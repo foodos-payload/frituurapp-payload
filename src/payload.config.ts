@@ -1,39 +1,35 @@
-// storage-adapter-import-placeholder
 import { postgresAdapter } from '@payloadcms/db-postgres'
-import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
-import sharp from 'sharp'
 
-import { Users } from './collections/Users'
-import { Media } from './collections/Media'
+import { Pages } from './collections/Pages'
+import { Tenants } from './collections/Tenants'
+import Users from './collections/Users'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+// eslint-disable-next-line no-restricted-exports
 export default buildConfig({
   admin: {
-    user: Users.slug,
-    importMap: {
-      baseDir: path.resolve(dirname),
+    components: {
+      afterNavLinks: ['@/components/TenantSelector#TenantSelectorRSC'],
     },
+    user: 'users',
   },
-  collections: [Users, Media],
-  editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
+  collections: [Pages, Users, Tenants],
+  db: postgresAdapter({
+    pool: { connectionString: process.env.DATABASE_URI as string },
+    idType: 'uuid',
+  }),
+  editor: lexicalEditor({}),
+  graphQL: {
+    schemaOutputFile: path.resolve(dirname, 'generated-schema.graphql'),
+  },
+  secret: process.env.PAYLOAD_SECRET as string,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: postgresAdapter({
-    pool: {
-      connectionString: process.env.DATABASE_URI || '',
-    },
-  }),
-  sharp,
-  plugins: [
-    payloadCloudPlugin(),
-    // storage-adapter-placeholder
-  ],
 })
