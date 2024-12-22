@@ -18,6 +18,9 @@ export default buildConfig({
       afterNavLinks: ['@/components/TenantSelector#TenantSelectorRSC'],
     },
     user: 'users',
+    meta: {
+      titleSuffix: 'Frituurapp',
+    },
   },
   collections: [Pages, Users, Tenants],
   db: postgresAdapter({
