@@ -5,7 +5,14 @@ cmd = "corepack enable && corepack prepare pnpm@latest --activate"
 cmd = "pnpm install --no-frozen-lockfile"
 
 [phases.build]
-cmd = "pnpm payload migrate up && pnpm build"
+cmd = """
+if pnpm payload migrate:status | grep -q 'No schema changes detected'; then
+  echo 'No schema changes detected, skipping migrate:create';
+else
+  pnpm payload migrate:create --force;
+fi
+pnpm payload migrate up && pnpm build
+"""
 
 [start]
 cmd = "pnpm start"
