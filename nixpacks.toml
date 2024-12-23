@@ -2,7 +2,7 @@
 cmd = "corepack enable && corepack prepare pnpm@latest --activate"
 
 [phases.install]
-cmd = "pnpm install --frozen-lockfile"
+cmd = "pnpm install --no-frozen-lockfile"
 
 [phases.build]
 cmd = "pnpm payload migrate up && pnpm build"
