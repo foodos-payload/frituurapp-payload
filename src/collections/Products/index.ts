@@ -2,9 +2,9 @@ import type { CollectionConfig } from 'payload';
 
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
-import { categoriesField } from '../../fields/CategoriesField'; // Reusable categories relationship field
+import { categoriesField } from '../../fields/CategoriesField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateProduct, filterByTenantRead } from './access/byTenant';
+import { canMutateProduct } from './access/byTenant';
 import { readAccess } from './access/readAccess';
 import { ensureUniqueNamePerShop } from './hooks/ensureUniqueNamePerShop';
 
@@ -13,7 +13,7 @@ export const Products: CollectionConfig = {
     access: {
         create: canMutateProduct,
         delete: canMutateProduct,
-        read: filterByTenantRead,
+        read: readAccess, // Use shop and tenant-based filtering
         update: canMutateProduct,
     },
     admin: {

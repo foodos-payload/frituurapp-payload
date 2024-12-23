@@ -58,8 +58,19 @@ const Users: CollectionConfig = {
       hooks: {
         beforeChange: [
           ({ value }) => {
-            // Ensure only shop IDs are saved (strip other fields if objects are passed)
-            return Array.isArray(value) ? value.map((shop) => (typeof shop === 'object' ? shop.id : shop)) : value;
+            return Array.isArray(value)
+              ? value.map((shop) => (typeof shop === 'object' ? shop.id : shop))
+              : value;
+          },
+        ],
+        beforeValidate: [
+          ({ value }) => {
+            if (!Array.isArray(value)) return value;
+            const invalidShops = value.filter((shop) => typeof shop !== 'string');
+            if (invalidShops.length > 0) {
+              throw new Error(`Invalid shop IDs: ${invalidShops.join(', ')}`);
+            }
+            return value;
           },
         ],
       },

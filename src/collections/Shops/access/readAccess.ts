@@ -9,29 +9,25 @@ export const readAccess: Access = ({ req }) => {
   const superAdmin = isSuperAdmin({ req });
   const selectedTenant = cookies.get('payload-tenant');
   const tenantAccessIDs = getTenantAccessIDs(req.user);
-  const userShops = req.user?.shops || [];
+  const userShops = Array.isArray(req.user?.shops)
+    ? req.user.shops.map((shop) => (typeof shop === 'object' ? shop.id : shop))
+    : [];
 
-  // If super-admin, allow access to all
+  // Super-admins can access all
   if (superAdmin) {
     return true;
   }
 
-  // Filter by selected tenant if applicable
-  if (selectedTenant && tenantAccessIDs.includes(selectedTenant)) {
+  // If specific shops are assigned
+  if (userShops.length > 0) {
     return {
-      tenant: { equals: selectedTenant },
-      id: { in: userShops }, // Restrict to assigned shops
-    };
-  }
-
-  // Default: Restrict access to user's assigned tenants and shops
-  if (tenantAccessIDs.length > 0) {
-    return {
-      tenant: { in: tenantAccessIDs },
       id: { in: userShops },
+      tenant: { in: tenantAccessIDs },
     };
   }
 
-  // Deny access if no valid tenant or shop match
-  return false;
+  // Default to tenant filtering
+  return {
+    tenant: { in: tenantAccessIDs },
+  };
 };

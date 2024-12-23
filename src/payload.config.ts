@@ -9,19 +9,28 @@ import { Tenants } from './collections/Tenants'
 import Users from './collections/Users'
 
 // Extended by Frituurapp team
-import { Shops } from './collections/Shops';
+import { Shops } from './collections/Shops'
 import { Categories } from './collections/Categories'
 import { Products } from './collections/Products'
 
+// Import the custom Not Found component
+import CustomNotFound from './components/CustomNotFound'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-// eslint-disable-next-line no-restricted-exports
 export default buildConfig({
   admin: {
     components: {
       afterNavLinks: ['@/components/TenantSelector#TenantSelectorRSC'],
+      extend: {
+        routes: [
+          {
+            path: '*', // Catch-all route for unmatched routes
+            element: CustomNotFound, // React element for the custom Not Found component
+          },
+        ],
+      },
     },
     user: 'users',
     meta: {
