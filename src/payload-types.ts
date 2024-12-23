@@ -15,6 +15,8 @@ export interface Config {
     users: User;
     tenants: Tenant;
     shops: Shop;
+    categories: Category;
+    products: Product;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -25,6 +27,8 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     shops: ShopsSelect<false> | ShopsSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -132,6 +136,107 @@ export interface Shop {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  name: string;
+  /**
+   * URL for the category image
+   */
+  image_url?: string | null;
+  /**
+   * Timestamp for last modification
+   */
+  modtime: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  categories: (string | Category)[];
+  name: string;
+  /**
+   * Use a unified sale price for all fulfillment methods.
+   */
+  price_unified?: boolean | null;
+  /**
+   * Unified sale price
+   */
+  price?: number | null;
+  /**
+   * Sale price for dine-in
+   */
+  price_dinein?: number | null;
+  /**
+   * Sale price for takeaway
+   */
+  price_takeaway?: number | null;
+  /**
+   * Sale price for delivery
+   */
+  price_delivery?: number | null;
+  /**
+   * Enable stock tracking for this product
+   */
+  enable_stock?: boolean | null;
+  /**
+   * Stock quantity
+   */
+  quantity?: number | null;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21)
+   */
+  tax: number;
+  /**
+   * Numeric identifier for the applicable tax table
+   */
+  tax_dinein?: number | null;
+  /**
+   * Enable product visibility in the POS system
+   */
+  posshow?: boolean | null;
+  /**
+   * Product barcode (if applicable)
+   */
+  barcode?: string | null;
+  /**
+   * URL for the product image
+   */
+  image_url?: string | null;
+  /**
+   * Timestamp for last modification
+   */
+  modtime: number;
+  /**
+   * Webshop description for the product
+   */
+  webdescription?: string | null;
+  /**
+   * Show this product in the webshop
+   */
+  webshopshow?: boolean | null;
+  /**
+   * Allow this product to be ordered via the webshop
+   */
+  webshoporderable?: boolean | null;
+  /**
+   * Product status (enabled or disabled)
+   */
+  status: 'enabled' | 'disabled';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -152,6 +257,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'shops';
         value: string | Shop;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: string | Category;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: string | Product;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -250,6 +363,48 @@ export interface ShopsSelect<T extends boolean = true> {
   name?: T;
   address?: T;
   phone?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  name?: T;
+  image_url?: T;
+  modtime?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  categories?: T;
+  name?: T;
+  price_unified?: T;
+  price?: T;
+  price_dinein?: T;
+  price_takeaway?: T;
+  price_delivery?: T;
+  enable_stock?: T;
+  quantity?: T;
+  tax?: T;
+  tax_dinein?: T;
+  posshow?: T;
+  barcode?: T;
+  image_url?: T;
+  modtime?: T;
+  webdescription?: T;
+  webshopshow?: T;
+  webshoporderable?: T;
+  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }

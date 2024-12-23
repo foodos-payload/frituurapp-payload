@@ -10,6 +10,8 @@ import Users from './collections/Users'
 
 // Extended by Frituurapp team
 import { Shops } from './collections/Shops';
+import { Categories } from './collections/Categories'
+import { Products } from './collections/Products'
 
 
 const filename = fileURLToPath(import.meta.url)
@@ -26,7 +28,7 @@ export default buildConfig({
       titleSuffix: 'Frituurapp',
     },
   },
-  collections: [Pages, Users, Tenants, Shops],
+  collections: [Pages, Users, Tenants, Shops, Categories, Products],
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI as string },
     idType: 'uuid',
