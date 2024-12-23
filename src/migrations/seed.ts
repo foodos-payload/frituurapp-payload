@@ -1,4 +1,4 @@
-import type { MigrateUpArgs } from '@payloadcms/db-postgres'
+import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres';
 
 export async function up({ payload }: MigrateUpArgs): Promise<void> {
   await payload.create({
@@ -8,37 +8,31 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       password: 'demo',
       roles: ['super-admin'],
     },
-  })
-
-  // The 'domains' field is used to associate a domain with this tenant.
-  // Uncomment and set the domain if you want to enable domain-based tenant assignment.
+  });
 
   const tenant1 = await payload.create({
     collection: 'tenants',
     data: {
       name: 'Tenant 1',
       slug: 'tenant-1',
-      // domains: [{ domain: 'abc.localhost.com:3000' }],
     },
-  })
+  });
 
   const tenant2 = await payload.create({
     collection: 'tenants',
     data: {
       name: 'Tenant 2',
       slug: 'tenant-2',
-      // domains: [{ domain: 'bbc.localhost.com:3000' }],
     },
-  })
+  });
 
   const tenant3 = await payload.create({
     collection: 'tenants',
     data: {
       name: 'Tenant 3',
       slug: 'tenant-3',
-      // domains: [{ domain: 'cbc.localhost.com:3000' }],
     },
-  })
+  });
 
   await payload.create({
     collection: 'users',
@@ -50,14 +44,10 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
           roles: ['tenant-admin'],
           tenant: tenant1.id,
         },
-        // {
-        //   roles: ['tenant-admin'],
-        //   tenant: tenant2.id,
-        // },
       ],
       username: 'tenant1',
     },
-  })
+  });
 
   await payload.create({
     collection: 'users',
@@ -72,7 +62,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       ],
       username: 'tenant2',
     },
-  })
+  });
 
   await payload.create({
     collection: 'users',
@@ -87,7 +77,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       ],
       username: 'tenant3',
     },
-  })
+  });
 
   await payload.create({
     collection: 'users',
@@ -110,7 +100,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       ],
       username: 'tenant3',
     },
-  })
+  });
 
   await payload.create({
     collection: 'pages',
@@ -119,7 +109,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tenant: tenant1.id,
       title: 'Page for Tenant 1',
     },
-  })
+  });
 
   await payload.create({
     collection: 'pages',
@@ -128,7 +118,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tenant: tenant2.id,
       title: 'Page for Tenant 2',
     },
-  })
+  });
 
   await payload.create({
     collection: 'pages',
@@ -137,5 +127,14 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tenant: tenant3.id,
       title: 'Page for Tenant 3',
     },
-  })
+  });
+}
+
+export async function down({ payload }: MigrateDownArgs): Promise<void> {
+  // Reverse the changes made in the `up` function (optional).
+  // This example assumes all inserted data should be deleted.
+
+  await payload.delete({ collection: 'users', where: { email: { like: '%' } } });
+  await payload.delete({ collection: 'tenants', where: { name: { like: '%' } } });
+  await payload.delete({ collection: 'pages', where: { slug: { like: '%' } } });
 }
