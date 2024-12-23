@@ -5,6 +5,7 @@ import { baseListFilter } from './access/baseListFilter';
 import { canMutateShop, filterByTenantRead } from './access/byTenant';
 import { readAccess } from './access/readAccess';
 import { ensureUniqueName } from './hooks/ensureUniqueName';
+import { autofillTenant } from '../../fields/TenantField/hooks/autofillTenant'; // Import the autofill hook
 
 export const Shops: CollectionConfig = {
   slug: 'shops',
@@ -19,7 +20,7 @@ export const Shops: CollectionConfig = {
     useAsTitle: 'name',
   },
   fields: [
-    tenantField,
+    tenantField, // Ensure this is added and includes the autofillTenant hook
     {
       name: 'name',
       type: 'text',
@@ -38,3 +39,4 @@ export const Shops: CollectionConfig = {
     },
   ],
 };
+
