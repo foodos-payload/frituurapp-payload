@@ -84,6 +84,12 @@ export interface Page {
 export interface Tenant {
   id: string;
   name: string;
+  domains?:
+    | {
+        domain: string;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Used for url paths, example: /tenant-slug/page-slug
    */
@@ -109,6 +115,10 @@ export interface User {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Assign shops to the user
+   */
+  shops?: (string | Shop)[] | null;
   username?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -332,6 +342,7 @@ export interface UsersSelect<T extends boolean = true> {
         roles?: T;
         id?: T;
       };
+  shops?: T;
   username?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -349,6 +360,12 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface TenantsSelect<T extends boolean = true> {
   name?: T;
+  domains?:
+    | T
+    | {
+        domain?: T;
+        id?: T;
+      };
   slug?: T;
   public?: T;
   updatedAt?: T;

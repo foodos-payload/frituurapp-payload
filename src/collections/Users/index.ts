@@ -1,11 +1,10 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig } from 'payload';
 
-import { createAccess } from './access/create'
-import { readAccess } from './access/read'
-import { updateAndDeleteAccess } from './access/updateAndDelete'
-import { externalUsersLogin } from './endpoints/externalUsersLogin'
-import { ensureUniqueUsername } from './hooks/ensureUniqueUsername'
-// import { setCookieBasedOnDomain } from './hooks/setCookieBasedOnDomain'
+import { createAccess } from './access/create';
+import { readAccess } from './access/read';
+import { updateAndDeleteAccess } from './access/updateAndDelete';
+import { externalUsersLogin } from './endpoints/externalUsersLogin';
+// import { setCookieBasedOnDomain } from './hooks/setCookieBasedOnDomain';
 
 const Users: CollectionConfig = {
   slug: 'users',
@@ -35,7 +34,6 @@ const Users: CollectionConfig = {
         {
           name: 'tenant',
           type: 'relationship',
-          index: true,
           relationTo: 'tenants',
           required: true,
           saveToJWT: true,
@@ -52,22 +50,30 @@ const Users: CollectionConfig = {
       saveToJWT: true,
     },
     {
+      name: 'shops',
+      type: 'relationship',
+      relationTo: 'shops',
+      hasMany: true,
+      saveToJWT: true,
+      hooks: {
+        beforeChange: [
+          ({ value }) => {
+            // Ensure only shop IDs are saved (strip other fields if objects are passed)
+            return Array.isArray(value) ? value.map((shop) => (typeof shop === 'object' ? shop.id : shop)) : value;
+          },
+        ],
+      },
+      admin: {
+        position: 'sidebar',
+        description: 'Assign shops to the user',
+      },
+    },
+    {
       name: 'username',
       type: 'text',
-      // hooks: {
-      //   beforeValidate: [ensureUniqueUsername],
-      // },
       index: true,
     },
   ],
-  // The following hook sets a cookie based on the domain a user logs in from.
-  // It checks the domain and matches it to a tenant in the system, then sets
-  // a 'payload-tenant' cookie for that tenant.
+};
 
-  // Uncomment this if you want to enable tenant-based cookie handling by domain.
-  // hooks: {
-  //   afterLogin: [setCookieBasedOnDomain],
-  // },
-}
-
-export default Users
+export default Users;
