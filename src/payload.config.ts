@@ -8,6 +8,10 @@ import { Pages } from './collections/Pages'
 import { Tenants } from './collections/Tenants'
 import Users from './collections/Users'
 
+// Extended by Frituurapp team
+import { Shops } from './collections/Shops';
+
+
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
@@ -22,7 +26,7 @@ export default buildConfig({
       titleSuffix: 'Frituurapp',
     },
   },
-  collections: [Pages, Users, Tenants],
+  collections: [Pages, Users, Tenants, Shops],
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI as string },
     idType: 'uuid',
