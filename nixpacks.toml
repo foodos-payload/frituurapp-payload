@@ -1,0 +1,10 @@
+[phases]
+# Install dependencies using pnpm
+install = "corepack enable pnpm && pnpm install --frozen-lockfile"
+
+# Run database migrations and build the app
+build = "pnpm payload migrate up && pnpm build"
+
+[start]
+# Start the application in production mode
+command = "pnpm start"
