@@ -4,7 +4,7 @@ import { createAccess } from './access/create';
 import { readAccess } from './access/read';
 import { updateAndDeleteAccess } from './access/updateAndDelete';
 import { externalUsersLogin } from './endpoints/externalUsersLogin';
-// import { setCookieBasedOnDomain } from './hooks/setCookieBasedOnDomain';
+import { setCookieBasedOnDomain } from './hooks/setCookieBasedOnDomain';
 
 const Users: CollectionConfig = {
   slug: 'users',
@@ -18,6 +18,9 @@ const Users: CollectionConfig = {
     useAsTitle: 'email',
   },
   auth: true,
+  hooks: {
+    afterLogin: [setCookieBasedOnDomain],
+  },
   endpoints: [externalUsersLogin],
   fields: [
     {
