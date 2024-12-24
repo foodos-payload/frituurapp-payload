@@ -22,6 +22,8 @@ import { Tables } from './collections/ShopSettings/Tables';
 import { Printers } from './collections/ShopSettings/Printers';
 import { FulfillmentMethods } from './collections/ShopSettings/FulfillmentMethods';
 import { Timeslots } from './collections/ShopSettings/Timeslots';
+import { Customers } from './collections/Customers';
+import { CustomerCredits } from './collections/CustomerCredits';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -106,6 +108,20 @@ export default buildConfig({
       admin: {
         ...Pages.admin,
         group: 'Content Management',
+      },
+    },
+    {
+      ...Customers,
+      admin: {
+        ...Customers.admin,
+        group: 'Loyalty',
+      },
+    },
+    {
+      ...CustomerCredits,
+      admin: {
+        ...CustomerCredits.admin,
+        group: 'Loyalty',
       },
     },
     {

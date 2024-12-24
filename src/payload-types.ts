@@ -20,6 +20,8 @@ export interface Config {
     tables: Table;
     printers: Printer;
     pages: Page;
+    customers: Customer;
+    'customer-credits': CustomerCredit;
     categories: Category;
     products: Product;
     subproducts: Subproduct;
@@ -39,6 +41,8 @@ export interface Config {
     tables: TablesSelect<false> | TablesSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    customers: CustomersSelect<false> | CustomersSelect<true>;
+    'customer-credits': CustomerCreditsSelect<false> | CustomerCreditsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
@@ -434,25 +438,108 @@ export interface Page {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
+ * via the `definition` "customers".
  */
-export interface Category {
+export interface Customer {
   id: string;
   tenant: string | Tenant;
   shops: (string | Shop)[];
-  name: string;
   /**
-   * URL for the category image
+   * First name of the customer.
    */
-  image_url?: string | null;
+  firstname: string;
   /**
-   * Timestamp for last modification
+   * Last name of the customer.
+   */
+  lastname: string;
+  /**
+   * Company name associated with the customer (if applicable).
+   */
+  company_name?: string | null;
+  /**
+   * Street address of the customer.
+   */
+  street?: string | null;
+  /**
+   * House number of the customer.
+   */
+  house_number?: string | null;
+  /**
+   * City of the customer.
+   */
+  city?: string | null;
+  /**
+   * Postal code of the customer.
+   */
+  postal_code?: string | null;
+  /**
+   * VAT number for business customers.
+   */
+  vat_number?: string | null;
+  /**
+   * Email address of the customer.
+   */
+  email: string;
+  /**
+   * Phone number of the customer.
+   */
+  phone?: string | null;
+  tags?:
+    | {
+        /**
+         * Tag ID associated with the customer.
+         */
+        tag_id?: string | null;
+        /**
+         * Type of tag (e.g., loyalty, preference).
+         */
+        tag_type?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Timestamp for last modification.
    */
   modtime: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-credits".
+ */
+export interface CustomerCredit {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
   /**
-   * Category status (enabled or disabled)
+   * The customer this credit is assigned to.
    */
-  status: 'enabled' | 'disabled';
+  customerid: string | Customer;
+  /**
+   * Credit value available for the customer.
+   */
+  value: number;
+  /**
+   * Optional tag identifier for this credit.
+   */
+  tagid?: string | null;
+  /**
+   * Optional tag type for this credit.
+   */
+  tagtype?: string | null;
+  /**
+   * Product associated with this credit (if applicable).
+   */
+  productid?: (string | null) | Product;
+  /**
+   * Category associated with this credit (if applicable).
+   */
+  categoryid?: (string | null) | Category;
+  /**
+   * Payment method associated with this credit.
+   */
+  paymenttype?: (string | null) | PaymentMethod;
   updatedAt: string;
   createdAt: string;
 }
@@ -550,6 +637,30 @@ export interface Product {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  name: string;
+  /**
+   * URL for the category image
+   */
+  image_url?: string | null;
+  /**
+   * Timestamp for last modification
+   */
+  modtime: number;
+  /**
+   * Category status (enabled or disabled)
+   */
+  status: 'enabled' | 'disabled';
   updatedAt: string;
   createdAt: string;
 }
@@ -711,6 +822,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pages';
         value: string | Page;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: string | Customer;
+      } | null)
+    | ({
+        relationTo: 'customer-credits';
+        value: string | CustomerCredit;
       } | null)
     | ({
         relationTo: 'categories';
@@ -959,6 +1078,51 @@ export interface PagesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   tenant?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers_select".
+ */
+export interface CustomersSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  firstname?: T;
+  lastname?: T;
+  company_name?: T;
+  street?: T;
+  house_number?: T;
+  city?: T;
+  postal_code?: T;
+  vat_number?: T;
+  email?: T;
+  phone?: T;
+  tags?:
+    | T
+    | {
+        tag_id?: T;
+        tag_type?: T;
+        id?: T;
+      };
+  modtime?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-credits_select".
+ */
+export interface CustomerCreditsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  customerid?: T;
+  value?: T;
+  tagid?: T;
+  tagtype?: T;
+  productid?: T;
+  categoryid?: T;
+  paymenttype?: T;
   updatedAt?: T;
   createdAt?: T;
 }
