@@ -86,5 +86,89 @@ export const Shops: CollectionConfig = {
       name: 'phone',
       type: 'text',
     },
+    {
+      name: 'company_details',
+      type: 'group',
+      admin: {
+        description: 'Details about the company associated with the shop.',
+      },
+      fields: [
+        {
+          name: 'company_name',
+          type: 'text',
+          required: true,
+          admin: {
+            description: 'The name of the company.',
+          },
+        },
+        {
+          name: 'street',
+          type: 'text',
+          admin: {
+            description: 'The street of the company address.',
+          },
+        },
+        {
+          name: 'house_number',
+          type: 'text',
+          admin: {
+            description: 'The house number of the company address.',
+          },
+        },
+        {
+          name: 'city',
+          type: 'text',
+          admin: {
+            description: 'The city of the company address.',
+          },
+        },
+        {
+          name: 'postal',
+          type: 'text',
+          admin: {
+            description: 'The postal code of the company address.',
+          },
+        },
+        {
+          name: 'vat_nr',
+          type: 'text',
+          admin: {
+            description: 'The VAT number of the company.',
+          },
+        },
+        {
+          name: 'website_url',
+          type: 'text',
+          admin: {
+            description: 'The URL of the company website.',
+          },
+        },
+      ],
+    },
+    {
+      name: 'exceptionally_closed_days',
+      type: 'array',
+      admin: {
+        description: 'List of dates when the shop is exceptionally closed.',
+      },
+      fields: [
+        {
+          name: 'date',
+          type: 'date',
+          required: true,
+          admin: {
+            description: 'The date when the shop is closed.',
+          },
+        },
+        {
+          name: 'reason',
+          type: 'text',
+          required: false,
+          admin: {
+            description: 'The reason for the closure.',
+          },
+        },
+      ],
+    },
   ],
 };

@@ -143,6 +143,55 @@ export interface Shop {
   name: string;
   address?: string | null;
   phone?: string | null;
+  /**
+   * Details about the company associated with the shop.
+   */
+  company_details: {
+    /**
+     * The name of the company.
+     */
+    company_name: string;
+    /**
+     * The street of the company address.
+     */
+    street?: string | null;
+    /**
+     * The house number of the company address.
+     */
+    house_number?: string | null;
+    /**
+     * The city of the company address.
+     */
+    city?: string | null;
+    /**
+     * The postal code of the company address.
+     */
+    postal?: string | null;
+    /**
+     * The VAT number of the company.
+     */
+    vat_nr?: string | null;
+    /**
+     * The URL of the company website.
+     */
+    website_url?: string | null;
+  };
+  /**
+   * List of dates when the shop is exceptionally closed.
+   */
+  exceptionally_closed_days?:
+    | {
+        /**
+         * The date when the shop is closed.
+         */
+        date: string;
+        /**
+         * The reason for the closure.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -772,6 +821,24 @@ export interface ShopsSelect<T extends boolean = true> {
   name?: T;
   address?: T;
   phone?: T;
+  company_details?:
+    | T
+    | {
+        company_name?: T;
+        street?: T;
+        house_number?: T;
+        city?: T;
+        postal?: T;
+        vat_nr?: T;
+        website_url?: T;
+      };
+  exceptionally_closed_days?:
+    | T
+    | {
+        date?: T;
+        reason?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
