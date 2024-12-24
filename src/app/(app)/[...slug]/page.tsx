@@ -42,7 +42,7 @@ export default async function Page({
     return (
       <div>
         <h1>No Tenant Found</h1>
-        <p>We couldn’t find a tenant for "{host}".</p>
+        <p>We couldn&rsquo;t find a tenant for &quot;{host}&quot;.</p>
       </div>
     )
   }
