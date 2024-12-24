@@ -46,14 +46,14 @@ export default buildConfig({
       ...Tenants,
       admin: {
         ...Tenants.admin,
-        group: 'System',
+        group: 'Shop Management',
       },
     },
     {
       ...Users,
       admin: {
         ...Users.admin,
-        group: 'System',
+        group: 'Shop Management',
       },
     },
     {
@@ -61,6 +61,20 @@ export default buildConfig({
       admin: {
         ...Shops.admin,
         group: 'Shop Management',
+      },
+    },
+    {
+      ...PaymentMethods,
+      admin: {
+        ...PaymentMethods.admin,
+        group: 'Shop Settings',
+      },
+    },
+    {
+      ...Tables,
+      admin: {
+        ...Tables.admin,
+        group: 'Shop Settings',
       },
     },
     {
@@ -98,20 +112,7 @@ export default buildConfig({
         group: 'Products',
       },
     },
-    {
-      ...PaymentMethods,
-      admin: {
-        ...PaymentMethods.admin,
-        group: 'Shop Settings',
-      },
-    },
-    {
-      ...Tables,
-      admin: {
-        ...Tables.admin,
-        group: 'Shop Settings',
-      },
-    },
+
   ],
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI as string },
