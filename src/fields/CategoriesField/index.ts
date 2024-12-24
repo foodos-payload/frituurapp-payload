@@ -10,16 +10,12 @@ export const categoriesField: Field = {
         read: ({ req }) => {
             // Ensure only accessible categories are shown
             const userShops = req.user?.shops || [];
-            return {
-                shops: { in: userShops },
-            };
+            return userShops.length > 0;
         },
         update: ({ req }) => {
             // Ensure updates are limited to accessible categories
             const userShops = req.user?.shops || [];
-            return {
-                shops: { in: userShops },
-            };
+            return userShops.length > 0;
         },
     },
     admin: {

@@ -32,14 +32,6 @@ export default buildConfig({
   admin: {
     components: {
       afterNavLinks: ['@/components/TenantSelector#TenantSelectorRSC'],
-      extend: {
-        routes: [
-          {
-            path: '*', // Catch-all route for unmatched routes
-            element: CustomNotFound, // React element for the custom Not Found component
-          },
-        ],
-      },
     },
     user: 'users',
     meta: {

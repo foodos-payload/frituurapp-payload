@@ -10,16 +10,12 @@ export const shopsField: Field = {
         read: ({ req }) => {
             // Ensure only shops the tenant has access to are visible
             const tenantShops = req.user?.shops || [];
-            return {
-                id: { in: tenantShops },
-            };
+            return tenantShops.length > 0;
         },
         update: ({ req }) => {
             // Allow updates only for shops the tenant has access to
             const tenantShops = req.user?.shops || [];
-            return {
-                id: { in: tenantShops },
-            };
+            return tenantShops.length > 0;
         },
     },
     admin: {
