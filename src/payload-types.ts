@@ -15,7 +15,10 @@ export interface Config {
     users: User;
     shops: Shop;
     'payment-methods': PaymentMethod;
+    'fulfillment-methods': FulfillmentMethod;
+    timeslots: Timeslot;
     tables: Table;
+    printers: Printer;
     pages: Page;
     categories: Category;
     products: Product;
@@ -31,7 +34,10 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     shops: ShopsSelect<false> | ShopsSelect<true>;
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
+    'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
+    timeslots: TimeslotsSelect<false> | TimeslotsSelect<true>;
     tables: TablesSelect<false> | TablesSelect<true>;
+    printers: PrintersSelect<false> | PrintersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
@@ -182,6 +188,105 @@ export interface PaymentMethod {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fulfillment-methods".
+ */
+export interface FulfillmentMethod {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Select the type of fulfillment method.
+   */
+  method_type: 'delivery' | 'takeaway' | 'dine_in';
+  /**
+   * Specify the base delivery fee, if applicable.
+   */
+  delivery_fee?: number | null;
+  /**
+   * Specify the minimum order amount for this fulfillment method.
+   */
+  minimum_order?: number | null;
+  /**
+   * Specify the extra cost per kilometer for delivery.
+   */
+  extra_cost_per_km?: number | null;
+  /**
+   * Enable or disable this fulfillment method.
+   */
+  enabled?: boolean | null;
+  /**
+   * Additional settings specific to this fulfillment method.
+   */
+  settings?: {
+    /**
+     * Specify the delivery radius in kilometers.
+     */
+    delivery_radius?: number | null;
+    /**
+     * Add specific instructions for takeaway orders.
+     */
+    pickup_instructions?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timeslots".
+ */
+export interface Timeslot {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * The fulfillment method associated with this timeslot.
+   */
+  method_id: string | FulfillmentMethod;
+  /**
+   * Specify time ranges for selected days.
+   */
+  days?:
+    | {
+        /**
+         * Select the day for these time ranges.
+         */
+        day: '1' | '2' | '3' | '4' | '5' | '6' | '7';
+        /**
+         * Define multiple time ranges for this day.
+         */
+        time_ranges?:
+          | {
+              /**
+               * Start time for this range (e.g., 13:00).
+               */
+              start_time: string;
+              /**
+               * End time for this range (e.g., 14:00).
+               */
+              end_time: string;
+              /**
+               * Interval in minutes for this range.
+               */
+              interval_minutes: number;
+              /**
+               * Maximum orders per interval. Leave empty for unlimited.
+               */
+              max_orders?: number | null;
+              /**
+               * Enable or disable this range.
+               */
+              status?: boolean | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tables".
  */
 export interface Table {
@@ -200,6 +305,29 @@ export interface Table {
    * Number of persons that can fit on this table.
    */
   capacity: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "printers".
+ */
+export interface Printer {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name of the printer.
+   */
+  printername: string;
+  /**
+   * PrintNode ID associated with this printer.
+   */
+  printnode_id?: string | null;
+  /**
+   * Enable or disable this printer.
+   */
+  enabled?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -476,8 +604,20 @@ export interface PayloadLockedDocument {
         value: string | PaymentMethod;
       } | null)
     | ({
+        relationTo: 'fulfillment-methods';
+        value: string | FulfillmentMethod;
+      } | null)
+    | ({
+        relationTo: 'timeslots';
+        value: string | Timeslot;
+      } | null)
+    | ({
         relationTo: 'tables';
         value: string | Table;
+      } | null)
+    | ({
+        relationTo: 'printers';
+        value: string | Printer;
       } | null)
     | ({
         relationTo: 'pages';
@@ -617,6 +757,54 @@ export interface PaymentMethodsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fulfillment-methods_select".
+ */
+export interface FulfillmentMethodsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  method_type?: T;
+  delivery_fee?: T;
+  minimum_order?: T;
+  extra_cost_per_km?: T;
+  enabled?: T;
+  settings?:
+    | T
+    | {
+        delivery_radius?: T;
+        pickup_instructions?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timeslots_select".
+ */
+export interface TimeslotsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  method_id?: T;
+  days?:
+    | T
+    | {
+        day?: T;
+        time_ranges?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tables_select".
  */
 export interface TablesSelect<T extends boolean = true> {
@@ -625,6 +813,19 @@ export interface TablesSelect<T extends boolean = true> {
   table_num?: T;
   status?: T;
   capacity?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "printers_select".
+ */
+export interface PrintersSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  printername?: T;
+  printnode_id?: T;
+  enabled?: T;
   updatedAt?: T;
   createdAt?: T;
 }

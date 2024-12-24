@@ -19,6 +19,9 @@ import { Subproducts } from './collections/Subproducts';
 import { Productpopups } from './collections/Productpopups';
 import { PaymentMethods } from './collections/ShopSettings/PaymentMethods';
 import { Tables } from './collections/ShopSettings/Tables';
+import { Printers } from './collections/ShopSettings/Printers';
+import { FulfillmentMethods } from './collections/ShopSettings/FulfillmentMethods';
+import { Timeslots } from './collections/ShopSettings/Timeslots';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -71,9 +74,30 @@ export default buildConfig({
       },
     },
     {
+      ...FulfillmentMethods,
+      admin: {
+        ...FulfillmentMethods.admin,
+        group: 'Shop Settings',
+      },
+    },
+    {
+      ...Timeslots,
+      admin: {
+        ...Timeslots.admin,
+        group: 'Shop Settings',
+      },
+    },
+    {
       ...Tables,
       admin: {
         ...Tables.admin,
+        group: 'Shop Settings',
+      },
+    },
+    {
+      ...Printers,
+      admin: {
+        ...Printers.admin,
         group: 'Shop Settings',
       },
     },
