@@ -1,7 +1,7 @@
 import type { BaseListFilter } from 'payload';
 import { parseCookies } from 'payload';
-import { isSuperAdmin } from '../../../access/isSuperAdmin';
-import { getTenantAccessIDs } from '../../../utilities/getTenantAccessIDs';
+import { isSuperAdmin } from '../../../../access/isSuperAdmin';
+import { getTenantAccessIDs } from '../../../../utilities/getTenantAccessIDs';
 
 export const baseListFilter: BaseListFilter = (args) => {
     const req = args.req;

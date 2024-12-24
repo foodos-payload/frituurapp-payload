@@ -19,6 +19,8 @@ export interface Config {
     products: Product;
     subproducts: Subproduct;
     productpopups: Productpopup;
+    'payment-methods': PaymentMethod;
+    tables: Table;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -33,6 +35,8 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
     productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
+    'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
+    tables: TablesSelect<false> | TablesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -387,6 +391,69 @@ export interface Subproduct {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-methods".
+ */
+export interface PaymentMethod {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Select a payment provider.
+   */
+  provider: 'multisafepay' | 'cash_on_delivery';
+  /**
+   * Settings for MultiSafePay.
+   */
+  multisafepay_settings?: {
+    /**
+     * Enable test mode for MultiSafePay.
+     */
+    enable_test_mode?: boolean | null;
+    /**
+     * Live API Key for MultiSafePay.
+     */
+    live_api_key?: string | null;
+    /**
+     * Test API Key for MultiSafePay.
+     */
+    test_api_key?: string | null;
+    /**
+     * Select the payment methods to enable for MultiSafePay.
+     */
+    methods?: ('MSP_Bancontact' | 'MSP_Visa' | 'MSP_Mastercard' | 'MSP_iDeal')[] | null;
+  };
+  /**
+   * Enable or disable this payment method.
+   */
+  enabled?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables".
+ */
+export interface Table {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Unique table number within a shop.
+   */
+  table_num: number;
+  /**
+   * Current status of the table.
+   */
+  status?: ('0' | '1' | '2') | null;
+  /**
+   * Number of persons that can fit on this table.
+   */
+  capacity: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -423,6 +490,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'productpopups';
         value: string | Productpopup;
+      } | null)
+    | ({
+        relationTo: 'payment-methods';
+        value: string | PaymentMethod;
+      } | null)
+    | ({
+        relationTo: 'tables';
+        value: string | Table;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -623,6 +698,39 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   maximum_option?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-methods_select".
+ */
+export interface PaymentMethodsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  provider?: T;
+  multisafepay_settings?:
+    | T
+    | {
+        enable_test_mode?: T;
+        live_api_key?: T;
+        test_api_key?: T;
+        methods?: T;
+      };
+  enabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables_select".
+ */
+export interface TablesSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  table_num?: T;
+  status?: T;
+  capacity?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -1,7 +1,7 @@
 import type { FieldHook } from 'payload';
 import { ValidationError } from 'payload';
 
-export const ensureUniqueNamePerShop: FieldHook = async ({
+export const ensureUniqueProviderPerShop: FieldHook = async ({
     data,
     req,
     siblingData,
@@ -24,7 +24,7 @@ export const ensureUniqueNamePerShop: FieldHook = async ({
         collection: 'payment-methods',
         where: {
             shops: { in: shopIDs },
-            payment_name: { equals: value },
+            provider: { equals: value }, // Validate uniqueness based on provider
         },
     });
 
@@ -35,8 +35,8 @@ export const ensureUniqueNamePerShop: FieldHook = async ({
     if (isDuplicate) {
         throw new ValidationError([
             {
-                message: `A payment method with the name "${value}" already exists in one or more selected shops.`,
-                path: 'payment_name',
+                message: `The payment provider "${value}" is already assigned to one or more selected shops.`,
+                path: 'provider',
             },
         ]);
     }

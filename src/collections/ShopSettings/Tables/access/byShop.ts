@@ -1,5 +1,5 @@
 import type { Access } from 'payload';
-import { getTenantAccessIDs } from '../../../utilities/getTenantAccessIDs';
+import { getTenantAccessIDs } from '../../../../utilities/getTenantAccessIDs';
 
 export const filterByShopRead: Access = ({ req }) => {
     const tenantAccessIDs = getTenantAccessIDs(req.user);

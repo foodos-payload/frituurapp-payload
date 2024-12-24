@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload';
 
-import { tenantField } from '../../fields/TenantField';
-import { shopsField } from '../../fields/ShopsField';
+import { tenantField } from '../../../fields/TenantField';
+import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateTable } from './access/byTenant';
 import { filterByShopRead } from './access/byShop';
@@ -38,11 +38,11 @@ export const Tables: CollectionConfig = {
             name: 'status',
             type: 'select',
             options: [
-                { label: 'Available', value: 0 },
-                { label: 'Occupied', value: 1 },
-                { label: 'Reserved', value: 2 },
+                { label: 'Available', value: '0' },
+                { label: 'Reserved', value: '1' },
+                { label: 'Occupied', value: '2' },
             ],
-            defaultValue: 0,
+            defaultValue: '0',
             admin: {
                 description: 'Current status of the table.',
             },
