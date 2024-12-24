@@ -6,7 +6,6 @@ import { baseListFilter } from './access/baseListFilter';
 import { canMutatePrinter } from './access/byTenant';
 import { filterByShopRead } from './access/byShop';
 import { readAccess } from './access/readAccess';
-import { ensureUniquePrinterNamePerShop } from './hooks/ensureUniquePrinterNamePerShop';
 
 export const Printers: CollectionConfig = {
     slug: 'printers',
@@ -18,37 +17,106 @@ export const Printers: CollectionConfig = {
     },
     admin: {
         baseListFilter,
-        useAsTitle: 'printername',
+        useAsTitle: 'printername', // Use printername as the title
     },
     fields: [
         tenantField, // Ensure printers are scoped by tenant
-        shopsField, // Link printers to specific shops
         {
             name: 'printername',
-            type: 'text',
+            type: 'relationship',
+            relationTo: 'shops',
             required: true,
-            hooks: {
-                beforeValidate: [ensureUniquePrinterNamePerShop], // Validate unique printer names per shop
-            },
             admin: {
-                description: 'Name of the printer.',
+                description: 'Select the shop associated with this printer.',
             },
         },
         {
-            name: 'printnode_id',
-            type: 'text',
-            required: false,
+            name: 'printer_settings',
+            type: 'group',
             admin: {
-                description: 'PrintNode ID associated with this printer.',
+                description: 'Settings for this shop printer.',
             },
-        },
-        {
-            name: 'enabled',
-            type: 'checkbox',
-            defaultValue: true,
-            admin: {
-                description: 'Enable or disable this printer.',
-            },
+            fields: [
+                {
+                    name: 'default_printer_id',
+                    type: 'text',
+                    defaultValue: '73861244',
+                    admin: {
+                        description: 'Default printer ID.',
+                    },
+                },
+                {
+                    name: 'print_enabled',
+                    type: 'checkbox',
+                    defaultValue: true,
+                    admin: {
+                        description: 'Enable printing functionality.',
+                    },
+                },
+                {
+                    name: 'kitchen_enabled',
+                    type: 'checkbox',
+                    defaultValue: true,
+                    admin: {
+                        description: 'Enable kitchen printing functionality.',
+                    },
+                },
+                {
+                    name: 'customer_enabled',
+                    type: 'checkbox',
+                    defaultValue: false,
+                    admin: {
+                        description: 'Enable customer printing functionality.',
+                    },
+                },
+                {
+                    name: 'kitchen_ticket_amount',
+                    type: 'number',
+                    defaultValue: 2,
+                    admin: {
+                        description: 'Number of kitchen tickets to print.',
+                    },
+                },
+                {
+                    name: 'kitchen_printer_id',
+                    type: 'text',
+                    defaultValue: '73861244',
+                    admin: {
+                        description: 'Printer ID for the kitchen printer.',
+                    },
+                },
+                {
+                    name: 'kiosk_printers',
+                    type: 'array',
+                    admin: {
+                        description: 'List of Kiosk printers (add multiple).',
+                    },
+                    fields: [
+                        {
+                            name: 'kiosk_id',
+                            type: 'text',
+                            admin: {
+                                description: 'Kiosk ID.',
+                            },
+                        },
+                        {
+                            name: 'kiosk_printnode_id',
+                            type: 'text',
+                            admin: {
+                                description: 'Kiosk PrintNode ID.',
+                            },
+                        },
+                    ],
+                },
+                {
+                    name: 'print_category_headers',
+                    type: 'checkbox',
+                    defaultValue: true,
+                    admin: {
+                        description: 'Enable printing of category headers.',
+                    },
+                },
+            ],
         },
     ],
 };

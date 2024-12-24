@@ -315,19 +315,59 @@ export interface Table {
 export interface Printer {
   id: string;
   tenant: string | Tenant;
-  shops: (string | Shop)[];
   /**
-   * Name of the printer.
+   * Select the shop associated with this printer.
    */
-  printername: string;
+  printername: string | Shop;
   /**
-   * PrintNode ID associated with this printer.
+   * Settings for this shop printer.
    */
-  printnode_id?: string | null;
-  /**
-   * Enable or disable this printer.
-   */
-  enabled?: boolean | null;
+  printer_settings?: {
+    /**
+     * Default printer ID.
+     */
+    default_printer_id?: string | null;
+    /**
+     * Enable printing functionality.
+     */
+    print_enabled?: boolean | null;
+    /**
+     * Enable kitchen printing functionality.
+     */
+    kitchen_enabled?: boolean | null;
+    /**
+     * Enable customer printing functionality.
+     */
+    customer_enabled?: boolean | null;
+    /**
+     * Number of kitchen tickets to print.
+     */
+    kitchen_ticket_amount?: number | null;
+    /**
+     * Printer ID for the kitchen printer.
+     */
+    kitchen_printer_id?: string | null;
+    /**
+     * List of Kiosk printers (add multiple).
+     */
+    kiosk_printers?:
+      | {
+          /**
+           * Kiosk ID.
+           */
+          kiosk_id?: string | null;
+          /**
+           * Kiosk PrintNode ID.
+           */
+          kiosk_printnode_id?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Enable printing of category headers.
+     */
+    print_category_headers?: boolean | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -822,10 +862,25 @@ export interface TablesSelect<T extends boolean = true> {
  */
 export interface PrintersSelect<T extends boolean = true> {
   tenant?: T;
-  shops?: T;
   printername?: T;
-  printnode_id?: T;
-  enabled?: T;
+  printer_settings?:
+    | T
+    | {
+        default_printer_id?: T;
+        print_enabled?: T;
+        kitchen_enabled?: T;
+        customer_enabled?: T;
+        kitchen_ticket_amount?: T;
+        kitchen_printer_id?: T;
+        kiosk_printers?:
+          | T
+          | {
+              kiosk_id?: T;
+              kiosk_printnode_id?: T;
+              id?: T;
+            };
+        print_category_headers?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
