@@ -173,5 +173,32 @@ export const Products: CollectionConfig = {
                 description: 'Product status (enabled or disabled)',
             },
         },
+        {
+            name: 'productpopups',
+            type: 'array',
+            fields: [
+                {
+                    name: 'popup',
+                    type: 'relationship',
+                    relationTo: 'productpopups',
+                    required: true,
+                    admin: {
+                        description: 'Select a popup to assign to this product.',
+                    },
+                },
+                {
+                    name: 'order',
+                    type: 'number',
+                    required: true,
+                    defaultValue: 0,
+                    admin: {
+                        description: 'Order in which this popup appears in the product workflow.',
+                    },
+                },
+            ],
+            admin: {
+                description: 'Assign popups to this product and define their order.',
+            },
+        },
     ],
 };

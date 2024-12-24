@@ -12,6 +12,10 @@ import Users from './collections/Users'
 import { Shops } from './collections/Shops'
 import { Categories } from './collections/Categories'
 import { Products } from './collections/Products'
+import { Subproducts } from './collections/Subproducts'
+import { Productpopups } from './collections/Productpopups'
+
+
 
 // Import the custom Not Found component
 import CustomNotFound from './components/CustomNotFound'
@@ -37,7 +41,7 @@ export default buildConfig({
       titleSuffix: 'Frituurapp',
     },
   },
-  collections: [Pages, Users, Tenants, Shops, Categories, Products],
+  collections: [Tenants, Users, Shops, Pages, Categories, Products, Subproducts, Productpopups],
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI as string },
     idType: 'uuid',

@@ -48,5 +48,19 @@ export const Categories: CollectionConfig = {
                 description: 'Timestamp for last modification',
             },
         },
+        {
+            name: 'status',
+            type: 'select',
+            required: true,
+            defaultValue: 'enabled',
+            options: [
+                { label: 'Enabled', value: 'enabled' },
+                { label: 'Disabled', value: 'disabled' },
+            ],
+            admin: {
+                position: 'sidebar',
+                description: 'Category status (enabled or disabled)',
+            },
+        },
     ],
 };

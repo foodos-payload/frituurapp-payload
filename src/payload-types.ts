@@ -11,24 +11,28 @@ export interface Config {
     users: UserAuthOperations;
   };
   collections: {
-    pages: Page;
-    users: User;
     tenants: Tenant;
+    users: User;
     shops: Shop;
+    pages: Page;
     categories: Category;
     products: Product;
+    subproducts: Subproduct;
+    productpopups: Productpopup;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {};
   collectionsSelect: {
-    pages: PagesSelect<false> | PagesSelect<true>;
-    users: UsersSelect<false> | UsersSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
     shops: ShopsSelect<false> | ShopsSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
+    productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -64,18 +68,6 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages".
- */
-export interface Page {
-  id: string;
-  title?: string | null;
-  slug?: string | null;
-  tenant: string | Tenant;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -146,6 +138,18 @@ export interface Shop {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: string;
+  title?: string | null;
+  slug?: string | null;
+  tenant: string | Tenant;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories".
  */
 export interface Category {
@@ -161,6 +165,10 @@ export interface Category {
    * Timestamp for last modification
    */
   modtime: number;
+  /**
+   * Category status (enabled or disabled)
+   */
+  status: 'enabled' | 'disabled';
   updatedAt: string;
   createdAt: string;
 }
@@ -242,6 +250,138 @@ export interface Product {
    * Product status (enabled or disabled)
    */
   status: 'enabled' | 'disabled';
+  /**
+   * Assign popups to this product and define their order.
+   */
+  productpopups?:
+    | {
+        /**
+         * Select a popup to assign to this product.
+         */
+        popup: string | Productpopup;
+        /**
+         * Order in which this popup appears in the product workflow.
+         */
+        order: number;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "productpopups".
+ */
+export interface Productpopup {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Title of the popup, e.g., "Choose Your Sauce"
+   */
+  popup_title: string;
+  /**
+   * Optional: Associate this popup with a specific product.
+   */
+  product?: (string | null) | Product;
+  /**
+   * Allow selecting multiple options in this popup.
+   */
+  multiselect?: boolean | null;
+  /**
+   * Require selection of an option in the cash register.
+   */
+  required_option_cashregister?: boolean | null;
+  /**
+   * Require selection of an option in the webshop.
+   */
+  required_option_webshop?: boolean | null;
+  /**
+   * Minimum number of options to select.
+   */
+  minimum_option?: number | null;
+  /**
+   * Maximum number of options to select. Set to 0 for no limit.
+   */
+  maximum_option?: number | null;
+  /**
+   * Default subproduct selected when the popup loads.
+   */
+  default_checked_subproduct?: (string | null) | Subproduct;
+  /**
+   * List of subproducts associated with this popup.
+   */
+  subproducts?: (string | Subproduct)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subproducts".
+ */
+export interface Subproduct {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  name: string;
+  /**
+   * Use a unified sale price for all fulfillment methods.
+   */
+  price_unified?: boolean | null;
+  /**
+   * Unified sale price
+   */
+  price?: number | null;
+  /**
+   * Sale price for dine-in
+   */
+  price_dinein?: number | null;
+  /**
+   * Sale price for takeaway
+   */
+  price_takeaway?: number | null;
+  /**
+   * Sale price for delivery
+   */
+  price_delivery?: number | null;
+  /**
+   * Enable linking to an existing product. If enabled, price and tax fields will be hidden.
+   */
+  linked_product_enabled?: boolean | null;
+  linked_product?: (string | null) | Product;
+  /**
+   * Enable stock tracking for this subproduct
+   */
+  stock_enabled?: boolean | null;
+  /**
+   * Stock quantity
+   */
+  stock_quantity?: number | null;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21)
+   */
+  tax?: number | null;
+  /**
+   * Specify the VAT percentage for dinein (e.g., 6, 12, 21)
+   */
+  tax_table?: number | null;
+  /**
+   * URL for the subproduct image
+   */
+  image_url?: string | null;
+  /**
+   * Timestamp for last modification
+   */
+  modtime: number;
+  /**
+   * Mark this subproduct as deleted
+   */
+  deleted?: boolean | null;
+  /**
+   * Subproduct status (enabled or disabled)
+   */
+  status: 'enabled' | 'disabled';
   updatedAt: string;
   createdAt: string;
 }
@@ -253,20 +393,20 @@ export interface PayloadLockedDocument {
   id: string;
   document?:
     | ({
-        relationTo: 'pages';
-        value: string | Page;
+        relationTo: 'tenants';
+        value: string | Tenant;
       } | null)
     | ({
         relationTo: 'users';
         value: string | User;
       } | null)
     | ({
-        relationTo: 'tenants';
-        value: string | Tenant;
-      } | null)
-    | ({
         relationTo: 'shops';
         value: string | Shop;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: string | Page;
       } | null)
     | ({
         relationTo: 'categories';
@@ -275,6 +415,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'products';
         value: string | Product;
+      } | null)
+    | ({
+        relationTo: 'subproducts';
+        value: string | Subproduct;
+      } | null)
+    | ({
+        relationTo: 'productpopups';
+        value: string | Productpopup;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -320,12 +468,18 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages_select".
+ * via the `definition` "tenants_select".
  */
-export interface PagesSelect<T extends boolean = true> {
-  title?: T;
+export interface TenantsSelect<T extends boolean = true> {
+  name?: T;
+  domains?:
+    | T
+    | {
+        domain?: T;
+        id?: T;
+      };
   slug?: T;
-  tenant?: T;
+  public?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -356,23 +510,6 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tenants_select".
- */
-export interface TenantsSelect<T extends boolean = true> {
-  name?: T;
-  domains?:
-    | T
-    | {
-        domain?: T;
-        id?: T;
-      };
-  slug?: T;
-  public?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "shops_select".
  */
 export interface ShopsSelect<T extends boolean = true> {
@@ -380,6 +517,17 @@ export interface ShopsSelect<T extends boolean = true> {
   name?: T;
   address?: T;
   phone?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -393,6 +541,7 @@ export interface CategoriesSelect<T extends boolean = true> {
   name?: T;
   image_url?: T;
   modtime?: T;
+  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -422,6 +571,58 @@ export interface ProductsSelect<T extends boolean = true> {
   webshopshow?: T;
   webshoporderable?: T;
   status?: T;
+  productpopups?:
+    | T
+    | {
+        popup?: T;
+        order?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subproducts_select".
+ */
+export interface SubproductsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  name?: T;
+  price_unified?: T;
+  price?: T;
+  price_dinein?: T;
+  price_takeaway?: T;
+  price_delivery?: T;
+  linked_product_enabled?: T;
+  linked_product?: T;
+  stock_enabled?: T;
+  stock_quantity?: T;
+  tax?: T;
+  tax_table?: T;
+  image_url?: T;
+  modtime?: T;
+  deleted?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "productpopups_select".
+ */
+export interface ProductpopupsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  popup_title?: T;
+  product?: T;
+  multiselect?: T;
+  required_option_cashregister?: T;
+  required_option_webshop?: T;
+  minimum_option?: T;
+  maximum_option?: T;
+  default_checked_subproduct?: T;
+  subproducts?: T;
   updatedAt?: T;
   createdAt?: T;
 }
