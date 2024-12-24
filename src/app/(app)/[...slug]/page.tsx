@@ -5,13 +5,23 @@ import { getPayload } from 'payload'
 import React from 'react'
 import { RenderPage } from '../../components/RenderPage'
 
-// 1. Declare the page as 'force-dynamic' to avoid params-related errors
+// Tells Next.js this route is fully dynamic
 export const dynamic = 'force-dynamic'
 
-export default async function Page({ params }: { params: { slug?: string[] } }) {
-  // 2. Determine host from request
-  const headers = getHeaders()
-  const host = headers.get('host') // e.g. "abc.localhost:3000"
+// Note that we type `params` as a Promise if Next.js is passing it that way.
+// Then we `await` it to extract its properties.
+export default async function Page({
+  params: promiseParams,
+}: {
+  // If you're on the Edge runtime and Next is passing `params` as a promise:
+  params: Promise<{ slug?: string[] }>
+}) {
+  // 1. Await the params
+  const { slug } = await promiseParams
+
+  // 2. Await the headers (Edge runtime requires this)
+  const resolvedHeaders = await getHeaders()
+  const host = resolvedHeaders.get('host') // e.g. "abc.localhost:3000"
 
   // 3. Setup and get Payload
   const payload = await getPayload({ config: configPromise })
@@ -29,7 +39,6 @@ export default async function Page({ params }: { params: { slug?: string[] } }) 
 
   const tenant = findTenant?.docs?.[0]
   if (!tenant) {
-    // If no tenant matches, show a fallback (or you could do "return notFound()")
     return (
       <div>
         <h1>No Tenant Found</h1>
@@ -40,10 +49,10 @@ export default async function Page({ params }: { params: { slug?: string[] } }) 
 
   // 5. Construct a slug constraint
   let slugConstraint: Where
-  if (params.slug && params.slug.length > 0) {
+  if (slug && slug.length > 0) {
     slugConstraint = {
       slug: {
-        equals: params.slug.join('/'),
+        equals: slug.join('/'),
       },
     }
   } else {
@@ -63,7 +72,7 @@ export default async function Page({ params }: { params: { slug?: string[] } }) 
 
   const pageData = pageQuery.docs?.[0]
 
-  // 7. If no page found, just return a minimal fallback
+  // 7. If no page found, return a minimal fallback
   if (!pageData) {
     return (
       <div>
