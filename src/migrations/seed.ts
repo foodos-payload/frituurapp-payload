@@ -15,6 +15,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
     data: {
       name: 'Tenant 1',
       slug: 'tenant-1',
+      domains: [{ domain: 'tenant1.localhost:3000' }],
     },
   });
 
@@ -23,6 +24,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
     data: {
       name: 'Tenant 2',
       slug: 'tenant-2',
+      domains: [{ domain: 'tenant2.localhost:3000' }],
     },
   });
 
@@ -31,6 +33,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
     data: {
       name: 'Tenant 3',
       slug: 'tenant-3',
+      domains: [{ domain: 'tenant3.localhost:3000' }],
     },
   });
 
