@@ -1,4 +1,4 @@
-import type { Access } from 'payload';
+import type { Access, Where } from 'payload';
 import { parseCookies } from 'payload';
 import { isSuperAdmin } from '../../../../access/isSuperAdmin';
 import { getTenantAccessIDs } from '../../../../utilities/getTenantAccessIDs';
@@ -24,7 +24,7 @@ export const readAccess: Access = ({ req }) => {
         return {
             shops: { in: userShops }, // Restrict to the user's assigned shops
             tenant: { in: tenantAccessIDs }, // Ensure cross-tenant access control
-        };
+        } as Where;
     }
 
     // Fallback to tenant-level filtering

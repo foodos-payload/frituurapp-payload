@@ -12,12 +12,15 @@ export const ensureUniqueProviderPerShop: FieldHook = async ({
 
     const shopIDs = Array.isArray(shops) ? shops : [];
     if (shopIDs.length === 0) {
-        throw new ValidationError([
-            {
-                message: 'At least one shop must be selected to create or update a payment method.',
-                path: 'shops',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: 'At least one shop must be selected to create or update a payment method.',
+                        path: 'shops',
+                    },
+                ]
+        });
     }
 
     const existingPaymentMethods = await req.payload.find({
@@ -33,12 +36,15 @@ export const ensureUniqueProviderPerShop: FieldHook = async ({
     );
 
     if (isDuplicate) {
-        throw new ValidationError([
-            {
-                message: `The payment provider "${value}" is already assigned to one or more selected shops.`,
-                path: 'provider',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: `The payment provider "${value}" is already assigned to one or more selected shops.`,
+                        path: 'provider',
+                    },
+                ]
+        });
     }
 
     return value;

@@ -1,4 +1,4 @@
-import type { Access } from 'payload';
+import type { Access, Where } from 'payload';
 import { getTenantAccessIDs } from '../../../../utilities/getTenantAccessIDs';
 
 export const filterByShopRead: Access = ({ req }) => {
@@ -16,7 +16,7 @@ export const filterByShopRead: Access = ({ req }) => {
     if (tenantAccessIDs.length > 0) {
         return {
             tenant: { in: tenantAccessIDs },
-        };
+        } as Where;
     }
 
     return false;

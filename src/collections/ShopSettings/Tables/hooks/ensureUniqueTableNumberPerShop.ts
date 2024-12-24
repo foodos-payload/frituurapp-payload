@@ -16,12 +16,15 @@ export const ensureUniqueTableNumberPerShop: FieldHook = async ({
         : [];
 
     if (shopIDs.length === 0) {
-        throw new ValidationError([
-            {
-                message: 'At least one shop must be selected to create or update a table.',
-                path: 'shops',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: 'At least one shop must be selected to create or update a table.',
+                        path: 'shops',
+                    },
+                ]
+        });
     }
 
     // Check for existing tables with the same table number in the selected shops
@@ -38,12 +41,15 @@ export const ensureUniqueTableNumberPerShop: FieldHook = async ({
     );
 
     if (isDuplicate) {
-        throw new ValidationError([
-            {
-                message: `A table with the number "${value}" already exists in one or more selected shops.`,
-                path: 'table_num',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: `A table with the number "${value}" already exists in one or more selected shops.`,
+                        path: 'table_num',
+                    },
+                ]
+        });
     }
 
     return value;

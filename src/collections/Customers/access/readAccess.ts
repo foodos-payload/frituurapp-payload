@@ -1,4 +1,4 @@
-import type { Access } from 'payload';
+import type { Access, Where } from 'payload';
 import { parseCookies } from 'payload';
 import { isSuperAdmin } from '../../../access/isSuperAdmin';
 import { getTenantAccessIDs } from '../../../utilities/getTenantAccessIDs';
@@ -21,7 +21,7 @@ export const readAccess: Access = ({ req }) => {
     return {
       shops: { in: userShops },
       tenant: { in: tenantAccessIDs },
-    };
+    } as Where;
   }
 
   return {

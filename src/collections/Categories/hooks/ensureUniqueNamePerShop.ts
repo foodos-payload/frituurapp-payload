@@ -13,12 +13,14 @@ export const ensureUniqueNamePerShop: FieldHook = async ({ data, req, siblingDat
     // Validate shops field
     const shopIDs = Array.isArray(shops) ? shops : [];
     if (shopIDs.length === 0) {
-        throw new ValidationError([
-            {
-                message: 'At least one shop must be selected to create or update a category.',
-                path: 'shops',
-            },
-        ]);
+        throw new ValidationError({
+            errors: [
+                {
+                    message: 'At least one shop must be selected to create or update a category.',
+                    path: 'shops',
+                },
+            ]
+        });
     }
 
     // Query for existing categories with the same name in overlapping shops
@@ -38,12 +40,15 @@ export const ensureUniqueNamePerShop: FieldHook = async ({ data, req, siblingDat
     );
 
     if (isDuplicate) {
-        throw new ValidationError([
-            {
-                message: `A category with the name "${value}" already exists in one or more selected shops.`,
-                path: 'name',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: `A category with the name "${value}" already exists in one or more selected shops.`,
+                        path: 'name',
+                    },
+                ]
+        });
     }
 
     return value;

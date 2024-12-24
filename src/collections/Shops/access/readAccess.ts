@@ -1,5 +1,5 @@
 //src/collections/Shops/access/readAccess.ts
-import type { Access } from 'payload';
+import type { Access, Where } from 'payload';
 import { parseCookies } from 'payload';
 import { isSuperAdmin } from '../../../access/isSuperAdmin';
 import { getTenantAccessIDs } from '../../../utilities/getTenantAccessIDs';
@@ -23,7 +23,7 @@ export const readAccess: Access = ({ req }) => {
     return {
       id: { in: userShops },
       tenant: { in: tenantAccessIDs },
-    };
+    } as Where;
   }
 
   // Default to tenant filtering

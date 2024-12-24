@@ -12,12 +12,15 @@ export const ensureUniqueTimeslotPerShop: FieldHook = async ({
     const shopIDs = Array.isArray(shops) ? shops : [];
 
     if (shopIDs.length === 0) {
-        throw new ValidationError([
-            {
-                message: 'At least one shop must be selected to create or update a timeslot.',
-                path: 'shops',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: 'At least one shop must be selected to create or update a timeslot.',
+                        path: 'shops',
+                    },
+                ]
+        });
     }
 
     const methodId = data?.method_id || siblingData?.method_id || originalDoc?.method_id;
@@ -49,13 +52,16 @@ export const ensureUniqueTimeslotPerShop: FieldHook = async ({
     });
 
     if (isOverlap) {
-        throw new ValidationError([
-            {
-                message:
-                    'Overlapping time ranges exist for the selected day and shop with different fulfillment methods.',
-                path: 'ranges',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message:
+                            'Overlapping time ranges exist for the selected day and shop with different fulfillment methods.',
+                        path: 'ranges',
+                    },
+                ]
+        });
     }
 
     return value;

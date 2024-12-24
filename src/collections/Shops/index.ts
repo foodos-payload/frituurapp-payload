@@ -16,7 +16,7 @@ export const Shops: CollectionConfig = {
   admin: {
     baseListFilter,
     useAsTitle: 'name',
-    redirect: '/admin/collections/shops', // Redirect to the list of shops after create/update
+    // Redirect to the list of shops after create/update
   },
   hooks: {
     afterChange: [

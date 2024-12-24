@@ -1,4 +1,4 @@
-import type { Access } from 'payload';
+import type { Access, Where } from 'payload';
 import { parseCookies } from 'payload';
 import { isSuperAdmin } from '../../../../access/isSuperAdmin';
 import { getTenantAccessIDs } from '../../../../utilities/getTenantAccessIDs';
@@ -23,7 +23,7 @@ export const readAccess: Access = ({ req }) => {
         return {
             shops: { in: userShops }, // Ensure payment methods are linked to accessible shops
             tenant: { in: tenantAccessIDs }, // Cross-check tenant permissions
-        };
+        } as Where;
     }
 
     // Default to tenant filtering if no specific shops are assigned

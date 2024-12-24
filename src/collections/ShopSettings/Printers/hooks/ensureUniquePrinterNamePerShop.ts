@@ -12,12 +12,15 @@ export const ensureUniquePrinterNamePerShop: FieldHook = async ({
 
     const shopIDs = Array.isArray(shops) ? shops : [];
     if (shopIDs.length === 0) {
-        throw new ValidationError([
-            {
-                message: 'At least one shop must be selected to create or update a printer.',
-                path: 'shops',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: 'At least one shop must be selected to create or update a printer.',
+                        path: 'shops',
+                    },
+                ]
+        });
     }
 
     const existingPrinters = await req.payload.find({
@@ -33,12 +36,15 @@ export const ensureUniquePrinterNamePerShop: FieldHook = async ({
     );
 
     if (isDuplicate) {
-        throw new ValidationError([
-            {
-                message: `A printer with the name "${value}" already exists in one or more selected shops.`,
-                path: 'printername',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: `A printer with the name "${value}" already exists in one or more selected shops.`,
+                        path: 'printername',
+                    },
+                ]
+        });
     }
 
     return value;

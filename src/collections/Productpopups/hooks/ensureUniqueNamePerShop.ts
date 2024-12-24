@@ -6,12 +6,15 @@ export const ensureUniqueNamePerShop: FieldHook = async ({ data, req, siblingDat
 
     const shopIDs = Array.isArray(shops) ? shops : [];
     if (shopIDs.length === 0) {
-        throw new ValidationError([
-            {
-                message: 'At least one shop must be selected to create or update a product popup.',
-                path: 'shops',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: 'At least one shop must be selected to create or update a product popup.',
+                        path: 'shops',
+                    },
+                ]
+        });
     }
 
     const existingPopups = await req.payload.find({
@@ -27,12 +30,15 @@ export const ensureUniqueNamePerShop: FieldHook = async ({ data, req, siblingDat
     );
 
     if (isDuplicate) {
-        throw new ValidationError([
-            {
-                message: `A popup with the title "${value}" already exists in one or more selected shops.`,
-                path: 'popup_title',
-            },
-        ]);
+        throw new ValidationError({
+            errors:
+                [
+                    {
+                        message: `A popup with the title "${value}" already exists in one or more selected shops.`,
+                        path: 'popup_title',
+                    },
+                ]
+        });
     }
 
     return value;

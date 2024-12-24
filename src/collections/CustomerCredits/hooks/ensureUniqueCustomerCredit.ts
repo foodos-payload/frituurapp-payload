@@ -6,12 +6,15 @@ export const ensureUniqueCustomerCredit: FieldHook = async ({ data, req, value, 
   const customerID = data?.customerid || originalDoc?.customerid;
 
   if (!tenantID || !customerID) {
-    throw new ValidationError([
-      {
-        message: 'Tenant and Customer must be defined to create or update customer credit.',
-        path: 'customerid',
-      },
-    ]);
+    throw new ValidationError({
+      errors:
+        [
+          {
+            message: 'Tenant and Customer must be defined to create or update customer credit.',
+            path: 'customerid',
+          },
+        ]
+    });
   }
 
   const existingCredits = await req.payload.find({
@@ -25,12 +28,14 @@ export const ensureUniqueCustomerCredit: FieldHook = async ({ data, req, value, 
   const isDuplicate = existingCredits.docs.some((credit) => credit.id !== originalDoc?.id);
 
   if (isDuplicate) {
-    throw new ValidationError([
-      {
-        message: `A credit entry already exists for this customer under the same tenant.`,
-        path: 'customerid',
-      },
-    ]);
+    throw new ValidationError({
+      errors: [
+        {
+          message: `A credit entry already exists for this customer under the same tenant.`,
+          path: 'customerid',
+        },
+      ]
+    });
   }
 
   return value;
