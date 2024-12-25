@@ -27,6 +27,11 @@ import { CustomerCredits } from './collections/CustomerCredits';
 import { CustomerLoyalty } from './collections/CustomerLoyalty';
 import { Coupons } from './collections/Coupons';
 import { GiftVouchers } from './collections/GiftVouchers';
+import { ReservationSettings } from './collections/ReservationSettings';
+import { ReservationEntries } from './collections/ReservationEntries';
+import { ReservationExceptions } from './collections/ReservationExceptions';
+import { FullyBookedDays } from './collections/ReservationFullyBookedDays';
+import { ReservationHolidays } from './collections/ReservationHolidays';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -88,6 +93,41 @@ export default buildConfig({
       ...Tables,
       admin: {
         ...Tables.admin,
+        group: 'Shop Settings',
+      },
+    },
+    {
+      ...ReservationSettings,
+      admin: {
+        ...ReservationSettings.admin,
+        group: 'Shop Settings',
+      },
+    },
+    {
+      ...ReservationEntries,
+      admin: {
+        ...ReservationEntries.admin,
+        group: 'Shop Settings',
+      },
+    },
+    {
+      ...ReservationExceptions,
+      admin: {
+        ...ReservationExceptions.admin,
+        group: 'Shop Settings',
+      },
+    },
+    {
+      ...ReservationHolidays,
+      admin: {
+        ...ReservationHolidays.admin,
+        group: 'Shop Settings',
+      },
+    },
+    {
+      ...FullyBookedDays,
+      admin: {
+        ...FullyBookedDays.admin,
         group: 'Shop Settings',
       },
     },

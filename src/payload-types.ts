@@ -18,6 +18,10 @@ export interface Config {
     'fulfillment-methods': FulfillmentMethod;
     timeslots: Timeslot;
     tables: Table;
+    'reservation-settings': ReservationSetting;
+    'reservation-entries': ReservationEntry;
+    'reservation-exceptions': ReservationException;
+    'fully-booked-days': FullyBookedDay;
     printers: Printer;
     pages: Page;
     customers: Customer;
@@ -42,6 +46,10 @@ export interface Config {
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
     timeslots: TimeslotsSelect<false> | TimeslotsSelect<true>;
     tables: TablesSelect<false> | TablesSelect<true>;
+    'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
+    'reservation-entries': ReservationEntriesSelect<false> | ReservationEntriesSelect<true>;
+    'reservation-exceptions': ReservationExceptionsSelect<false> | ReservationExceptionsSelect<true>;
+    'fully-booked-days': FullyBookedDaysSelect<false> | FullyBookedDaysSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     customers: CustomersSelect<false> | CustomersSelect<true>;
@@ -364,6 +372,113 @@ export interface Table {
    * Number of persons that can fit on this table.
    */
   capacity: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-settings".
+ */
+export interface ReservationSetting {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name for reservation settings (e.g., Lunch Reservations).
+   */
+  reservation_name: string;
+  /**
+   * Define active days for reservations.
+   */
+  active_days?: {
+    monday?: boolean | null;
+    tuesday?: boolean | null;
+    wednesday?: boolean | null;
+    thursday?: boolean | null;
+    friday?: boolean | null;
+    saturday?: boolean | null;
+    sunday?: boolean | null;
+  };
+  /**
+   * Set the reservation period.
+   */
+  reservation_period: {
+    start_date: string;
+    end_date: string;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-entries".
+ */
+export interface ReservationEntry {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name of the customer making the reservation.
+   */
+  customer_name: string;
+  /**
+   * Phone number of the customer.
+   */
+  customer_phone: string;
+  /**
+   * Date of the reservation.
+   */
+  date: string;
+  /**
+   * Number of persons for the reservation.
+   */
+  persons: number;
+  /**
+   * Assigned table for the reservation.
+   */
+  table: string | Table;
+  /**
+   * Special requests from the customer.
+   */
+  special_requests?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-exceptions".
+ */
+export interface ReservationException {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Date when reservations are not allowed.
+   */
+  exception_date: string;
+  /**
+   * Reason for the exception (optional).
+   */
+  reason?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fully-booked-days".
+ */
+export interface FullyBookedDay {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Date when reservations are fully booked.
+   */
+  date: string;
+  /**
+   * Optional reason for marking the day as fully booked.
+   */
+  reason?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -931,6 +1046,22 @@ export interface PayloadLockedDocument {
         value: string | Table;
       } | null)
     | ({
+        relationTo: 'reservation-settings';
+        value: string | ReservationSetting;
+      } | null)
+    | ({
+        relationTo: 'reservation-entries';
+        value: string | ReservationEntry;
+      } | null)
+    | ({
+        relationTo: 'reservation-exceptions';
+        value: string | ReservationException;
+      } | null)
+    | ({
+        relationTo: 'fully-booked-days';
+        value: string | FullyBookedDay;
+      } | null)
+    | ({
         relationTo: 'printers';
         value: string | Printer;
       } | null)
@@ -1166,6 +1297,75 @@ export interface TablesSelect<T extends boolean = true> {
   table_num?: T;
   status?: T;
   capacity?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-settings_select".
+ */
+export interface ReservationSettingsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  reservation_name?: T;
+  active_days?:
+    | T
+    | {
+        monday?: T;
+        tuesday?: T;
+        wednesday?: T;
+        thursday?: T;
+        friday?: T;
+        saturday?: T;
+        sunday?: T;
+      };
+  reservation_period?:
+    | T
+    | {
+        start_date?: T;
+        end_date?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-entries_select".
+ */
+export interface ReservationEntriesSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  customer_name?: T;
+  customer_phone?: T;
+  date?: T;
+  time?: T;
+  persons?: T;
+  table?: T;
+  special_requests?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-exceptions_select".
+ */
+export interface ReservationExceptionsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  exception_date?: T;
+  reason?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fully-booked-days_select".
+ */
+export interface FullyBookedDaysSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  date?: T;
+  reason?: T;
   updatedAt?: T;
   createdAt?: T;
 }
