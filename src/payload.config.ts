@@ -24,6 +24,7 @@ import { FulfillmentMethods } from './collections/ShopSettings/FulfillmentMethod
 import { Timeslots } from './collections/ShopSettings/Timeslots';
 import { Customers } from './collections/Customers';
 import { CustomerCredits } from './collections/CustomerCredits';
+import { CustomerLoyalty } from './collections/CustomerLoyalty';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -113,6 +114,13 @@ export default buildConfig({
       ...CustomerCredits,
       admin: {
         ...CustomerCredits.admin,
+        group: 'Loyalty',
+      },
+    },
+    {
+      ...CustomerLoyalty,
+      admin: {
+        ...CustomerLoyalty.admin,
         group: 'Loyalty',
       },
     },

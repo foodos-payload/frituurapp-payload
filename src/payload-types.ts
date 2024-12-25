@@ -22,6 +22,7 @@ export interface Config {
     pages: Page;
     customers: Customer;
     'customer-credits': CustomerCredit;
+    'customer-loyalty': CustomerLoyalty;
     categories: Category;
     products: Product;
     subproducts: Subproduct;
@@ -43,6 +44,7 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     customers: CustomersSelect<false> | CustomersSelect<true>;
     'customer-credits': CustomerCreditsSelect<false> | CustomerCreditsSelect<true>;
+    'customer-loyalty': CustomerLoyaltySelect<false> | CustomerLoyaltySelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
@@ -782,6 +784,37 @@ export interface Subproduct {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-loyalty".
+ */
+export interface CustomerLoyalty {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name of the loyalty program, e.g., "VIP Rewards".
+   */
+  program_name: string;
+  /**
+   * Number of points awarded per purchase.
+   */
+  points_per_purchase: number;
+  /**
+   * Conversion ratio for points to currency, e.g., 100 points = $1.
+   */
+  redeem_ratio: number;
+  /**
+   * Status of the loyalty program.
+   */
+  status: 'active' | 'inactive';
+  /**
+   * Additional details about the loyalty program.
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -830,6 +863,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'customer-credits';
         value: string | CustomerCredit;
+      } | null)
+    | ({
+        relationTo: 'customer-loyalty';
+        value: string | CustomerLoyalty;
       } | null)
     | ({
         relationTo: 'categories';
@@ -1123,6 +1160,21 @@ export interface CustomerCreditsSelect<T extends boolean = true> {
   productid?: T;
   categoryid?: T;
   paymenttype?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-loyalty_select".
+ */
+export interface CustomerLoyaltySelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  program_name?: T;
+  points_per_purchase?: T;
+  redeem_ratio?: T;
+  status?: T;
+  description?: T;
   updatedAt?: T;
   createdAt?: T;
 }
