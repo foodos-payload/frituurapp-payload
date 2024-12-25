@@ -21,6 +21,7 @@ export interface Config {
     'reservation-settings': ReservationSetting;
     'reservation-entries': ReservationEntry;
     'reservation-exceptions': ReservationException;
+    'reservation-holidays': ReservationHoliday;
     'fully-booked-days': FullyBookedDay;
     printers: Printer;
     pages: Page;
@@ -49,6 +50,7 @@ export interface Config {
     'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
     'reservation-entries': ReservationEntriesSelect<false> | ReservationEntriesSelect<true>;
     'reservation-exceptions': ReservationExceptionsSelect<false> | ReservationExceptionsSelect<true>;
+    'reservation-holidays': ReservationHolidaysSelect<false> | ReservationHolidaysSelect<true>;
     'fully-booked-days': FullyBookedDaysSelect<false> | FullyBookedDaysSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
@@ -460,6 +462,29 @@ export interface ReservationException {
    * Reason for the exception (optional).
    */
   reason?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-holidays".
+ */
+export interface ReservationHoliday {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Start date of the holiday period.
+   */
+  start_date: string;
+  /**
+   * End date of the holiday period.
+   */
+  end_date: string;
+  /**
+   * Optional reason for the holiday period.
+   */
+  reason: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -1058,6 +1083,10 @@ export interface PayloadLockedDocument {
         value: string | ReservationException;
       } | null)
     | ({
+        relationTo: 'reservation-holidays';
+        value: string | ReservationHoliday;
+      } | null)
+    | ({
         relationTo: 'fully-booked-days';
         value: string | FullyBookedDay;
       } | null)
@@ -1353,6 +1382,19 @@ export interface ReservationExceptionsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
   exception_date?: T;
+  reason?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-holidays_select".
+ */
+export interface ReservationHolidaysSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  start_date?: T;
+  end_date?: T;
   reason?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -16,7 +16,7 @@ export const ReservationHolidays: CollectionConfig = {
   },
   admin: {
     baseListFilter,
-    useAsTitle: 'holiday_period',
+    useAsTitle: 'reason',
   },
   fields: [
     tenantField,
@@ -40,6 +40,7 @@ export const ReservationHolidays: CollectionConfig = {
     {
       name: 'reason',
       type: 'textarea',
+      required: true,
       admin: {
         description: 'Optional reason for the holiday period.',
       },
