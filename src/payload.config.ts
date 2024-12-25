@@ -25,6 +25,7 @@ import { Timeslots } from './collections/ShopSettings/Timeslots';
 import { Customers } from './collections/Customers';
 import { CustomerCredits } from './collections/CustomerCredits';
 import { CustomerLoyalty } from './collections/CustomerLoyalty';
+import { Coupons } from './collections/Coupons';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -121,6 +122,13 @@ export default buildConfig({
       ...CustomerLoyalty,
       admin: {
         ...CustomerLoyalty.admin,
+        group: 'Loyalty',
+      },
+    },
+    {
+      ...Coupons,
+      admin: {
+        ...Coupons.admin,
         group: 'Loyalty',
       },
     },

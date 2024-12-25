@@ -23,6 +23,7 @@ export interface Config {
     customers: Customer;
     'customer-credits': CustomerCredit;
     'customer-loyalty': CustomerLoyalty;
+    coupons: Coupon;
     categories: Category;
     products: Product;
     subproducts: Subproduct;
@@ -45,6 +46,7 @@ export interface Config {
     customers: CustomersSelect<false> | CustomersSelect<true>;
     'customer-credits': CustomerCreditsSelect<false> | CustomerCreditsSelect<true>;
     'customer-loyalty': CustomerLoyaltySelect<false> | CustomerLoyaltySelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
@@ -815,6 +817,49 @@ export interface CustomerLoyalty {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons".
+ */
+export interface Coupon {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Unique barcode for the coupon.
+   */
+  barcode: string;
+  /**
+   * Value of the coupon (percentage or fixed amount).
+   */
+  value: number;
+  /**
+   * Type of value for the coupon.
+   */
+  value_type: 'percentage' | 'fixed';
+  /**
+   * Start date for the coupon validity.
+   */
+  valid_from: string;
+  /**
+   * End date for the coupon validity.
+   */
+  valid_until: string;
+  /**
+   * Maximum number of times the coupon can be used. Leave empty for unlimited.
+   */
+  max_uses?: number | null;
+  /**
+   * Number of times this coupon has been used.
+   */
+  uses?: number | null;
+  /**
+   * Mark if the coupon has already been fully used.
+   */
+  used?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -867,6 +912,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'customer-loyalty';
         value: string | CustomerLoyalty;
+      } | null)
+    | ({
+        relationTo: 'coupons';
+        value: string | Coupon;
       } | null)
     | ({
         relationTo: 'categories';
@@ -1175,6 +1224,24 @@ export interface CustomerLoyaltySelect<T extends boolean = true> {
   redeem_ratio?: T;
   status?: T;
   description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons_select".
+ */
+export interface CouponsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  barcode?: T;
+  value?: T;
+  value_type?: T;
+  valid_from?: T;
+  valid_until?: T;
+  max_uses?: T;
+  uses?: T;
+  used?: T;
   updatedAt?: T;
   createdAt?: T;
 }
