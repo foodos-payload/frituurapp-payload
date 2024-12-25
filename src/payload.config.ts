@@ -26,6 +26,7 @@ import { Customers } from './collections/Customers';
 import { CustomerCredits } from './collections/CustomerCredits';
 import { CustomerLoyalty } from './collections/CustomerLoyalty';
 import { Coupons } from './collections/Coupons';
+import { GiftVouchers } from './collections/GiftVouchers';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -129,6 +130,13 @@ export default buildConfig({
       ...Coupons,
       admin: {
         ...Coupons.admin,
+        group: 'Loyalty',
+      },
+    },
+    {
+      ...GiftVouchers,
+      admin: {
+        ...GiftVouchers.admin,
         group: 'Loyalty',
       },
     },

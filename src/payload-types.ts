@@ -24,6 +24,7 @@ export interface Config {
     'customer-credits': CustomerCredit;
     'customer-loyalty': CustomerLoyalty;
     coupons: Coupon;
+    'gift-vouchers': GiftVoucher;
     categories: Category;
     products: Product;
     subproducts: Subproduct;
@@ -47,6 +48,7 @@ export interface Config {
     'customer-credits': CustomerCreditsSelect<false> | CustomerCreditsSelect<true>;
     'customer-loyalty': CustomerLoyaltySelect<false> | CustomerLoyaltySelect<true>;
     coupons: CouponsSelect<false> | CouponsSelect<true>;
+    'gift-vouchers': GiftVouchersSelect<false> | GiftVouchersSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
@@ -860,6 +862,41 @@ export interface Coupon {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gift-vouchers".
+ */
+export interface GiftVoucher {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Unique barcode for the gift voucher.
+   */
+  barcode: string;
+  /**
+   * Value of the gift voucher.
+   */
+  value: number;
+  /**
+   * Start date for the gift voucher validity.
+   */
+  valid_from: string;
+  /**
+   * End date for the gift voucher validity.
+   */
+  valid_until: string;
+  /**
+   * Mark if the gift voucher has been used.
+   */
+  used?: boolean | null;
+  /**
+   * The payment method used to purchase this voucher.
+   */
+  payment_type: string | PaymentMethod;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -916,6 +953,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'coupons';
         value: string | Coupon;
+      } | null)
+    | ({
+        relationTo: 'gift-vouchers';
+        value: string | GiftVoucher;
       } | null)
     | ({
         relationTo: 'categories';
@@ -1242,6 +1283,22 @@ export interface CouponsSelect<T extends boolean = true> {
   max_uses?: T;
   uses?: T;
   used?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gift-vouchers_select".
+ */
+export interface GiftVouchersSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  barcode?: T;
+  value?: T;
+  valid_from?: T;
+  valid_until?: T;
+  used?: T;
+  payment_type?: T;
   updatedAt?: T;
   createdAt?: T;
 }
