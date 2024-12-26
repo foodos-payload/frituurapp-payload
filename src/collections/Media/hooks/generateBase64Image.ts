@@ -1,8 +1,7 @@
-import type { AfterReadHook } from 'payload';
 import fs from 'fs';
 import path from 'path';
 
-export const generateBase64Image: AfterReadHook = async ({ doc }) => {
+export const generateBase64Image = async ({ doc }: { doc: any }) => {
     if (doc.filename) {
         const filePath = path.join(process.cwd(), 'media', doc.filename);
         if (fs.existsSync(filePath)) {

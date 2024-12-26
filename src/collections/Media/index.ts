@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { baseListFilter } from './access/baseListFilter';
@@ -5,6 +7,9 @@ import { canMutateMedia } from './access/byTenant';
 import { filterByTenantRead } from './access/byTenant';
 import { readAccess } from './access/readAccess';
 import { generateBase64Image } from './hooks/generateBase64Image';
+
+// Simulate __dirname
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -19,13 +24,12 @@ export const Media: CollectionConfig = {
     useAsTitle: 'filename',
   },
   upload: {
-    staticURL: '/media',
-    staticDir: 'media',
+    staticDir: path.resolve(__dirname, '../../../media'), // Correctly specify the directory for uploaded files
+    adminThumbnail: 'thumbnail',
     imageSizes: [
       { name: 'thumbnail', width: 150, height: 150 },
       { name: 'medium', width: 600, height: 600 },
     ],
-    adminThumbnail: 'thumbnail',
   },
   hooks: {
     afterRead: [generateBase64Image], // Automatically include base64 in the API
