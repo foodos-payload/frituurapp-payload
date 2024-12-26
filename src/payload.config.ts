@@ -34,11 +34,6 @@ import { Media } from './collections/Media';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
-// console.log('S3 Configuration:', {
-//   region: process.env.DO_REGION,
-//   endpoint: process.env.DO_ENDPOINT,
-//   bucket: process.env.DO_BUCKET_NAME,
-// });
 
 export default buildConfig({
   admin: {
@@ -155,7 +150,6 @@ export default buildConfig({
         ...Media.admin,
         group: 'Content Management',
       },
-
     },
     {
       ...Customers,
@@ -234,19 +228,16 @@ export default buildConfig({
       collections: {
         media: true, // Enable S3 storage for 'media'
       },
-      bucket: process.env.DO_BUCKET_NAME,
+      bucket: process.env.DO_BUCKET_NAME || 'default-bucket', // Add fallback
       config: {
-        region: process.env.DO_REGION,
-        endpoint: process.env.DO_ENDPOINT, // Optional for DigitalOcean Spaces
+        region: process.env.DO_REGION || 'default-region', // Add fallback
+        endpoint: process.env.DO_ENDPOINT || 'https://example.com', // Add fallback
         credentials: {
-          accessKeyId: process.env.DO_ACCESS_KEY,
-          secretAccessKey: process.env.DO_SECRET_KEY,
+          accessKeyId: process.env.DO_ACCESS_KEY || '',
+          secretAccessKey: process.env.DO_SECRET_KEY || '',
         },
       },
-      options: {
-        ACL: 'public-read', // Ensure public access
-        acl: 'public-read', // Alternative, depending on implementation
-      },
+
     }),
   ],
 
