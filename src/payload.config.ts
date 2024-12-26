@@ -3,15 +3,12 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import path from 'path';
 import { buildConfig } from 'payload';
 import { fileURLToPath } from 'url';
+import { s3Storage } from '@payloadcms/storage-s3';
 
+// Import all collections
 import { Pages } from './collections/Pages';
 import { Tenants } from './collections/Tenants';
 import Users from './collections/Users';
-
-// Import the custom Not Found component
-import CustomNotFound from './components/CustomNotFound';
-
-// Extended by Frituurapp team
 import { Shops } from './collections/Shops';
 import { Categories } from './collections/Categories';
 import { Products } from './collections/Products';
@@ -37,6 +34,11 @@ import { Media } from './collections/Media';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
+// console.log('S3 Configuration:', {
+//   region: process.env.DO_REGION,
+//   endpoint: process.env.DO_ENDPOINT,
+//   bucket: process.env.DO_BUCKET_NAME,
+// });
 
 export default buildConfig({
   admin: {
@@ -153,6 +155,7 @@ export default buildConfig({
         ...Media.admin,
         group: 'Content Management',
       },
+
     },
     {
       ...Customers,
@@ -224,8 +227,29 @@ export default buildConfig({
         group: 'Orders',
       },
     },
-
   ],
+
+  plugins: [
+    s3Storage({
+      collections: {
+        media: true, // Enable S3 storage for 'media'
+      },
+      bucket: process.env.DO_BUCKET_NAME,
+      config: {
+        region: process.env.DO_REGION,
+        endpoint: process.env.DO_ENDPOINT, // Optional for DigitalOcean Spaces
+        credentials: {
+          accessKeyId: process.env.DO_ACCESS_KEY,
+          secretAccessKey: process.env.DO_SECRET_KEY,
+        },
+      },
+      options: {
+        ACL: 'public-read', // Ensure public access
+        acl: 'public-read', // Alternative, depending on implementation
+      },
+    }),
+  ],
+
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI as string },
     idType: 'uuid',

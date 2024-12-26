@@ -607,9 +607,13 @@ export interface Media {
       }[]
     | null;
   /**
-   * Base64 representation of the image (used in API calls).
+   * Blurhash representation of the image for quick previews.
    */
-  base64?: string | null;
+  blurhash?: string | null;
+  /**
+   * URL of the original image in S3.
+   */
+  s3_url?: string | null;
   /**
    * Alternative text for the media file to improve accessibility.
    */
@@ -618,10 +622,7 @@ export interface Media {
   createdAt: string;
   url?: string | null;
   thumbnailURL?: string | null;
-  /**
-   * Filename of the uploaded media.
-   */
-  filename: string;
+  filename?: string | null;
   mimeType?: string | null;
   filesize?: number | null;
   width?: number | null;
@@ -1623,7 +1624,8 @@ export interface MediaSelect<T extends boolean = true> {
         tag?: T;
         id?: T;
       };
-  base64?: T;
+  blurhash?: T;
+  s3_url?: T;
   alt_text?: T;
   updatedAt?: T;
   createdAt?: T;

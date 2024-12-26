@@ -1,15 +1,9 @@
-import { fileURLToPath } from 'url';
-import path from 'path';
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateMedia } from './access/byTenant';
 import { filterByTenantRead } from './access/byTenant';
-import { readAccess } from './access/readAccess';
-import { generateBase64Image } from './hooks/generateBase64Image';
-
-// Simulate __dirname
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { generateBlurhash } from './hooks/generateBlurhash'; // Updated to reflect no Base64
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -24,27 +18,68 @@ export const Media: CollectionConfig = {
     useAsTitle: 'filename',
   },
   upload: {
-    staticDir: path.resolve(__dirname, '../../../media'), // Correctly specify the directory for uploaded files
-    adminThumbnail: 'thumbnail',
+    disableLocalStorage: true, // Use S3 entirely
     imageSizes: [
       { name: 'thumbnail', width: 150, height: 150 },
       { name: 'medium', width: 600, height: 600 },
     ],
   },
   hooks: {
-    afterRead: [generateBase64Image], // Automatically include base64 in the API
+    beforeChange: [
+      async ({ data, operation }) => {
+        if (operation === 'create' && data.filename) {
+          data.s3_url = `${process.env.DO_CDN_URL}/${data.filename}`;
+        }
+        return data;
+      },
+    ],
+    afterChange: [
+      async ({ req, operation, doc }) => {
+        if (operation === 'create') {
+          // Delay logic to ensure the document is committed
+          setTimeout(async () => {
+            try {
+              const AWS = require('@aws-sdk/client-s3');
+              const s3 = new AWS.S3({
+                region: process.env.DO_REGION,
+                endpoint: process.env.DO_ENDPOINT,
+                credentials: {
+                  accessKeyId: process.env.DO_ACCESS_KEY,
+                  secretAccessKey: process.env.DO_SECRET_KEY,
+                },
+              });
+
+              // Step 1: Apply public-read ACL
+              await s3.putObjectAcl({
+                Bucket: process.env.DO_BUCKET_NAME,
+                Key: doc.filename,
+                ACL: 'public-read',
+              });
+              console.log(`Applied public-read ACL to ${doc.filename}`);
+
+              // Step 2: Generate Blurhash
+              const blurhash = await generateBlurhash({ filename: doc.filename });
+              console.log('Generated Blurhash:', blurhash);
+
+              // Step 3: Update the document with the Blurhash
+              await req.payload.update({
+                collection: 'media',
+                id: doc.id,
+                data: {
+                  blurhash,
+                },
+              });
+              console.log(`Updated document ${doc.id} with Blurhash.`);
+            } catch (error) {
+              console.error('Error in afterChange hook:', error);
+            }
+          }, 500); // Delay of 500ms
+        }
+      },
+    ],
   },
   fields: [
-    tenantField, // To associate with a tenant
-    {
-      name: 'filename',
-      type: 'text',
-      required: true,
-      admin: {
-        readOnly: true,
-        description: 'Filename of the uploaded media.',
-      },
-    },
+    tenantField,
     {
       name: 'tags',
       type: 'array',
@@ -62,11 +97,19 @@ export const Media: CollectionConfig = {
       ],
     },
     {
-      name: 'base64',
+      name: 'blurhash',
       type: 'text',
       admin: {
         readOnly: true,
-        description: 'Base64 representation of the image (used in API calls).',
+        description: 'Blurhash representation of the image for quick previews.',
+      },
+    },
+    {
+      name: 's3_url',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        description: 'URL of the original image in S3.',
       },
     },
     {
