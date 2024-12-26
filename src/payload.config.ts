@@ -32,6 +32,7 @@ import { ReservationEntries } from './collections/ReservationEntries';
 import { ReservationExceptions } from './collections/ReservationExceptions';
 import { FullyBookedDays } from './collections/ReservationFullyBookedDays';
 import { ReservationHolidays } from './collections/ReservationHolidays';
+import { Orders } from './collections/Orders';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -206,6 +207,13 @@ export default buildConfig({
       admin: {
         ...Productpopups.admin,
         group: 'Products',
+      },
+    },
+    {
+      ...Orders,
+      admin: {
+        ...Orders.admin,
+        group: 'Orders',
       },
     },
 

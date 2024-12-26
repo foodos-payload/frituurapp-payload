@@ -34,6 +34,7 @@ export interface Config {
     products: Product;
     subproducts: Subproduct;
     productpopups: Productpopup;
+    orders: Order;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -63,6 +64,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
     productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -1037,6 +1039,94 @@ export interface GiftVoucher {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Auto-incrementing identifier for the order.
+   */
+  id: number;
+  /**
+   * Temporary order number for daily purposes.
+   */
+  tempOrdNr: number;
+  /**
+   * Type of the order (e.g., POS, Web, or Kiosk).
+   */
+  order_type: 'pos' | 'web' | 'kiosk';
+  /**
+   * Link to the customer placing the order.
+   */
+  customer?: (string | null) | Customer;
+  /**
+   * Total price of the order.
+   */
+  total_price: number;
+  /**
+   * Date when the order was created.
+   */
+  order_date: string;
+  /**
+   * Time when the order was created (e.g., 13:45).
+   */
+  order_time: string;
+  /**
+   * Expected date for order pickup or dine-in.
+   */
+  order_expected_date?: string | null;
+  /**
+   * Expected time for order pickup or dine-in (e.g., 18:30).
+   */
+  order_expected_time?: string | null;
+  /**
+   * Table number for dine-in orders.
+   */
+  table_number?: number | null;
+  /**
+   * Fulfillment method used for the order.
+   */
+  fulfillment_method?: (string | null) | FulfillmentMethod;
+  /**
+   * Current status of the order.
+   */
+  status?: ('pending_payment' | 'pending' | 'processing' | 'completed' | 'cancelled') | null;
+  /**
+   * List of products in the order.
+   */
+  order_details?:
+    | {
+        product: string | Product;
+        quantity: number;
+        price: number;
+        tax: number;
+        subproducts?:
+          | {
+              subproduct: string | Subproduct;
+              price: number;
+              tax: number;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Payment details for the order.
+   */
+  payments?:
+    | {
+        payment_method: string | PaymentMethod;
+        amount: number;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -1133,6 +1223,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'productpopups';
         value: string | Productpopup;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1636,6 +1730,52 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   maximum_option?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  id?: T;
+  tempOrdNr?: T;
+  order_type?: T;
+  customer?: T;
+  total_price?: T;
+  order_date?: T;
+  order_time?: T;
+  order_expected_date?: T;
+  order_expected_time?: T;
+  table_number?: T;
+  fulfillment_method?: T;
+  status?: T;
+  order_details?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        price?: T;
+        tax?: T;
+        subproducts?:
+          | T
+          | {
+              subproduct?: T;
+              price?: T;
+              tax?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  payments?:
+    | T
+    | {
+        payment_method?: T;
+        amount?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
