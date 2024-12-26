@@ -25,6 +25,7 @@ export interface Config {
     'fully-booked-days': FullyBookedDay;
     printers: Printer;
     pages: Page;
+    media: Media;
     customers: Customer;
     'customer-credits': CustomerCredit;
     'customer-loyalty': CustomerLoyalty;
@@ -55,6 +56,7 @@ export interface Config {
     'fully-booked-days': FullyBookedDaysSelect<false> | FullyBookedDaysSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
     customers: CustomersSelect<false> | CustomersSelect<true>;
     'customer-credits': CustomerCreditsSelect<false> | CustomerCreditsSelect<true>;
     'customer-loyalty': CustomerLoyaltySelect<false> | CustomerLoyaltySelect<true>;
@@ -590,6 +592,63 @@ export interface Page {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  tenant: string | Tenant;
+  /**
+   * Optional tags to organize media files.
+   */
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Base64 representation of the image (used in API calls).
+   */
+  base64?: string | null;
+  /**
+   * Alternative text for the media file to improve accessibility.
+   */
+  alt_text?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  /**
+   * Filename of the uploaded media.
+   */
+  filename: string;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    medium?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "customers".
  */
 export interface Customer {
@@ -750,9 +809,9 @@ export interface Product {
    */
   barcode?: string | null;
   /**
-   * URL for the product image
+   * Reference an image from the Media library.
    */
-  image_url?: string | null;
+  image?: (string | null) | Media;
   /**
    * Timestamp for last modification
    */
@@ -802,9 +861,9 @@ export interface Category {
   shops: (string | Shop)[];
   name: string;
   /**
-   * URL for the category image
+   * Reference an image from the Media library.
    */
-  image_url?: string | null;
+  image?: (string | null) | Media;
   /**
    * Timestamp for last modification
    */
@@ -914,9 +973,9 @@ export interface Subproduct {
    */
   tax_table?: number | null;
   /**
-   * URL for the subproduct image
+   * Reference an image from the Media library.
    */
-  image_url?: string | null;
+  image?: (string | null) | Media;
   /**
    * Timestamp for last modification
    */
@@ -1191,6 +1250,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pages';
         value: string | Page;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: string | Media;
       } | null)
     | ({
         relationTo: 'customers';
@@ -1550,6 +1613,56 @@ export interface PagesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media_select".
+ */
+export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  base64?: T;
+  alt_text?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        medium?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "customers_select".
  */
 export interface CustomersSelect<T extends boolean = true> {
@@ -1650,7 +1763,7 @@ export interface CategoriesSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
   name?: T;
-  image_url?: T;
+  image?: T;
   modtime?: T;
   status?: T;
   updatedAt?: T;
@@ -1676,7 +1789,7 @@ export interface ProductsSelect<T extends boolean = true> {
   tax_dinein?: T;
   posshow?: T;
   barcode?: T;
-  image_url?: T;
+  image?: T;
   modtime?: T;
   webdescription?: T;
   webshopshow?: T;
@@ -1711,7 +1824,7 @@ export interface SubproductsSelect<T extends boolean = true> {
   stock_quantity?: T;
   tax?: T;
   tax_table?: T;
-  image_url?: T;
+  image?: T;
   modtime?: T;
   deleted?: T;
   status?: T;

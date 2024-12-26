@@ -120,10 +120,12 @@ export const Products: CollectionConfig = {
             },
         },
         {
-            name: 'image_url',
-            type: 'text',
+            name: 'image',
+            type: 'relationship',
+            relationTo: 'media',
+            required: false,
             admin: {
-                description: 'URL for the product image',
+                description: 'Reference an image from the Media library.',
             },
         },
         {

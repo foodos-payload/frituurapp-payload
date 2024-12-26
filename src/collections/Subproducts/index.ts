@@ -122,10 +122,12 @@ export const Subproducts: CollectionConfig = {
             },
         },
         {
-            name: 'image_url',
-            type: 'text',
+            name: 'image',
+            type: 'relationship',
+            relationTo: 'media',
+            required: false,
             admin: {
-                description: 'URL for the subproduct image',
+                description: 'Reference an image from the Media library.',
             },
         },
         {

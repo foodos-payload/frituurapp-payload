@@ -33,6 +33,7 @@ import { ReservationExceptions } from './collections/ReservationExceptions';
 import { FullyBookedDays } from './collections/ReservationFullyBookedDays';
 import { ReservationHolidays } from './collections/ReservationHolidays';
 import { Orders } from './collections/Orders';
+import { Media } from './collections/Media';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -143,6 +144,13 @@ export default buildConfig({
       ...Pages,
       admin: {
         ...Pages.admin,
+        group: 'Content Management',
+      },
+    },
+    {
+      ...Media,
+      admin: {
+        ...Media.admin,
         group: 'Content Management',
       },
     },
