@@ -9,25 +9,26 @@ export const readAccess: Access = ({ req }) => {
   const selectedTenant = cookies.get('payload-tenant');
   const tenantAccessIDs = getTenantAccessIDs(req.user);
 
+  // Extract shop IDs from the user's shops array
   const userShops = Array.isArray(req.user?.shops)
     ? req.user.shops.map((shop) => (typeof shop === 'object' ? shop.id : shop))
     : [];
 
-  // SuperAdmin gets unrestricted access
+  // Super-admins can access everything
   if (superAdmin) {
     return true;
   }
 
-  // Users with shop assignments can access their shops' data
+  // If user has specific shop assignments
   if (userShops.length > 0) {
     return {
-      shops: { in: userShops },
-      tenant: { in: tenantAccessIDs },
-    } as Where;
+      shops: { in: userShops }, // Ensure products are linked to accessible shops
+      tenant: { in: tenantAccessIDs }, // Cross-check tenant permissions
+    };
   }
 
-  // Default to tenant-based filtering
+  // Default to tenant filtering if no specific shops are assigned
   return {
     tenant: { in: tenantAccessIDs },
-  };
+  } as Where;
 };

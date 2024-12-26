@@ -3,7 +3,6 @@ import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateReservationEntry } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
 import { readAccess } from './access/readAccess';
 
 export const ReservationEntries: CollectionConfig = {
@@ -47,10 +46,20 @@ export const ReservationEntries: CollectionConfig = {
     },
     {
       name: 'time',
-      type: 'time',
+      type: 'text', // Use 'text' to ensure input visibility
       required: true,
+      validate: (value: string | null | undefined) => {
+        if (typeof value === 'string') {
+          const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
+          if (!timePattern.test(value)) {
+            return 'Please provide a valid time in HH:mm format.';
+          }
+        }
+        return true;
+      },
       admin: {
-        description: 'Time of the reservation.',
+        description: 'Time of the reservation in HH:mm format.',
+        placeholder: 'e.g., 13:30',
       },
     },
     {

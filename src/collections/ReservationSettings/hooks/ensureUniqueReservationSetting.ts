@@ -1,38 +1,46 @@
-import type { FieldHook } from 'payload';
+import type { CollectionBeforeValidateHook } from 'payload';
 import { ValidationError } from 'payload';
 
-export const ensureUniqueReservationSetting: FieldHook = async ({ data, req, siblingData, value, originalDoc }) => {
-    const shopId = data?.shop || siblingData?.shop || originalDoc?.shop;
-    const reservationFrom = data?.reservation_from || siblingData?.reservation_from;
-    const reservationUntil = data?.reservation_until || siblingData?.reservation_until;
+export const ensureUniqueReservationSetting: CollectionBeforeValidateHook = async ({
+    data,
+    req,
+    originalDoc,
+}) => {
+    const shopId = data?.shops || originalDoc?.shops;
+    const reservationFrom = data?.reservation_period?.start_date;
+    const reservationUntil = data?.reservation_period?.end_date;
 
     if (!shopId || !reservationFrom || !reservationUntil) {
-        return value;
+        return data; // Skip validation if required fields are missing
     }
 
     const existingSettings = await req.payload.find({
         collection: 'reservation-settings',
         where: {
-            shop: { equals: shopId },
-            reservation_from: { lte: reservationUntil },
-            reservation_until: { gte: reservationFrom },
+            and: [
+                { shops: { equals: shopId } },
+                { 'reservation_period.start_date': { less_than_equal: reservationUntil } },
+                { 'reservation_period.end_date': { greater_than_equal: reservationFrom } },
+            ],
         },
     });
 
     const isDuplicate = existingSettings.docs.some((setting) => setting.id !== originalDoc?.id);
 
     if (isDuplicate) {
-        throw new ValidationError([
-            {
-                message: `Overlapping reservation settings found for the selected shop and date range.`,
-                path: 'reservation_from',
-            },
-            {
-                message: `Overlapping reservation settings found for the selected shop and date range.`,
-                path: 'reservation_until',
-            },
-        ]);
+        throw new ValidationError({
+            errors: [
+                {
+                    message: `Overlapping reservation settings found for the selected shop and date range.`,
+                    path: 'reservation_period.start_date',
+                },
+                {
+                    message: `Overlapping reservation settings found for the selected shop and date range.`,
+                    path: 'reservation_period.end_date',
+                },
+            ],
+        });
     }
 
-    return value;
+    return data;
 };

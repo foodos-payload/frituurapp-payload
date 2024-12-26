@@ -434,6 +434,10 @@ export interface ReservationEntry {
    */
   date: string;
   /**
+   * Time of the reservation in HH:mm format.
+   */
+  time: string;
+  /**
    * Number of persons for the reservation.
    */
   persons: number;

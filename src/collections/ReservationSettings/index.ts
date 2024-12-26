@@ -3,7 +3,6 @@ import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateReservationSetting } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
 import { readAccess } from './access/readAccess';
 import { ensureUniqueReservationSetting } from './hooks/ensureUniqueReservationSetting';
 
@@ -40,13 +39,13 @@ export const ReservationSettings: CollectionConfig = {
         description: 'Define active days for reservations.',
       },
       fields: [
-        { name: 'monday', type: 'checkbox', defaultValue: false, admin: { label: 'Monday' } },
-        { name: 'tuesday', type: 'checkbox', defaultValue: false, admin: { label: 'Tuesday' } },
-        { name: 'wednesday', type: 'checkbox', defaultValue: false, admin: { label: 'Wednesday' } },
-        { name: 'thursday', type: 'checkbox', defaultValue: false, admin: { label: 'Thursday' } },
-        { name: 'friday', type: 'checkbox', defaultValue: false, admin: { label: 'Friday' } },
-        { name: 'saturday', type: 'checkbox', defaultValue: false, admin: { label: 'Saturday' } },
-        { name: 'sunday', type: 'checkbox', defaultValue: false, admin: { label: 'Sunday' } },
+        { name: 'monday', type: 'checkbox', defaultValue: false, label: 'Monday' },
+        { name: 'tuesday', type: 'checkbox', defaultValue: false, label: 'Tuesday' },
+        { name: 'wednesday', type: 'checkbox', defaultValue: false, label: 'Wednesday' },
+        { name: 'thursday', type: 'checkbox', defaultValue: false, label: 'Thursday' },
+        { name: 'friday', type: 'checkbox', defaultValue: false, label: 'Friday' },
+        { name: 'saturday', type: 'checkbox', defaultValue: false, label: 'Saturday' },
+        { name: 'sunday', type: 'checkbox', defaultValue: false, label: 'Sunday' },
       ],
     },
     {
@@ -56,8 +55,8 @@ export const ReservationSettings: CollectionConfig = {
         description: 'Set the reservation period.',
       },
       fields: [
-        { name: 'start_date', type: 'date', required: true, admin: { label: 'Start Date' } },
-        { name: 'end_date', type: 'date', required: true, admin: { label: 'End Date' } },
+        { name: 'start_date', type: 'date', required: true, label: 'Start Date' },
+        { name: 'end_date', type: 'date', required: true, label: 'End Date' },
       ],
     },
   ],
