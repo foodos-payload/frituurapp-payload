@@ -94,9 +94,9 @@ export default buildConfig({
       },
     },
     {
-      ...Tables,
+      ...ReservationEntries,
       admin: {
-        ...Tables.admin,
+        ...ReservationEntries.admin,
         group: '📆🪑', // Reserveringen group
       },
     },
@@ -107,6 +107,14 @@ export default buildConfig({
         group: '📆🪑', // Reserveringen group
       },
     },
+    {
+      ...Tables,
+      admin: {
+        ...Tables.admin,
+        group: '📆🪑', // Reserveringen group
+      },
+    },
+
     {
       ...Printers,
       admin: {

@@ -17,8 +17,9 @@ export interface Config {
     'payment-methods': PaymentMethod;
     'fulfillment-methods': FulfillmentMethod;
     timeslots: Timeslot;
-    tables: Table;
+    'reservation-entries': ReservationEntry;
     'reservation-settings': ReservationSetting;
+    tables: Table;
     printers: Printer;
     pages: Page;
     media: Media;
@@ -44,8 +45,9 @@ export interface Config {
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
     timeslots: TimeslotsSelect<false> | TimeslotsSelect<true>;
-    tables: TablesSelect<false> | TablesSelect<true>;
+    'reservation-entries': ReservationEntriesSelect<false> | ReservationEntriesSelect<true>;
     'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
+    tables: TablesSelect<false> | TablesSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -109,7 +111,7 @@ export interface Tenant {
       }[]
     | null;
   /**
-   * Used for url paths, example: /tenant-slug/page-slug
+   * Used for URL paths, example: /tenant-slug/page-slug.
    */
   slug: string;
   /**
@@ -125,18 +127,30 @@ export interface Tenant {
  */
 export interface User {
   id: string;
+  /**
+   * Assign roles to the user.
+   */
   roles?: ('super-admin' | 'user')[] | null;
   tenants?:
     | {
+        /**
+         * Assign tenants to the user.
+         */
         tenant: string | Tenant;
+        /**
+         * Assign roles specific to the tenant.
+         */
         roles: ('tenant-admin' | 'tenant-viewer')[];
         id?: string | null;
       }[]
     | null;
   /**
-   * Assign shops to the user
+   * Assign shops to the user.
    */
   shops?: (string | Shop)[] | null;
+  /**
+   * The username of the user.
+   */
   username?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -156,8 +170,17 @@ export interface User {
 export interface Shop {
   id: string;
   tenant: string | Tenant;
+  /**
+   * The name of the shop.
+   */
   name: string;
+  /**
+   * The address of the shop.
+   */
   address?: string | null;
+  /**
+   * The phone number of the shop.
+   */
   phone?: string | null;
   /**
    * Details about the company associated with the shop.
@@ -308,7 +331,7 @@ export interface Timeslot {
    */
   method_id: string | FulfillmentMethod;
   /**
-   * Specify time ranges for selected days.
+   * Select the day / time for these time ranges.
    */
   days?:
     | {
@@ -347,6 +370,45 @@ export interface Timeslot {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-entries".
+ */
+export interface ReservationEntry {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name of the customer making the reservation.
+   */
+  customer_name: string;
+  /**
+   * Phone number of the customer.
+   */
+  customer_phone: string;
+  /**
+   * Date of the reservation.
+   */
+  date: string;
+  /**
+   * Date of the reservation.
+   */
+  time: string;
+  /**
+   * Number of persons for the reservation.
+   */
+  persons: number;
+  /**
+   * Assigned table for the reservation.
+   */
+  table: string | Table;
+  /**
+   * Special requests from the customer.
+   */
+  special_requests?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -521,7 +583,13 @@ export interface Printer {
  */
 export interface Page {
   id: string;
+  /**
+   * Title of the page.
+   */
   title?: string | null;
+  /**
+   * Used for URL paths, e.g., /page-slug.
+   */
   slug?: string | null;
   tenant: string | Tenant;
   updatedAt: string;
@@ -606,26 +674,6 @@ export interface Customer {
    */
   company_name?: string | null;
   /**
-   * Street address of the customer.
-   */
-  street?: string | null;
-  /**
-   * House number of the customer.
-   */
-  house_number?: string | null;
-  /**
-   * City of the customer.
-   */
-  city?: string | null;
-  /**
-   * Postal code of the customer.
-   */
-  postal_code?: string | null;
-  /**
-   * VAT number for business customers.
-   */
-  vat_number?: string | null;
-  /**
    * Email address of the customer.
    */
   email: string;
@@ -646,10 +694,6 @@ export interface Customer {
         id?: string | null;
       }[]
     | null;
-  /**
-   * Timestamp for last modification.
-   */
-  modtime: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -701,49 +745,52 @@ export interface Product {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   categories: (string | Category)[];
+  /**
+   * Enter the product name.
+   */
   name: string;
   /**
    * Use a unified sale price for all fulfillment methods.
    */
   price_unified?: boolean | null;
   /**
-   * Unified sale price
+   * The unified sale price.
    */
   price?: number | null;
   /**
-   * Sale price for dine-in
+   * Sale price for dine-in.
    */
   price_dinein?: number | null;
   /**
-   * Sale price for takeaway
+   * Sale price for takeaway.
    */
   price_takeaway?: number | null;
   /**
-   * Sale price for delivery
+   * Sale price for delivery.
    */
   price_delivery?: number | null;
   /**
-   * Enable stock tracking for this product
+   * Enable stock tracking for this product.
    */
   enable_stock?: boolean | null;
   /**
-   * Stock quantity
+   * Specify the stock quantity for this product.
    */
   quantity?: number | null;
   /**
-   * Specify the VAT percentage (e.g., 6, 12, 21)
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
   tax: number;
   /**
-   * Numeric identifier for the applicable tax table
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
   tax_dinein?: number | null;
   /**
-   * Enable product visibility in the POS system
+   * Enable product visibility in the POS system.
    */
   posshow?: boolean | null;
   /**
-   * Product barcode (if applicable)
+   * Product barcode (if applicable).
    */
   barcode?: string | null;
   /**
@@ -751,25 +798,29 @@ export interface Product {
    */
   image?: (string | null) | Media;
   /**
-   * Timestamp for last modification
+   * Timestamp for last modification.
    */
   modtime: number;
   /**
-   * Webshop description for the product
+   * Webshop description for the product.
    */
   webdescription?: string | null;
   /**
-   * Show this product in the webshop
+   * Show this product in the webshop.
    */
   webshopshow?: boolean | null;
   /**
-   * Allow this product to be ordered via the webshop
+   * Allow this product to be ordered via the webshop.
    */
   webshoporderable?: boolean | null;
   /**
-   * Product status (enabled or disabled)
+   * Product status (enabled or disabled).
    */
   status: 'enabled' | 'disabled';
+  /**
+   * Enable this to prevent category-specific popups from applying to this product.
+   */
+  exclude_category_popups?: boolean | null;
   /**
    * Assign popups to this product and define their order.
    */
@@ -810,6 +861,19 @@ export interface Category {
    * Category status (enabled or disabled)
    */
   status: 'enabled' | 'disabled';
+  /**
+   * Assign product popups to this category. These popups will apply to all products in the category.
+   */
+  productpopups?:
+    | {
+        popup: string | Productpopup;
+        /**
+         * The order in which this popup will appear.
+         */
+        order?: number | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -822,13 +886,9 @@ export interface Productpopup {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
-   * Title of the popup, e.g., "Choose Your Sauce"
+   * Title of the popup, e.g., "Choose Your Sauce".
    */
   popup_title: string;
-  /**
-   * Optional: Associate this popup with a specific product.
-   */
-  product?: (string | null) | Product;
   /**
    * Allow selecting multiple options in this popup.
    */
@@ -868,34 +928,40 @@ export interface Subproduct {
   id: string;
   tenant: string | Tenant;
   shops: (string | Shop)[];
+  /**
+   * Enter the name of the subproduct.
+   */
   name: string;
   /**
    * Use a unified sale price for all fulfillment methods.
    */
   price_unified?: boolean | null;
   /**
-   * Unified sale price
+   * The unified sale price.
    */
   price?: number | null;
   /**
-   * Sale price for dine-in
+   * Sale price for dine-in.
    */
   price_dinein?: number | null;
   /**
-   * Sale price for takeaway
+   * Sale price for takeaway.
    */
   price_takeaway?: number | null;
   /**
-   * Sale price for delivery
+   * Sale price for delivery.
    */
   price_delivery?: number | null;
   /**
    * Enable linking to an existing product. If enabled, price and tax fields will be hidden.
    */
   linked_product_enabled?: boolean | null;
+  /**
+   * Select a product to link with this subproduct.
+   */
   linked_product?: (string | null) | Product;
   /**
-   * Enable stock tracking for this subproduct
+   * Enable stock tracking for this subproduct.
    */
   stock_enabled?: boolean | null;
   /**
@@ -903,11 +969,11 @@ export interface Subproduct {
    */
   stock_quantity?: number | null;
   /**
-   * Specify the VAT percentage (e.g., 6, 12, 21)
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
   tax?: number | null;
   /**
-   * Specify the VAT percentage for dinein (e.g., 6, 12, 21)
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
   tax_table?: number | null;
   /**
@@ -915,7 +981,7 @@ export interface Subproduct {
    */
   image?: (string | null) | Media;
   /**
-   * Timestamp for last modification
+   * Timestamp for last modification.
    */
   modtime: number;
   /**
@@ -923,7 +989,7 @@ export interface Subproduct {
    */
   deleted?: boolean | null;
   /**
-   * Subproduct status (enabled or disabled)
+   * Subproduct status (enabled or disabled).
    */
   status: 'enabled' | 'disabled';
   updatedAt: string;
@@ -1058,42 +1124,6 @@ export interface Order {
    */
   order_type: 'pos' | 'web' | 'kiosk';
   /**
-   * Link to the customer placing the order.
-   */
-  customer?: (string | null) | Customer;
-  /**
-   * Total price of the order.
-   */
-  total_price: number;
-  /**
-   * Date when the order was created.
-   */
-  order_date: string;
-  /**
-   * Time when the order was created (e.g., 13:45).
-   */
-  order_time: string;
-  /**
-   * Expected date for order pickup or dine-in.
-   */
-  order_expected_date?: string | null;
-  /**
-   * Expected time for order pickup or dine-in (e.g., 18:30).
-   */
-  order_expected_time?: string | null;
-  /**
-   * Table number for dine-in orders.
-   */
-  table_number?: number | null;
-  /**
-   * Fulfillment method used for the order.
-   */
-  fulfillment_method?: (string | null) | FulfillmentMethod;
-  /**
-   * Current status of the order.
-   */
-  status?: ('pending_payment' | 'pending' | 'processing' | 'completed' | 'cancelled') | null;
-  /**
    * List of products in the order.
    */
   order_details?:
@@ -1158,12 +1188,16 @@ export interface PayloadLockedDocument {
         value: string | Timeslot;
       } | null)
     | ({
-        relationTo: 'tables';
-        value: string | Table;
+        relationTo: 'reservation-entries';
+        value: string | ReservationEntry;
       } | null)
     | ({
         relationTo: 'reservation-settings';
         value: string | ReservationSetting;
+      } | null)
+    | ({
+        relationTo: 'tables';
+        value: string | Table;
       } | null)
     | ({
         relationTo: 'printers';
@@ -1401,14 +1435,18 @@ export interface TimeslotsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tables_select".
+ * via the `definition` "reservation-entries_select".
  */
-export interface TablesSelect<T extends boolean = true> {
+export interface ReservationEntriesSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  table_num?: T;
-  status?: T;
-  capacity?: T;
+  customer_name?: T;
+  customer_phone?: T;
+  date?: T;
+  time?: T;
+  persons?: T;
+  table?: T;
+  special_requests?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1462,6 +1500,19 @@ export interface ReservationSettingsSelect<T extends boolean = true> {
         reason?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables_select".
+ */
+export interface TablesSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  table_num?: T;
+  status?: T;
+  capacity?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1565,11 +1616,6 @@ export interface CustomersSelect<T extends boolean = true> {
   firstname?: T;
   lastname?: T;
   company_name?: T;
-  street?: T;
-  house_number?: T;
-  city?: T;
-  postal_code?: T;
-  vat_number?: T;
   email?: T;
   phone?: T;
   tags?:
@@ -1579,7 +1625,6 @@ export interface CustomersSelect<T extends boolean = true> {
         tag_type?: T;
         id?: T;
       };
-  modtime?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1659,15 +1704,6 @@ export interface OrdersSelect<T extends boolean = true> {
   id?: T;
   tempOrdNr?: T;
   order_type?: T;
-  customer?: T;
-  total_price?: T;
-  order_date?: T;
-  order_time?: T;
-  order_expected_date?: T;
-  order_expected_time?: T;
-  table_number?: T;
-  fulfillment_method?: T;
-  status?: T;
   order_details?:
     | T
     | {
@@ -1706,6 +1742,13 @@ export interface CategoriesSelect<T extends boolean = true> {
   image?: T;
   modtime?: T;
   status?: T;
+  productpopups?:
+    | T
+    | {
+        popup?: T;
+        order?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1735,6 +1778,7 @@ export interface ProductsSelect<T extends boolean = true> {
   webshopshow?: T;
   webshoporderable?: T;
   status?: T;
+  exclude_category_popups?: T;
   productpopups?:
     | T
     | {
@@ -1779,7 +1823,6 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
   popup_title?: T;
-  product?: T;
   multiselect?: T;
   required_option_cashregister?: T;
   required_option_webshop?: T;

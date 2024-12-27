@@ -41,94 +41,378 @@ export const ReservationSettings: CollectionConfig = {
     {
       name: 'reservation_name',
       type: 'text',
+      label: {
+        en: 'Reservation Name',
+        nl: 'Naam van de Reservering',
+        de: 'Reservierungsname',
+        fr: 'Nom de la Réservation',
+      },
       required: true,
       admin: {
-        description: 'Name for reservation settings (e.g., Lunch Reservations).',
+        description: {
+          en: 'Name for reservation settings (e.g., Lunch Reservations).',
+          nl: 'Naam voor reserveringsinstellingen (bijv. Lunchreserveringen).',
+          de: 'Name für Reservierungseinstellungen (z. B., Mittagsreservierungen).',
+          fr: 'Nom des paramètres de réservation (p.ex., Réservations Déjeuner).',
+        },
       },
     },
     {
       name: 'active_days',
       type: 'group',
+      label: {
+        en: 'Active Days',
+        nl: 'Actieve Dagen',
+        de: 'Aktive Tage',
+        fr: 'Jours Actifs',
+      },
       admin: {
-        description: 'Define active days for reservations.',
+        description: {
+          en: 'Define active days for reservations.',
+          nl: 'Bepaal actieve dagen voor reserveringen.',
+          de: 'Definieren Sie aktive Tage für Reservierungen.',
+          fr: 'Définissez les jours actifs pour les réservations.',
+        },
       },
       fields: [
-        { name: 'monday', type: 'checkbox', defaultValue: false, label: 'Monday' },
-        { name: 'tuesday', type: 'checkbox', defaultValue: false, label: 'Tuesday' },
-        { name: 'wednesday', type: 'checkbox', defaultValue: false, label: 'Wednesday' },
-        { name: 'thursday', type: 'checkbox', defaultValue: false, label: 'Thursday' },
-        { name: 'friday', type: 'checkbox', defaultValue: false, label: 'Friday' },
-        { name: 'saturday', type: 'checkbox', defaultValue: false, label: 'Saturday' },
-        { name: 'sunday', type: 'checkbox', defaultValue: false, label: 'Sunday' },
+        {
+          name: 'monday',
+          type: 'checkbox',
+          defaultValue: false,
+          label: {
+            en: 'Monday',
+            nl: 'Maandag',
+            de: 'Montag',
+            fr: 'Lundi',
+          },
+        },
+        {
+          name: 'tuesday',
+          type: 'checkbox',
+          defaultValue: false,
+          label: {
+            en: 'Tuesday',
+            nl: 'Dinsdag',
+            de: 'Dienstag',
+            fr: 'Mardi',
+          },
+        },
+        {
+          name: 'wednesday',
+          type: 'checkbox',
+          defaultValue: false,
+          label: {
+            en: 'Wednesday',
+            nl: 'Woensdag',
+            de: 'Mittwoch',
+            fr: 'Mercredi',
+          },
+        },
+        {
+          name: 'thursday',
+          type: 'checkbox',
+          defaultValue: false,
+          label: {
+            en: 'Thursday',
+            nl: 'Donderdag',
+            de: 'Donnerstag',
+            fr: 'Jeudi',
+          },
+        },
+        {
+          name: 'friday',
+          type: 'checkbox',
+          defaultValue: false,
+          label: {
+            en: 'Friday',
+            nl: 'Vrijdag',
+            de: 'Freitag',
+            fr: 'Vendredi',
+          },
+        },
+        {
+          name: 'saturday',
+          type: 'checkbox',
+          defaultValue: false,
+          label: {
+            en: 'Saturday',
+            nl: 'Zaterdag',
+            de: 'Samstag',
+            fr: 'Samedi',
+          },
+        },
+        {
+          name: 'sunday',
+          type: 'checkbox',
+          defaultValue: false,
+          label: {
+            en: 'Sunday',
+            nl: 'Zondag',
+            de: 'Sonntag',
+            fr: 'Dimanche',
+          },
+        },
       ],
+
     },
     {
       name: 'reservation_periods',
       type: 'array',
+      label: {
+        en: 'Reservation Periods',
+        nl: 'Reserveringsperiodes',
+        de: 'Reservierungsperioden',
+        fr: 'Périodes de Réservation',
+      },
       admin: {
-        description: 'Define multiple reservation periods.',
+        description: {
+          en: 'Define multiple reservation periods.',
+          nl: 'Definieer meerdere reserveringsperiodes.',
+          de: 'Definieren Sie mehrere Reservierungsperioden.',
+          fr: 'Définissez plusieurs périodes de réservation.',
+        },
       },
       fields: [
-        { name: 'start_date', type: 'date', required: true, label: 'Start Date' },
-        { name: 'end_date', type: 'date', required: true, label: 'End Date' },
-        { name: 'start_time', type: 'text', required: true, label: 'Start Time', admin: { placeholder: 'e.g., 09:00' } },
-        { name: 'end_time', type: 'text', required: true, label: 'End Time', admin: { placeholder: 'e.g., 22:00' } },
+        {
+          name: 'start_date',
+          type: 'date',
+          required: true,
+          label: {
+            en: 'Start Date',
+            nl: 'Startdatum',
+            de: 'Anfangsdatum',
+            fr: 'Date de Début',
+          },
+          admin: {
+            placeholder: {
+              en: 'e.g., 2023-01-01',
+              nl: 'bijv., 2023-01-01',
+              de: 'z. B., 2023-01-01',
+              fr: 'p.ex., 2023-01-01',
+            },
+          },
+        },
+        {
+          name: 'end_date',
+          type: 'date',
+          required: true,
+          label: {
+            en: 'End Date',
+            nl: 'Einddatum',
+            de: 'Enddatum',
+            fr: 'Date de Fin',
+          },
+          admin: {
+            placeholder: {
+              en: 'e.g., 2023-12-31',
+              nl: 'bijv., 2023-12-31',
+              de: 'z. B., 2023-12-31',
+              fr: 'p.ex., 2023-12-31',
+            },
+          },
+        },
+        {
+          name: 'start_time',
+          type: 'text',
+          required: true,
+          label: {
+            en: 'Start Time',
+            nl: 'Starttijd',
+            de: 'Startzeit',
+            fr: 'Heure de Début',
+          },
+          admin: {
+            placeholder: {
+              en: 'e.g., 09:00',
+              nl: 'bijv., 09:00',
+              de: 'z. B., 09:00',
+              fr: 'p.ex., 09:00',
+            },
+          },
+        },
+        {
+          name: 'end_time',
+          type: 'text',
+          required: true,
+          label: {
+            en: 'End Time',
+            nl: 'Eindtijd',
+            de: 'Endzeit',
+            fr: 'Heure de Fin',
+          },
+          admin: {
+            placeholder: {
+              en: 'e.g., 22:00',
+              nl: 'bijv., 22:00',
+              de: 'z. B., 22:00',
+              fr: 'p.ex., 22:00',
+            },
+          },
+        },
       ],
     },
     {
       name: 'holidays',
       type: 'array',
+      label: {
+        en: 'Holidays',
+        nl: 'Vakanties',
+        de: 'Feiertage',
+        fr: 'Vacances',
+      },
+
       admin: {
-        description: 'Define holidays when reservations are not allowed.',
+        description: {
+          en: 'Define holidays when reservations are not allowed.',
+          nl: 'Definieer vakanties waarop reserveringen niet zijn toegestaan.',
+          de: 'Definieren Sie Feiertage, an denen keine Reservierungen erlaubt sind.',
+          fr: 'Définissez les jours de vacances où les réservations ne sont pas autorisées.',
+        },
+
       },
       fields: [
-        { name: 'start_date', type: 'date', required: true },
-        { name: 'end_date', type: 'date', required: true },
+        {
+          name: 'start_date',
+          type: 'date',
+          required: true,
+          label: {
+            en: 'Start Date',
+            nl: 'Startdatum',
+            de: 'Anfangsdatum',
+            fr: 'Date de Début',
+          },
+        },
+        {
+          name: 'end_date',
+          type: 'date',
+          required: true,
+          label: {
+            en: 'End Date',
+            nl: 'Einddatum',
+            de: 'Enddatum',
+            fr: 'Date de Fin',
+          },
+        },
         {
           name: 'reason',
           type: 'textarea',
-          required: false,
+          label: {
+            en: 'Reason',
+            nl: 'Reden',
+            de: 'Grund',
+            fr: 'Raison',
+          },
           admin: {
-            description: 'Optional reason for the holiday period.',
+            description: {
+              en: 'Optional reason for the holiday period.',
+              nl: 'Optionele reden voor de vakantieperiode.',
+              de: 'Optionale Begründung für die Urlaubszeit.',
+              fr: 'Raison facultative pour la période de vacances.',
+            },
           },
         },
       ],
+
     },
     {
       name: 'fully_booked_days',
       type: 'array',
+      label: {
+        en: 'Fully Booked Days',
+        nl: 'Volledig Volgeboekte Dagen',
+        de: 'Vollständig Ausgebuchte Tage',
+        fr: 'Jours Complet',
+      },
       admin: {
-        description: 'List of fully booked days.',
+        description: {
+          en: 'List of fully booked days.',
+          nl: 'Lijst van volledig volgeboekte dagen.',
+          de: 'Liste der vollständig ausgebuchten Tage.',
+          fr: 'Liste des jours complètement réservés.',
+        },
       },
       fields: [
-        { name: 'date', type: 'date', required: true },
+        {
+          name: 'date',
+          type: 'date',
+          required: true,
+          label: {
+            en: 'Date',
+            nl: 'Datum',
+            de: 'Datum',
+            fr: 'Date',
+          },
+        },
         {
           name: 'reason',
           type: 'textarea',
-          required: false,
+          label: {
+            en: 'Reason',
+            nl: 'Reden',
+            de: 'Grund',
+            fr: 'Raison',
+          },
           admin: {
-            description: 'Optional reason for marking the day as fully booked.',
+            description: {
+              en: 'Optional reason for marking the day as fully booked.',
+              nl: 'Optionele reden om de dag als volledig volgeboekt te markeren.',
+              de: 'Optionale Begründung für die Markierung des Tages als vollständig ausgebucht.',
+              fr: 'Raison facultative pour marquer la journée comme complètement réservée.',
+            },
           },
         },
       ],
+
     },
     {
       name: 'exceptions',
       type: 'array',
+      label: {
+        en: 'Exceptions',
+        nl: 'Uitzonderingen',
+        de: 'Ausnahmen',
+        fr: 'Exceptions',
+      },
       admin: {
-        description: 'List of exceptions when reservations are not allowed.',
+        description: {
+          en: 'List of exceptions when reservations are not allowed.',
+          nl: 'Lijst van uitzonderingen waarop reserveringen niet zijn toegestaan.',
+          de: 'Liste von Ausnahmen, bei denen keine Reservierungen erlaubt sind.',
+          fr: 'Liste des exceptions où les réservations ne sont pas autorisées.',
+        },
       },
       fields: [
-        { name: 'exception_date', type: 'date', required: true },
+        {
+          name: 'exception_date',
+          type: 'date',
+          required: true,
+          label: {
+            en: 'Exception Date',
+            nl: 'Uitzonderingsdatum',
+            de: 'Ausnahmedatum',
+            fr: 'Date d\'Exception',
+          },
+        },
         {
           name: 'reason',
           type: 'textarea',
-          required: false,
+          label: {
+            en: 'Reason',
+            nl: 'Reden',
+            de: 'Grund',
+            fr: 'Raison',
+          },
           admin: {
-            description: 'Reason for the exception (optional).',
+            description: {
+              en: 'Reason for the exception (optional).',
+              nl: 'Reden voor de uitzondering (optioneel).',
+              de: 'Grund für die Ausnahme (optional).',
+              fr: 'Raison de l\'exception (facultatif).',
+            },
           },
         },
       ],
+
     },
   ],
 };

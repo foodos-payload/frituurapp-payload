@@ -31,7 +31,6 @@ export const Media: CollectionConfig = {
       fr: 'Média',
     },
   },
-
   upload: {
     disableLocalStorage: true, // Use S3 entirely
     imageSizes: [
@@ -51,7 +50,6 @@ export const Media: CollectionConfig = {
     afterChange: [
       async ({ req, operation, doc }) => {
         if (operation === 'create') {
-          // Delay logic to ensure the document is committed
           setTimeout(async () => {
             try {
               const AWS = require('@aws-sdk/client-s3');
@@ -98,42 +96,94 @@ export const Media: CollectionConfig = {
     {
       name: 'tags',
       type: 'array',
+      label: {
+        en: 'Tags',
+        nl: 'Tags',
+        de: 'Tags',
+        fr: 'Étiquettes',
+      },
       admin: {
-        description: 'Optional tags to organize media files.',
+        description: {
+          en: 'Optional tags to organize media files.',
+          nl: 'Optionele tags om mediabestanden te organiseren.',
+          de: 'Optionale Tags zur Organisation von Mediendateien.',
+          fr: 'Tags optionnels pour organiser les fichiers multimédia.',
+        },
+        placeholder: {
+          en: 'Enter a tag',
+          nl: 'Voer een tag in',
+          de: 'Geben Sie ein Tag ein',
+          fr: 'Entrez une étiquette',
+        },
       },
       fields: [
         {
           name: 'tag',
           type: 'text',
-          admin: {
-            placeholder: 'Enter a tag',
-          },
         },
       ],
     },
     {
       name: 'blurhash',
       type: 'text',
+      label: {
+        en: 'Blurhash',
+        nl: 'Blurhash',
+        de: 'Blurhash',
+        fr: 'Blurhash',
+      },
       admin: {
         readOnly: true,
-        description: 'Blurhash representation of the image for quick previews.',
+        description: {
+          en: 'Blurhash representation of the image for quick previews.',
+          nl: 'Blurhash-weergave van de afbeelding voor snelle previews.',
+          de: 'Blurhash-Darstellung des Bildes für schnelle Vorschauen.',
+          fr: 'Représentation Blurhash de l\'image pour des aperçus rapides.',
+        },
       },
     },
     {
       name: 's3_url',
       type: 'text',
+      label: {
+        en: 'S3 URL',
+        nl: 'S3 URL',
+        de: 'S3 URL',
+        fr: 'URL S3',
+      },
       admin: {
         readOnly: true,
-        description: 'URL of the original image in S3.',
+        description: {
+          en: 'URL of the original image in S3.',
+          nl: 'URL van de originele afbeelding in S3.',
+          de: 'URL des Originalbildes in S3.',
+          fr: 'URL de l\'image originale dans S3.',
+        },
       },
     },
     {
       name: 'alt_text',
       type: 'text',
       required: false,
+      label: {
+        en: 'Alt Text',
+        nl: 'Alt Tekst',
+        de: 'Alt-Text',
+        fr: 'Texte Alt',
+      },
       admin: {
-        placeholder: 'Provide a description for accessibility (optional)',
-        description: 'Alternative text for the media file to improve accessibility.',
+        placeholder: {
+          en: 'Provide a description for accessibility (optional)',
+          nl: 'Geef een beschrijving voor toegankelijkheid (optioneel)',
+          de: 'Geben Sie eine Beschreibung für die Barrierefreiheit ein (optional)',
+          fr: 'Fournir une description pour l\'accessibilité (optionnel)',
+        },
+        description: {
+          en: 'Alternative text for the media file to improve accessibility.',
+          nl: 'Alternatieve tekst voor het mediabestand om de toegankelijkheid te verbeteren.',
+          de: 'Alternativtext für die Mediendatei, um die Zugänglichkeit zu verbessern.',
+          fr: 'Texte alternatif pour le fichier multimédia pour améliorer l\'accessibilité.',
+        },
       },
     },
   ],

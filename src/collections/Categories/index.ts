@@ -19,7 +19,6 @@ export const Categories: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'name',
-
     },
     labels: {
         plural: {
@@ -41,33 +40,75 @@ export const Categories: CollectionConfig = {
         {
             name: 'name',
             type: 'text',
+            label: {
+                en: 'Name',
+                nl: 'Naam',
+                de: 'Name',
+                fr: 'Nom',
+            },
             required: true,
             hooks: {
                 beforeValidate: [ensureUniqueNamePerShop], // Validate category names within shops
+            },
+            admin: {
+                placeholder: {
+                    en: 'e.g., Appetizers',
+                    nl: 'bijv., Voorgerechten',
+                    de: 'z.B., Vorspeisen',
+                    fr: 'p.ex., Entrées',
+                },
             },
         },
         {
             name: 'image',
             type: 'relationship',
             relationTo: 'media',
+            label: {
+                en: 'Image',
+                nl: 'Afbeelding',
+                de: 'Bild',
+                fr: 'Image',
+            },
             required: false,
             admin: {
-                description: 'Reference an image from the Media library.',
+                description: {
+                    en: 'Reference an image from the Media library.',
+                    nl: 'Verwijs naar een afbeelding uit de mediabibliotheek.',
+                    de: 'Verweisen Sie auf ein Bild aus der Medienbibliothek.',
+                    fr: 'Faites référence à une image de la bibliothèque multimédia.',
+                },
             },
         },
         {
             name: 'modtime',
             type: 'number',
+            label: {
+                en: 'Modification Time',
+                nl: 'Wijzigingstijd',
+                de: 'Änderungszeit',
+                fr: 'Heure de Modification',
+            },
             required: true,
             defaultValue: () => Date.now(),
             admin: {
                 position: 'sidebar',
-                description: 'Timestamp for last modification',
+                description: {
+                    en: 'Timestamp for last modification',
+                    nl: 'Tijdstempel voor de laatste wijziging',
+                    de: 'Zeitstempel für die letzte Änderung',
+                    fr: 'Horodatage de la dernière modification',
+                },
             },
         },
         {
             name: 'status',
             type: 'select',
+            label: {
+                en: 'Status',
+                nl: 'Status',
+                de: 'Status',
+                fr: 'Statut',
+            },
             required: true,
             defaultValue: 'enabled',
             options: [
@@ -76,8 +117,64 @@ export const Categories: CollectionConfig = {
             ],
             admin: {
                 position: 'sidebar',
-                description: 'Category status (enabled or disabled)',
+                description: {
+                    en: 'Category status (enabled or disabled)',
+                    nl: 'Categorystatus (ingeschakeld of uitgeschakeld)',
+                    de: 'Kategorystatus (aktiviert oder deaktiviert)',
+                    fr: 'Statut de la catégorie (activé ou désactivé)',
+                },
             },
+        },
+        {
+            name: 'productpopups',
+            type: 'array',
+            label: {
+                en: 'Assigned Product Popups',
+                nl: 'Toegewezen Productpop-ups',
+                de: 'Zugewiesene Produkt-Popups',
+                fr: 'Pop-ups Produit Assignées',
+            },
+            admin: {
+                description: {
+                    en: 'Assign product popups to this category. These popups will apply to all products in the category.',
+                    nl: 'Wijs productpop-ups toe aan deze categorie. Deze pop-ups zijn van toepassing op alle producten in de categorie.',
+                    de: 'Weisen Sie dieser Kategorie Produkt-Popups zu. Diese Popups gelten für alle Produkte in der Kategorie.',
+                    fr: 'Attribuez des pop-ups produit à cette catégorie. Ces pop-ups s\'appliqueront à tous les produits de la catégorie.',
+                },
+            },
+            fields: [
+                {
+                    name: 'popup',
+                    type: 'relationship',
+                    relationTo: 'productpopups',
+                    required: true,
+                    label: {
+                        en: 'Popup',
+                        nl: 'Pop-up',
+                        de: 'Popup',
+                        fr: 'Pop-up',
+                    },
+                },
+                {
+                    name: 'order',
+                    type: 'number',
+                    defaultValue: 0,
+                    label: {
+                        en: 'Sort Order',
+                        nl: 'Sorteervolgorde',
+                        de: 'Sortierreihenfolge',
+                        fr: 'Ordre de Tri',
+                    },
+                    admin: {
+                        description: {
+                            en: 'The order in which this popup will appear.',
+                            nl: 'De volgorde waarin deze pop-up wordt weergegeven.',
+                            de: 'Die Reihenfolge, in der dieses Popup angezeigt wird.',
+                            fr: 'L\'ordre dans lequel cette pop-up apparaîtra.',
+                        },
+                    },
+                },
+            ],
         },
     ],
 };
