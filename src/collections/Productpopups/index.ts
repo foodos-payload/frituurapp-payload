@@ -17,7 +17,7 @@ export const Productpopups: CollectionConfig = {
     },
     admin: {
         baseListFilter,
-        useAsTitle: 'popup_title',
+        useAsTitle: 'popup_title_nl',
     },
     labels: {
         plural: {
@@ -37,30 +37,129 @@ export const Productpopups: CollectionConfig = {
         tenantField,
         shopsField,
         {
-            name: 'popup_title',
+            name: 'popup_title_nl',
             type: 'text',
             required: true,
             label: {
-                en: 'Popup Title',
-                nl: 'Pop-uptitel',
-                de: 'Popup-Titel',
-                fr: 'Titre de la Pop-up',
+                en: 'Popup Title (Dutch)',
+                nl: 'Popuptitel (Nederlands)',
+                de: 'Popup-Titel (Niederländisch)',
+                fr: 'Titre de la Pop-up (Néerlandais)',
             },
             admin: {
-                description: {
-                    en: 'Title of the popup, e.g., "Choose Your Sauce".',
-                    nl: 'Titel van de pop-up, bijv. "Kies je saus".',
-                    de: 'Titel des Popups, z. B., "Wählen Sie Ihre Sauce".',
-                    fr: 'Titre de la pop-up, p.ex., "Choisissez votre sauce".',
-                },
                 placeholder: {
-                    en: 'e.g., Choose Your Sauce',
+                    en: 'e.g., Kies je saus',
                     nl: 'bijv., Kies je saus',
                     de: 'z. B., Wählen Sie Ihre Sauce',
                     fr: 'p.ex., Choisissez votre sauce',
                 },
+                description: {
+                    en: 'Enter the popup title in Dutch (default).',
+                    nl: 'Voer de popuptitel in het Nederlands in (standaard).',
+                    de: 'Geben Sie den Popup-Titel auf Niederländisch ein (Standard).',
+                    fr: 'Entrez le titre de la pop-up en néerlandais (par défaut).',
+                },
             },
         },
+        {
+            type: 'tabs',
+            label: {
+                en: 'Translated Popup Titles',
+                nl: 'Vertaalde Popuptitels',
+                de: 'Übersetzte Popup-Titel',
+                fr: 'Titres de Pop-up Traduites',
+            },
+            tabs: [
+                {
+                    label: 'English',
+                    fields: [
+                        {
+                            name: 'popup_title_en',
+                            type: 'text',
+                            label: {
+                                en: 'Popup Title (English)',
+                                nl: 'Popuptitel (Engels)',
+                                de: 'Popup-Titel (Englisch)',
+                                fr: 'Titre de la Pop-up (Anglais)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Choose Your Sauce',
+                                    nl: 'bijv., Kies je saus',
+                                    de: 'z. B., Wählen Sie Ihre Sauce',
+                                    fr: 'p.ex., Choisissez votre sauce',
+                                },
+                                description: {
+                                    en: 'Enter the popup title in English.',
+                                    nl: 'Voer de popuptitel in het Engels in.',
+                                    de: 'Geben Sie den Popup-Titel auf Englisch ein.',
+                                    fr: 'Entrez le titre de la pop-up en anglais.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'German',
+                    fields: [
+                        {
+                            name: 'popup_title_de',
+                            type: 'text',
+                            label: {
+                                en: 'Popup Title (German)',
+                                nl: 'Popuptitel (Duits)',
+                                de: 'Popup-Titel (Deutsch)',
+                                fr: 'Titre de la Pop-up (Allemand)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Wählen Sie Ihre Sauce',
+                                    nl: 'bijv., Kies je saus',
+                                    de: 'z. B., Wählen Sie Ihre Sauce',
+                                    fr: 'p.ex., Choisissez votre sauce',
+                                },
+                                description: {
+                                    en: 'Enter the popup title in German.',
+                                    nl: 'Voer de popuptitel in het Duits in.',
+                                    de: 'Geben Sie den Popup-Titel auf Deutsch ein.',
+                                    fr: 'Entrez le titre de la pop-up en allemand.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'French',
+                    fields: [
+                        {
+                            name: 'popup_title_fr',
+                            type: 'text',
+                            label: {
+                                en: 'Popup Title (French)',
+                                nl: 'Popuptitel (Frans)',
+                                de: 'Popup-Titel (Französisch)',
+                                fr: 'Titre de la Pop-up (Français)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Choisissez votre sauce',
+                                    nl: 'bijv., Kies je saus',
+                                    de: 'z. B., Wählen Sie Ihre Sauce',
+                                    fr: 'p.ex., Choisissez votre sauce',
+                                },
+                                description: {
+                                    en: 'Enter the popup title in French.',
+                                    nl: 'Voer de popuptitel in het Frans in.',
+                                    de: 'Geben Sie den Popup-Titel auf Französisch ein.',
+                                    fr: 'Entrez le titre de la pop-up en français.',
+                                },
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+
 
         {
             name: 'multiselect',

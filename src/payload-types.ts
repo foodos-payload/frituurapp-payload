@@ -746,9 +746,21 @@ export interface Product {
   shops: (string | Shop)[];
   categories: (string | Category)[];
   /**
-   * Enter the product name.
+   * Enter the product name in Dutch.
    */
-  name: string;
+  name_nl: string;
+  /**
+   * Enter the name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the name in French.
+   */
+  name_fr?: string | null;
   /**
    * Use a unified sale price for all fulfillment methods.
    */
@@ -802,9 +814,21 @@ export interface Product {
    */
   modtime: number;
   /**
-   * Webshop description for the product.
+   * Enter the default description in Dutch.
    */
-  webdescription?: string | null;
+  description_nl: string;
+  /**
+   * Enter the description in English.
+   */
+  description_en?: string | null;
+  /**
+   * Enter the description in German.
+   */
+  description_de?: string | null;
+  /**
+   * Enter the description in French.
+   */
+  description_fr?: string | null;
   /**
    * Show this product in the webshop.
    */
@@ -848,7 +872,22 @@ export interface Category {
   id: string;
   tenant: string | Tenant;
   shops: (string | Shop)[];
-  name: string;
+  /**
+   * Enter the category name in Dutch (default).
+   */
+  name_nl: string;
+  /**
+   * Enter the category name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the category name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the category name in French.
+   */
+  name_fr?: string | null;
   /**
    * Reference an image from the Media library.
    */
@@ -886,9 +925,21 @@ export interface Productpopup {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
-   * Title of the popup, e.g., "Choose Your Sauce".
+   * Enter the popup title in Dutch (default).
    */
-  popup_title: string;
+  popup_title_nl: string;
+  /**
+   * Enter the popup title in English.
+   */
+  popup_title_en?: string | null;
+  /**
+   * Enter the popup title in German.
+   */
+  popup_title_de?: string | null;
+  /**
+   * Enter the popup title in French.
+   */
+  popup_title_fr?: string | null;
   /**
    * Allow selecting multiple options in this popup.
    */
@@ -929,9 +980,21 @@ export interface Subproduct {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
-   * Enter the name of the subproduct.
+   * Enter the subproduct name in Dutch.
    */
-  name: string;
+  name_nl: string;
+  /**
+   * Enter the subproduct name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the subproduct name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the subproduct name in French.
+   */
+  name_fr?: string | null;
   /**
    * Use a unified sale price for all fulfillment methods.
    */
@@ -1738,7 +1801,10 @@ export interface OrdersSelect<T extends boolean = true> {
 export interface CategoriesSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  name?: T;
+  name_nl?: T;
+  name_en?: T;
+  name_de?: T;
+  name_fr?: T;
   image?: T;
   modtime?: T;
   status?: T;
@@ -1760,7 +1826,10 @@ export interface ProductsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
   categories?: T;
-  name?: T;
+  name_nl?: T;
+  name_en?: T;
+  name_de?: T;
+  name_fr?: T;
   price_unified?: T;
   price?: T;
   price_dinein?: T;
@@ -1774,7 +1843,10 @@ export interface ProductsSelect<T extends boolean = true> {
   barcode?: T;
   image?: T;
   modtime?: T;
-  webdescription?: T;
+  description_nl?: T;
+  description_en?: T;
+  description_de?: T;
+  description_fr?: T;
   webshopshow?: T;
   webshoporderable?: T;
   status?: T;
@@ -1796,7 +1868,10 @@ export interface ProductsSelect<T extends boolean = true> {
 export interface SubproductsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  name?: T;
+  name_nl?: T;
+  name_en?: T;
+  name_de?: T;
+  name_fr?: T;
   price_unified?: T;
   price?: T;
   price_dinein?: T;
@@ -1822,7 +1897,10 @@ export interface SubproductsSelect<T extends boolean = true> {
 export interface ProductpopupsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  popup_title?: T;
+  popup_title_nl?: T;
+  popup_title_en?: T;
+  popup_title_de?: T;
+  popup_title_fr?: T;
   multiselect?: T;
   required_option_cashregister?: T;
   required_option_webshop?: T;

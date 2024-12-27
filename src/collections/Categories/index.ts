@@ -18,7 +18,7 @@ export const Categories: CollectionConfig = {
     },
     admin: {
         baseListFilter,
-        useAsTitle: 'name',
+        useAsTitle: 'name_nl',
     },
     labels: {
         plural: {
@@ -38,27 +38,132 @@ export const Categories: CollectionConfig = {
         tenantField, // Ensure categories are scoped by tenant
         shopsField, // Link categories to one or multiple shops
         {
-            name: 'name',
+            name: 'name_nl',
             type: 'text',
             label: {
-                en: 'Name',
-                nl: 'Naam',
-                de: 'Name',
-                fr: 'Nom',
+                en: 'Category Name (Dutch)',
+                nl: 'Categorienaam (Nederlands)',
+                de: 'Kategoriename (Niederländisch)',
+                fr: 'Nom de la Catégorie (Néerlandais)',
             },
             required: true,
-            hooks: {
-                beforeValidate: [ensureUniqueNamePerShop], // Validate category names within shops
-            },
             admin: {
                 placeholder: {
                     en: 'e.g., Appetizers',
                     nl: 'bijv., Voorgerechten',
-                    de: 'z.B., Vorspeisen',
+                    de: 'z. B., Vorspeisen',
                     fr: 'p.ex., Entrées',
                 },
+                description: {
+                    en: 'Enter the category name in Dutch (default).',
+                    nl: 'Voer de categorienaam in het Nederlands in (standaard).',
+                    de: 'Geben Sie den Kategorienamen auf Niederländisch ein (Standard).',
+                    fr: 'Entrez le nom de la catégorie en néerlandais (par défaut).',
+                },
+            },
+            hooks: {
+                beforeValidate: [ensureUniqueNamePerShop], // Validate category names within shops
             },
         },
+        {
+            type: 'tabs',
+            label: {
+                en: 'Translated Category Names',
+                nl: 'Vertaalde Categorienamen',
+                de: 'Übersetzte Kategorienamen',
+                fr: 'Noms de Catégories Traduits',
+            },
+            tabs: [
+                {
+                    label: 'English',
+                    fields: [
+                        {
+                            name: 'name_en',
+                            type: 'text',
+                            label: {
+                                en: 'Category Name (English)',
+                                nl: 'Categorienaam (Engels)',
+                                de: 'Kategoriename (Englisch)',
+                                fr: 'Nom de la Catégorie (Anglais)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Appetizers',
+                                    nl: 'bijv., Voorgerechten',
+                                    de: 'z. B., Vorspeisen',
+                                    fr: 'p.ex., Entrées',
+                                },
+                                description: {
+                                    en: 'Enter the category name in English.',
+                                    nl: 'Voer de categorienaam in het Engels in.',
+                                    de: 'Geben Sie den Kategorienamen auf Englisch ein.',
+                                    fr: 'Entrez le nom de la catégorie en anglais.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'German',
+                    fields: [
+                        {
+                            name: 'name_de',
+                            type: 'text',
+                            label: {
+                                en: 'Category Name (German)',
+                                nl: 'Categorienaam (Duits)',
+                                de: 'Kategoriename (Deutsch)',
+                                fr: 'Nom de la Catégorie (Allemand)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Vorspeisen',
+                                    nl: 'bijv., Voorgerechten',
+                                    de: 'z. B., Vorspeisen',
+                                    fr: 'p.ex., Entrées',
+                                },
+                                description: {
+                                    en: 'Enter the category name in German.',
+                                    nl: 'Voer de categorienaam in het Duits in.',
+                                    de: 'Geben Sie den Kategorienamen auf Deutsch ein.',
+                                    fr: 'Entrez le nom de la catégorie en allemand.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'French',
+                    fields: [
+                        {
+                            name: 'name_fr',
+                            type: 'text',
+                            label: {
+                                en: 'Category Name (French)',
+                                nl: 'Categorienaam (Frans)',
+                                de: 'Kategoriename (Französisch)',
+                                fr: 'Nom de la Catégorie (Français)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Entrées',
+                                    nl: 'bijv., Voorgerechten',
+                                    de: 'z. B., Vorspeisen',
+                                    fr: 'p.ex., Entrées',
+                                },
+                                description: {
+                                    en: 'Enter the category name in French.',
+                                    nl: 'Voer de categorienaam in het Frans in.',
+                                    de: 'Geben Sie den Kategorienamen auf Französisch ein.',
+                                    fr: 'Entrez le nom de la catégorie en français.',
+                                },
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+
         {
             name: 'image',
             type: 'relationship',

@@ -18,7 +18,7 @@ export const Subproducts: CollectionConfig = {
     },
     admin: {
         baseListFilter,
-        useAsTitle: 'name',
+        useAsTitle: 'name_nl',
     },
     labels: {
         plural: {
@@ -39,27 +39,132 @@ export const Subproducts: CollectionConfig = {
         tenantField, // Ensure subproducts are scoped by tenant
         shopsField, // Link subproducts to one or multiple shops
         {
-            name: 'name',
+            name: 'name_nl',
             type: 'text',
             label: {
-                en: 'Subproduct Name',
-                nl: 'Naam van Subproduct',
-                de: 'Name des Unterprodukts',
-                fr: 'Nom du Sous-produit',
-            },
-            admin: {
-                description: {
-                    en: 'Enter the name of the subproduct.',
-                    nl: 'Voer de naam van het subproduct in.',
-                    de: 'Geben Sie den Namen des Unterprodukts ein.',
-                    fr: 'Entrez le nom du sous-produit.',
-                },
+                en: 'Subproduct Name (Dutch)',
+                nl: 'Naam van Subproduct (Nederlands)',
+                de: 'Name des Unterprodukts (Niederländisch)',
+                fr: 'Nom du Sous-produit (Néerlandais)',
             },
             required: true,
+            admin: {
+                placeholder: {
+                    en: 'e.g., Extra Cheese',
+                    nl: 'bijv., Extra Kaas',
+                    de: 'z. B., Extra Käse',
+                    fr: 'p.ex., Fromage Supplémentaire',
+                },
+                description: {
+                    en: 'Enter the subproduct name in Dutch.',
+                    nl: 'Voer de naam van het subproduct in het Nederlands in.',
+                    de: 'Geben Sie den Namen des Unterprodukts auf Niederländisch ein.',
+                    fr: 'Entrez le nom du sous-produit en néerlandais.',
+                },
+            },
             hooks: {
                 beforeValidate: [ensureUniqueNamePerShop], // Validate subproduct names within shops
             },
         },
+        {
+            type: 'tabs',
+            label: {
+                en: 'Translated Names',
+                nl: 'Vertaalde Namen',
+                de: 'Übersetzte Namen',
+                fr: 'Noms Traduits',
+            },
+            tabs: [
+                {
+                    label: 'English',
+                    fields: [
+                        {
+                            name: 'name_en',
+                            type: 'text',
+                            label: {
+                                en: 'Subproduct Name (English)',
+                                nl: 'Naam van Subproduct (Engels)',
+                                de: 'Name des Unterprodukts (Englisch)',
+                                fr: 'Nom du Sous-produit (Anglais)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Extra Cheese',
+                                    nl: 'bijv., Extra Kaas',
+                                    de: 'z. B., Extra Käse',
+                                    fr: 'p.ex., Fromage Supplémentaire',
+                                },
+                                description: {
+                                    en: 'Enter the subproduct name in English.',
+                                    nl: 'Voer de naam van het subproduct in het Engels in.',
+                                    de: 'Geben Sie den Namen des Unterprodukts auf Englisch ein.',
+                                    fr: 'Entrez le nom du sous-produit en anglais.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'German',
+                    fields: [
+                        {
+                            name: 'name_de',
+                            type: 'text',
+                            label: {
+                                en: 'Subproduct Name (German)',
+                                nl: 'Naam van Subproduct (Duits)',
+                                de: 'Name des Unterprodukts (Deutsch)',
+                                fr: 'Nom du Sous-produit (Allemand)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Extra Cheese',
+                                    nl: 'bijv., Extra Kaas',
+                                    de: 'z. B., Extra Käse',
+                                    fr: 'p.ex., Fromage Supplémentaire',
+                                },
+                                description: {
+                                    en: 'Enter the subproduct name in German.',
+                                    nl: 'Voer de naam van het subproduct in het Duits in.',
+                                    de: 'Geben Sie den Namen des Unterprodukts auf Deutsch ein.',
+                                    fr: 'Entrez le nom du sous-produit en allemand.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'French',
+                    fields: [
+                        {
+                            name: 'name_fr',
+                            type: 'text',
+                            label: {
+                                en: 'Subproduct Name (French)',
+                                nl: 'Naam van Subproduct (Frans)',
+                                de: 'Name des Unterprodukts (Französisch)',
+                                fr: 'Nom du Sous-produit (Français)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Extra Cheese',
+                                    nl: 'bijv., Extra Kaas',
+                                    de: 'z. B., Extra Käse',
+                                    fr: 'p.ex., Fromage Supplémentaire',
+                                },
+                                description: {
+                                    en: 'Enter the subproduct name in French.',
+                                    nl: 'Voer de naam van het subproduct in het Frans in.',
+                                    de: 'Geben Sie den Namen des Unterprodukts auf Französisch ein.',
+                                    fr: 'Entrez le nom du sous-produit en français.',
+                                },
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+
         {
             name: 'price_unified',
             type: 'checkbox',

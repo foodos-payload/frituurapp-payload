@@ -18,7 +18,7 @@ export const Products: CollectionConfig = {
     },
     admin: {
         baseListFilter,
-        useAsTitle: 'name',
+        useAsTitle: 'name_nl',
     },
     labels: {
         plural: {
@@ -40,14 +40,15 @@ export const Products: CollectionConfig = {
         shopsField, // Link products to one or multiple shops
         categoriesField, // Link products to categories
         {
-            name: 'name',
+            name: 'name_nl',
             type: 'text',
             label: {
-                en: 'Product Name',
-                nl: 'Productnaam',
-                de: 'Produktname',
-                fr: 'Nom du Produit',
+                en: 'Name (Dutch)',
+                nl: 'Naam (Nederlands)',
+                de: 'Name (Niederländisch)',
+                fr: 'Nom (Néerlandais)',
             },
+            required: true,
             admin: {
                 placeholder: {
                     en: 'e.g., Pizza Margherita',
@@ -56,19 +57,116 @@ export const Products: CollectionConfig = {
                     fr: 'p.ex., Pizza Margherita',
                 },
                 description: {
-                    en: 'Enter the product name.',
-                    nl: 'Voer de productnaam in.',
-                    de: 'Geben Sie den Produktnamen ein.',
-                    fr: 'Entrez le nom du produit.',
+                    en: 'Enter the product name in Dutch.',
+                    nl: 'Voer de productnaam in het Nederlands in.',
+                    de: 'Geben Sie den Produktnamen auf Niederländisch ein.',
+                    fr: 'Entrez le nom du produit en néerlandais.',
                 },
             },
-
-            required: true,
             hooks: {
                 beforeValidate: [ensureUniqueNamePerShop],
             },
-            localized: true,
         },
+        {
+            type: 'tabs',
+            label: {
+                en: 'Translated Names',
+                nl: 'Vertaalde Namen',
+                de: 'Übersetzte Namen',
+                fr: 'Noms Traduits',
+            },
+            tabs: [
+                {
+                    label: 'English',
+                    fields: [
+                        {
+                            name: 'name_en',
+                            type: 'text',
+                            label: {
+                                en: 'Name (English)',
+                                nl: 'Naam (Engels)',
+                                de: 'Name (Englisch)',
+                                fr: 'Nom (Anglais)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Product Name',
+                                    nl: 'bijv., Productnaam',
+                                    de: 'z. B., Produktname',
+                                    fr: 'p.ex., Nom du Produit',
+                                },
+                                description: {
+                                    en: 'Enter the name in English.',
+                                    nl: 'Voer de naam in het Engels in.',
+                                    de: 'Geben Sie den Namen auf Englisch ein.',
+                                    fr: 'Entrez le nom en anglais.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'German',
+                    fields: [
+                        {
+                            name: 'name_de',
+                            type: 'text',
+                            label: {
+                                en: 'Name (German)',
+                                nl: 'Naam (Duits)',
+                                de: 'Name (Deutsch)',
+                                fr: 'Nom (Allemand)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Produktname',
+                                    nl: 'bijv., Productnaam',
+                                    de: 'z. B., Produktname',
+                                    fr: 'p.ex., Nom du Produit',
+                                },
+                                description: {
+                                    en: 'Enter the name in German.',
+                                    nl: 'Voer de naam in het Duits in.',
+                                    de: 'Geben Sie den Namen auf Deutsch ein.',
+                                    fr: 'Entrez le nom en allemand.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'French',
+                    fields: [
+                        {
+                            name: 'name_fr',
+                            type: 'text',
+                            label: {
+                                en: 'Name (French)',
+                                nl: 'Naam (Frans)',
+                                de: 'Name (Französisch)',
+                                fr: 'Nom (Français)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Nom du Produit',
+                                    nl: 'bijv., Productnaam',
+                                    de: 'z. B., Produktname',
+                                    fr: 'p.ex., Nom du Produit',
+                                },
+                                description: {
+                                    en: 'Enter the name in French.',
+                                    nl: 'Voer de naam in het Frans in.',
+                                    de: 'Geben Sie den Namen auf Französisch ein.',
+                                    fr: 'Entrez le nom en français.',
+                                },
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+
+
         {
             name: 'price_unified',
             type: 'checkbox',
@@ -332,24 +430,129 @@ export const Products: CollectionConfig = {
             },
         },
         {
-            name: 'webdescription',
+            name: 'description_nl',
             type: 'textarea',
             label: {
-                en: 'Webshop Description',
-                nl: 'Webshop Beschrijving',
-                de: 'Webshop-Beschreibung',
-                fr: 'Description de la Boutique en Ligne',
+                en: 'Description (Dutch)',
+                nl: 'Beschrijving (Nederlands)',
+                de: 'Beschreibung (Niederländisch)',
+                fr: 'Description (Néerlandais)',
             },
-
+            required: true,
             admin: {
+                placeholder: {
+                    en: 'e.g., A delicious Pizza Margherita.',
+                    nl: 'bijv., Een heerlijke Pizza Margherita.',
+                    de: 'z. B., Eine köstliche Pizza Margherita.',
+                    fr: 'p.ex., Une délicieuse Pizza Margherita.',
+                },
                 description: {
-                    en: 'Webshop description for the product.',
-                    nl: 'Webshopbeschrijving voor het product.',
-                    de: 'Webshop-Beschreibung für das Produkt.',
-                    fr: 'Description du produit pour la boutique en ligne.',
+                    en: 'Enter the default description in Dutch.',
+                    nl: 'Voer de standaardbeschrijving in het Nederlands in.',
+                    de: 'Geben Sie die Standardbeschreibung auf Niederländisch ein.',
+                    fr: 'Entrez la description par défaut en néerlandais.',
                 },
             },
         },
+        {
+            type: 'tabs',
+            label: {
+                en: 'Translated Descriptions',
+                nl: 'Vertaalde Beschrijvingen',
+                de: 'Übersetzte Beschreibungen',
+                fr: 'Descriptions Traduites',
+            },
+            tabs: [
+                {
+                    label: 'English',
+                    fields: [
+                        {
+                            name: 'description_en',
+                            type: 'textarea',
+                            label: {
+                                en: 'Description (English)',
+                                nl: 'Beschrijving (Engels)',
+                                de: 'Beschreibung (Englisch)',
+                                fr: 'Description (Anglais)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., A delicious Pizza Margherita.',
+                                    nl: 'bijv., Een heerlijke Pizza Margherita.',
+                                    de: 'z. B., Eine köstliche Pizza Margherita.',
+                                    fr: 'p.ex., Une délicieuse Pizza Margherita.',
+                                },
+                                description: {
+                                    en: 'Enter the description in English.',
+                                    nl: 'Voer de beschrijving in het Engels in.',
+                                    de: 'Geben Sie die Beschreibung auf Englisch ein.',
+                                    fr: 'Entrez la description en anglais.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'German',
+                    fields: [
+                        {
+                            name: 'description_de',
+                            type: 'textarea',
+                            label: {
+                                en: 'Description (German)',
+                                nl: 'Beschrijving (Duits)',
+                                de: 'Beschreibung (Deutsch)',
+                                fr: 'Description (Allemand)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Eine köstliche Pizza Margherita.',
+                                    nl: 'bijv., Een heerlijke Pizza Margherita.',
+                                    de: 'z. B., Eine köstliche Pizza Margherita.',
+                                    fr: 'p.ex., Une délicieuse Pizza Margherita.',
+                                },
+                                description: {
+                                    en: 'Enter the description in German.',
+                                    nl: 'Voer de beschrijving in het Duits in.',
+                                    de: 'Geben Sie die Beschreibung auf Deutsch ein.',
+                                    fr: 'Entrez la description en allemand.',
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    label: 'French',
+                    fields: [
+                        {
+                            name: 'description_fr',
+                            type: 'textarea',
+                            label: {
+                                en: 'Description (French)',
+                                nl: 'Beschrijving (Frans)',
+                                de: 'Beschreibung (Französisch)',
+                                fr: 'Description (Français)',
+                            },
+                            admin: {
+                                placeholder: {
+                                    en: 'e.g., Une délicieuse Pizza Margherita.',
+                                    nl: 'bijv., Een heerlijke Pizza Margherita.',
+                                    de: 'z. B., Eine köstliche Pizza Margherita.',
+                                    fr: 'p.ex., Une délicieuse Pizza Margherita.',
+                                },
+                                description: {
+                                    en: 'Enter the description in French.',
+                                    nl: 'Voer de beschrijving in het Frans in.',
+                                    de: 'Geben Sie die Beschreibung auf Französisch ein.',
+                                    fr: 'Entrez la description en français.',
+                                },
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+
         {
             name: 'webshopshow',
             type: 'checkbox',
