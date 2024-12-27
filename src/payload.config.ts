@@ -31,6 +31,9 @@ import { FullyBookedDays } from './collections/ReservationFullyBookedDays';
 import { ReservationHolidays } from './collections/ReservationHolidays';
 import { Orders } from './collections/Orders';
 import { Media } from './collections/Media';
+import { en } from '@payloadcms/translations/languages/en'
+import { de } from '@payloadcms/translations/languages/de'
+import { fr } from '@payloadcms/translations/languages/fr'
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -44,6 +47,9 @@ export default buildConfig({
     meta: {
       titleSuffix: 'Frituurapp',
     },
+  },
+  i18n: {
+    supportedLanguages: { en, de, fr },
   },
   collections: [
     {
