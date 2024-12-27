@@ -31,6 +31,7 @@ import { FullyBookedDays } from './collections/ReservationFullyBookedDays';
 import { ReservationHolidays } from './collections/ReservationHolidays';
 import { Orders } from './collections/Orders';
 import { Media } from './collections/Media';
+import { nl } from '@payloadcms/translations/languages/nl'
 import { en } from '@payloadcms/translations/languages/en'
 import { de } from '@payloadcms/translations/languages/de'
 import { fr } from '@payloadcms/translations/languages/fr'
@@ -49,8 +50,8 @@ export default buildConfig({
     },
   },
   i18n: {
-    supportedLanguages: { en, de, fr },
-    fallbackLanguage: 'de',
+    supportedLanguages: { nl, en, de, fr },
+    fallbackLanguage: 'nl',
   },
   collections: [
     {
@@ -230,8 +231,8 @@ export default buildConfig({
     },
   ],
   localization: {
-    locales: ['en', 'de', 'fr'],
-    defaultLocale: 'de',
+    locales: ['nl', 'en', 'de', 'fr'],
+    defaultLocale: 'nl',
     fallback: true,
   },
   plugins: [
