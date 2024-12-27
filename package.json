@@ -24,6 +24,7 @@
     "@payloadcms/plugin-cloud-storage": "^3.11.0",
     "@payloadcms/richtext-lexical": "^3.11.0",
     "@payloadcms/storage-s3": "^3.11.0",
+    "@payloadcms/translations": "^3.11.0",
     "@payloadcms/ui": "^3.11.0",
     "blurhash": "^2.0.5",
     "cross-env": "^7.0.3",
