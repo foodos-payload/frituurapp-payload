@@ -31,6 +31,7 @@ export const Products: CollectionConfig = {
             hooks: {
                 beforeValidate: [ensureUniqueNamePerShop],
             },
+            localized: true,
         },
         {
             name: 'price_unified',

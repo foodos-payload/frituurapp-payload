@@ -229,7 +229,11 @@ export default buildConfig({
       },
     },
   ],
-
+  localization: {
+    locales: ['en', 'de', 'fr'],
+    defaultLocale: 'de',
+    fallback: true,
+  },
   plugins: [
     s3Storage({
       collections: {
