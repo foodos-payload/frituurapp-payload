@@ -14,11 +14,15 @@ export const Tenants: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     hidden: ({ user }) => {
-      // Ensure `user` exists before accessing properties
+      // Ensure `user` exists and cast it to the expected type
       if (!user) return true;
 
       // Hide for non-superadmins with access to a single tenant
-      return !isSuperAdmin({ req: { user } }) && user.tenants?.length === 1;
+      return (
+        !isSuperAdmin({ req: { user } as any }) &&
+        user.tenants &&
+        user.tenants.length === 1
+      );
     },
   },
   labels: {

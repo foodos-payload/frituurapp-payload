@@ -109,20 +109,29 @@ export const Media: CollectionConfig = {
           de: 'Optionale Tags zur Organisation von Mediendateien.',
           fr: 'Tags optionnels pour organiser les fichiers multimédia.',
         },
-        placeholder: {
-          en: 'Enter a tag',
-          nl: 'Voer een tag in',
-          de: 'Geben Sie ein Tag ein',
-          fr: 'Entrez une étiquette',
-        },
       },
       fields: [
         {
           name: 'tag',
           type: 'text',
+          label: {
+            en: 'Tag',
+            nl: 'Tag',
+            de: 'Tag',
+            fr: 'Étiquette',
+          },
+          admin: {
+            placeholder: {
+              en: 'Enter a tag',
+              nl: 'Voer een tag in',
+              de: 'Geben Sie ein Tag ein',
+              fr: 'Entrez une étiquette',
+            },
+          },
         },
       ],
     },
+
     {
       name: 'blurhash',
       type: 'text',
