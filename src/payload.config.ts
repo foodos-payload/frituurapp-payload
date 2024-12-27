@@ -50,6 +50,7 @@ export default buildConfig({
   },
   i18n: {
     supportedLanguages: { en, de, fr },
+    fallbackLanguage: 'de',
   },
   collections: [
     {
