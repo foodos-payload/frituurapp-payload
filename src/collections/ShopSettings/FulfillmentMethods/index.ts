@@ -19,6 +19,21 @@ export const FulfillmentMethods: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'method_type',
     },
+    labels: {
+        plural: {
+            en: 'Fulfillment Methods',
+            nl: 'Afhandelingsmethoden',
+            de: 'Erfüllungsmethoden',
+            fr: 'Méthodes de Réalisation',
+        },
+        singular: {
+            en: 'Fulfillment Method',
+            nl: 'Afhandelingsmethode',
+            de: 'Erfüllungsmethode',
+            fr: 'Méthode de Réalisation',
+        },
+    },
+
     fields: [
         tenantField, // Ensure fulfillment methods are scoped by tenant
         shopsField, // Link fulfillment methods to specific shops

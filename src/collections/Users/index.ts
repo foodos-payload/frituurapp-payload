@@ -17,6 +17,21 @@ const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
   },
+  labels: {
+    plural: {
+      en: 'Users',
+      nl: 'Gebruikers',
+      de: 'Benutzer',
+      fr: 'Utilisateurs',
+    },
+    singular: {
+      en: 'User',
+      nl: 'Gebruiker',
+      de: 'Benutzer',
+      fr: 'Utilisateur',
+    },
+  },
+
   auth: true,
   hooks: {
     afterLogin: [setCookieBasedOnDomain],

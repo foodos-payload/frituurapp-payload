@@ -18,6 +18,21 @@ export const CustomerCredits: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'customerid', // Display customer ID in admin view
   },
+  labels: {
+    plural: {
+      en: 'Customer Credits',
+      nl: 'Klantenpunten',
+      de: 'Kundenkredite',
+      fr: 'Crédits Client',
+    },
+    singular: {
+      en: 'Customer Credit',
+      nl: 'Klantenpunten',
+      de: 'Kundenkredit',
+      fr: 'Crédit Client',
+    },
+  },
+
   fields: [
     tenantField, // Ensure customer credits are scoped by tenant
     shopsField, // Link customer credits to specific shops

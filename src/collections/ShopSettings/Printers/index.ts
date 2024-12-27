@@ -19,6 +19,21 @@ export const Printers: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'printername', // Use printername as the title
     },
+    labels: {
+        plural: {
+            en: 'Printers',
+            nl: 'Printers',
+            de: 'Drucker',
+            fr: 'Imprimantes',
+        },
+        singular: {
+            en: 'Printer',
+            nl: 'Printer',
+            de: 'Drucker',
+            fr: 'Imprimante',
+        },
+    },
+
     fields: [
         tenantField, // Ensure printers are scoped by tenant
         {

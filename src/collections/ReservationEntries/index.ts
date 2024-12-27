@@ -17,6 +17,21 @@ export const ReservationEntries: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'customer_name', // Use customer name as the title
   },
+  labels: {
+    plural: {
+      en: 'Reservation Entries',
+      nl: 'Reserveringen',
+      de: 'Reservierungseinträge',
+      fr: 'Entrées de Réservation',
+    },
+    singular: {
+      en: 'Reservation Entry',
+      nl: 'Reservering',
+      de: 'Reservierungseintrag',
+      fr: 'Entrée de Réservation',
+    },
+  },
+
   fields: [
     tenantField,
     shopsField,

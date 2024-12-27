@@ -18,6 +18,21 @@ export const Shops: CollectionConfig = {
     useAsTitle: 'name',
     // Redirect to the list of shops after create/update
   },
+  labels: {
+    plural: {
+      en: 'Shops',
+      nl: 'Winkels',
+      de: 'Geschäfte',
+      fr: 'Magasins',
+    },
+    singular: {
+      en: 'Shop',
+      nl: 'Winkel',
+      de: 'Geschäft',
+      fr: 'Magasin',
+    },
+  },
+
   hooks: {
     afterChange: [
       async ({ req, operation, doc }) => {

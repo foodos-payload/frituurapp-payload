@@ -20,6 +20,21 @@ export const PaymentMethods: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'provider',
     },
+    labels: {
+        plural: {
+            en: 'Payment Methods',
+            nl: 'Betaalmethoden',
+            de: 'Zahlungsmethoden',
+            fr: 'Méthodes de Paiement',
+        },
+        singular: {
+            en: 'Payment Method',
+            nl: 'Betaalmethode',
+            de: 'Zahlungsmethode',
+            fr: 'Méthode de Paiement',
+        },
+    },
+
     fields: [
         tenantField, // Ensure payment methods are scoped by tenant
         shopsField, // Link payment methods to one or multiple shops

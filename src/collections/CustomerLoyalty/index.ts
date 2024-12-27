@@ -19,6 +19,21 @@ export const CustomerLoyalty: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'program_name',
   },
+  labels: {
+    plural: {
+      en: 'Customer Loyalty Programs',
+      nl: 'Loyaliteitsprogramma’s',
+      de: 'Kundenbindungsprogramme',
+      fr: 'Programmes de Fidélité Client',
+    },
+    singular: {
+      en: 'Customer Loyalty Program',
+      nl: 'Loyaliteitsprogramma',
+      de: 'Kundenbindungsprogramm',
+      fr: 'Programme de Fidélité Client',
+    },
+  },
+
   fields: [
     tenantField, // Ensure loyalty programs are scoped by tenant
     shopsField, // Link loyalty programs to specific shops

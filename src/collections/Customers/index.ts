@@ -18,6 +18,21 @@ export const Customers: CollectionConfig = {
     useAsTitle: 'firstname',
     group: 'Shop Settings',
   },
+  labels: {
+    plural: {
+      en: 'Customers',
+      nl: 'Klanten',
+      de: 'Kunden',
+      fr: 'Clients',
+    },
+    singular: {
+      en: 'Customer',
+      nl: 'Klant',
+      de: 'Kunde',
+      fr: 'Client',
+    },
+  },
+
   fields: [
     tenantField, // Scope customers by tenant
     shopsField, // Link customers to specific shops

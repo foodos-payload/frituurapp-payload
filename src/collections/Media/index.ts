@@ -17,6 +17,21 @@ export const Media: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'filename',
   },
+  labels: {
+    plural: {
+      en: 'Media',
+      nl: 'Media',
+      de: 'Medien',
+      fr: 'Médias',
+    },
+    singular: {
+      en: 'Media',
+      nl: 'Media',
+      de: 'Medium',
+      fr: 'Média',
+    },
+  },
+
   upload: {
     disableLocalStorage: true, // Use S3 entirely
     imageSizes: [

@@ -16,14 +16,28 @@ export const ReservationSettings: CollectionConfig = {
   },
   admin: {
     baseListFilter,
-    useAsTitle: 'reservation_name', // Title defaults to 'Reservation Settings for Shop X'
+    useAsTitle: 'reservation_name',
+  },
+  labels: {
+    plural: {
+      en: 'Reservation Settings',
+      nl: 'Reserveringsinstellingen',
+      de: 'Reservierungseinstellungen',
+      fr: 'Paramètres de Réservation',
+    },
+    singular: {
+      en: 'Reservation Setting',
+      nl: 'Reserveringsinstelling',
+      de: 'Reservierungseinstellung',
+      fr: 'Paramètre de Réservation',
+    },
   },
   hooks: {
-    beforeValidate: [ensureUniqueReservationSetting], // Ensure no overlapping settings
+    beforeValidate: [ensureUniqueReservationSetting],
   },
   fields: [
-    tenantField, // Ensures reservations are scoped by tenant
-    shopsField, // Link reservations to specific shops
+    tenantField, // Scope by tenant
+    shopsField, // Link to shops
     {
       name: 'reservation_name',
       type: 'text',
@@ -49,14 +63,71 @@ export const ReservationSettings: CollectionConfig = {
       ],
     },
     {
-      name: 'reservation_period',
-      type: 'group',
+      name: 'reservation_periods',
+      type: 'array',
       admin: {
-        description: 'Set the reservation period.',
+        description: 'Define multiple reservation periods.',
       },
       fields: [
         { name: 'start_date', type: 'date', required: true, label: 'Start Date' },
         { name: 'end_date', type: 'date', required: true, label: 'End Date' },
+        { name: 'start_time', type: 'text', required: true, label: 'Start Time', admin: { placeholder: 'e.g., 09:00' } },
+        { name: 'end_time', type: 'text', required: true, label: 'End Time', admin: { placeholder: 'e.g., 22:00' } },
+      ],
+    },
+    {
+      name: 'holidays',
+      type: 'array',
+      admin: {
+        description: 'Define holidays when reservations are not allowed.',
+      },
+      fields: [
+        { name: 'start_date', type: 'date', required: true },
+        { name: 'end_date', type: 'date', required: true },
+        {
+          name: 'reason',
+          type: 'textarea',
+          required: false,
+          admin: {
+            description: 'Optional reason for the holiday period.',
+          },
+        },
+      ],
+    },
+    {
+      name: 'fully_booked_days',
+      type: 'array',
+      admin: {
+        description: 'List of fully booked days.',
+      },
+      fields: [
+        { name: 'date', type: 'date', required: true },
+        {
+          name: 'reason',
+          type: 'textarea',
+          required: false,
+          admin: {
+            description: 'Optional reason for marking the day as fully booked.',
+          },
+        },
+      ],
+    },
+    {
+      name: 'exceptions',
+      type: 'array',
+      admin: {
+        description: 'List of exceptions when reservations are not allowed.',
+      },
+      fields: [
+        { name: 'exception_date', type: 'date', required: true },
+        {
+          name: 'reason',
+          type: 'textarea',
+          required: false,
+          admin: {
+            description: 'Reason for the exception (optional).',
+          },
+        },
       ],
     },
   ],

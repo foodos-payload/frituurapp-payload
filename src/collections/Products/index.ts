@@ -20,6 +20,21 @@ export const Products: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'name',
     },
+    labels: {
+        plural: {
+            en: 'Products',
+            nl: 'Producten',
+            de: 'Produkte',
+            fr: 'Produits',
+        },
+        singular: {
+            en: 'Product',
+            nl: 'Product',
+            de: 'Produkt',
+            fr: 'Produit',
+        },
+    },
+
     fields: [
         tenantField, // Ensure products are scoped by tenant
         shopsField, // Link products to one or multiple shops

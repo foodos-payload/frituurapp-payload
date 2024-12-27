@@ -19,6 +19,21 @@ export const GiftVouchers: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'barcode',
   },
+  labels: {
+    plural: {
+      en: 'Gift Vouchers',
+      nl: 'Cadeaubonnen',
+      de: 'Geschenkgutscheine',
+      fr: 'Bons Cadeaux',
+    },
+    singular: {
+      en: 'Gift Voucher',
+      nl: 'Cadeaubon',
+      de: 'Geschenkgutschein',
+      fr: 'Bon Cadeau',
+    },
+  },
+
   fields: [
     tenantField, // Ensure gift vouchers are scoped by tenant
     shopsField, // Link gift vouchers to specific shops

@@ -18,6 +18,21 @@ export const Pages: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'title',
   },
+  labels: {
+    plural: {
+      en: 'Pages',
+      nl: 'Pagina’s',
+      de: 'Seiten',
+      fr: 'Pages',
+    },
+    singular: {
+      en: 'Page',
+      nl: 'Pagina',
+      de: 'Seite',
+      fr: 'Page',
+    },
+  },
+
   fields: [
     {
       name: 'title',

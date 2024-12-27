@@ -19,6 +19,21 @@ export const Coupons: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'barcode',
   },
+  labels: {
+    plural: {
+      en: 'Coupons',
+      nl: 'Kortingsbonnen',
+      de: 'Gutscheine',
+      fr: 'Coupons',
+    },
+    singular: {
+      en: 'Coupon',
+      nl: 'Kortingsbon',
+      de: 'Gutschein',
+      fr: 'Coupon',
+    },
+  },
+
   fields: [
     tenantField, // Ensure coupons are scoped by tenant
     shopsField, // Link coupons to specific shops

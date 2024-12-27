@@ -26,9 +26,6 @@ import { Coupons } from './collections/Coupons';
 import { GiftVouchers } from './collections/GiftVouchers';
 import { ReservationSettings } from './collections/ReservationSettings';
 import { ReservationEntries } from './collections/ReservationEntries';
-import { ReservationExceptions } from './collections/ReservationExceptions';
-import { FullyBookedDays } from './collections/ReservationFullyBookedDays';
-import { ReservationHolidays } from './collections/ReservationHolidays';
 import { Orders } from './collections/Orders';
 import { Media } from './collections/Media';
 import { nl } from '@payloadcms/translations/languages/nl'
@@ -58,177 +55,150 @@ export default buildConfig({
       ...Tenants,
       admin: {
         ...Tenants.admin,
-        group: 'Shop Management',
+        group: '🏪',
       },
     },
     {
       ...Users,
       admin: {
         ...Users.admin,
-        group: 'Shop Management',
+        group: '🏪',
       },
     },
     {
       ...Shops,
       admin: {
         ...Shops.admin,
-        group: 'Shop Management',
+        group: '🏪',
       },
     },
     {
       ...PaymentMethods,
       admin: {
         ...PaymentMethods.admin,
-        group: 'Shop Settings',
+        group: '🛠️',
       },
     },
     {
       ...FulfillmentMethods,
       admin: {
         ...FulfillmentMethods.admin,
-        group: 'Shop Settings',
+        group: '🛠️',
       },
     },
     {
       ...Timeslots,
       admin: {
         ...Timeslots.admin,
-        group: 'Shop Settings',
+        group: '🛠️',
       },
     },
     {
       ...Tables,
       admin: {
         ...Tables.admin,
-        group: 'Shop Settings',
+        group: '📆🪑', // Reserveringen group
       },
     },
     {
       ...ReservationSettings,
       admin: {
         ...ReservationSettings.admin,
-        group: 'Shop Settings',
-      },
-    },
-    {
-      ...ReservationEntries,
-      admin: {
-        ...ReservationEntries.admin,
-        group: 'Shop Settings',
-      },
-    },
-    {
-      ...ReservationExceptions,
-      admin: {
-        ...ReservationExceptions.admin,
-        group: 'Shop Settings',
-      },
-    },
-    {
-      ...ReservationHolidays,
-      admin: {
-        ...ReservationHolidays.admin,
-        group: 'Shop Settings',
-      },
-    },
-    {
-      ...FullyBookedDays,
-      admin: {
-        ...FullyBookedDays.admin,
-        group: 'Shop Settings',
+        group: '📆🪑', // Reserveringen group
       },
     },
     {
       ...Printers,
       admin: {
         ...Printers.admin,
-        group: 'Shop Settings',
+        group: '🛠️',
       },
     },
     {
       ...Pages,
       admin: {
         ...Pages.admin,
-        group: 'Content Management',
+        group: '🏪',
       },
     },
     {
       ...Media,
       admin: {
         ...Media.admin,
-        group: 'Content Management',
+        group: '🏪',
       },
     },
     {
       ...Customers,
       admin: {
         ...Customers.admin,
-        group: 'Loyalty',
+        group: '🎁',
       },
     },
     {
       ...CustomerCredits,
       admin: {
         ...CustomerCredits.admin,
-        group: 'Loyalty',
+        group: '🎁',
       },
     },
     {
       ...CustomerLoyalty,
       admin: {
         ...CustomerLoyalty.admin,
-        group: 'Loyalty',
+        group: '🎁',
       },
     },
     {
       ...Coupons,
       admin: {
         ...Coupons.admin,
-        group: 'Loyalty',
+        group: '🎁',
       },
     },
     {
       ...GiftVouchers,
       admin: {
         ...GiftVouchers.admin,
-        group: 'Loyalty',
-      },
-    },
-    {
-      ...Categories,
-      admin: {
-        ...Categories.admin,
-        group: 'Products',
-      },
-    },
-    {
-      ...Products,
-      admin: {
-        ...Products.admin,
-        group: 'Products',
-      },
-    },
-    {
-      ...Subproducts,
-      admin: {
-        ...Subproducts.admin,
-        group: 'Products',
-      },
-    },
-    {
-      ...Productpopups,
-      admin: {
-        ...Productpopups.admin,
-        group: 'Products',
+        group: '🎁',
       },
     },
     {
       ...Orders,
       admin: {
         ...Orders.admin,
-        group: 'Orders',
+        group: '🛒',
       },
     },
+    {
+      ...Categories,
+      admin: {
+        ...Categories.admin,
+        group: '🛒',
+      },
+    },
+    {
+      ...Products,
+      admin: {
+        ...Products.admin,
+        group: '🛒',
+      },
+    },
+    {
+      ...Subproducts,
+      admin: {
+        ...Subproducts.admin,
+        group: '🛒',
+      },
+    },
+    {
+      ...Productpopups,
+      admin: {
+        ...Productpopups.admin,
+        group: '🛒',
+      },
+    },
+
   ],
   localization: {
     locales: ['nl', 'en', 'de', 'fr'],

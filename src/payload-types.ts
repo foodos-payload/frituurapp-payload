@@ -19,10 +19,6 @@ export interface Config {
     timeslots: Timeslot;
     tables: Table;
     'reservation-settings': ReservationSetting;
-    'reservation-entries': ReservationEntry;
-    'reservation-exceptions': ReservationException;
-    'reservation-holidays': ReservationHoliday;
-    'fully-booked-days': FullyBookedDay;
     printers: Printer;
     pages: Page;
     media: Media;
@@ -31,11 +27,11 @@ export interface Config {
     'customer-loyalty': CustomerLoyalty;
     coupons: Coupon;
     'gift-vouchers': GiftVoucher;
+    orders: Order;
     categories: Category;
     products: Product;
     subproducts: Subproduct;
     productpopups: Productpopup;
-    orders: Order;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -50,10 +46,6 @@ export interface Config {
     timeslots: TimeslotsSelect<false> | TimeslotsSelect<true>;
     tables: TablesSelect<false> | TablesSelect<true>;
     'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
-    'reservation-entries': ReservationEntriesSelect<false> | ReservationEntriesSelect<true>;
-    'reservation-exceptions': ReservationExceptionsSelect<false> | ReservationExceptionsSelect<true>;
-    'reservation-holidays': ReservationHolidaysSelect<false> | ReservationHolidaysSelect<true>;
-    'fully-booked-days': FullyBookedDaysSelect<false> | FullyBookedDaysSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -62,11 +54,11 @@ export interface Config {
     'customer-loyalty': CustomerLoyaltySelect<false> | CustomerLoyaltySelect<true>;
     coupons: CouponsSelect<false> | CouponsSelect<true>;
     'gift-vouchers': GiftVouchersSelect<false> | GiftVouchersSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
     productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
-    orders: OrdersSelect<false> | OrdersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -406,112 +398,57 @@ export interface ReservationSetting {
     sunday?: boolean | null;
   };
   /**
-   * Set the reservation period.
+   * Define multiple reservation periods.
    */
-  reservation_period: {
-    start_date: string;
-    end_date: string;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-entries".
- */
-export interface ReservationEntry {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
+  reservation_periods?:
+    | {
+        start_date: string;
+        end_date: string;
+        start_time: string;
+        end_time: string;
+        id?: string | null;
+      }[]
+    | null;
   /**
-   * Name of the customer making the reservation.
+   * Define holidays when reservations are not allowed.
    */
-  customer_name: string;
+  holidays?:
+    | {
+        start_date: string;
+        end_date: string;
+        /**
+         * Optional reason for the holiday period.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
-   * Phone number of the customer.
+   * List of fully booked days.
    */
-  customer_phone: string;
+  fully_booked_days?:
+    | {
+        date: string;
+        /**
+         * Optional reason for marking the day as fully booked.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
-   * Date of the reservation.
+   * List of exceptions when reservations are not allowed.
    */
-  date: string;
-  /**
-   * Time of the reservation in HH:mm format.
-   */
-  time: string;
-  /**
-   * Number of persons for the reservation.
-   */
-  persons: number;
-  /**
-   * Assigned table for the reservation.
-   */
-  table: string | Table;
-  /**
-   * Special requests from the customer.
-   */
-  special_requests?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-exceptions".
- */
-export interface ReservationException {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Date when reservations are not allowed.
-   */
-  exception_date: string;
-  /**
-   * Reason for the exception (optional).
-   */
-  reason?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-holidays".
- */
-export interface ReservationHoliday {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Start date of the holiday period.
-   */
-  start_date: string;
-  /**
-   * End date of the holiday period.
-   */
-  end_date: string;
-  /**
-   * Optional reason for the holiday period.
-   */
-  reason: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fully-booked-days".
- */
-export interface FullyBookedDay {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Date when reservations are fully booked.
-   */
-  date: string;
-  /**
-   * Optional reason for marking the day as fully booked.
-   */
-  reason?: string | null;
+  exceptions?:
+    | {
+        exception_date: string;
+        /**
+         * Reason for the exception (optional).
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1229,22 +1166,6 @@ export interface PayloadLockedDocument {
         value: string | ReservationSetting;
       } | null)
     | ({
-        relationTo: 'reservation-entries';
-        value: string | ReservationEntry;
-      } | null)
-    | ({
-        relationTo: 'reservation-exceptions';
-        value: string | ReservationException;
-      } | null)
-    | ({
-        relationTo: 'reservation-holidays';
-        value: string | ReservationHoliday;
-      } | null)
-    | ({
-        relationTo: 'fully-booked-days';
-        value: string | FullyBookedDay;
-      } | null)
-    | ({
         relationTo: 'printers';
         value: string | Printer;
       } | null)
@@ -1277,6 +1198,10 @@ export interface PayloadLockedDocument {
         value: string | GiftVoucher;
       } | null)
     | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
         relationTo: 'categories';
         value: string | Category;
       } | null)
@@ -1291,10 +1216,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'productpopups';
         value: string | Productpopup;
-      } | null)
-    | ({
-        relationTo: 'orders';
-        value: number | Order;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1510,66 +1431,37 @@ export interface ReservationSettingsSelect<T extends boolean = true> {
         saturday?: T;
         sunday?: T;
       };
-  reservation_period?:
+  reservation_periods?:
     | T
     | {
         start_date?: T;
         end_date?: T;
+        start_time?: T;
+        end_time?: T;
+        id?: T;
       };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-entries_select".
- */
-export interface ReservationEntriesSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  customer_name?: T;
-  customer_phone?: T;
-  date?: T;
-  time?: T;
-  persons?: T;
-  table?: T;
-  special_requests?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-exceptions_select".
- */
-export interface ReservationExceptionsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  exception_date?: T;
-  reason?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-holidays_select".
- */
-export interface ReservationHolidaysSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  start_date?: T;
-  end_date?: T;
-  reason?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fully-booked-days_select".
- */
-export interface FullyBookedDaysSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  date?: T;
-  reason?: T;
+  holidays?:
+    | T
+    | {
+        start_date?: T;
+        end_date?: T;
+        reason?: T;
+        id?: T;
+      };
+  fully_booked_days?:
+    | T
+    | {
+        date?: T;
+        reason?: T;
+        id?: T;
+      };
+  exceptions?:
+    | T
+    | {
+        exception_date?: T;
+        reason?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1759,6 +1651,52 @@ export interface GiftVouchersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  id?: T;
+  tempOrdNr?: T;
+  order_type?: T;
+  customer?: T;
+  total_price?: T;
+  order_date?: T;
+  order_time?: T;
+  order_expected_date?: T;
+  order_expected_time?: T;
+  table_number?: T;
+  fulfillment_method?: T;
+  status?: T;
+  order_details?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        price?: T;
+        tax?: T;
+        subproducts?:
+          | T
+          | {
+              subproduct?: T;
+              price?: T;
+              tax?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  payments?:
+    | T
+    | {
+        payment_method?: T;
+        amount?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories_select".
  */
 export interface CategoriesSelect<T extends boolean = true> {
@@ -1849,52 +1787,6 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   maximum_option?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "orders_select".
- */
-export interface OrdersSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  id?: T;
-  tempOrdNr?: T;
-  order_type?: T;
-  customer?: T;
-  total_price?: T;
-  order_date?: T;
-  order_time?: T;
-  order_expected_date?: T;
-  order_expected_time?: T;
-  table_number?: T;
-  fulfillment_method?: T;
-  status?: T;
-  order_details?:
-    | T
-    | {
-        product?: T;
-        quantity?: T;
-        price?: T;
-        tax?: T;
-        subproducts?:
-          | T
-          | {
-              subproduct?: T;
-              price?: T;
-              tax?: T;
-              id?: T;
-            };
-        id?: T;
-      };
-  payments?:
-    | T
-    | {
-        payment_method?: T;
-        amount?: T;
-        id?: T;
-      };
   updatedAt?: T;
   createdAt?: T;
 }

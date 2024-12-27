@@ -19,6 +19,21 @@ export const Productpopups: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'popup_title',
     },
+    labels: {
+        plural: {
+            en: 'Product Popups',
+            nl: 'Productpop-ups',
+            de: 'Produkt-Popups',
+            fr: 'Pop-ups Produit',
+        },
+        singular: {
+            en: 'Product Popup',
+            nl: 'Productpop-up',
+            de: 'Produkt-Popup',
+            fr: 'Pop-up Produit',
+        },
+    },
+
     fields: [
         tenantField, // Ensure productpopups are scoped by tenant
         shopsField, // Link popups to one or multiple shops

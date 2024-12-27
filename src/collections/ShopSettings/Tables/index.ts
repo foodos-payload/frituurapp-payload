@@ -20,6 +20,21 @@ export const Tables: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'table_num',
     },
+    labels: {
+        plural: {
+            en: 'Tables',
+            nl: 'Tafels',
+            de: 'Tische',
+            fr: 'Tables',
+        },
+        singular: {
+            en: 'Table',
+            nl: 'Tafel',
+            de: 'Tisch',
+            fr: 'Table',
+        },
+    },
+
     fields: [
         tenantField, // Ensure tables are scoped by tenant
         shopsField, // Link tables to specific shops

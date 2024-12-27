@@ -19,6 +19,21 @@ export const Timeslots: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'method_id',
     },
+    labels: {
+        plural: {
+            en: 'Timeslots',
+            nl: 'Tijdvakken',
+            de: 'Zeitfenster',
+            fr: 'Plages Horaires',
+        },
+        singular: {
+            en: 'Timeslot',
+            nl: 'Tijdvak',
+            de: 'Zeitfenster',
+            fr: 'Plage Horaire',
+        },
+    },
+
     fields: [
         tenantField, // Ensure timeslots are scoped by tenant
         shopsField, // Link timeslots to specific shops

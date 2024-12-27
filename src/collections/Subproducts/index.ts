@@ -20,6 +20,21 @@ export const Subproducts: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'name',
     },
+    labels: {
+        plural: {
+            en: 'Subproducts',
+            nl: 'Subproducten',
+            de: 'Unterprodukte',
+            fr: 'Sous-produits',
+        },
+        singular: {
+            en: 'Subproduct',
+            nl: 'Subproduct',
+            de: 'Unterprodukt',
+            fr: 'Sous-produit',
+        },
+    },
+
     fields: [
         tenantField, // Ensure subproducts are scoped by tenant
         shopsField, // Link subproducts to one or multiple shops

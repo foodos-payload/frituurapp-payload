@@ -17,6 +17,21 @@ export const Orders: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'id',
   },
+  labels: {
+    plural: {
+      en: 'Orders',
+      nl: 'Bestellingen',
+      de: 'Bestellungen',
+      fr: 'Commandes',
+    },
+    singular: {
+      en: 'Order',
+      nl: 'Bestelling',
+      de: 'Bestellung',
+      fr: 'Commande',
+    },
+  },
+
   hooks: {
     beforeChange: [
       async ({ data, originalDoc, req }) => {

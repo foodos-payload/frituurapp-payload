@@ -19,6 +19,21 @@ export const Categories: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'name',
+
+    },
+    labels: {
+        plural: {
+            en: 'Categories',
+            nl: 'Categorieën',
+            de: 'Kategorien',
+            fr: 'Catégories',
+        },
+        singular: {
+            en: 'Category',
+            nl: 'Categorie',
+            de: 'Kategorie',
+            fr: 'Catégorie',
+        },
     },
     fields: [
         tenantField, // Ensure categories are scoped by tenant
