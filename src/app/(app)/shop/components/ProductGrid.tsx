@@ -79,11 +79,10 @@ export function ProductGrid({ categorizedProducts }: ProductGridProps) {
             <li key={category.slug}>
               <button
                 onClick={() => handleCategoryClick(category.slug)}
-                className={`text-md px-4 py-2 w-full text-left rounded-lg ${
-                  activeCategory === category.slug
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700'
-                } hover:bg-blue-400 hover:text-white transition`}
+                className={`text-md px-4 py-2 w-full text-left rounded-lg ${activeCategory === category.slug
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-700'
+                  } hover:bg-blue-400 hover:text-white transition`}
               >
                 {category.name}
               </button>
@@ -98,7 +97,11 @@ export function ProductGrid({ categorizedProducts }: ProductGridProps) {
           <div
             key={category.id}
             id={category.slug}
-            ref={(el) => el && categoryRefs.current.set(category.slug, el)}
+            ref={(el) => {
+              if (el) {
+                categoryRefs.current.set(category.slug, el);
+              }
+            }}
             className="mt-8"
           >
             <h2 className="text-xl font-bold mb-4">{category.name}</h2>

@@ -1,51 +1,48 @@
 // File: /app/(app)/bestellen/page.tsx
-
 import React from 'react'
 import { headers } from 'next/headers'
 import BestellenLayout from './components/BestellenLayout'
 
-export const dynamic = 'force-dynamic' // we want fresh data each time
+export const dynamic = 'force-dynamic'
 
-// Next 13 allows you to define the server component signature with `searchParams`
-export default async function BestellenPage({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string }
-}) {
-  // 1) Extract host from headers
-  const headersList = headers()
-  const fullHost = headersList.get('host') || ''
-  const hostSlug = fullHost.split('.')[0]
+// We won’t define a strict type for the route’s context, to avoid Next 15.1 conflicts.
+export default async function BestellenPage(context: any) {
+    // If context.searchParams exists, store it. Otherwise, empty object.
+    const searchParams = context?.searchParams || {}
 
-  // 2) If there's a ?lang=XX, pass it along to the API
-  const langQuery = searchParams?.lang || ''
+    // 1) Because `headers()` returns a Promise in Next 15.1, we must await it:
+    const requestHeaders = await headers()
+    const fullHost = requestHeaders.get('host') || ''
+    const hostSlug = fullHost.split('.')[0] || 'defaultShop'
 
-  // 3) Call your route
-  const res = await fetch(
-    `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${hostSlug}&lang=${langQuery}`,
-    {
-      cache: 'no-store',
+    // 2) If we want language from the query string: ?lang=en
+    const userLangQuery = searchParams.lang ?? 'nl'
+
+    // 3) Build the API URL for your route
+    const apiUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${hostSlug}&lang=${userLangQuery}`
+    console.log('Fetching from:', apiUrl)
+
+    // 4) Fetch from your route
+    const res = await fetch(apiUrl, { cache: 'no-store' })
+    if (!res.ok) {
+        return (
+            <div style={{ padding: '1rem' }}>
+                <h2>Could not load products for host: {hostSlug}</h2>
+            </div>
+        )
     }
-  )
 
-  if (!res.ok) {
+    // 5) Parse JSON
+    const data = await res.json()
+    const categorizedProducts = data?.categorizedProducts || []
+    const userLang = data?.userLang || 'nl'
+
+    // 6) Render your layout
     return (
-      <div style={{ padding: '1rem' }}>
-        <h2>Could not load products for host: {hostSlug}</h2>
-      </div>
+        <BestellenLayout
+            shopSlug={hostSlug}
+            categorizedProducts={categorizedProducts}
+            userLang={userLang}
+        />
     )
-  }
-
-  const data = await res.json()
-  // data = { categorizedProducts, userLang } from our route
-  const categorizedProducts = data?.categorizedProducts || []
-
-  // 4) Render your layout, passing all fields
-  return (
-    <BestellenLayout
-      shopSlug={hostSlug}
-      categorizedProducts={categorizedProducts}
-      userLang={data.userLang || 'nl'} // if you want to see what the route chose
-    />
-  )
 }
