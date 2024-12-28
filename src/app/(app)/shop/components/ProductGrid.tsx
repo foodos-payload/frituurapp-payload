@@ -32,7 +32,6 @@ export function ProductGrid({ products }: ProductGridProps) {
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => {
-          console.log(product, 'product')
           return (
             <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <CardHeader className="p-0">
