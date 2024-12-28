@@ -48,12 +48,13 @@ export async function GET(request: NextRequest) {
             collection: 'categories',
             where: { shops: { equals: shop.id } },
             depth: 1,
+            limit: 50,
         })
 
         // We store all possible language fields (assuming your categories also have them).
         const categories = categoriesResult.docs.map((cat: any) => ({
             id: cat.id,
-            slug: cat.slug,
+            slug: cat.name_nl,
             // If you have name_en, name_de, name_fr, etc. use them
             name_nl: cat.name_nl,
             name_en: cat.name_en,
@@ -67,6 +68,7 @@ export async function GET(request: NextRequest) {
             collection: 'products',
             where: { shops: { equals: shop.id } },
             depth: 2,
+            limit: 500,
         })
 
         // 6) Organize products by category
