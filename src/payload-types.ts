@@ -170,13 +170,9 @@ export interface User {
 export interface Shop {
   id: string;
   tenant: string | Tenant;
-  /**
-   * The name of the shop.
-   */
+  domain: string;
   name: string;
-  /**
-   * The address of the shop.
-   */
+  slug?: string | null;
   address?: string | null;
   /**
    * The phone number of the shop.
@@ -1404,7 +1400,9 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface ShopsSelect<T extends boolean = true> {
   tenant?: T;
+  domain?: T;
   name?: T;
+  slug?: T;
   address?: T;
   phone?: T;
   company_details?:
