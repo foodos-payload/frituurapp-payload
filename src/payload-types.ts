@@ -171,8 +171,14 @@ export interface Shop {
   id: string;
   tenant: string | Tenant;
   domain: string;
+  /**
+   * The name of the shop.
+   */
   name: string;
   slug?: string | null;
+  /**
+   * The address of the shop.
+   */
   address?: string | null;
   /**
    * The phone number of the shop.

@@ -1,7 +1,7 @@
 import { toast } from '@payloadcms/ui';
 import type { FieldHook } from 'payload';
 
-export const ensureUniqueName: FieldHook = async ({ data, req, value }) => {
+export const ensureUniqueName: FieldHook = async ({ data, req, value, originalDoc }) => {
   const tenantID =
     typeof data?.tenant === 'object' ? data.tenant.id : data?.tenant;
 
@@ -22,11 +22,14 @@ export const ensureUniqueName: FieldHook = async ({ data, req, value }) => {
     },
   });
 
-  if (existingShop.totalDocs > 0) {
-    
+  // Exclude the current shop being updated
+  const isDuplicate = existingShop.docs.some(
+    (shop) => shop.id !== originalDoc?.id
+  );
+
+  if (isDuplicate) {
     throw new Error(`A shop with the name "${value}" already exists for this tenant.`);
   }
 
   return value;
 };
-

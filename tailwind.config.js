@@ -17,6 +17,8 @@ module.exports = {
     },
     extend: {
       colors: {
+        'product-cards': '#f8f9fa', // Example custom color
+        'color-brand-primary': '#007bff',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -73,5 +75,5 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/line-clamp')],
 }
