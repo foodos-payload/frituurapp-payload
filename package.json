@@ -46,7 +46,7 @@
     "clsx": "^2.0.0",
     "tailwind-merge": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",
-    "react-icons": "^5.4.0",
+    "react-icons": "^5.4.0"
   },
   "devDependencies": {
     "@payloadcms/graphql": "^3.11.0",
