@@ -4,6 +4,7 @@ import { baseListFilter } from './access/baseListFilter';
 import { canMutateShop } from './access/byTenant';
 import { filterByShopRead } from './access/byShop';
 import { ensureUniqueName } from './hooks/ensureUniqueName';
+import { slugify } from './hooks/slugify';
 
 export const Shops: CollectionConfig = {
   slug: 'shops',
@@ -16,7 +17,6 @@ export const Shops: CollectionConfig = {
   admin: {
     baseListFilter,
     useAsTitle: 'name',
-    // Redirect to the list of shops after create/update
   },
   hooks: {
     afterChange: [
@@ -71,12 +71,25 @@ export const Shops: CollectionConfig = {
   fields: [
     tenantField, // Ensures shops are scoped to a tenant
     {
+      name: 'domain',
+      type: 'text',
+      required: true,
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,
       hooks: {
         beforeValidate: [ensureUniqueName],
       },
+    },
+    {
+      name: 'slug',
+      type: 'text',
+      unique: true,
+      hooks: {
+        beforeChange: [slugify],
+      }
     },
     {
       name: 'address',

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import './index.scss'
+import './globals.css'
 
 const baseClass = 'multi-tenant'
 

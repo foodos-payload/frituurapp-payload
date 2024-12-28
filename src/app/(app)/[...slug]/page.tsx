@@ -19,6 +19,12 @@ export default async function Page({
   // 1. Await the params
   const { slug } = await promiseParams
 
+  // Check if this is the shop route
+  if (slug?.[0] === 'shop') {
+    // Let the shop page handle its own rendering
+    return null
+  }
+
   // 2. Await the headers (Edge runtime requires this)
   const resolvedHeaders = await getHeaders()
   const host = resolvedHeaders.get('host') // e.g. "abc.localhost:3000"

@@ -164,7 +164,9 @@ export interface User {
 export interface Shop {
   id: string;
   tenant: string | Tenant;
+  domain: string;
   name: string;
+  slug?: string | null;
   address?: string | null;
   phone?: string | null;
   /**
@@ -1386,7 +1388,9 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface ShopsSelect<T extends boolean = true> {
   tenant?: T;
+  domain?: T;
   name?: T;
+  slug?: T;
   address?: T;
   phone?: T;
   company_details?:
