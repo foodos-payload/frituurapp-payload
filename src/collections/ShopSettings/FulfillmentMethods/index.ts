@@ -19,12 +19,33 @@ export const FulfillmentMethods: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'method_type',
     },
+    labels: {
+        plural: {
+            en: 'Fulfillment Methods',
+            nl: 'Afhandelingsmethoden',
+            de: 'Erfüllungsmethoden',
+            fr: 'Méthodes de Réalisation',
+        },
+        singular: {
+            en: 'Fulfillment Method',
+            nl: 'Afhandelingsmethode',
+            de: 'Erfüllungsmethode',
+            fr: 'Méthode de Réalisation',
+        },
+    },
+
     fields: [
         tenantField, // Ensure fulfillment methods are scoped by tenant
         shopsField, // Link fulfillment methods to specific shops
         {
             name: 'method_type',
             type: 'select',
+            label: {
+                en: 'Fulfillment Type',
+                nl: 'Afhandelingsmethode',
+                de: 'Erfüllungstyp',
+                fr: 'Type de Réalisation',
+            },
             required: true,
             options: [
                 { label: 'Delivery', value: 'delivery' },
@@ -32,64 +53,146 @@ export const FulfillmentMethods: CollectionConfig = {
                 { label: 'Dine-in', value: 'dine_in' },
             ],
             admin: {
-                description: 'Select the type of fulfillment method.',
+                description: {
+                    en: 'Select the type of fulfillment method.',
+                    nl: 'Selecteer het type afhandelingsmethode.',
+                    de: 'Wählen Sie den Typ der Erfüllungsmethode aus.',
+                    fr: 'Sélectionnez le type de méthode de réalisation.',
+                },
             },
         },
         {
             name: 'delivery_fee',
             type: 'number',
+            label: {
+                en: 'Delivery Fee',
+                nl: 'Bezorgkosten',
+                de: 'Liefergebühr',
+                fr: 'Frais de Livraison',
+            },
             defaultValue: 0,
             admin: {
                 condition: (data) => data.method_type === 'delivery',
-                description: 'Specify the base delivery fee, if applicable.',
+                description: {
+                    en: 'Specify the base delivery fee, if applicable.',
+                    nl: 'Specificeer de basisbezorgkosten, indien van toepassing.',
+                    de: 'Geben Sie die Basisliefergebühr an, falls zutreffend.',
+                    fr: 'Spécifiez les frais de livraison de base, le cas échéant.',
+                },
             },
         },
         {
             name: 'minimum_order',
             type: 'number',
+            label: {
+                en: 'Minimum Order Amount',
+                nl: 'Minimaal Bestelbedrag',
+                de: 'Mindestbestellbetrag',
+                fr: 'Montant Minimum de Commande',
+            },
             defaultValue: 0,
             admin: {
-                description: 'Specify the minimum order amount for this fulfillment method.',
+                description: {
+                    en: 'Specify the minimum order amount for this fulfillment method.',
+                    nl: 'Specificeer het minimale bestelbedrag voor deze afhandelingsmethode.',
+                    de: 'Geben Sie den Mindestbestellbetrag für diese Erfüllungsmethode an.',
+                    fr: 'Spécifiez le montant minimum de commande pour cette méthode de réalisation.',
+                },
             },
         },
         {
             name: 'extra_cost_per_km',
             type: 'number',
+            label: {
+                en: 'Extra Cost per Kilometer',
+                nl: 'Extra Kosten per Kilometer',
+                de: 'Zusätzliche Kosten pro Kilometer',
+                fr: 'Coût Supplémentaire par Kilomètre',
+            },
             defaultValue: 0,
             admin: {
                 condition: (data) => data.method_type === 'delivery',
-                description: 'Specify the extra cost per kilometer for delivery.',
+                description: {
+                    en: 'Specify the extra cost per kilometer for delivery.',
+                    nl: 'Specificeer de extra kosten per kilometer voor bezorging.',
+                    de: 'Geben Sie die zusätzlichen Kosten pro Kilometer für die Lieferung an.',
+                    fr: 'Spécifiez le coût supplémentaire par kilomètre pour la livraison.',
+                },
             },
         },
         {
             name: 'enabled',
             type: 'checkbox',
+            label: {
+                en: 'Enabled',
+                nl: 'Ingeschakeld',
+                de: 'Aktiviert',
+                fr: 'Activé',
+            },
             defaultValue: true,
             admin: {
-                description: 'Enable or disable this fulfillment method.',
+                description: {
+                    en: 'Enable or disable this fulfillment method.',
+                    nl: 'Schakel deze afhandelingsmethode in of uit.',
+                    de: 'Aktivieren oder deaktivieren Sie diese Erfüllungsmethode.',
+                    fr: 'Activez ou désactivez cette méthode de réalisation.',
+                },
             },
         },
         {
             name: 'settings',
             type: 'group',
+            label: {
+                en: 'Settings',
+                nl: 'Instellingen',
+                de: 'Einstellungen',
+                fr: 'Paramètres',
+            },
             admin: {
-                description: 'Additional settings specific to this fulfillment method.',
+                description: {
+                    en: 'Additional settings specific to this fulfillment method.',
+                    nl: 'Aanvullende instellingen specifiek voor deze afhandelingsmethode.',
+                    de: 'Zusätzliche Einstellungen für diese Erfüllungsmethode.',
+                    fr: 'Paramètres supplémentaires spécifiques à cette méthode de réalisation.',
+                },
             },
             fields: [
                 {
                     name: 'delivery_radius',
                     type: 'number',
+                    label: {
+                        en: 'Delivery Radius',
+                        nl: 'Bezorgradius',
+                        de: 'Lieferradius',
+                        fr: 'Rayon de Livraison',
+                    },
                     admin: {
                         condition: (data) => data.method_type === 'delivery',
-                        description: 'Specify the delivery radius in kilometers.',
+                        description: {
+                            en: 'Specify the delivery radius in kilometers.',
+                            nl: 'Specificeer de bezorgradius in kilometers.',
+                            de: 'Geben Sie den Lieferradius in Kilometern an.',
+                            fr: 'Spécifiez le rayon de livraison en kilomètres.',
+                        },
                     },
                 },
                 {
                     name: 'pickup_instructions',
                     type: 'textarea',
+                    label: {
+                        en: 'Pickup Instructions',
+                        nl: 'Ophaalinstructies',
+                        de: 'Abholanweisungen',
+                        fr: 'Instructions de Ramassage',
+                    },
                     admin: {
                         condition: (data) => data.method_type === 'takeaway',
-                        description: 'Add specific instructions for takeaway orders.',
+                        description: {
+                            en: 'Add specific instructions for takeaway orders.',
+                            nl: 'Voeg specifieke instructies toe voor afhaalbestellingen.',
+                            de: 'Fügen Sie spezifische Anweisungen für Mitnahmebestellungen hinzu.',
+                            fr: 'Ajoutez des instructions spécifiques pour les commandes à emporter.',
+                        },
                     },
                 },
             ],

@@ -26,7 +26,7 @@ export const ensureUniqueNamePerShop: FieldHook = async ({ data, req, siblingDat
         collection: 'products',
         where: {
             shops: { in: shopIDs },
-            name: { equals: value },
+            name_nl: { equals: value },
         },
     });
 
@@ -40,7 +40,7 @@ export const ensureUniqueNamePerShop: FieldHook = async ({ data, req, siblingDat
                 [
                     {
                         message: `A product with the name "${value}" already exists in one or more selected shops.`,
-                        path: 'name',
+                        path: 'name_nl',
                     },
                 ]
         });

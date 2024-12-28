@@ -19,92 +19,190 @@ export const Coupons: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'barcode',
   },
+  labels: {
+    plural: {
+      en: 'Coupons',
+      nl: 'Kortingsbonnen',
+      de: 'Gutscheine',
+      fr: 'Coupons',
+    },
+    singular: {
+      en: 'Coupon',
+      nl: 'Kortingsbon',
+      de: 'Gutschein',
+      fr: 'Coupon',
+    },
+  },
   fields: [
     tenantField, // Ensure coupons are scoped by tenant
     shopsField, // Link coupons to specific shops
     {
       name: 'barcode',
       type: 'text',
+      label: {
+        en: 'Barcode',
+        nl: 'Streepjescode',
+        de: 'Strichcode',
+        fr: 'Code-barres',
+      },
       required: true,
       unique: true, // Ensure barcode uniqueness across shops
       hooks: {
         beforeValidate: [ensureUniqueBarcodePerShop],
       },
       admin: {
-        description: 'Unique barcode for the coupon.',
+        description: {
+          en: 'Unique barcode for the coupon.',
+          nl: 'Unieke streepjescode voor de kortingsbon.',
+          de: 'Einzigartiger Strichcode für den Gutschein.',
+          fr: 'Code-barres unique pour le coupon.',
+        },
+        placeholder: {
+          en: 'e.g., 12345ABC',
+          nl: 'bijv., 12345ABC',
+          de: 'z.B., 12345ABC',
+          fr: 'p.ex., 12345ABC',
+        },
       },
     },
     {
       name: 'value',
       type: 'number',
+      label: {
+        en: 'Value',
+        nl: 'Waarde',
+        de: 'Wert',
+        fr: 'Valeur',
+      },
       required: true,
       admin: {
-        description: 'Value of the coupon (percentage or fixed amount).',
+        description: {
+          en: 'Value of the coupon (percentage or fixed amount).',
+          nl: 'Waarde van de kortingsbon (percentage of vast bedrag).',
+          de: 'Wert des Gutscheins (Prozentsatz oder fester Betrag).',
+          fr: 'Valeur du coupon (pourcentage ou montant fixe).',
+        },
       },
     },
     {
       name: 'value_type',
       type: 'select',
+      label: {
+        en: 'Value Type',
+        nl: 'Type Waarde',
+        de: 'Werttyp',
+        fr: 'Type de Valeur',
+      },
       options: [
         { label: 'Percentage', value: 'percentage' },
         { label: 'Fixed Amount', value: 'fixed' },
       ],
       required: true,
       admin: {
-        description: 'Type of value for the coupon.',
+        description: {
+          en: 'Type of value for the coupon.',
+          nl: 'Type waarde voor de kortingsbon.',
+          de: 'Werttyp für den Gutschein.',
+          fr: 'Type de valeur pour le coupon.',
+        },
       },
     },
     {
       name: 'valid_from',
       type: 'date',
+      label: {
+        en: 'Valid From',
+        nl: 'Geldig Vanaf',
+        de: 'Gültig Ab',
+        fr: 'Valide À Partir de',
+      },
       required: true,
       admin: {
-        description: 'Start date for the coupon validity.',
+        description: {
+          en: 'Start date for the coupon validity.',
+          nl: 'Startdatum voor de geldigheid van de kortingsbon.',
+          de: 'Startdatum für die Gültigkeit des Gutscheins.',
+          fr: 'Date de début de validité du coupon.',
+        },
       },
     },
     {
       name: 'valid_until',
       type: 'date',
+      label: {
+        en: 'Valid Until',
+        nl: 'Geldig Tot',
+        de: 'Gültig Bis',
+        fr: 'Valide Jusqu\'à',
+      },
       required: true,
       admin: {
-        description: 'End date for the coupon validity.',
+        description: {
+          en: 'End date for the coupon validity.',
+          nl: 'Einddatum voor de geldigheid van de kortingsbon.',
+          de: 'Enddatum für die Gültigkeit des Gutscheins.',
+          fr: 'Date de fin de validité du coupon.',
+        },
       },
     },
     {
       name: 'max_uses',
       type: 'number',
+      label: {
+        en: 'Maximum Uses',
+        nl: 'Maximaal Gebruik',
+        de: 'Maximale Nutzung',
+        fr: 'Utilisations Maximales',
+      },
       required: false,
       admin: {
-        description: 'Maximum number of times the coupon can be used. Leave empty for unlimited.',
+        description: {
+          en: 'Maximum number of times the coupon can be used. Leave empty for unlimited.',
+          nl: 'Maximaal aantal keren dat de kortingsbon kan worden gebruikt. Laat leeg voor onbeperkt.',
+          de: 'Maximale Anzahl der Nutzungen des Gutscheins. Leer lassen für unbegrenzt.',
+          fr: 'Nombre maximal d\'utilisations du coupon. Laissez vide pour illimité.',
+        },
       },
     },
     {
       name: 'uses',
       type: 'number',
       defaultValue: 0,
+      label: {
+        en: 'Uses',
+        nl: 'Gebruiken',
+        de: 'Verwendungen',
+        fr: 'Utilisations',
+      },
       admin: {
         readOnly: true,
-        description: 'Number of times this coupon has been used.',
+        description: {
+          en: 'Number of times this coupon has been used.',
+          nl: 'Aantal keren dat deze kortingsbon is gebruikt.',
+          de: 'Anzahl der Nutzungen dieses Gutscheins.',
+          fr: 'Nombre de fois que ce coupon a été utilisé.',
+        },
       },
     },
     {
       name: 'used',
       type: 'checkbox',
       defaultValue: false,
+      label: {
+        en: 'Used',
+        nl: 'Gebruikt',
+        de: 'Verwendet',
+        fr: 'Utilisé',
+      },
       admin: {
-        description: 'Mark if the coupon has already been fully used.',
+        description: {
+          en: 'Mark if the coupon has already been fully used.',
+          nl: 'Markeer als de kortingsbon al volledig is gebruikt.',
+          de: 'Markieren Sie, ob der Gutschein bereits vollständig verwendet wurde.',
+          fr: 'Marquez si le coupon a déjà été entièrement utilisé.',
+        },
         condition: (data) => data?.max_uses > 0 && data?.uses >= data?.max_uses,
       },
     },
   ],
-  hooks: {
-    beforeChange: [
-      async ({ data, originalDoc }) => {
-        // Automatically mark the coupon as used if it reaches its max uses
-        if (data?.max_uses && originalDoc?.uses >= data.max_uses) {
-          data.used = true;
-        }
-      },
-    ],
-  },
 };

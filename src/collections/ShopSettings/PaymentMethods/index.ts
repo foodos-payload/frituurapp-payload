@@ -20,12 +20,33 @@ export const PaymentMethods: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'provider',
     },
+    labels: {
+        plural: {
+            en: 'Payment Methods',
+            nl: 'Betaalmethoden',
+            de: 'Zahlungsmethoden',
+            fr: 'Méthodes de Paiement',
+        },
+        singular: {
+            en: 'Payment Method',
+            nl: 'Betaalmethode',
+            de: 'Zahlungsmethode',
+            fr: 'Méthode de Paiement',
+        },
+    },
+
     fields: [
         tenantField, // Ensure payment methods are scoped by tenant
         shopsField, // Link payment methods to one or multiple shops
         {
             name: 'provider',
             type: 'select',
+            label: {
+                en: 'Payment Provider',
+                nl: 'Betalingsprovider',
+                de: 'Zahlungsanbieter',
+                fr: 'Fournisseur de Paiement',
+            },
             required: true,
             options: [
                 { label: 'MultiSafePay', value: 'multisafepay' },
@@ -35,42 +56,97 @@ export const PaymentMethods: CollectionConfig = {
                 beforeValidate: [ensureUniqueProviderPerShop], // Add uniqueness validation here
             },
             admin: {
-                description: 'Select a payment provider.',
+                description: {
+                    en: 'Select a payment provider.',
+                    nl: 'Selecteer een betalingsprovider.',
+                    de: 'Wählen Sie einen Zahlungsanbieter aus.',
+                    fr: 'Sélectionnez un fournisseur de paiement.',
+                },
             },
         },
         {
             name: 'multisafepay_settings',
             type: 'group',
+            label: {
+                en: 'MultiSafePay Settings',
+                nl: 'MultiSafePay Instellingen',
+                de: 'MultiSafePay-Einstellungen',
+                fr: 'Paramètres MultiSafePay',
+            },
             admin: {
                 condition: (data) => data.provider === 'multisafepay', // Show only if MultiSafePay is selected
-                description: 'Settings for MultiSafePay.',
+                description: {
+                    en: 'Settings for MultiSafePay.',
+                    nl: 'Instellingen voor MultiSafePay.',
+                    de: 'Einstellungen für MultiSafePay.',
+                    fr: 'Paramètres pour MultiSafePay.',
+                },
             },
             fields: [
                 {
                     name: 'enable_test_mode',
                     type: 'checkbox',
+                    label: {
+                        en: 'Enable Test Mode',
+                        nl: 'Testmodus Inschakelen',
+                        de: 'Testmodus Aktivieren',
+                        fr: 'Activer le Mode Test',
+                    },
                     defaultValue: false,
                     admin: {
-                        description: 'Enable test mode for MultiSafePay.',
+                        description: {
+                            en: 'Enable test mode for MultiSafePay.',
+                            nl: 'Schakel de testmodus in voor MultiSafePay.',
+                            de: 'Aktivieren Sie den Testmodus für MultiSafePay.',
+                            fr: 'Activez le mode test pour MultiSafePay.',
+                        },
                     },
                 },
                 {
                     name: 'live_api_key',
                     type: 'text',
+                    label: {
+                        en: 'Live API Key',
+                        nl: 'Live API-sleutel',
+                        de: 'Live-API-Schlüssel',
+                        fr: 'Clé API en Direct',
+                    },
                     admin: {
-                        description: 'Live API Key for MultiSafePay.',
+                        description: {
+                            en: 'Live API Key for MultiSafePay.',
+                            nl: 'Live API-sleutel voor MultiSafePay.',
+                            de: 'Live-API-Schlüssel für MultiSafePay.',
+                            fr: 'Clé API en direct pour MultiSafePay.',
+                        },
                     },
                 },
                 {
                     name: 'test_api_key',
                     type: 'text',
+                    label: {
+                        en: 'Test API Key',
+                        nl: 'Test API-sleutel',
+                        de: 'Test-API-Schlüssel',
+                        fr: 'Clé API de Test',
+                    },
                     admin: {
-                        description: 'Test API Key for MultiSafePay.',
+                        description: {
+                            en: 'Test API Key for MultiSafePay.',
+                            nl: 'Test API-sleutel voor MultiSafePay.',
+                            de: 'Test-API-Schlüssel für MultiSafePay.',
+                            fr: 'Clé API de test pour MultiSafePay.',
+                        },
                     },
                 },
                 {
                     name: 'methods',
                     type: 'select',
+                    label: {
+                        en: 'Payment Methods',
+                        nl: 'Betalingsmethoden',
+                        de: 'Zahlungsmethoden',
+                        fr: 'Méthodes de Paiement',
+                    },
                     hasMany: true,
                     options: [
                         { label: 'Bancontact', value: 'MSP_Bancontact' },
@@ -79,7 +155,12 @@ export const PaymentMethods: CollectionConfig = {
                         { label: 'iDeal', value: 'MSP_iDeal' },
                     ],
                     admin: {
-                        description: 'Select the payment methods to enable for MultiSafePay.',
+                        description: {
+                            en: 'Select the payment methods to enable for MultiSafePay.',
+                            nl: 'Selecteer de betalingsmethoden om in te schakelen voor MultiSafePay.',
+                            de: 'Wählen Sie die Zahlungsmethoden aus, die für MultiSafePay aktiviert werden sollen.',
+                            fr: 'Sélectionnez les méthodes de paiement à activer pour MultiSafePay.',
+                        },
                     },
                 },
             ],
@@ -87,9 +168,20 @@ export const PaymentMethods: CollectionConfig = {
         {
             name: 'enabled',
             type: 'checkbox',
+            label: {
+                en: 'Enabled',
+                nl: 'Ingeschakeld',
+                de: 'Aktiviert',
+                fr: 'Activé',
+            },
             defaultValue: true,
             admin: {
-                description: 'Enable or disable this payment method.',
+                description: {
+                    en: 'Enable or disable this payment method.',
+                    nl: 'Schakel deze betalingsmethode in of uit.',
+                    de: 'Aktivieren oder deaktivieren Sie diese Zahlungsmethode.',
+                    fr: 'Activez ou désactivez cette méthode de paiement.',
+                },
             },
         },
     ],

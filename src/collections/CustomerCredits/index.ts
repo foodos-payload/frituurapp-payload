@@ -1,5 +1,4 @@
 import type { CollectionConfig } from 'payload';
-
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
@@ -18,6 +17,20 @@ export const CustomerCredits: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'customerid', // Display customer ID in admin view
   },
+  labels: {
+    plural: {
+      en: 'Customer Credits',
+      nl: 'Klantenpunten',
+      de: 'Kundenkredite',
+      fr: 'Crédits Client',
+    },
+    singular: {
+      en: 'Customer Credit',
+      nl: 'Klantenpunten',
+      de: 'Kundenkredit',
+      fr: 'Crédit Client',
+    },
+  },
   fields: [
     tenantField, // Ensure customer credits are scoped by tenant
     shopsField, // Link customer credits to specific shops
@@ -26,32 +39,76 @@ export const CustomerCredits: CollectionConfig = {
       type: 'relationship',
       relationTo: 'customers',
       required: true,
+      label: {
+        en: 'Customer',
+        nl: 'Klant',
+        de: 'Kunde',
+        fr: 'Client',
+      },
       admin: {
-        description: 'The customer this credit is assigned to.',
+        description: {
+          en: 'The customer this credit is assigned to.',
+          nl: 'De klant aan wie dit krediet is toegewezen.',
+          de: 'Der Kunde, dem dieses Guthaben zugewiesen ist.',
+          fr: 'Le client à qui ce crédit est attribué.',
+        },
       },
     },
     {
       name: 'value',
       type: 'number',
       required: true,
+      label: {
+        en: 'Credit Value',
+        nl: 'Kredietwaarde',
+        de: 'Kreditwert',
+        fr: 'Valeur du Crédit',
+      },
       admin: {
-        description: 'Credit value available for the customer.',
+        description: {
+          en: 'Credit value available for the customer.',
+          nl: 'Beschikbare kredietwaarde voor de klant.',
+          de: 'Verfügbarer Kreditwert für den Kunden.',
+          fr: 'Valeur du crédit disponible pour le client.',
+        },
       },
     },
     {
       name: 'tagid',
       type: 'text',
       required: false,
+      label: {
+        en: 'Tag ID',
+        nl: 'Tag-ID',
+        de: 'Tag-ID',
+        fr: 'ID de Tag',
+      },
       admin: {
-        description: 'Optional tag identifier for this credit.',
+        description: {
+          en: 'Optional tag identifier for this credit.',
+          nl: 'Optionele tag-ID voor dit krediet.',
+          de: 'Optionale Tag-ID für dieses Guthaben.',
+          fr: 'Identifiant de tag facultatif pour ce crédit.',
+        },
       },
     },
     {
       name: 'tagtype',
       type: 'text',
       required: false,
+      label: {
+        en: 'Tag Type',
+        nl: 'Tagtype',
+        de: 'Tag-Typ',
+        fr: 'Type de Tag',
+      },
       admin: {
-        description: 'Optional tag type for this credit.',
+        description: {
+          en: 'Optional tag type for this credit.',
+          nl: 'Optioneel tagtype voor dit krediet.',
+          de: 'Optionale Tag-Art für dieses Guthaben.',
+          fr: 'Type de tag facultatif pour ce crédit.',
+        },
       },
     },
     {
@@ -59,8 +116,19 @@ export const CustomerCredits: CollectionConfig = {
       type: 'relationship',
       relationTo: 'products',
       required: false,
+      label: {
+        en: 'Associated Product',
+        nl: 'Geassocieerd Product',
+        de: 'Zugehöriges Produkt',
+        fr: 'Produit Associé',
+      },
       admin: {
-        description: 'Product associated with this credit (if applicable).',
+        description: {
+          en: 'Product associated with this credit (if applicable).',
+          nl: 'Product geassocieerd met dit krediet (indien van toepassing).',
+          de: 'Produkt, das mit diesem Guthaben verbunden ist (falls zutreffend).',
+          fr: 'Produit associé à ce crédit (le cas échéant).',
+        },
       },
     },
     {
@@ -68,8 +136,19 @@ export const CustomerCredits: CollectionConfig = {
       type: 'relationship',
       relationTo: 'categories',
       required: false,
+      label: {
+        en: 'Associated Category',
+        nl: 'Geassocieerde Categorie',
+        de: 'Zugehörige Kategorie',
+        fr: 'Catégorie Associée',
+      },
       admin: {
-        description: 'Category associated with this credit (if applicable).',
+        description: {
+          en: 'Category associated with this credit (if applicable).',
+          nl: 'Categorie geassocieerd met dit krediet (indien van toepassing).',
+          de: 'Kategorie, die mit diesem Guthaben verbunden ist (falls zutreffend).',
+          fr: 'Catégorie associée à ce crédit (le cas échéant).',
+        },
       },
     },
     {
@@ -77,8 +156,19 @@ export const CustomerCredits: CollectionConfig = {
       type: 'relationship',
       relationTo: 'payment-methods',
       required: false,
+      label: {
+        en: 'Payment Method',
+        nl: 'Betalingsmethode',
+        de: 'Zahlungsmethode',
+        fr: 'Méthode de Paiement',
+      },
       admin: {
-        description: 'Payment method associated with this credit.',
+        description: {
+          en: 'Payment method associated with this credit.',
+          nl: 'Betalingsmethode geassocieerd met dit krediet.',
+          de: 'Zahlungsmethode, die mit diesem Guthaben verbunden ist.',
+          fr: 'Méthode de paiement associée à ce crédit.',
+        },
       },
     },
   ],

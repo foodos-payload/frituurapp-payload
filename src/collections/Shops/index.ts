@@ -18,6 +18,21 @@ export const Shops: CollectionConfig = {
     baseListFilter,
     useAsTitle: 'name',
   },
+  labels: {
+    plural: {
+      en: 'Shops',
+      nl: 'Winkels',
+      de: 'Geschäfte',
+      fr: 'Magasins',
+    },
+    singular: {
+      en: 'Shop',
+      nl: 'Winkel',
+      de: 'Geschäft',
+      fr: 'Magasin',
+    },
+  },
+
   hooks: {
     afterChange: [
       async ({ req, operation, doc }) => {
@@ -78,6 +93,20 @@ export const Shops: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
+      label: {
+        en: 'Shop Name',
+        nl: 'Naam van de Winkel',
+        de: 'Name des Geschäfts',
+        fr: 'Nom du Magasin',
+      },
+      admin: {
+        description: {
+          en: 'The name of the shop.',
+          nl: 'De naam van de winkel.',
+          de: 'Der Name des Geschäfts.',
+          fr: 'Le nom du magasin.',
+        },
+      },
       required: true,
       hooks: {
         beforeValidate: [ensureUniqueName],
@@ -94,66 +123,184 @@ export const Shops: CollectionConfig = {
     {
       name: 'address',
       type: 'text',
+      label: {
+        en: 'Address',
+        nl: 'Adres',
+        de: 'Adresse',
+        fr: 'Adresse',
+      },
+      admin: {
+        description: {
+          en: 'The address of the shop.',
+          nl: 'Het adres van de winkel.',
+          de: 'Die Adresse des Geschäfts.',
+          fr: 'L\'adresse du magasin.',
+        },
+      },
+
     },
     {
       name: 'phone',
       type: 'text',
+      label: {
+        en: 'Phone Number',
+        nl: 'Telefoonnummer',
+        de: 'Telefonnummer',
+        fr: 'Numéro de Téléphone',
+      },
+      admin: {
+        description: {
+          en: 'The phone number of the shop.',
+          nl: 'Het telefoonnummer van de winkel.',
+          de: 'Die Telefonnummer des Geschäfts.',
+          fr: 'Le numéro de téléphone du magasin.',
+        },
+      },
+
     },
     {
       name: 'company_details',
       type: 'group',
+      label: {
+        en: 'Company Details',
+        nl: 'Bedrijfsgegevens',
+        de: 'Firmendetails',
+        fr: 'Détails de l\'Entreprise',
+      },
       admin: {
-        description: 'Details about the company associated with the shop.',
+        description: {
+          en: 'Details about the company associated with the shop.',
+          nl: 'Details over het bedrijf dat bij de winkel hoort.',
+          de: 'Details zum Unternehmen, das mit dem Geschäft verbunden ist.',
+          fr: 'Détails sur l\'entreprise associée au magasin.',
+        },
       },
       fields: [
         {
           name: 'company_name',
           type: 'text',
+          label: {
+            en: 'Company Name',
+            nl: 'Bedrijfsnaam',
+            de: 'Firmenname',
+            fr: 'Nom de l\'Entreprise',
+          },
           required: true,
           admin: {
-            description: 'The name of the company.',
+            description: {
+              en: 'The name of the company.',
+              nl: 'De naam van het bedrijf.',
+              de: 'Der Name des Unternehmens.',
+              fr: 'Le nom de l\'entreprise.',
+            },
           },
         },
         {
           name: 'street',
           type: 'text',
+          label: {
+            en: 'Street',
+            nl: 'Straat',
+            de: 'Straße',
+            fr: 'Rue',
+          },
           admin: {
-            description: 'The street of the company address.',
+            description: {
+              en: 'The street of the company address.',
+              nl: 'De straat van het bedrijfsadres.',
+              de: 'Die Straße der Firmenadresse.',
+              fr: 'La rue de l\'adresse de l\'entreprise.',
+            },
           },
         },
         {
           name: 'house_number',
           type: 'text',
+          label: {
+            en: 'House Number',
+            nl: 'Huisnummer',
+            de: 'Hausnummer',
+            fr: 'Numéro de Maison',
+          },
           admin: {
-            description: 'The house number of the company address.',
+            description: {
+              en: 'The house number of the company address.',
+              nl: 'Het huisnummer van het bedrijfsadres.',
+              de: 'Die Hausnummer der Firmenadresse.',
+              fr: 'Le numéro de maison de l\'adresse de l\'entreprise.',
+            },
           },
         },
         {
           name: 'city',
           type: 'text',
+          label: {
+            en: 'City',
+            nl: 'Stad',
+            de: 'Stadt',
+            fr: 'Ville',
+          },
           admin: {
-            description: 'The city of the company address.',
+            description: {
+              en: 'The city of the company address.',
+              nl: 'De stad van het bedrijfsadres.',
+              de: 'Die Stadt der Firmenadresse.',
+              fr: 'La ville de l\'adresse de l\'entreprise.',
+            },
           },
         },
         {
           name: 'postal',
           type: 'text',
+          label: {
+            en: 'Postal Code',
+            nl: 'Postcode',
+            de: 'Postleitzahl',
+            fr: 'Code Postal',
+          },
           admin: {
-            description: 'The postal code of the company address.',
+            description: {
+              en: 'The postal code of the company address.',
+              nl: 'De postcode van het bedrijfsadres.',
+              de: 'Die Postleitzahl der Firmenadresse.',
+              fr: 'Le code postal de l\'adresse de l\'entreprise.',
+            },
           },
         },
         {
           name: 'vat_nr',
           type: 'text',
+          label: {
+            en: 'VAT Number',
+            nl: 'BTW-nummer',
+            de: 'Umsatzsteuernummer',
+            fr: 'Numéro de TVA',
+          },
           admin: {
-            description: 'The VAT number of the company.',
+            description: {
+              en: 'The VAT number of the company.',
+              nl: 'Het BTW-nummer van het bedrijf.',
+              de: 'Die Umsatzsteuernummer des Unternehmens.',
+              fr: 'Le numéro de TVA de l\'entreprise.',
+            },
           },
         },
         {
           name: 'website_url',
           type: 'text',
+          label: {
+            en: 'Website URL',
+            nl: 'Website-URL',
+            de: 'Website-URL',
+            fr: 'URL du Site Web',
+          },
           admin: {
-            description: 'The URL of the company website.',
+            description: {
+              en: 'The URL of the company website.',
+              nl: 'De URL van de bedrijfswebsite.',
+              de: 'Die URL der Firmenwebsite.',
+              fr: 'L\'URL du site web de l\'entreprise.',
+            },
           },
         },
       ],
@@ -161,24 +308,57 @@ export const Shops: CollectionConfig = {
     {
       name: 'exceptionally_closed_days',
       type: 'array',
+      label: {
+        en: 'Exceptionally Closed Days',
+        nl: 'Uitzonderlijk Gesloten Dagen',
+        de: 'Ausnahmsweise Geschlossene Tage',
+        fr: 'Jours Exceptionnellement Fermés',
+      },
       admin: {
-        description: 'List of dates when the shop is exceptionally closed.',
+        description: {
+          en: 'List of dates when the shop is exceptionally closed.',
+          nl: 'Lijst met data waarop de winkel uitzonderlijk gesloten is.',
+          de: 'Liste der Daten, an denen das Geschäft ausnahmsweise geschlossen ist.',
+          fr: 'Liste des dates où le magasin est exceptionnellement fermé.',
+        },
       },
       fields: [
         {
           name: 'date',
           type: 'date',
+          label: {
+            en: 'Date',
+            nl: 'Datum',
+            de: 'Datum',
+            fr: 'Date',
+          },
           required: true,
           admin: {
-            description: 'The date when the shop is closed.',
+            description: {
+              en: 'The date when the shop is closed.',
+              nl: 'De datum waarop de winkel gesloten is.',
+              de: 'Das Datum, an dem das Geschäft geschlossen ist.',
+              fr: 'La date à laquelle le magasin est fermé.',
+            },
           },
         },
         {
           name: 'reason',
           type: 'text',
+          label: {
+            en: 'Reason',
+            nl: 'Reden',
+            de: 'Grund',
+            fr: 'Raison',
+          },
           required: false,
           admin: {
-            description: 'The reason for the closure.',
+            description: {
+              en: 'The reason for the closure.',
+              nl: 'De reden voor de sluiting.',
+              de: 'Der Grund für die Schließung.',
+              fr: 'La raison de la fermeture.',
+            },
           },
         },
       ],

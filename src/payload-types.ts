@@ -17,12 +17,9 @@ export interface Config {
     'payment-methods': PaymentMethod;
     'fulfillment-methods': FulfillmentMethod;
     timeslots: Timeslot;
-    tables: Table;
-    'reservation-settings': ReservationSetting;
     'reservation-entries': ReservationEntry;
-    'reservation-exceptions': ReservationException;
-    'reservation-holidays': ReservationHoliday;
-    'fully-booked-days': FullyBookedDay;
+    'reservation-settings': ReservationSetting;
+    tables: Table;
     printers: Printer;
     pages: Page;
     media: Media;
@@ -31,11 +28,11 @@ export interface Config {
     'customer-loyalty': CustomerLoyalty;
     coupons: Coupon;
     'gift-vouchers': GiftVoucher;
+    orders: Order;
     categories: Category;
     products: Product;
     subproducts: Subproduct;
     productpopups: Productpopup;
-    orders: Order;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -48,12 +45,9 @@ export interface Config {
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
     timeslots: TimeslotsSelect<false> | TimeslotsSelect<true>;
-    tables: TablesSelect<false> | TablesSelect<true>;
-    'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
     'reservation-entries': ReservationEntriesSelect<false> | ReservationEntriesSelect<true>;
-    'reservation-exceptions': ReservationExceptionsSelect<false> | ReservationExceptionsSelect<true>;
-    'reservation-holidays': ReservationHolidaysSelect<false> | ReservationHolidaysSelect<true>;
-    'fully-booked-days': FullyBookedDaysSelect<false> | FullyBookedDaysSelect<true>;
+    'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
+    tables: TablesSelect<false> | TablesSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -62,11 +56,11 @@ export interface Config {
     'customer-loyalty': CustomerLoyaltySelect<false> | CustomerLoyaltySelect<true>;
     coupons: CouponsSelect<false> | CouponsSelect<true>;
     'gift-vouchers': GiftVouchersSelect<false> | GiftVouchersSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
     productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
-    orders: OrdersSelect<false> | OrdersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -76,7 +70,7 @@ export interface Config {
   };
   globals: {};
   globalsSelect: {};
-  locale: 'en' | 'de' | 'fr';
+  locale: 'nl' | 'en' | 'de' | 'fr';
   user: User & {
     collection: 'users';
   };
@@ -117,7 +111,7 @@ export interface Tenant {
       }[]
     | null;
   /**
-   * Used for url paths, example: /tenant-slug/page-slug
+   * Used for URL paths, example: /tenant-slug/page-slug.
    */
   slug: string;
   /**
@@ -133,18 +127,30 @@ export interface Tenant {
  */
 export interface User {
   id: string;
+  /**
+   * Assign roles to the user.
+   */
   roles?: ('super-admin' | 'user')[] | null;
   tenants?:
     | {
+        /**
+         * Assign tenants to the user.
+         */
         tenant: string | Tenant;
+        /**
+         * Assign roles specific to the tenant.
+         */
         roles: ('tenant-admin' | 'tenant-viewer')[];
         id?: string | null;
       }[]
     | null;
   /**
-   * Assign shops to the user
+   * Assign shops to the user.
    */
   shops?: (string | Shop)[] | null;
+  /**
+   * The username of the user.
+   */
   username?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -168,6 +174,9 @@ export interface Shop {
   name: string;
   slug?: string | null;
   address?: string | null;
+  /**
+   * The phone number of the shop.
+   */
   phone?: string | null;
   /**
    * Details about the company associated with the shop.
@@ -318,7 +327,7 @@ export interface Timeslot {
    */
   method_id: string | FulfillmentMethod;
   /**
-   * Specify time ranges for selected days.
+   * Select the day / time for these time ranges.
    */
   days?:
     | {
@@ -357,6 +366,45 @@ export interface Timeslot {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-entries".
+ */
+export interface ReservationEntry {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name of the customer making the reservation.
+   */
+  customer_name: string;
+  /**
+   * Phone number of the customer.
+   */
+  customer_phone: string;
+  /**
+   * Date of the reservation.
+   */
+  date: string;
+  /**
+   * Date of the reservation.
+   */
+  time: string;
+  /**
+   * Number of persons for the reservation.
+   */
+  persons: number;
+  /**
+   * Assigned table for the reservation.
+   */
+  table: string | Table;
+  /**
+   * Special requests from the customer.
+   */
+  special_requests?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -408,112 +456,57 @@ export interface ReservationSetting {
     sunday?: boolean | null;
   };
   /**
-   * Set the reservation period.
+   * Define multiple reservation periods.
    */
-  reservation_period: {
-    start_date: string;
-    end_date: string;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-entries".
- */
-export interface ReservationEntry {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
+  reservation_periods?:
+    | {
+        start_date: string;
+        end_date: string;
+        start_time: string;
+        end_time: string;
+        id?: string | null;
+      }[]
+    | null;
   /**
-   * Name of the customer making the reservation.
+   * Define holidays when reservations are not allowed.
    */
-  customer_name: string;
+  holidays?:
+    | {
+        start_date: string;
+        end_date: string;
+        /**
+         * Optional reason for the holiday period.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
-   * Phone number of the customer.
+   * List of fully booked days.
    */
-  customer_phone: string;
+  fully_booked_days?:
+    | {
+        date: string;
+        /**
+         * Optional reason for marking the day as fully booked.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
-   * Date of the reservation.
+   * List of exceptions when reservations are not allowed.
    */
-  date: string;
-  /**
-   * Time of the reservation in HH:mm format.
-   */
-  time: string;
-  /**
-   * Number of persons for the reservation.
-   */
-  persons: number;
-  /**
-   * Assigned table for the reservation.
-   */
-  table: string | Table;
-  /**
-   * Special requests from the customer.
-   */
-  special_requests?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-exceptions".
- */
-export interface ReservationException {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Date when reservations are not allowed.
-   */
-  exception_date: string;
-  /**
-   * Reason for the exception (optional).
-   */
-  reason?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-holidays".
- */
-export interface ReservationHoliday {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Start date of the holiday period.
-   */
-  start_date: string;
-  /**
-   * End date of the holiday period.
-   */
-  end_date: string;
-  /**
-   * Optional reason for the holiday period.
-   */
-  reason: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fully-booked-days".
- */
-export interface FullyBookedDay {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Date when reservations are fully booked.
-   */
-  date: string;
-  /**
-   * Optional reason for marking the day as fully booked.
-   */
-  reason?: string | null;
+  exceptions?:
+    | {
+        exception_date: string;
+        /**
+         * Reason for the exception (optional).
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -586,7 +579,13 @@ export interface Printer {
  */
 export interface Page {
   id: string;
+  /**
+   * Title of the page.
+   */
   title?: string | null;
+  /**
+   * Used for URL paths, e.g., /page-slug.
+   */
   slug?: string | null;
   tenant: string | Tenant;
   updatedAt: string;
@@ -671,26 +670,6 @@ export interface Customer {
    */
   company_name?: string | null;
   /**
-   * Street address of the customer.
-   */
-  street?: string | null;
-  /**
-   * House number of the customer.
-   */
-  house_number?: string | null;
-  /**
-   * City of the customer.
-   */
-  city?: string | null;
-  /**
-   * Postal code of the customer.
-   */
-  postal_code?: string | null;
-  /**
-   * VAT number for business customers.
-   */
-  vat_number?: string | null;
-  /**
    * Email address of the customer.
    */
   email: string;
@@ -711,10 +690,6 @@ export interface Customer {
         id?: string | null;
       }[]
     | null;
-  /**
-   * Timestamp for last modification.
-   */
-  modtime: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -766,49 +741,64 @@ export interface Product {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   categories: (string | Category)[];
-  name: string;
+  /**
+   * Enter the product name in Dutch.
+   */
+  name_nl: string;
+  /**
+   * Enter the name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the name in French.
+   */
+  name_fr?: string | null;
   /**
    * Use a unified sale price for all fulfillment methods.
    */
   price_unified?: boolean | null;
   /**
-   * Unified sale price
+   * The unified sale price.
    */
   price?: number | null;
   /**
-   * Sale price for dine-in
+   * Sale price for dine-in.
    */
   price_dinein?: number | null;
   /**
-   * Sale price for takeaway
+   * Sale price for takeaway.
    */
   price_takeaway?: number | null;
   /**
-   * Sale price for delivery
+   * Sale price for delivery.
    */
   price_delivery?: number | null;
   /**
-   * Enable stock tracking for this product
+   * Enable stock tracking for this product.
    */
   enable_stock?: boolean | null;
   /**
-   * Stock quantity
+   * Specify the stock quantity for this product.
    */
   quantity?: number | null;
   /**
-   * Specify the VAT percentage (e.g., 6, 12, 21)
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
   tax: number;
   /**
-   * Numeric identifier for the applicable tax table
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
   tax_dinein?: number | null;
   /**
-   * Enable product visibility in the POS system
+   * Enable product visibility in the POS system.
    */
   posshow?: boolean | null;
   /**
-   * Product barcode (if applicable)
+   * Product barcode (if applicable).
    */
   barcode?: string | null;
   /**
@@ -816,25 +806,41 @@ export interface Product {
    */
   image?: (string | null) | Media;
   /**
-   * Timestamp for last modification
+   * Timestamp for last modification.
    */
   modtime: number;
   /**
-   * Webshop description for the product
+   * Enter the default description in Dutch.
    */
-  webdescription?: string | null;
+  description_nl: string;
   /**
-   * Show this product in the webshop
+   * Enter the description in English.
+   */
+  description_en?: string | null;
+  /**
+   * Enter the description in German.
+   */
+  description_de?: string | null;
+  /**
+   * Enter the description in French.
+   */
+  description_fr?: string | null;
+  /**
+   * Show this product in the webshop.
    */
   webshopshow?: boolean | null;
   /**
-   * Allow this product to be ordered via the webshop
+   * Allow this product to be ordered via the webshop.
    */
   webshoporderable?: boolean | null;
   /**
-   * Product status (enabled or disabled)
+   * Product status (enabled or disabled).
    */
   status: 'enabled' | 'disabled';
+  /**
+   * Enable this to prevent category-specific popups from applying to this product.
+   */
+  exclude_category_popups?: boolean | null;
   /**
    * Assign popups to this product and define their order.
    */
@@ -862,7 +868,22 @@ export interface Category {
   id: string;
   tenant: string | Tenant;
   shops: (string | Shop)[];
-  name: string;
+  /**
+   * Enter the category name in Dutch (default).
+   */
+  name_nl: string;
+  /**
+   * Enter the category name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the category name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the category name in French.
+   */
+  name_fr?: string | null;
   /**
    * Reference an image from the Media library.
    */
@@ -875,6 +896,19 @@ export interface Category {
    * Category status (enabled or disabled)
    */
   status: 'enabled' | 'disabled';
+  /**
+   * Assign product popups to this category. These popups will apply to all products in the category.
+   */
+  productpopups?:
+    | {
+        popup: string | Productpopup;
+        /**
+         * The order in which this popup will appear.
+         */
+        order?: number | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -887,13 +921,21 @@ export interface Productpopup {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
-   * Title of the popup, e.g., "Choose Your Sauce"
+   * Enter the popup title in Dutch (default).
    */
-  popup_title: string;
+  popup_title_nl: string;
   /**
-   * Optional: Associate this popup with a specific product.
+   * Enter the popup title in English.
    */
-  product?: (string | null) | Product;
+  popup_title_en?: string | null;
+  /**
+   * Enter the popup title in German.
+   */
+  popup_title_de?: string | null;
+  /**
+   * Enter the popup title in French.
+   */
+  popup_title_fr?: string | null;
   /**
    * Allow selecting multiple options in this popup.
    */
@@ -933,34 +975,52 @@ export interface Subproduct {
   id: string;
   tenant: string | Tenant;
   shops: (string | Shop)[];
-  name: string;
+  /**
+   * Enter the subproduct name in Dutch.
+   */
+  name_nl: string;
+  /**
+   * Enter the subproduct name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the subproduct name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the subproduct name in French.
+   */
+  name_fr?: string | null;
   /**
    * Use a unified sale price for all fulfillment methods.
    */
   price_unified?: boolean | null;
   /**
-   * Unified sale price
+   * The unified sale price.
    */
   price?: number | null;
   /**
-   * Sale price for dine-in
+   * Sale price for dine-in.
    */
   price_dinein?: number | null;
   /**
-   * Sale price for takeaway
+   * Sale price for takeaway.
    */
   price_takeaway?: number | null;
   /**
-   * Sale price for delivery
+   * Sale price for delivery.
    */
   price_delivery?: number | null;
   /**
    * Enable linking to an existing product. If enabled, price and tax fields will be hidden.
    */
   linked_product_enabled?: boolean | null;
+  /**
+   * Select a product to link with this subproduct.
+   */
   linked_product?: (string | null) | Product;
   /**
-   * Enable stock tracking for this subproduct
+   * Enable stock tracking for this subproduct.
    */
   stock_enabled?: boolean | null;
   /**
@@ -968,11 +1028,11 @@ export interface Subproduct {
    */
   stock_quantity?: number | null;
   /**
-   * Specify the VAT percentage (e.g., 6, 12, 21)
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
   tax?: number | null;
   /**
-   * Specify the VAT percentage for dinein (e.g., 6, 12, 21)
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
   tax_table?: number | null;
   /**
@@ -980,7 +1040,7 @@ export interface Subproduct {
    */
   image?: (string | null) | Media;
   /**
-   * Timestamp for last modification
+   * Timestamp for last modification.
    */
   modtime: number;
   /**
@@ -988,7 +1048,7 @@ export interface Subproduct {
    */
   deleted?: boolean | null;
   /**
-   * Subproduct status (enabled or disabled)
+   * Subproduct status (enabled or disabled).
    */
   status: 'enabled' | 'disabled';
   updatedAt: string;
@@ -1123,42 +1183,6 @@ export interface Order {
    */
   order_type: 'pos' | 'web' | 'kiosk';
   /**
-   * Link to the customer placing the order.
-   */
-  customer?: (string | null) | Customer;
-  /**
-   * Total price of the order.
-   */
-  total_price: number;
-  /**
-   * Date when the order was created.
-   */
-  order_date: string;
-  /**
-   * Time when the order was created (e.g., 13:45).
-   */
-  order_time: string;
-  /**
-   * Expected date for order pickup or dine-in.
-   */
-  order_expected_date?: string | null;
-  /**
-   * Expected time for order pickup or dine-in (e.g., 18:30).
-   */
-  order_expected_time?: string | null;
-  /**
-   * Table number for dine-in orders.
-   */
-  table_number?: number | null;
-  /**
-   * Fulfillment method used for the order.
-   */
-  fulfillment_method?: (string | null) | FulfillmentMethod;
-  /**
-   * Current status of the order.
-   */
-  status?: ('pending_payment' | 'pending' | 'processing' | 'completed' | 'cancelled') | null;
-  /**
    * List of products in the order.
    */
   order_details?:
@@ -1223,28 +1247,16 @@ export interface PayloadLockedDocument {
         value: string | Timeslot;
       } | null)
     | ({
-        relationTo: 'tables';
-        value: string | Table;
+        relationTo: 'reservation-entries';
+        value: string | ReservationEntry;
       } | null)
     | ({
         relationTo: 'reservation-settings';
         value: string | ReservationSetting;
       } | null)
     | ({
-        relationTo: 'reservation-entries';
-        value: string | ReservationEntry;
-      } | null)
-    | ({
-        relationTo: 'reservation-exceptions';
-        value: string | ReservationException;
-      } | null)
-    | ({
-        relationTo: 'reservation-holidays';
-        value: string | ReservationHoliday;
-      } | null)
-    | ({
-        relationTo: 'fully-booked-days';
-        value: string | FullyBookedDay;
+        relationTo: 'tables';
+        value: string | Table;
       } | null)
     | ({
         relationTo: 'printers';
@@ -1279,6 +1291,10 @@ export interface PayloadLockedDocument {
         value: string | GiftVoucher;
       } | null)
     | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
         relationTo: 'categories';
         value: string | Category;
       } | null)
@@ -1293,10 +1309,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'productpopups';
         value: string | Productpopup;
-      } | null)
-    | ({
-        relationTo: 'orders';
-        value: number | Order;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1484,14 +1496,18 @@ export interface TimeslotsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tables_select".
+ * via the `definition` "reservation-entries_select".
  */
-export interface TablesSelect<T extends boolean = true> {
+export interface ReservationEntriesSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  table_num?: T;
-  status?: T;
-  capacity?: T;
+  customer_name?: T;
+  customer_phone?: T;
+  date?: T;
+  time?: T;
+  persons?: T;
+  table?: T;
+  special_requests?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1514,66 +1530,50 @@ export interface ReservationSettingsSelect<T extends boolean = true> {
         saturday?: T;
         sunday?: T;
       };
-  reservation_period?:
+  reservation_periods?:
     | T
     | {
         start_date?: T;
         end_date?: T;
+        start_time?: T;
+        end_time?: T;
+        id?: T;
+      };
+  holidays?:
+    | T
+    | {
+        start_date?: T;
+        end_date?: T;
+        reason?: T;
+        id?: T;
+      };
+  fully_booked_days?:
+    | T
+    | {
+        date?: T;
+        reason?: T;
+        id?: T;
+      };
+  exceptions?:
+    | T
+    | {
+        exception_date?: T;
+        reason?: T;
+        id?: T;
       };
   updatedAt?: T;
   createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-entries_select".
+ * via the `definition` "tables_select".
  */
-export interface ReservationEntriesSelect<T extends boolean = true> {
+export interface TablesSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  customer_name?: T;
-  customer_phone?: T;
-  date?: T;
-  time?: T;
-  persons?: T;
-  table?: T;
-  special_requests?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-exceptions_select".
- */
-export interface ReservationExceptionsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  exception_date?: T;
-  reason?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-holidays_select".
- */
-export interface ReservationHolidaysSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  start_date?: T;
-  end_date?: T;
-  reason?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fully-booked-days_select".
- */
-export interface FullyBookedDaysSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  date?: T;
-  reason?: T;
+  table_num?: T;
+  status?: T;
+  capacity?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1677,11 +1677,6 @@ export interface CustomersSelect<T extends boolean = true> {
   firstname?: T;
   lastname?: T;
   company_name?: T;
-  street?: T;
-  house_number?: T;
-  city?: T;
-  postal_code?: T;
-  vat_number?: T;
   email?: T;
   phone?: T;
   tags?:
@@ -1691,7 +1686,6 @@ export interface CustomersSelect<T extends boolean = true> {
         tag_type?: T;
         id?: T;
       };
-  modtime?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1763,15 +1757,62 @@ export interface GiftVouchersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  id?: T;
+  tempOrdNr?: T;
+  order_type?: T;
+  order_details?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        price?: T;
+        tax?: T;
+        subproducts?:
+          | T
+          | {
+              subproduct?: T;
+              price?: T;
+              tax?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  payments?:
+    | T
+    | {
+        payment_method?: T;
+        amount?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories_select".
  */
 export interface CategoriesSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  name?: T;
+  name_nl?: T;
+  name_en?: T;
+  name_de?: T;
+  name_fr?: T;
   image?: T;
   modtime?: T;
   status?: T;
+  productpopups?:
+    | T
+    | {
+        popup?: T;
+        order?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1783,7 +1824,10 @@ export interface ProductsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
   categories?: T;
-  name?: T;
+  name_nl?: T;
+  name_en?: T;
+  name_de?: T;
+  name_fr?: T;
   price_unified?: T;
   price?: T;
   price_dinein?: T;
@@ -1797,10 +1841,14 @@ export interface ProductsSelect<T extends boolean = true> {
   barcode?: T;
   image?: T;
   modtime?: T;
-  webdescription?: T;
+  description_nl?: T;
+  description_en?: T;
+  description_de?: T;
+  description_fr?: T;
   webshopshow?: T;
   webshoporderable?: T;
   status?: T;
+  exclude_category_popups?: T;
   productpopups?:
     | T
     | {
@@ -1818,7 +1866,10 @@ export interface ProductsSelect<T extends boolean = true> {
 export interface SubproductsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  name?: T;
+  name_nl?: T;
+  name_en?: T;
+  name_de?: T;
+  name_fr?: T;
   price_unified?: T;
   price?: T;
   price_dinein?: T;
@@ -1844,8 +1895,10 @@ export interface SubproductsSelect<T extends boolean = true> {
 export interface ProductpopupsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  popup_title?: T;
-  product?: T;
+  popup_title_nl?: T;
+  popup_title_en?: T;
+  popup_title_de?: T;
+  popup_title_fr?: T;
   multiselect?: T;
   required_option_cashregister?: T;
   required_option_webshop?: T;
@@ -1853,52 +1906,6 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   maximum_option?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "orders_select".
- */
-export interface OrdersSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  id?: T;
-  tempOrdNr?: T;
-  order_type?: T;
-  customer?: T;
-  total_price?: T;
-  order_date?: T;
-  order_time?: T;
-  order_expected_date?: T;
-  order_expected_time?: T;
-  table_number?: T;
-  fulfillment_method?: T;
-  status?: T;
-  order_details?:
-    | T
-    | {
-        product?: T;
-        quantity?: T;
-        price?: T;
-        tax?: T;
-        subproducts?:
-          | T
-          | {
-              subproduct?: T;
-              price?: T;
-              tax?: T;
-              id?: T;
-            };
-        id?: T;
-      };
-  payments?:
-    | T
-    | {
-        payment_method?: T;
-        amount?: T;
-        id?: T;
-      };
   updatedAt?: T;
   createdAt?: T;
 }

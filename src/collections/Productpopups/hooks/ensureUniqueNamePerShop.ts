@@ -21,7 +21,7 @@ export const ensureUniqueNamePerShop: FieldHook = async ({ data, req, siblingDat
         collection: 'productpopups',
         where: {
             shops: { in: shopIDs },
-            popup_title: { equals: value }, // Checking for duplicate popup titles
+            popup_title_nl: { equals: value }, // Checking for duplicate popup titles
         },
     });
 
@@ -35,7 +35,7 @@ export const ensureUniqueNamePerShop: FieldHook = async ({ data, req, siblingDat
                 [
                     {
                         message: `A popup with the title "${value}" already exists in one or more selected shops.`,
-                        path: 'popup_title',
+                        path: 'popup_title_nl',
                     },
                 ]
         });
