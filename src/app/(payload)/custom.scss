@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Set a global font-family */
+body {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+}
+
+/* Example: Apply Poppins to specific elements */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600; /* Semi-bold for headers */
+}
+
+a.btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500; /* Medium for buttons */
+    background-color:var(--theme-elevation-100);
+}
+
+.card > a {
+    background-color:unset !important;
+    color:unset;
+}
+
+.card a.btn.btn--icon.btn--icon-style-with-border.btn--icon-only.btn--size-medium.btn--icon-position-right.btn--withoutPopup.btn--style-icon-label.btn--round.btn--withoutPopup {
+    display: none;
+}
+
+button.collapsible__toggle.collapsible__toggle--open span, button.collapsible__toggle.collapsible__toggle--collapsed span {
+    display: none;
+}
+
+
+/* Custom styling sidebar left */
+button.nav-group__toggle.nav-group__toggle--open {
+    font-size: x-large;
+    border-bottom: 1px solid var(--theme-elevation-800);
+}
+
+button.nav-group__toggle.nav-group__toggle--collapsed {
+    font-size: x-large;
+    border-bottom: 1px solid var(--theme-elevation-800);
+}
+
+svg.icon.icon--chevron.nav-group__indicator {
+    height: 40px;
+    width: 20px;
+    /* background-color: black !important; */
+}
+
+.nav-group__indicator svg .stroke {
+    stroke: var(--theme-elevation-800); 
+}
+
+/* Button styling backend */
+a.btn.btn--icon-style-without-border.btn--size-small.btn--withoutPopup.btn--style-pill.btn--withoutPopup {
+    // background-color:#068b59;
+    // color:white;
+    font-size:large;
+    padding:5px;
+}
+
+// Hide localizer in admin ui (doesnt work anyway) 
+.localizer-button {
+    display: none;
+}
+
+//Make tables full width 
+.collection-list__wrap .table {
+    width: -webkit-fill-available !important;
+}
+
+input, optgroup, select, textarea {
+    border-width: 2px;
+}
+
+.checkbox-input__input {
+    border-width: 2px;
+}
+
+button.btn.array-field__add-row.btn--icon.btn--icon-style-with-border.btn--size-medium.btn--icon-position-left.btn--withoutPopup.btn--style-icon-label.btn--withoutPopup {
+    border: 1px solid var(--theme-elevation-800);
+    padding: 2px 10px;
+}
+
+button.btn.btn--icon-style-without-border.btn--size-medium.btn--withoutPopup.btn--style-secondary.btn--withoutPopup {
+    padding: 3px 10px;
+}
+

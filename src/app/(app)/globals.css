@@ -1,6 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* Set a global font-family */
+body {
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+}
+
+/* Example: Apply Poppins to specific elements */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600; /* Semi-bold for headers */
+}
 
 @layer base {
   /* :root {
