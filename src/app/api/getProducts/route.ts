@@ -10,6 +10,86 @@ const DEFAULT_LANG = 'nl'
 
 export const dynamic = 'force-dynamic'
 
+////////////////////////////////////////////////////////////////////////
+// 1) Define interfaces for your final JSON shape
+////////////////////////////////////////////////////////////////////////
+
+interface LinkedProductJSON {
+    id: string
+    name_nl: string
+    description_nl?: string
+    priceUnified: boolean
+    price: number | null
+    image?: {
+        url: string
+        alt: string
+    } | null
+}
+
+interface SubproductJSON {
+    id: string
+    name_nl: string
+    price: number
+    image?: {
+        url: string
+        alt: string
+    } | null
+    linkedProduct?: LinkedProductJSON
+}
+
+interface PopupJSON {
+    id: string
+    popup_title_nl: string
+    multiselect: boolean
+    minimum_option: number
+    maximum_option: number
+    subproducts: SubproductJSON[]
+}
+
+interface PopupItemJSON {
+    order: number
+    popup: PopupJSON | null
+}
+
+interface ProductJSON {
+    id: string
+    name_nl: string
+    name_en: string | null
+    name_de: string | null
+    name_fr: string | null
+    description_nl: string
+    description_en: string
+    description_de: string
+    description_fr: string
+    priceUnified: boolean
+    price: number | null
+    priceDineIn: number | null
+    priceTakeaway: number | null
+    priceDelivery: number | null
+    enable_stock: boolean
+    quantity: number
+    webdescription: string
+    isPromotion: boolean
+    image?: {
+        url: string
+        alt: string
+    } | null
+    productpopups: PopupItemJSON[]
+}
+
+interface CategoryJSON {
+    id: string
+    slug: string
+    name_nl: string
+    name_en: string | null
+    name_de: string | null
+    name_fr: string | null
+    categoryPopups: PopupItemJSON[]
+    products: ProductJSON[]
+}
+
+////////////////////////////////////////////////////////////////////////
+
 export async function GET(request: NextRequest) {
     const payload = await getPayload({ config })
 
@@ -59,83 +139,24 @@ export async function GET(request: NextRequest) {
             limit: 500,
         })
 
-        // 5) Map categories → category-level popups, then filter matching products
-        const categorizedProducts = categoriesResult.docs.map((cat: any) => {
+        ////////////////////////////////////////////////////////////////////
+        // 5) Build the final JSON structure
+        ////////////////////////////////////////////////////////////////////
+        const categorizedProducts: CategoryJSON[] = categoriesResult.docs.map((cat: any) => {
             // CATEGORY-LEVEL POPUPS (with subproducts)
-            const categoryPopups = (cat.productpopups || []).map((catPopupItem: any) => ({
-                order: catPopupItem.order,
-                popup: catPopupItem.popup
-                    ? {
-                        id: catPopupItem.popup.id,
-                        popup_title_nl: catPopupItem.popup.popup_title_nl,
-                        multiselect: catPopupItem.popup.multiselect,
-                        minimum_option: catPopupItem.popup.minimum_option,
-                        maximum_option: catPopupItem.popup.maximum_option,
-                        subproducts: (catPopupItem.popup.subproducts || []).map((sub: any) => {
-                            // Basic subproduct shape
-                            const baseSub = {
-                                id: sub.id,
-                                name_nl: sub.name_nl,
-                                price: sub.price,
-                                image: sub.image
-                                    ? {
-                                        url: sub.image?.s3_url || '',
-                                        alt: sub.image?.alt_text || '',
-                                    }
-                                    : null,
-                            }
-
-                            // If subproduct is linked to a product, embed that product
-                            if (sub.linked_product_enabled && sub.linked_product) {
-                                baseSub.linkedProduct = {
-                                    id: sub.linked_product.id,
-                                    name_nl: sub.linked_product.name_nl,
-                                    description_nl: sub.linked_product.description_nl,
-                                    priceUnified: sub.linked_product.price_unified || false,
-                                    price: sub.linked_product.price_unified
-                                        ? sub.linked_product.price
-                                        : null,
-                                    image: sub.linked_product.image
-                                        ? {
-                                            url: sub.linked_product.image?.s3_url || '',
-                                            alt: sub.linked_product.image?.alt_text || '',
-                                        }
-                                        : null,
-                                }
-                            }
-
-                            return baseSub
-                        }),
-                    }
-                    : null,
-            }))
-
-            // Filter the products that belong to this category
-            const productsInCat = productsResult.docs.filter((prod: any) =>
-                prod.categories?.some((c: any) => c.id === cat.id),
-            )
-
-            // For each product, combine category popups (unless excluded) + product popups
-            const products = productsInCat.map((product: any) => {
-                // 1) Start with category-level popups, skip if product excludes them
-                let finalPopups = []
-                if (!product.exclude_category_popups) {
-                    finalPopups = [...categoryPopups]
-                }
-
-                // 2) PRODUCT-LEVEL POPUPS
-                const productPopups = (product.productpopups || []).map((prodPopupItem: any) => ({
-                    order: prodPopupItem.order,
-                    popup: prodPopupItem.popup
+            const categoryPopups: PopupItemJSON[] = (cat.productpopups || []).map((catPopupItem: any) => {
+                return {
+                    order: catPopupItem.order,
+                    popup: catPopupItem.popup
                         ? {
-                            id: prodPopupItem.popup.id,
-                            popup_title_nl: prodPopupItem.popup.popup_title_nl,
-                            multiselect: prodPopupItem.popup.multiselect,
-                            minimum_option: prodPopupItem.popup.minimum_option,
-                            maximum_option: prodPopupItem.popup.maximum_option,
-                            // subproducts can also be linked to products
-                            subproducts: (prodPopupItem.popup.subproducts || []).map((sub: any) => {
-                                const baseSub = {
+                            id: catPopupItem.popup.id,
+                            popup_title_nl: catPopupItem.popup.popup_title_nl,
+                            multiselect: catPopupItem.popup.multiselect,
+                            minimum_option: catPopupItem.popup.minimum_option,
+                            maximum_option: catPopupItem.popup.maximum_option,
+                            subproducts: (catPopupItem.popup.subproducts || []).map((sub: any) => {
+                                // Basic subproduct
+                                const baseSub: SubproductJSON = {
                                     id: sub.id,
                                     name_nl: sub.name_nl,
                                     price: sub.price,
@@ -147,6 +168,7 @@ export async function GET(request: NextRequest) {
                                         : null,
                                 }
 
+                                // If subproduct is linked to a product, embed that product
                                 if (sub.linked_product_enabled && sub.linked_product) {
                                     baseSub.linkedProduct = {
                                         id: sub.linked_product.id,
@@ -169,14 +191,77 @@ export async function GET(request: NextRequest) {
                             }),
                         }
                         : null,
-                }))
+                }
+            })
 
-                // Merge them all
+            // Filter products that belong to this category
+            const productsInCat = productsResult.docs.filter((prod: any) =>
+                prod.categories?.some((c: any) => c.id === cat.id),
+            )
+
+            // For each product, combine category-level popups (unless excluded) + product popups
+            const products: ProductJSON[] = productsInCat.map((product: any) => {
+                // 1) Start with category-level popups, skip if product excludes them
+                let finalPopups: PopupItemJSON[] = []
+                if (!product.exclude_category_popups) {
+                    finalPopups = [...categoryPopups]
+                }
+
+                // 2) PRODUCT-LEVEL POPUPS
+                const productPopups: PopupItemJSON[] = (product.productpopups || []).map((prodPopupItem: any) => {
+                    return {
+                        order: prodPopupItem.order,
+                        popup: prodPopupItem.popup
+                            ? {
+                                id: prodPopupItem.popup.id,
+                                popup_title_nl: prodPopupItem.popup.popup_title_nl,
+                                multiselect: prodPopupItem.popup.multiselect,
+                                minimum_option: prodPopupItem.popup.minimum_option,
+                                maximum_option: prodPopupItem.popup.maximum_option,
+                                subproducts: (prodPopupItem.popup.subproducts || []).map((sub: any) => {
+                                    const baseSub: SubproductJSON = {
+                                        id: sub.id,
+                                        name_nl: sub.name_nl,
+                                        price: sub.price,
+                                        image: sub.image
+                                            ? {
+                                                url: sub.image?.s3_url || '',
+                                                alt: sub.image?.alt_text || '',
+                                            }
+                                            : null,
+                                    }
+
+                                    if (sub.linked_product_enabled && sub.linked_product) {
+                                        baseSub.linkedProduct = {
+                                            id: sub.linked_product.id,
+                                            name_nl: sub.linked_product.name_nl,
+                                            description_nl: sub.linked_product.description_nl,
+                                            priceUnified: sub.linked_product.price_unified || false,
+                                            price: sub.linked_product.price_unified
+                                                ? sub.linked_product.price
+                                                : null,
+                                            image: sub.linked_product.image
+                                                ? {
+                                                    url: sub.linked_product.image?.s3_url || '',
+                                                    alt: sub.linked_product.image?.alt_text || '',
+                                                }
+                                                : null,
+                                        }
+                                    }
+
+                                    return baseSub
+                                }),
+                            }
+                            : null,
+                    }
+                })
+
+                // Merge them
                 finalPopups.push(...productPopups)
-                finalPopups.sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                finalPopups.sort((a, b) => (a.order || 0) - (b.order || 0))
 
-                // Return the final product shape
-                return {
+                // Build final product JSON
+                const prodJSON: ProductJSON = {
                     id: product.id,
                     name_nl: product.name_nl,
                     name_en: product.name_en || null,
@@ -209,10 +294,12 @@ export async function GET(request: NextRequest) {
 
                     productpopups: finalPopups,
                 }
+
+                return prodJSON
             })
 
             // Return final category object
-            return {
+            const catJSON: CategoryJSON = {
                 id: cat.id,
                 slug: cat.name_nl,
                 name_nl: cat.name_nl,
@@ -222,6 +309,8 @@ export async function GET(request: NextRequest) {
                 categoryPopups,
                 products,
             }
+
+            return catJSON
         })
 
         // Return the data

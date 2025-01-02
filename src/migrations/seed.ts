@@ -226,6 +226,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tax: 6,
       tax_table: 12,
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
     },
   });
 
@@ -240,6 +242,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tax: 6,
       tax_table: 12,
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
     },
   });
 
@@ -254,6 +258,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tax: 6,
       tax_table: 12,
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
     },
   });
 
@@ -268,6 +274,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tax: 6,
       tax_table: 12,
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
     },
   });
 
@@ -283,6 +291,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tax: 6,
       tax_table: 12,
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
     },
   });
   const fanta = await payload.create({
@@ -296,6 +306,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tax: 6,
       tax_table: 12,
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
     },
   });
   const spaBlauw = await payload.create({
@@ -309,6 +321,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tax: 6,
       tax_table: 12,
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
     },
   });
 
@@ -356,6 +370,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
           order: 1,
         },
       ],
+      modtime: Date.now(), // <---- add this
+
     },
   });
 
@@ -366,7 +382,10 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       shops: [shop1.id],
       name_nl: 'Snacks',
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
     },
+
   });
 
   const catBurgers = await payload.create({
@@ -386,6 +405,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
           order: 2, // So we can test multi-step
         },
       ],
+      modtime: Date.now(), // <---- add this
+
     },
   });
 
@@ -396,6 +417,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       shops: [shop1.id],
       name_nl: 'Sauzen (los)',
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
     },
   });
 
@@ -406,6 +429,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       shops: [shop1.id],
       name_nl: 'Pizza',
       status: 'enabled',
+      modtime: Date.now(), // <---- add this
+
       productpopups: [
         {
           popup: drinksPopup.id,
@@ -421,6 +446,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
       tenant: tenant1.id,
       shops: [shop1.id],
       name_nl: 'Desserts',
+      modtime: Date.now(), // <---- add this
+
       status: 'enabled',
     },
   });
@@ -460,6 +487,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
         webshoporderable: true,
         status: 'enabled',
         description_nl: `${fn.nl} - lekker vers.`,
+        modtime: Date.now(), // <---- add this
+
       },
     });
   }
@@ -495,6 +524,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
         webshoporderable: true,
         status: 'enabled',
         description_nl: `Heerlijk snack: ${sn.nl}`,
+        modtime: Date.now(), // <---- add this
+
       },
     });
   }
@@ -533,6 +564,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
         webshoporderable: true,
         status: 'enabled',
         description_nl: `Smakelijke burger: ${b.nl}`,
+        modtime: Date.now(), // <---- add this
+
       },
     });
   }
@@ -568,6 +601,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
         webshoporderable: true,
         status: 'enabled',
         description_nl: `${s.nl} - los`,
+        modtime: Date.now(), // <---- add this
+
       },
     });
   }
@@ -603,6 +638,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
         webshoporderable: true,
         status: 'enabled',
         description_nl: `Lekkere ${p.nl}`,
+        modtime: Date.now(), // <---- add this
+
       },
     });
   }
@@ -638,6 +675,8 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
         webshoporderable: true,
         status: 'enabled',
         description_nl: `Geniet van ${d.nl}`,
+        modtime: Date.now(), // <---- add this
+
       },
     });
   }

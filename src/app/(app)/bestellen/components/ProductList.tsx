@@ -173,7 +173,7 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
                     width: '240px',
                     flexShrink: 0,
                     position: 'sticky',
-                    top: '0', // or top: '80px' if your header is 80px tall
+                    top: '100px', // or top: '80px' if your header is 80px tall
                     alignSelf: 'flex-start',
                     height: '100vh', // you can adjust
                     overflow: 'auto',
