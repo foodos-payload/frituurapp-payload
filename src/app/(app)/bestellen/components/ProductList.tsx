@@ -1,12 +1,13 @@
+// File: /app/(app)/bestellen/components/ProductList.tsx
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
 import HorizontalCategories from './HorizontalCategories'
 import VerticalCategories from './VerticalCategories'
 import ProductCard from './ProductCard'
-import ProductPopupFlow from './ProductPopupFlow' // <-- We'll create this file below
+import ProductPopupFlow from './ProductPopupFlow'
 
-/** Example data types **/
+// Example data types (simplified for clarity)
 type Subproduct = {
     id: string
     name_nl: string
@@ -42,7 +43,7 @@ type Product = {
     image?: { url: string; alt: string }
     webdescription?: string
     isPromotion?: boolean
-    productpopups?: PopupItem[]        // <--- Add popup field
+    productpopups?: PopupItem[]
 }
 
 type Category = {
@@ -55,42 +56,45 @@ type Category = {
     products: Product[]
 }
 
-type Props = {
-    categorizedProducts: Category[]
+interface Props {
+    /** The original, unfiltered categories for your menus. */
+    unfilteredCategories: Category[]
+    /** The search-filtered categories for the main product listing. */
+    filteredCategories: Category[]
+    /** Current user language. */
     userLang?: string
+    /**
+     * If the parent wants to do something (like clearing the search) when a category is clicked,
+     * we can call this callback.
+     */
+    onCategoryClick?: (slug: string) => void
 }
 
-/**
- * ProductList with:
- * - Sticky vertical categories on large screens
- * - Sticky horizontal categories on smaller screens
- * - A scroll listener that finds which category is "closest to top" and marks it active,
- *   but ignores scroll events briefly after a user clicks a category.
- */
-export default function ProductList({ categorizedProducts, userLang }: Props) {
-    // Keep track of which category is "active".
+export default function ProductList({
+    unfilteredCategories,
+    filteredCategories,
+    userLang,
+    onCategoryClick,
+}: Props) {
+    // We'll default to the first unfiltered category as "active".
     const [activeCategory, setActiveCategory] = useState(() => {
-        const firstSlug = categorizedProducts[0]?.slug || ''
-        console.log('[ProductList] Initial activeCategory:', firstSlug)
-        return firstSlug
+        return unfilteredCategories[0]?.slug || ''
     })
 
-    // Track which product was clicked (to open the popup modal).
+    // If user clicks a product, we store it here to show the popup flow.
     const [activeProduct, setActiveProduct] = useState<Product | null>(null)
 
-    // Refs for each category’s container <div>.
+    // categoryRefs to track DOM positions of each category for scrolling logic
     const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
-    // A boolean that indicates "programmatic scrolling" (so the scroll event doesn’t override it).
+    // If we're scrolling programmatically, ignore scroll events that set activeCategory.
     const [programmaticScroll, setProgrammaticScroll] = useState(false)
 
+    // ===== Scroll listener: updates activeCategory based on scroll position =====
     useEffect(() => {
-        console.log('[ProductList] useEffect() - set up scroll listener')
-
         function handleScroll() {
-            // If we're currently programmatically scrolling, ignore
             if (programmaticScroll) return
-            if (categorizedProducts.length === 0) return
+            if (unfilteredCategories.length === 0) return
 
             const headerOffset = 80 // e.g., sticky header height
             const scrollY = window.scrollY + headerOffset
@@ -98,13 +102,12 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
             let bestSlug = ''
             let bestDist = Number.MAX_VALUE
 
-            for (const cat of categorizedProducts) {
+            for (const cat of unfilteredCategories) {
                 const el = categoryRefs.current[cat.slug]
                 if (!el) continue
 
                 const offsetTop = el.offsetTop
                 const dist = Math.abs(offsetTop - scrollY)
-
                 if (dist < bestDist) {
                     bestDist = dist
                     bestSlug = cat.slug
@@ -112,92 +115,82 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
             }
 
             if (bestSlug && bestSlug !== activeCategory) {
-                console.log('[ProductList] handleScroll => setActiveCategory:', bestSlug)
                 setActiveCategory(bestSlug)
             }
         }
 
-        // Attach the event listener
         window.addEventListener('scroll', handleScroll, { passive: true })
-
         return () => {
-            console.log('[ProductList] useEffect cleanup - remove scroll listener')
             window.removeEventListener('scroll', handleScroll)
         }
-    }, [categorizedProducts, activeCategory, programmaticScroll])
+    }, [unfilteredCategories, activeCategory, programmaticScroll])
 
-    /**
-     * On category menu click:
-     *   - set `programmaticScroll = true`,
-     *   - scrollIntoView,
-     *   - set active category immediately,
-     *   - after ~600ms, set `programmaticScroll = false`.
-     */
+    // ===== Called when user clicks a category in a menu =====
     function handleCategoryClick(slug: string) {
-        console.log('[ProductList] handleCategoryClick => user clicked:', slug)
         setProgrammaticScroll(true)
 
+        // If the parent wants to do something (like clearing a search filter):
+        if (onCategoryClick) {
+            onCategoryClick(slug)
+        }
+
+        // Then scroll that category into view
         const el = categoryRefs.current[slug]
         if (el) {
-            console.log(`[handleCategoryClick] calling scrollIntoView for slug=${slug}`)
             el.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
 
         setActiveCategory(slug)
 
-        // Wait a little while for the smooth-scroll to finish
         setTimeout(() => {
             setProgrammaticScroll(false)
         }, 600)
     }
 
-    /**
-     * Called when a product card is clicked.
-     * We'll open the popup flow by setting activeProduct.
-     */
-    function handleProductClick(product: Product) {
-        console.log(`Clicked product: ${product.name_nl} (ID: ${product.id})`)
-        setActiveProduct(product)
+    // ===== Called when user clicks a product card =====
+    function handleProductClick(prod: Product) {
+        setActiveProduct(prod)
     }
+
+    // ===== 1) Build the category list for menus (using unfiltered categories) =====
+    const menuCategories = unfilteredCategories.map((cat) => ({
+        id: cat.id,
+        slug: cat.slug,
+        label: pickCategoryName(cat, userLang),
+    }))
+
+    // ===== 2) Build the category sections for main listing (using filtered categories) =====
+    // In Option B, the parent has already removed categories with 0 products if desired.
+    // So here, we can just use "filteredCategories" as the final list.
+    // But if you want to hide categories that are truly empty:
+    const visibleSections = filteredCategories
 
     return (
         <div style={{ display: 'flex', gap: '1rem' }}>
-            {/* 
-        -- VERTICAL CATEGORIES on large screens --
-        We'll make it sticky by applying Tailwind classes (or inline styles).
-        Example: `position: sticky; top: 0;`
-      */}
+            {/* LEFT: vertical categories on large screens */}
             <div
                 className="hidden lg:block"
                 style={{
                     width: '240px',
                     flexShrink: 0,
                     position: 'sticky',
-                    top: '100px', // or top: '80px' if your header is 80px tall
+                    top: '100px',
                     alignSelf: 'flex-start',
-                    height: '100vh', // you can adjust
+                    height: '100vh',
                     overflow: 'auto',
                     background: '#f9f9f9',
                 }}
             >
                 <VerticalCategories
-                    categories={categorizedProducts.map((cat) => ({
-                        id: cat.id,
-                        slug: cat.slug,
-                        label: pickCategoryName(cat, userLang),
-                    }))}
+                    categories={menuCategories}
                     activeCategory={activeCategory}
                     onCategoryClick={handleCategoryClick}
                 />
             </div>
 
-            {/* MAIN PRODUCT AREA */}
+            {/* MAIN COLUMN */}
             <div style={{ flexGrow: 1 }}>
-                {/* 
-          -- HORIZONTAL CATEGORIES on small screens --
-          Make it sticky as well. Typically you'd do something like:
-          `position: sticky; top: 0; z-index: 50; background: white;`
-        */}
+                {/* HORIZONTAL categories on small screens */}
                 <div
                     className="block lg:hidden"
                     style={{
@@ -209,18 +202,14 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
                     }}
                 >
                     <HorizontalCategories
-                        categories={categorizedProducts.map((cat) => ({
-                            id: cat.id,
-                            slug: cat.slug,
-                            label: pickCategoryName(cat, userLang),
-                        }))}
+                        categories={menuCategories}
                         activeCategory={activeCategory}
                         onCategoryClick={handleCategoryClick}
                     />
                 </div>
 
-                {/* CATEGORY SECTIONS */}
-                {categorizedProducts.map((cat) => {
+                {/* CATEGORY SECTIONS: map over your "filtered" array */}
+                {visibleSections.map((cat) => {
                     const catLabel = pickCategoryName(cat, userLang)
                     return (
                         <div
@@ -231,7 +220,9 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
                             }}
                             style={{ marginBottom: '2rem' }}
                         >
-                            <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{catLabel}</h3>
+                            <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                {catLabel}
+                            </h3>
 
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                                 {cat.products.map((prod) => {
@@ -254,9 +245,16 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
                         </div>
                     )
                 })}
+
+                {/* If no categories remain after filtering */}
+                {visibleSections.length === 0 && (
+                    <div style={{ marginTop: '2rem' }}>
+                        <h2>No products match your search.</h2>
+                    </div>
+                )}
             </div>
 
-            {/* The Popups Modal */}
+            {/* PRODUCT POPUP FLOW */}
             {activeProduct && (
                 <ProductPopupFlow
                     product={activeProduct}

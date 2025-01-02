@@ -1,9 +1,11 @@
+// File: /app/(app)/bestellen/components/BestellenLayout.tsx
 'use client'
 
 import React, { useState } from 'react'
 import ProductList from './ProductList'
+import Header from './Header'
 
-// Example data shape
+// Minimal shape for a product
 type Product = {
     id: string
     name_nl: string
@@ -17,6 +19,7 @@ type Product = {
     // ...
 }
 
+// Minimal shape for a category
 type Category = {
     id: string
     slug: string
@@ -38,24 +41,61 @@ export default function BestellenLayout({
     categorizedProducts,
     userLang,
 }: Props) {
-    // State to track whether the JSON modal is open
     const [showJsonModal, setShowJsonModal] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
+
+    // 1) Filter products in each category by matching name in selected language
+    const filteredCategories = categorizedProducts.map((cat) => {
+        // For each product, check if its name includes searchTerm
+        const filteredProds = cat.products.filter((prod) => {
+            const name = pickProductName(prod, userLang).toLowerCase()
+            return name.includes(searchTerm.toLowerCase())
+        })
+        // Return a new category object with only filtered products
+        return {
+            ...cat,
+            products: filteredProds,
+        }
+    })
+
+    // 2) Optionally hide categories that have zero products
+    //    We do that here just to reduce confusion in the child.
+    const visibleCategories = filteredCategories.filter(
+        (cat) => cat.products.length > 0
+    )
 
     return (
         <div className="p-5">
+            {/* Header with language switcher, search, etc. */}
+            <Header
+                userLang={userLang || 'nl'}
+                searchValue={searchTerm}
+                onSearchChange={(val) => setSearchTerm(val)}
+                onClearFilter={() => setSearchTerm('')}
+            />
+
             <h1 className="text-xl font-bold mb-2">Bestellen Layout</h1>
             <p>
                 Shop Slug: <strong>{shopSlug}</strong>
             </p>
             <p>Detected Language: {userLang}</p>
 
-            {/* The product list / categories, same as before */}
+            {/* 
+        3) We pass BOTH:
+           - The original unfiltered array (categorizedProducts) as `unfilteredCategories`
+           - The filtered array (visibleCategories) as `filteredCategories`
+      */}
             <ProductList
-                categorizedProducts={categorizedProducts}
+                unfilteredCategories={categorizedProducts}
+                filteredCategories={visibleCategories}
                 userLang={userLang}
+                onCategoryClick={() => {
+                    // When a category is clicked, we clear the search
+                    setSearchTerm('')
+                }}
             />
 
-            {/* Toggle button to open the modal */}
+            {/* JSON button for debugging */}
             <div className="mt-4">
                 <button
                     className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
@@ -65,18 +105,16 @@ export default function BestellenLayout({
                 </button>
             </div>
 
-            {/* Modal overlay & content */}
+            {/* JSON Modal */}
             {showJsonModal && (
                 <div
                     className="
-            fixed inset-0 z-50 
-            flex items-center justify-center 
+            fixed inset-0 z-50
+            flex items-center justify-center
             bg-black bg-opacity-50
           "
                 >
-                    {/* Modal box */}
                     <div className="relative w-11/12 max-w-3xl bg-white rounded shadow-lg p-6">
-                        {/* Close button (top-right) */}
                         <button
                             className="absolute top-2 right-2 text-gray-600 hover:text-black"
                             onClick={() => setShowJsonModal(false)}
@@ -85,8 +123,6 @@ export default function BestellenLayout({
                         </button>
 
                         <h2 className="text-lg font-bold mb-2">Raw JSON from API</h2>
-
-                        {/* JSON content in a scrollable <pre> */}
                         <div className="max-h-96 overflow-auto p-2 bg-gray-100 rounded text-sm">
                             <pre className="whitespace-pre-wrap">
                                 {JSON.stringify(categorizedProducts, null, 2)}
@@ -106,4 +142,18 @@ export default function BestellenLayout({
             )}
         </div>
     )
+}
+
+/** Helper to pick product name in correct language. */
+function pickProductName(prod: Product, lang?: string): string {
+    switch (lang) {
+        case 'en':
+            return prod.name_en || prod.name_nl
+        case 'fr':
+            return prod.name_fr || prod.name_nl
+        case 'de':
+            return prod.name_de || prod.name_nl
+        default:
+            return prod.name_nl
+    }
 }
