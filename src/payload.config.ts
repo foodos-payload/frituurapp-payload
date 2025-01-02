@@ -32,6 +32,7 @@ import { nl } from '@payloadcms/translations/languages/nl'
 import { en } from '@payloadcms/translations/languages/en'
 import { de } from '@payloadcms/translations/languages/de'
 import { fr } from '@payloadcms/translations/languages/fr'
+import { Services } from './collections/Services';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -203,6 +204,13 @@ export default buildConfig({
       ...Productpopups,
       admin: {
         ...Productpopups.admin,
+        group: '🛒',
+      },
+    },
+    {
+      ...Services,
+      admin: {
+        ...Services.admin,
         group: '🛒',
       },
     },

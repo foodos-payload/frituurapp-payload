@@ -33,6 +33,7 @@ export interface Config {
     products: Product;
     subproducts: Subproduct;
     productpopups: Productpopup;
+    services: Service;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -61,6 +62,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
     productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
+    services: ServicesSelect<false> | ServicesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -1223,6 +1225,104 @@ export interface Order {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services".
+ */
+export interface Service {
+  id: string;
+  title_nl: string;
+  title_en: string;
+  title_de: string;
+  title_fr: string;
+  description_nl: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  description_en: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  description_de: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  description_fr: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  monthly_price: string;
+  yearly_price: string;
+  try_demo?: string | null;
+  service_thumbnail: string | Media;
+  /**
+   * Stripe referral code for this service
+   */
+  referral_code?: string | null;
+  /**
+   * Stripe coupon code for this service
+   */
+  coupon_code?: string | null;
+  /**
+   * Semantic versioning (e.g., 1.0.0)
+   */
+  service_version: string;
+  service_last_update_date: string;
+  /**
+   * Select tenants for which this service should be hidden
+   */
+  hide_for_tenants?: (string | Tenant)[] | null;
+  /**
+   * URL for additional information about the service
+   */
+  get_more_info_url?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -1315,6 +1415,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'productpopups';
         value: string | Productpopup;
+      } | null)
+    | ({
+        relationTo: 'services';
+        value: string | Service;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1912,6 +2016,32 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   maximum_option?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services_select".
+ */
+export interface ServicesSelect<T extends boolean = true> {
+  title_nl?: T;
+  title_en?: T;
+  title_de?: T;
+  title_fr?: T;
+  description_nl?: T;
+  description_en?: T;
+  description_de?: T;
+  description_fr?: T;
+  monthly_price?: T;
+  yearly_price?: T;
+  try_demo?: T;
+  service_thumbnail?: T;
+  referral_code?: T;
+  coupon_code?: T;
+  service_version?: T;
+  service_last_update_date?: T;
+  hide_for_tenants?: T;
+  get_more_info_url?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -4,7 +4,6 @@ import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateCategory } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
 import { ensureUniqueNamePerShop } from './hooks/ensureUniqueNamePerShop';
 import { readAccess } from './access/readAccess';
 
