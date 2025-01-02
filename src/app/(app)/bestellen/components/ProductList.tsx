@@ -4,8 +4,30 @@ import React, { useEffect, useRef, useState } from 'react'
 import HorizontalCategories from './HorizontalCategories'
 import VerticalCategories from './VerticalCategories'
 import ProductCard from './ProductCard'
+import ProductPopupFlow from './ProductPopupFlow' // <-- We'll create this file below
 
 /** Example data types **/
+type Subproduct = {
+    id: string
+    name_nl: string
+    price: number
+    // ...
+}
+
+type PopupDoc = {
+    id: string
+    popup_title_nl: string
+    multiselect: boolean
+    minimum_option: number
+    maximum_option: number
+    subproducts: Subproduct[]
+}
+
+type PopupItem = {
+    order: number
+    popup: PopupDoc | null
+}
+
 type Product = {
     id: string
     name_nl: string
@@ -20,6 +42,7 @@ type Product = {
     image?: { url: string; alt: string }
     webdescription?: string
     isPromotion?: boolean
+    productpopups?: PopupItem[]        // <--- Add popup field
 }
 
 type Category = {
@@ -51,6 +74,9 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
         console.log('[ProductList] Initial activeCategory:', firstSlug)
         return firstSlug
     })
+
+    // Track which product was clicked (to open the popup modal).
+    const [activeProduct, setActiveProduct] = useState<Product | null>(null)
 
     // Refs for each category’s container <div>.
     const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -125,6 +151,15 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
         }, 600)
     }
 
+    /**
+     * Called when a product card is clicked.
+     * We'll open the popup flow by setting activeProduct.
+     */
+    function handleProductClick(product: Product) {
+        console.log(`Clicked product: ${product.name_nl} (ID: ${product.id})`)
+        setActiveProduct(product)
+    }
+
     return (
         <div style={{ display: 'flex', gap: '1rem' }}>
             {/* 
@@ -193,7 +228,8 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
                             id={cat.slug}
                             ref={(el) => {
                                 categoryRefs.current[cat.slug] = el
-                            }} style={{ marginBottom: '2rem' }}
+                            }}
+                            style={{ marginBottom: '2rem' }}
                         >
                             <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{catLabel}</h3>
 
@@ -210,9 +246,7 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
                                                 displayName,
                                                 displayDesc,
                                             }}
-                                            onClick={() =>
-                                                console.log(`Clicked: ${displayName} in category ${cat.slug}`)
-                                            }
+                                            onClick={() => handleProductClick(prod)}
                                         />
                                     )
                                 })}
@@ -221,6 +255,14 @@ export default function ProductList({ categorizedProducts, userLang }: Props) {
                     )
                 })}
             </div>
+
+            {/* The Popups Modal */}
+            {activeProduct && (
+                <ProductPopupFlow
+                    product={activeProduct}
+                    onClose={() => setActiveProduct(null)}
+                />
+            )}
         </div>
     )
 }
