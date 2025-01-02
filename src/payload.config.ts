@@ -46,6 +46,7 @@ export default buildConfig({
       titleSuffix: 'Frituurapp',
     },
   },
+  serverURL: process.env.SERVER_URL,
   i18n: {
     supportedLanguages: { nl, en, de, fr },
     fallbackLanguage: 'nl',

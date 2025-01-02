@@ -19,6 +19,11 @@ export const Products: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'name_nl',
+        components: {
+            beforeList: [
+                '@/components/excel-import-export'
+            ]
+        }
     },
     labels: {
         plural: {
