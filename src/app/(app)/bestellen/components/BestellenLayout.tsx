@@ -65,21 +65,23 @@ export default function BestellenLayout({
     )
 
     return (
-        <div className="p-5">
+        <div className="pl-2 pr-2">
             {/* Header with language switcher, search, etc. */}
-            <Header
-                userLang={userLang || 'nl'}
-                searchValue={searchTerm}
-                onSearchChange={(val) => setSearchTerm(val)}
-                onClearFilter={() => setSearchTerm('')}
-            />
-
-            <h1 className="text-xl font-bold mb-2">Bestellen Layout</h1>
-            <p>
-                Shop Slug: <strong>{shopSlug}</strong>
-            </p>
-            <p>Detected Language: {userLang}</p>
-
+            <div
+                style={{
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 50,
+                    background: 'white',
+                }}
+            >
+                <Header
+                    userLang={userLang || 'nl'}
+                    searchValue={searchTerm}
+                    onSearchChange={(val) => setSearchTerm(val)}
+                    onClearFilter={() => setSearchTerm('')}
+                />
+            </div>
             {/* 
         3) We pass BOTH:
            - The original unfiltered array (categorizedProducts) as `unfilteredCategories`

@@ -97,7 +97,7 @@ export default function ProductList({
             if (programmaticScroll) return
             if (unfilteredCategories.length === 0) return
 
-            const headerOffset = 80
+            const headerOffset = 200
             const scrollY = window.scrollY + headerOffset
 
             let bestSlug = ''
@@ -156,7 +156,10 @@ export default function ProductList({
     function scrollToCategory(slug: string) {
         const el = categoryRefs.current[slug]
         if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            el.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start', // We'll rely on scroll-margin-top to handle the offset
+            })
         }
         setActiveCategory(slug)
 
@@ -164,6 +167,7 @@ export default function ProductList({
             setProgrammaticScroll(false)
         }, 600)
     }
+
 
     // ===== Called when user clicks a product card =====
     function handleProductClick(prod: Product) {
@@ -194,7 +198,7 @@ export default function ProductList({
                     position: 'sticky',
                     top: '80px',
                     alignSelf: 'flex-start',
-                    height: '100vh',
+                    height: '70vh',
                     overflow: 'auto',
                     background: '#f9f9f9',
                 }}
@@ -236,6 +240,7 @@ export default function ProductList({
                             ref={(el) => {
                                 categoryRefs.current[cat.slug] = el
                             }}
+                            className="scroll-mt-[100px]" // Or "scroll-mt-24" if you want Tailwind scale
                             style={{ marginBottom: '2rem' }}
                         >
                             <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>

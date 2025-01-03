@@ -39,10 +39,10 @@ export default function Header({
     }
 
     return (
-        <div className="flex items-center justify-between bg-gray-100 p-2 mb-4">
+        <div className="flex items-center justify-between bg-gray-100 p-2 mb-4 h-[80px]">
             {/* Left: language switcher */}
             <div className="flex items-center gap-2">
-                <span>Language:</span>
+                <span></span>
                 {LANGUAGES.map((lang) => (
                     <button
                         key={lang.value}
@@ -81,7 +81,7 @@ export default function Header({
                     className="inline-flex items-center gap-1 text-gray-700 hover:text-black"
                 >
                     <FiUser />
-                    <span>My Account</span>
+                    <span></span>
                 </a>
             </div>
         </div>
