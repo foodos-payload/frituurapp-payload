@@ -245,7 +245,7 @@ export default function ProductList({
                         marginBottom: '1rem',
                         position: 'sticky',
                         // If mobileSearchOpen => top:110, else top:80
-                        top: mobileSearchOpen ? 110 : 80,
+                        top: mobileSearchOpen ? 120 : 80,
                         zIndex: 50,
                         background: '#fff',
                     }}
