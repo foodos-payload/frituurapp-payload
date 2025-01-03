@@ -7,6 +7,7 @@ import Header from './Header'
 import { CartProvider } from './cart/CartContext'
 import CartButton from './cart/CartButton'
 import CartDrawer from './cart/CartDrawer'
+import MenuDrawer from './menu/MenuDrawer'
 
 // Minimal shape for a product
 type Product = {
@@ -47,6 +48,9 @@ export default function BestellenLayout({
     const [showJsonModal, setShowJsonModal] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [showCartDrawer, setShowCartDrawer] = useState(false)
+    const [showMenuDrawer, setShowMenuDrawer] = useState(false)
+
+    const [lang, setLang] = useState(userLang || 'nl') // or from props
 
     // 1) Filter products by search term
     const filteredCategories = categorizedProducts.map(cat => {
@@ -67,6 +71,14 @@ export default function BestellenLayout({
 
     return (
         <CartProvider>
+            {/* The menu drawer (left side) */}
+            <MenuDrawer
+                isOpen={showMenuDrawer}
+                onClose={() => setShowMenuDrawer(false)}
+                userLang={lang}
+                onLangChange={(newLang) => setLang(newLang)}
+            />
+
             {/* The CartDrawer with overlay (z-[9999]) */}
             <CartDrawer
                 isOpen={showCartDrawer}
@@ -85,6 +97,8 @@ export default function BestellenLayout({
                         searchValue={searchTerm}
                         onSearchChange={val => setShowSearchTerm(val)}
                         onClearFilter={() => setShowSearchTerm('')}
+                        onMenuClick={() => setShowMenuDrawer(true)} // <-- Add this line!
+
                     />
                 </div>
 
