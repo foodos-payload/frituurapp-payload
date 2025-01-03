@@ -220,7 +220,7 @@ export default function ProductList({
                     width: '240px',
                     flexShrink: 0,
                     position: 'sticky',
-                    top: '80px',
+                    top: '100px',
                     alignSelf: 'flex-start',
                     height: '70vh',
                     overflow: 'auto',

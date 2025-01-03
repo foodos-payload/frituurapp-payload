@@ -25,7 +25,7 @@ export default function VerticalCategories({
 
   return (
     <div style={{ border: '1px solid #ccc', padding: '1rem' }}>
-      <h3>Categories (Vertical)</h3>
+
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {categories.map((cat) => {
           const isActive = cat.slug === activeCategory
