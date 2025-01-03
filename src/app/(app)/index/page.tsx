@@ -1,28 +1,21 @@
-// /src/app/(app)/[tenant]/index/page.tsx
-import React from 'react'
-import { headers } from 'next/headers'
-import { ChooseMode } from './ChooseMode.client'
+import React from "react"
+import { headers } from "next/headers"
+import { KioskContainer } from "./components/kiosk/KioskContainer"
+import { ChooseMode } from "./ChooseMode.client"
 
-// If Next is passing `params` as a promise, do this:
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-export default async function TenantIndexPage({
-    params: promiseParams,
-}: {
-    params: Promise<{ tenant: string }>
-}) {
-    const { tenant } = await promiseParams
-    const tenantSlug = tenant
+export default async function IndexPage(context: any) {
+    const searchParams = context?.searchParams || {}
+    const isKiosk = searchParams.kiosk === "true"
 
-    // 2. Get host headers
     const requestHeaders = await headers()
-    const fullHost = requestHeaders.get('host') || ''
-    const shopSlug = fullHost.split('.')[0] || 'defaultShop'
+    const fullHost = requestHeaders.get("host") || ""
+    const hostSlug = fullHost.split(".")[0] || "defaultShop"
 
-    // 3. Render
-    return (
-        <div>
-            <ChooseMode tenantSlug={tenantSlug} shopSlug={shopSlug} />
-        </div>
-    )
+    if (isKiosk) {
+        return <KioskContainer shopSlug={hostSlug} />
+    }
+
+    return <ChooseMode shopSlug={hostSlug} />
 }
