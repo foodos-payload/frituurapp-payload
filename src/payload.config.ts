@@ -19,6 +19,7 @@ import { Tables } from './collections/ShopSettings/Tables';
 import { Printers } from './collections/ShopSettings/Printers';
 import { FulfillmentMethods } from './collections/ShopSettings/FulfillmentMethods';
 import { Timeslots } from './collections/ShopSettings/Timeslots';
+import { ShopBranding } from './collections/ShopSettings/ShopBranding'
 import { Customers } from './collections/Customers';
 import { CustomerCredits } from './collections/CustomerCredits';
 import { CustomerLoyalty } from './collections/CustomerLoyalty';
@@ -90,6 +91,13 @@ export default buildConfig({
       ...Timeslots,
       admin: {
         ...Timeslots.admin,
+        group: '🛠️',
+      },
+    },
+    {
+      ...ShopBranding,
+      admin: {
+        ...ShopBranding.admin,
         group: '🛠️',
       },
     },
