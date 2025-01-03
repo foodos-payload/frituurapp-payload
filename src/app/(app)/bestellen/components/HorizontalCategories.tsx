@@ -47,6 +47,7 @@ export default function HorizontalCategories({
         border: '1px solid #ccc',
         padding: '0.5rem',
         whiteSpace: 'nowrap',
+
       }}
     >
       {categories.map((cat) => {

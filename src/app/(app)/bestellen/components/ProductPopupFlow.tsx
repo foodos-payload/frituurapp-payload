@@ -1,9 +1,12 @@
 // File: /app/(app)/bestellen/components/ProductPopupFlow.tsx
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, MouseEvent } from 'react'
+import { useCart } from './cart/CartContext'
 
-// Define the shape of a Subproduct, which may include a `linkedProduct`
+// ---------------------------------------------------------
+// 1) Types for your subproducts, popups, product, etc.
+// ---------------------------------------------------------
 type LinkedProductData = {
     id: string
     name_nl: string
@@ -24,7 +27,7 @@ type Subproduct = {
         url: string
         alt: string
     } | null
-    linkedProduct?: LinkedProductData  // <--- We'll check this
+    linkedProduct?: LinkedProductData
 }
 
 type PopupDoc = {
@@ -41,10 +44,10 @@ type PopupItem = {
     popup: PopupDoc | null
 }
 
-// Minimal product shape for your main product
 type Product = {
     id: string
     name_nl: string
+    price?: number | null // the base product price
     productpopups?: PopupItem[]
     // ...
 }
@@ -54,43 +57,65 @@ interface Props {
     onClose: () => void
 }
 
+// ---------------------------------------------------------
+// 2) The main component
+// ---------------------------------------------------------
 export default function ProductPopupFlow({ product, onClose }: Props) {
-    // 1) Sort popups by `order`
+    const { addItem } = useCart()
+
+    // ----------------------------------------
+    // A) Lock body scroll while mounted
+    // ----------------------------------------
+    useEffect(() => {
+        document.body.style.overflow = 'hidden'
+        return () => {
+            document.body.style.overflow = ''
+        }
+    }, [])
+
+    // ----------------------------------------
+    // B) Sort + filter the product popups
+    // ----------------------------------------
     const sortedPopups = (product.productpopups || [])
-        .filter((p) => p.popup !== null)
+        .filter(p => p.popup !== null)
         .sort((a, b) => (a.order || 0) - (b.order || 0))
 
     if (sortedPopups.length === 0) {
+        // If no popups exist, no flow needed
         return null
     }
 
-    // 2) Manage which popup is active
+    // ----------------------------------------
+    // C) Track current popup step
+    // ----------------------------------------
     const [currentIndex, setCurrentIndex] = useState(0)
-
-    // 3) Track which subproduct IDs are selected per popup
-    //    e.g. { 'popup-123': ['sub-1','sub-2'] }
-    const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({})
-
     const currentPopupItem = sortedPopups[currentIndex]
     const popup = currentPopupItem.popup
     if (!popup) {
-        return null // Shouldn’t happen
+        return null // safeguard
     }
 
+    // ----------------------------------------
+    // D) Track which subproduct IDs are selected per popup
+    //    e.g. { 'popup-abc': ['sub-1','sub-2'] }
+    // ----------------------------------------
+    const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({})
     const { id: popupID, popup_title_nl, multiselect, subproducts } = popup
     const currentSelections = selectedOptions[popupID] || []
 
-    // 4) On subproduct click, add or remove it from `selectedOptions[popupID]`
+    // ------------------------------------------------
+    // E) Handler: clicking a subproduct toggles or sets
+    // ------------------------------------------------
     function handleSubproductClick(sub: Subproduct) {
         const subID = sub.id
-        setSelectedOptions((prev) => {
+        setSelectedOptions(prev => {
             const oldArray = prev[popupID] || []
-            let newArray = []
+            let newArray: string[] = []
 
             if (multiselect) {
                 // Toggle
                 if (oldArray.includes(subID)) {
-                    newArray = oldArray.filter((id) => id !== subID)
+                    newArray = oldArray.filter(id => id !== subID)
                 } else {
                     newArray = [...oldArray, subID]
                 }
@@ -106,30 +131,91 @@ export default function ProductPopupFlow({ product, onClose }: Props) {
         })
     }
 
+    // ------------------------------------------------
+    // F) Navigation: Next / Back / Finish
+    // ------------------------------------------------
     function handleNext() {
-        // If we’re at last popup, finish. Otherwise increment index
         if (currentIndex >= sortedPopups.length - 1) {
             handleFinish()
         } else {
-            setCurrentIndex((prev) => prev + 1)
+            setCurrentIndex(i => i + 1)
         }
     }
 
     function handleBack() {
         if (currentIndex > 0) {
-            setCurrentIndex((prev) => prev - 1)
+            setCurrentIndex(i => i - 1)
         }
     }
 
+    // ------------------------------------------------
+    // G) On Finish => add to cart
+    // ------------------------------------------------
     function handleFinish() {
-        // e.g. pass these selections up to a cart
-        console.log('Final selectedOptions:', selectedOptions)
+        // 1) Gather all chosen subproducts from all popups
+        const chosenSubproducts: { id: string; name_nl: string; price: number }[] = []
+
+        for (const popupItem of sortedPopups) {
+            if (!popupItem.popup) continue
+            const chosenIDs = selectedOptions[popupItem.popup.id] || []
+            for (const sub of popupItem.popup.subproducts) {
+                if (!chosenIDs.includes(sub.id)) continue
+
+                // If sub has linked product, use that data
+                if (sub.linkedProduct) {
+                    chosenSubproducts.push({
+                        id: sub.linkedProduct.id,
+                        name_nl: sub.linkedProduct.name_nl,
+                        price: sub.linkedProduct.price ?? 0,
+                    })
+                } else {
+                    chosenSubproducts.push({
+                        id: sub.id,
+                        name_nl: sub.name_nl,
+                        price: sub.price,
+                    })
+                }
+            }
+        }
+
+        // 2) The product’s base price
+        const basePrice = product.price ?? 0
+
+        // 3) Add item to cart
+        addItem({
+            productId: product.id,
+            productName: product.name_nl,
+            price: basePrice,
+            quantity: 1,
+            note: '',
+            subproducts: chosenSubproducts,
+        })
+
+        // 4) Close
         onClose()
     }
 
+    // ------------------------------------------------
+    // H) Close if user clicks the overlay
+    // ------------------------------------------------
+    function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
+        if (e.target === e.currentTarget) {
+            onClose()
+        }
+    }
+
+    // ------------------------------------------------
+    // I) Render
+    // ------------------------------------------------
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white rounded-md shadow-md max-w-md w-full p-4 relative">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+            onClick={handleOverlayClick}
+        >
+            <div
+                className="bg-white rounded-md shadow-md max-w-md w-full p-4 relative"
+                onClick={e => e.stopPropagation()}
+            >
                 {/* Close Button */}
                 <button
                     className="absolute top-2 right-2 text-gray-500 hover:text-black"
@@ -138,26 +224,20 @@ export default function ProductPopupFlow({ product, onClose }: Props) {
                     ✕
                 </button>
 
+                {/* Title */}
                 <h2 className="text-xl font-semibold mb-2">{product.name_nl}</h2>
                 <p className="mb-4 text-gray-600">
                     Popup {currentIndex + 1} of {sortedPopups.length}:{' '}
                     <strong>{popup_title_nl}</strong>
                 </p>
 
-                {/* 5) List of subproducts (overriding with linked product data if present) */}
+                {/* Subproduct list */}
                 <div className="space-y-2">
-                    {subproducts.map((sub) => {
-                        // If linkedProduct is set, use that data instead
-                        const useLinked = sub.linkedProduct !== undefined
-                        const displayName = useLinked
-                            ? sub.linkedProduct!.name_nl
-                            : sub.name_nl
-                        const displayPrice = useLinked
-                            ? sub.linkedProduct!.price ?? 0
-                            : sub.price
-                        const displayImage = useLinked
-                            ? sub.linkedProduct?.image
-                            : sub.image
+                    {subproducts.map(sub => {
+                        const useLinked = !!sub.linkedProduct
+                        const displayName = useLinked ? sub.linkedProduct!.name_nl : sub.name_nl
+                        const displayPrice = useLinked ? sub.linkedProduct!.price ?? 0 : sub.price
+                        const displayImage = useLinked ? sub.linkedProduct?.image : sub.image
 
                         const isSelected = currentSelections.includes(sub.id)
 
@@ -171,19 +251,21 @@ export default function ProductPopupFlow({ product, onClose }: Props) {
                   ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
                 `}
                             >
-                                {/* Left side: optional image + name */}
                                 <div className="flex items-center gap-2">
                                     {displayImage?.url && (
                                         <img
                                             src={displayImage.url}
                                             alt={displayImage.alt}
-                                            style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                            style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                objectFit: 'cover',
+                                            }}
                                         />
                                     )}
                                     <span>{displayName}</span>
                                 </div>
 
-                                {/* Right side: price (or handle more advanced logic if needed) */}
                                 <span className="text-sm text-gray-500">
                                     €{displayPrice.toFixed(2)}
                                 </span>

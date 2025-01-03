@@ -39,7 +39,7 @@ export default function Header({
     }
 
     return (
-        <div className="flex items-center justify-between bg-gray-100 p-2 mb-4 h-[80px]">
+        <div className="flex items-center justify-between bg-white p mb-4 h-[80px] w-full">
             {/* Left: language switcher */}
             <div className="flex items-center gap-2">
                 <span></span>

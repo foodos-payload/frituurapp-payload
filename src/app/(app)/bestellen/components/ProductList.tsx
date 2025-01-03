@@ -6,6 +6,7 @@ import HorizontalCategories from './HorizontalCategories'
 import VerticalCategories from './VerticalCategories'
 import ProductCard from './ProductCard'
 import ProductPopupFlow from './ProductPopupFlow'
+import { useCart } from './cart/CartContext'
 
 // Example data types (simplified for clarity)
 type Subproduct = {
@@ -90,6 +91,9 @@ export default function ProductList({
     // If we're scrolling programmatically, ignore scroll events that set activeCategory.
     const [programmaticScroll, setProgrammaticScroll] = useState(false)
 
+    // Access the cart
+    const { addItem } = useCart()
+
     // ===== Scroll listener: updates activeCategory based on scroll position =====
     // ===== SCROLL LISTENER: update activeCategory as user scrolls =====
     useEffect(() => {
@@ -169,9 +173,29 @@ export default function ProductList({
     }
 
 
-    // ===== Called when user clicks a product card =====
+    //--------------------------------------------
+    // 3) Product Click => open flow if popups, else add directly
+    //--------------------------------------------
     function handleProductClick(prod: Product) {
-        setActiveProduct(prod)
+        const popups = prod.productpopups || []
+        // Does it have any non-null popups?
+        const hasPopups = popups.some((p) => p.popup !== null)
+
+        if (!hasPopups) {
+            // No popups => add directly to cart with quantity=1, no subproducts
+            addItem({
+                productId: prod.id,
+                productName: prod.name_nl,
+                price: prod.price || 0,
+                quantity: 1,
+                // If you want to store more fields from `prod` (like image?), do so:
+                // image: prod.image ? { ... } : undefined,
+            })
+            alert(`Added "${prod.name_nl}" to cart!`)
+        } else {
+            // If productpopups exist, open the flow
+            setActiveProduct(prod)
+        }
     }
 
     // ===== 1) Build the category list for menus (using unfiltered categories) =====
@@ -218,7 +242,7 @@ export default function ProductList({
                     style={{
                         marginBottom: '1rem',
                         position: 'sticky',
-                        top: 0,
+                        top: 80,
                         zIndex: 50,
                         background: '#fff',
                     }}
