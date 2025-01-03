@@ -78,8 +78,8 @@ export const KioskContainer: React.FC<KioskContainerProps> = ({ shopSlug }) => {
     return (
         <div className="flex flex-col h-[100vh]">
             <KioskAppHeaderHome
-                siteTitle={branding.siteTitle}
-                siteHeaderImg={branding.siteHeaderImg}
+                siteTitle={branding.siteTitle ?? "My Kiosk Site"}
+                siteHeaderImg={branding.siteHeaderImg ?? "/images/defaultHeader.jpg"}
             />
 
             <div className="flex flex-col justify-end grow">

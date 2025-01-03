@@ -17,6 +17,7 @@ export interface Config {
     'payment-methods': PaymentMethod;
     'fulfillment-methods': FulfillmentMethod;
     timeslots: Timeslot;
+    'shop-branding': ShopBranding;
     'reservation-entries': ReservationEntry;
     'reservation-settings': ReservationSetting;
     tables: Table;
@@ -45,6 +46,7 @@ export interface Config {
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
     timeslots: TimeslotsSelect<false> | TimeslotsSelect<true>;
+    'shop-branding': ShopBrandingSelect<false> | ShopBrandingSelect<true>;
     'reservation-entries': ReservationEntriesSelect<false> | ReservationEntriesSelect<true>;
     'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
     tables: TablesSelect<false> | TablesSelect<true>;
@@ -377,6 +379,83 @@ export interface Timeslot {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-branding".
+ */
+export interface ShopBranding {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Displayed kiosk site title.
+   */
+  siteTitle: string;
+  /**
+   * Large background image for the kiosk header.
+   */
+  siteHeaderImg?: (string | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  tenant: string | Tenant;
+  /**
+   * Optional tags to organize media files.
+   */
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Blurhash representation of the image for quick previews.
+   */
+  blurhash?: string | null;
+  /**
+   * URL of the original image in S3.
+   */
+  s3_url?: string | null;
+  /**
+   * Alternative text for the media file to improve accessibility.
+   */
+  alt_text?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    medium?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "reservation-entries".
  */
 export interface ReservationEntry {
@@ -596,64 +675,6 @@ export interface Page {
   tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  tenant: string | Tenant;
-  /**
-   * Optional tags to organize media files.
-   */
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Blurhash representation of the image for quick previews.
-   */
-  blurhash?: string | null;
-  /**
-   * URL of the original image in S3.
-   */
-  s3_url?: string | null;
-  /**
-   * Alternative text for the media file to improve accessibility.
-   */
-  alt_text?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    medium?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1185,6 +1206,10 @@ export interface Order {
    */
   tempOrdNr: number;
   /**
+   * Current status of the order (e.g., Payment Pending, In Preparation, etc.)
+   */
+  status: 'pending_payment' | 'awaiting_preparation' | 'in_preparation' | 'complete';
+  /**
    * Type of the order (e.g., POS, Web, or Kiosk).
    */
   order_type: 'pos' | 'web' | 'kiosk';
@@ -1251,6 +1276,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'timeslots';
         value: string | Timeslot;
+      } | null)
+    | ({
+        relationTo: 'shop-branding';
+        value: string | ShopBranding;
       } | null)
     | ({
         relationTo: 'reservation-entries';
@@ -1497,6 +1526,18 @@ export interface TimeslotsSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-branding_select".
+ */
+export interface ShopBrandingSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  siteTitle?: T;
+  siteHeaderImg?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1770,6 +1811,7 @@ export interface OrdersSelect<T extends boolean = true> {
   shops?: T;
   id?: T;
   tempOrdNr?: T;
+  status?: T;
   order_type?: T;
   order_details?:
     | T

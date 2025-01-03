@@ -14,6 +14,8 @@ interface HeaderProps {
     // We add a new prop to open the menu drawer
     onMenuClick: () => void
 
+    userLang?: string
+
     // If you want to show/hide the user avatar, you can do so
 }
 

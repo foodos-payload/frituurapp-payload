@@ -95,8 +95,8 @@ export default function BestellenLayout({
                     <Header
                         userLang={userLang || 'nl'}
                         searchValue={searchTerm}
-                        onSearchChange={val => setShowSearchTerm(val)}
-                        onClearFilter={() => setShowSearchTerm('')}
+                        onSearchChange={val => setSearchTerm(val)}
+                        onClearFilter={() => setSearchTerm('')}
                         onMenuClick={() => setShowMenuDrawer(true)} // <-- Add this line!
 
                     />
