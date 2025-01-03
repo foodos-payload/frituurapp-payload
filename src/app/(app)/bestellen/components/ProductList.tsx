@@ -91,12 +91,13 @@ export default function ProductList({
     const [programmaticScroll, setProgrammaticScroll] = useState(false)
 
     // ===== Scroll listener: updates activeCategory based on scroll position =====
+    // ===== SCROLL LISTENER: update activeCategory as user scrolls =====
     useEffect(() => {
         function handleScroll() {
             if (programmaticScroll) return
             if (unfilteredCategories.length === 0) return
 
-            const headerOffset = 80 // e.g., sticky header height
+            const headerOffset = 80
             const scrollY = window.scrollY + headerOffset
 
             let bestSlug = ''
@@ -120,26 +121,43 @@ export default function ProductList({
         }
 
         window.addEventListener('scroll', handleScroll, { passive: true })
-        return () => {
-            window.removeEventListener('scroll', handleScroll)
-        }
+        return () => window.removeEventListener('scroll', handleScroll)
     }, [unfilteredCategories, activeCategory, programmaticScroll])
 
     // ===== Called when user clicks a category in a menu =====
+    // ===== USER CLICKS A CATEGORY FROM THE MENU =====
     function handleCategoryClick(slug: string) {
         setProgrammaticScroll(true)
 
-        // If the parent wants to do something (like clearing a search filter):
-        if (onCategoryClick) {
-            onCategoryClick(slug)
-        }
+        // 1) If we are currently filtering out that category (meaning it's not in filteredCategories),
+        //    we need to let the parent remove the filter first, then wait a bit, then scroll.
+        const isCategoryFilteredOut = !filteredCategories.some((cat) => cat.slug === slug)
 
-        // Then scroll that category into view
+        if (isCategoryFilteredOut) {
+            // The parent can do something like setSearchTerm('') in onCategoryClick
+            if (onCategoryClick) {
+                onCategoryClick(slug)
+            }
+
+            // Then we wait a short time for the parent's re-render (the filter is cleared => category is visible).
+            setTimeout(() => {
+                scrollToCategory(slug)
+            }, 300)
+        } else {
+            // Otherwise, we can scroll immediately
+            if (onCategoryClick) {
+                onCategoryClick(slug)
+            }
+            scrollToCategory(slug)
+        }
+    }
+
+    // Helper to actually do the smooth-scroll
+    function scrollToCategory(slug: string) {
         const el = categoryRefs.current[slug]
         if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
-
         setActiveCategory(slug)
 
         setTimeout(() => {
@@ -174,7 +192,7 @@ export default function ProductList({
                     width: '240px',
                     flexShrink: 0,
                     position: 'sticky',
-                    top: '100px',
+                    top: '80px',
                     alignSelf: 'flex-start',
                     height: '100vh',
                     overflow: 'auto',
