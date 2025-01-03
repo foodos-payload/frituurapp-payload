@@ -50,31 +50,29 @@ export default function BestellenLayout({
     const [showCartDrawer, setShowCartDrawer] = useState(false)
     const [showMenuDrawer, setShowMenuDrawer] = useState(false)
 
-    const [lang, setLang] = useState(userLang || 'nl') // or from props
+    // We track the user’s chosen language (default to 'nl')
+    const [lang, setLang] = useState(userLang || 'nl')
 
-    // Track mobile search
+    // Whether mobile search is open
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
 
-    // 1) Filter products by search term
-    const filteredCategories = categorizedProducts.map(cat => {
-        const filteredProds = cat.products.filter(prod => {
-            const name = pickProductName(prod, userLang).toLowerCase()
-            return name.includes(searchTerm.toLowerCase())
+    // 1) Filter products in each category by the search term
+    const filteredCategories = categorizedProducts.map((cat) => {
+        const filteredProds = cat.products.filter((prod) => {
+            const productName = pickProductName(prod, lang).toLowerCase()
+            return productName.includes(searchTerm.toLowerCase())
         })
-        return {
-            ...cat,
-            products: filteredProds,
-        }
+        return { ...cat, products: filteredProds }
     })
 
-    // 2) Hide categories that have zero products
+    // 2) Only keep categories that still have products
     const visibleCategories = filteredCategories.filter(
-        cat => cat.products.length > 0
+        (cat) => cat.products.length > 0
     )
 
     return (
         <CartProvider>
-            {/* The menu drawer (left side) */}
+            {/* Left-side (MenuDrawer) */}
             <MenuDrawer
                 isOpen={showMenuDrawer}
                 onClose={() => setShowMenuDrawer(false)}
@@ -82,24 +80,21 @@ export default function BestellenLayout({
                 onLangChange={(newLang) => setLang(newLang)}
             />
 
-            {/* The CartDrawer with overlay (z-[9999]) */}
+            {/* Right-side (CartDrawer) */}
             <CartDrawer
                 isOpen={showCartDrawer}
                 onClose={() => setShowCartDrawer(false)}
             />
 
-            {/* 
-        Make a flex container that is h-screen (or min-h-screen) 
-        with overflow-y-auto. That ensures iOS / mobile can handle sticky properly.
-      */}
-            <div className="relative flex flex-col h-screen overflow-y-auto pl-1">
-                {/* Sticky header */}
+            {/* Our main layout container */}
+            <div className="relative flex flex-col h-screen overflow-y-auto overflow-x-hidden w-full scroll-smooth">
+                {/* Sticky Header */}
                 <div className="sticky top-0 z-50 bg-white">
                     <Header
-                        userLang={userLang || 'nl'}
+                        userLang={lang}
                         searchValue={searchTerm}
-                        onSearchChange={(val) => setSearchTerm(val)}     // <--- FIXED
-                        onClearFilter={() => setSearchTerm('')}          // <--- FIXED
+                        onSearchChange={(val) => setSearchTerm(val)}
+                        onClearFilter={() => setSearchTerm('')}
                         onMenuClick={() => setShowMenuDrawer(true)}
                         mobileSearchOpen={mobileSearchOpen}
                         setMobileSearchOpen={setMobileSearchOpen}
@@ -110,13 +105,16 @@ export default function BestellenLayout({
                 <ProductList
                     unfilteredCategories={categorizedProducts}
                     filteredCategories={visibleCategories}
-                    userLang={userLang}
-                    onCategoryClick={() => setSearchTerm('')}
+                    userLang={lang}
                     mobileSearchOpen={mobileSearchOpen}
+                    onCategoryClick={() => {
+                        // If user clicks a category, you can optionally reset searchTerm:
+                        setSearchTerm('')
+                    }}
                 />
 
-                {/* Debugging button */}
-                <div className="mt-4">
+                {/* A debugging button to show JSON data */}
+                <div className="mt-4 px-2">
                     <button
                         className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
                         onClick={() => setShowJsonModal(true)}
@@ -125,10 +123,11 @@ export default function BestellenLayout({
                     </button>
                 </div>
 
+                {/* The JSON modal overlay */}
                 {showJsonModal && (
                     <div
                         className="
-              fixed inset-0 z-50 
+              fixed inset-0 z-50
               flex items-center justify-center
               bg-black bg-opacity-50
             "
@@ -158,15 +157,15 @@ export default function BestellenLayout({
                     </div>
                 )}
 
-                {/* Floating cart button */}
+                {/* Floating Cart Button (bottom-right) */}
                 <CartButton onClick={() => setShowCartDrawer(true)} />
             </div>
         </CartProvider>
     )
 }
 
-/** Helper to pick product name in the correct language. */
-function pickProductName(prod: Product, lang?: string): string {
+/** Helper function to pick the product name in the correct language. */
+function pickProductName(prod: Product, lang: string): string {
     switch (lang) {
         case 'en':
             return prod.name_en || prod.name_nl

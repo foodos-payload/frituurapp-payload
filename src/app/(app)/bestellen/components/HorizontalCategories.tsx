@@ -1,6 +1,7 @@
+// File: /app/(app)/bestellen/components/HorizontalCategories.tsx
 'use client'
 
-import React, { useRef, useEffect } from 'react'
+import React from 'react'
 
 interface Category {
   id: string
@@ -19,55 +20,45 @@ export default function HorizontalCategories({
   activeCategory,
   onCategoryClick,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  // Log the activeCategory for debugging
-  useEffect(() => {
-    console.log('[HorizontalCategories] activeCategory changed:', activeCategory)
-  }, [activeCategory])
-
-  // Optionally auto-scroll the active category button into view
-  // useEffect(() => {
-  //   if (!activeCategory) return
-  //   const activeBtn = containerRef.current?.querySelector<HTMLButtonElement>(
-  //     `button[data-slug="${activeCategory}"]`
-  //   )
-  //   if (activeBtn) {
-  //     activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center' })
-  //   }
-  // }, [activeCategory])
-
   return (
     <div
-      ref={containerRef}
-      style={{
-        display: 'flex',
-        overflowX: 'auto',
-        gap: '0.5rem',
-        border: '1px solid #ccc',
-        padding: '0.5rem',
-        whiteSpace: 'nowrap',
-
-      }}
+      className="
+        w-full
+        flex
+        overflow-x-auto
+        gap-2
+        pb-1
+        bg-white
+        rounded
+        shadow-sm
+        font-medium
+        scroll-smooth
+      "
+      style={{ scrollbarWidth: 'thin' }} // optional narrower scrollbar for Firefox
     >
       {categories.map((cat) => {
         const isActive = cat.slug === activeCategory
         return (
-          <button
+          <a
             key={cat.id}
-            data-slug={cat.slug}
+            href={`#cat-${cat.slug}`}
             onClick={() => onCategoryClick(cat.slug)}
-            style={{
-              backgroundColor: isActive ? '#ccc' : '#fff',
-              fontWeight: isActive ? 'bold' : 'normal',
-              padding: '0.5rem 1rem',
-              cursor: 'pointer',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-            }}
+            className={`
+              whitespace-nowrap
+              px-4 py-2
+              border border-gray-300
+              rounded-lg
+              text-sm
+              cursor-pointer
+              transition-colors
+              ${isActive
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-blue-600 hover:text-white'
+              }
+            `}
           >
             {cat.label}
-          </button>
+          </a>
         )
       })}
     </div>
