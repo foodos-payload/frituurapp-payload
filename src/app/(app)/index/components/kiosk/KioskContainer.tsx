@@ -3,7 +3,10 @@
 import React, { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useFulfillment } from "../../hooks/useFulfillment"
+import { useBranding } from "../../hooks/useBranding"
 import { LanguageSwitcher } from "../LanguageSwitcher"
+
+import { KioskAppHeaderHome } from "./KioskAppHeaderHome"
 
 interface KioskContainerProps {
     shopSlug: string
@@ -13,9 +16,13 @@ export const KioskContainer: React.FC<KioskContainerProps> = ({ shopSlug }) => {
     const router = useRouter()
 
     // 1) We call our new hook, excluding “delivery”
-    const { fulfillmentOptions, isLoading } = useFulfillment({
+    const { fulfillmentOptions, isLoading: isFulfillLoading } = useFulfillment({
         shopSlug,
         excludeDelivery: true,
+    })
+
+    const { branding, isLoading: isBrandingLoading } = useBranding({
+        shopSlug,
     })
 
     // 2) In kiosk mode, set kiosk in localStorage
@@ -23,6 +30,8 @@ export const KioskContainer: React.FC<KioskContainerProps> = ({ shopSlug }) => {
         localStorage.setItem("kioskMode", "true")
         // Possibly do other kiosk stuff
     }, [])
+
+    const isLoading = isFulfillLoading || isBrandingLoading
 
     // 3) A small function for selecting shipping
     const selectOption = (key: "dine-in" | "takeaway" | "delivery") => {
@@ -68,13 +77,10 @@ export const KioskContainer: React.FC<KioskContainerProps> = ({ shopSlug }) => {
     //    We only show "dine-in" and "takeaway" because we excluded "delivery"
     return (
         <div className="flex flex-col h-[100vh]">
-            <div className="mb-10">
-                <div className="bg-gray-200 h-60 bg-cover bg-center relative">
-                    <h1 className="absolute top-[20%] left-2 text-white text-4xl font-bold p-3 rounded-lg bg-color-brand-primary">
-                        My Kiosk Title
-                    </h1>
-                </div>
-            </div>
+            <KioskAppHeaderHome
+                siteTitle={branding.siteTitle}
+                siteHeaderImg={branding.siteHeaderImg}
+            />
 
             <div className="flex flex-col justify-end grow">
                 <div className="flex flex-col justify-end items-end min-h-full bg-white">
