@@ -1,22 +1,41 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
-import configPromise from '@payload-config'
+import config from '@payload-config'
 
-export async function GET() {
+export const dynamic = 'force-dynamic'
+
+export async function GET(request: NextRequest) {
     try {
-        const payload = await getPayload({ config: configPromise })
+        const payload = await getPayload({ config })
 
-        // Query the 'fulfillment-methods' collection
-        // Optionally filter only enabled = true, if you have such a field
+        const { searchParams } = request.nextUrl
+        const host = searchParams.get('host')
+        if (!host) {
+            return NextResponse.json({ error: 'Host parameter is required' }, { status: 400 })
+        }
+
+        const shopResult = await payload.find({
+            collection: 'shops',
+            where: { slug: { equals: host } },
+            limit: 1,
+        })
+        const shop = shopResult.docs[0]
+        if (!shop) {
+            return NextResponse.json({ error: `No shop found for host: ${host}` }, { status: 404 })
+        }
+
         const fulfillments = await payload.find({
             collection: 'fulfillment-methods',
-            limit: 50, // Or any limit you want
-            // where: { enabled: { equals: true } }, 
+            where: {
+                shops: {
+                    equals: shop.id,
+                },
+            },
+            limit: 50,
         })
 
-        // Return the raw docs in JSON
         return NextResponse.json(fulfillments.docs)
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching fulfillment methods:', error)
         return NextResponse.json(
             { error: 'Failed to retrieve fulfillment methods' },
