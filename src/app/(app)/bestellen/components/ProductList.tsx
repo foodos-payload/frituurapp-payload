@@ -69,6 +69,7 @@ interface Props {
      * we can call this callback.
      */
     onCategoryClick?: (slug: string) => void
+    mobileSearchOpen?: boolean
 }
 
 export default function ProductList({
@@ -76,6 +77,7 @@ export default function ProductList({
     filteredCategories,
     userLang,
     onCategoryClick,
+    mobileSearchOpen = false,
 }: Props) {
     // We'll default to the first unfiltered category as "active".
     const [activeCategory, setActiveCategory] = useState(() => {
@@ -242,7 +244,8 @@ export default function ProductList({
                     style={{
                         marginBottom: '1rem',
                         position: 'sticky',
-                        top: 80,
+                        // If mobileSearchOpen => top:110, else top:80
+                        top: mobileSearchOpen ? 110 : 80,
                         zIndex: 50,
                         background: '#fff',
                     }}

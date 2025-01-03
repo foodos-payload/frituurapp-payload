@@ -1,49 +1,62 @@
 // File: /app/(app)/bestellen/components/Header.tsx
 'use client'
 
-import React from 'react'
-import { FiUser, FiMenu } from 'react-icons/fi'
+import React, { useState } from 'react'
+import { FiMenu, FiSearch, FiX } from 'react-icons/fi'
 
-// We'll no longer need to import the languages array here
 interface HeaderProps {
-    // We'll just keep the searchValue and onSearchChange
     searchValue: string
     onSearchChange: (newValue: string) => void
     onClearFilter: () => void
-
-    // We add a new prop to open the menu drawer
     onMenuClick: () => void
 
-    // If you want to show/hide the user avatar, you can do so
+    /** We'll pass the parent's state for mobile search: */
+    mobileSearchOpen: boolean
+    setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-// A placeholder: an 80px tall header that just has an image & the search
+/**
+ * Header with:
+ * - Left: Brand / Logo
+ * - Middle (desktop only): Search bar + Clear
+ * - Right: Mobile search icon + Menu icon
+ */
 export default function Header({
     searchValue,
     onSearchChange,
     onClearFilter,
     onMenuClick,
+    mobileSearchOpen,
+    setMobileSearchOpen,
 }: HeaderProps) {
-    function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
+    // Whenever user types in the input
+    function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
         onSearchChange(e.target.value)
+    }
+
+    // Toggles the mobile search bar
+    function toggleMobileSearch() {
+        // If we're currently open and user is closing, optionally clear
+        if (mobileSearchOpen) {
+            onClearFilter() // or remove if you'd like to keep typed text
+        }
+        setMobileSearchOpen(!mobileSearchOpen)
     }
 
     return (
         <div className="flex items-center justify-between bg-white p-2 mb-4 h-[80px] w-full">
-
-            {/* Left: Just a placeholder brand or image */}
+            {/* LEFT: Brand / Logo */}
             <div className="text-lg font-bold text-gray-700">
                 [Your Brand / Logo]
             </div>
 
-
-            {/* Middle: Search bar & Clear button */}
-            <div className="flex items-center gap-2">
+            {/* MIDDLE (Desktop only): Search bar + Clear button */}
+            <div className="hidden md:flex items-center gap-2">
                 <input
                     type="text"
                     placeholder="Search products..."
                     value={searchValue}
-                    onChange={handleSearch}
+                    onChange={handleSearchChange}
                     className="border border-gray-300 rounded px-2 py-1"
                 />
                 {searchValue && (
@@ -56,17 +69,53 @@ export default function Header({
                 )}
             </div>
 
-            {/* Right: Hamburger to open the drawer */}
-            <button onClick={onMenuClick} className="mr-4 text-gray-700 hover:text-black">
-                <FiMenu size={26} />
-            </button>
+            {/* RIGHT: Mobile Search + Menu Icons */}
+            <div className="flex items-center gap-3">
+                {/* MOBILE-ONLY Search Icon */}
+                <div className="md:hidden">
+                    <button
+                        onClick={toggleMobileSearch}
+                        className="text-gray-700 hover:text-black"
+                    >
+                        {mobileSearchOpen ? (
+                            <FiX size={20} />
+                        ) : (
+                            <FiSearch size={20} />
+                        )}
+                    </button>
+                </div>
 
-            {/* Optionally an avatar or user icon */}
-            {/* 
-      <a href="/my-account" className="inline-flex items-center gap-1 text-gray-700 hover:text-black ml-4">
-        <FiUser />
-      </a>
-      */}
+                {/* Menu Icon (Hamburger) */}
+                <button
+                    onClick={onMenuClick}
+                    className="text-gray-700 hover:text-black"
+                >
+                    <FiMenu size={26} />
+                </button>
+            </div>
+
+            {/* MOBILE SEARCH BAR (only if mobileSearchOpen) */}
+            {mobileSearchOpen && (
+                <div className="absolute top-[60px] left-0 w-full bg-white p-2 md:hidden shadow-md">
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            placeholder="Search products..."
+                            value={searchValue}
+                            onChange={handleSearchChange}
+                            className="border border-gray-300 rounded px-2 py-1 flex-grow"
+                        />
+                        {searchValue && (
+                            <button
+                                onClick={onClearFilter}
+                                className="bg-red-500 text-white px-2 py-1 rounded"
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

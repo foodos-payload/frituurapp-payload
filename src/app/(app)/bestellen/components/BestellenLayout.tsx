@@ -52,6 +52,9 @@ export default function BestellenLayout({
 
     const [lang, setLang] = useState(userLang || 'nl') // or from props
 
+    // Track mobile search
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+
     // 1) Filter products by search term
     const filteredCategories = categorizedProducts.map(cat => {
         const filteredProds = cat.products.filter(prod => {
@@ -86,19 +89,20 @@ export default function BestellenLayout({
             />
 
             {/* 
-            Make a flex container that is h-screen (or min-h-screen) 
-            with overflow-y-auto. That ensures iOS / mobile can handle sticky properly.
-          */}
+        Make a flex container that is h-screen (or min-h-screen) 
+        with overflow-y-auto. That ensures iOS / mobile can handle sticky properly.
+      */}
             <div className="relative flex flex-col h-screen overflow-y-auto pl-1">
                 {/* Sticky header */}
                 <div className="sticky top-0 z-50 bg-white">
                     <Header
                         userLang={userLang || 'nl'}
                         searchValue={searchTerm}
-                        onSearchChange={val => setShowSearchTerm(val)}
-                        onClearFilter={() => setShowSearchTerm('')}
-                        onMenuClick={() => setShowMenuDrawer(true)} // <-- Add this line!
-
+                        onSearchChange={(val) => setSearchTerm(val)}     // <--- FIXED
+                        onClearFilter={() => setSearchTerm('')}          // <--- FIXED
+                        onMenuClick={() => setShowMenuDrawer(true)}
+                        mobileSearchOpen={mobileSearchOpen}
+                        setMobileSearchOpen={setMobileSearchOpen}
                     />
                 </div>
 
@@ -108,6 +112,7 @@ export default function BestellenLayout({
                     filteredCategories={visibleCategories}
                     userLang={userLang}
                     onCategoryClick={() => setSearchTerm('')}
+                    mobileSearchOpen={mobileSearchOpen}
                 />
 
                 {/* Debugging button */}
@@ -123,10 +128,10 @@ export default function BestellenLayout({
                 {showJsonModal && (
                     <div
                         className="
-                  fixed inset-0 z-50 
-                  flex items-center justify-center
-                  bg-black bg-opacity-50
-                "
+              fixed inset-0 z-50 
+              flex items-center justify-center
+              bg-black bg-opacity-50
+            "
                     >
                         <div className="relative w-11/12 max-w-3xl bg-white rounded shadow-lg p-6">
                             <button
@@ -159,7 +164,6 @@ export default function BestellenLayout({
         </CartProvider>
     )
 }
-
 
 /** Helper to pick product name in the correct language. */
 function pickProductName(prod: Product, lang?: string): string {
