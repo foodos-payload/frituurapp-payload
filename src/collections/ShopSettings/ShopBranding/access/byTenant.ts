@@ -1,19 +1,18 @@
-import type { Access } from 'payload';
-import { isSuperAdmin } from '../../../../access/isSuperAdmin';
-import { getTenantAccessIDs } from '../../../../utilities/getTenantAccessIDs';
+// File: /src/collections/ShopSettings/ShopBranding/access/byTenant.ts
+import type { Access } from 'payload'
+import { isSuperAdmin } from '../../../../access/isSuperAdmin'
+import { getTenantAccessIDs } from '../../../../utilities/getTenantAccessIDs'
 
-export const canMutatePrinter: Access = ({ req }) => {
-    const superAdmin = isSuperAdmin({ req });
-
+export const canMutateBranding: Access = ({ req }) => {
+    const superAdmin = isSuperAdmin({ req })
     if (superAdmin) {
-        return true;
+        return true
     }
 
-    const tenantAccessIDs = getTenantAccessIDs(req.user);
-
+    const tenantIDs = getTenantAccessIDs(req.user)
     return {
         tenant: {
-            in: tenantAccessIDs,
+            in: tenantIDs,
         },
-    };
-};
+    }
+}
