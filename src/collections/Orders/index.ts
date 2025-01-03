@@ -97,6 +97,65 @@ export const Orders: CollectionConfig = {
       },
     },
     {
+      name: 'status',
+      type: 'select',
+      required: true,
+      defaultValue: 'pending_payment',
+      options: [
+        {
+          label: {
+            en: 'Pending Payment',
+            nl: 'Wacht op Betaling',
+            de: 'Zahlung ausstehend',
+            fr: 'En Attente de Paiement',
+          },
+          value: 'pending_payment',
+        },
+        {
+          label: {
+            en: 'Awaiting Preparation',
+            nl: 'Wacht op Voorbereiding',
+            de: 'Wartet auf Vorbereitung',
+            fr: 'En Attente de Préparation',
+          },
+          value: 'awaiting_preparation',
+        },
+        {
+          label: {
+            en: 'In Preparation',
+            nl: 'In Voorbereiding',
+            de: 'In Vorbereitung',
+            fr: 'En Préparation',
+          },
+          value: 'in_preparation',
+        },
+        {
+          label: {
+            en: 'Complete',
+            nl: 'Voltooid',
+            de: 'Abgeschlossen',
+            fr: 'Terminé',
+          },
+          value: 'complete',
+        },
+      ],
+      label: {
+        en: 'Status',
+        nl: 'Status',
+        de: 'Status',
+        fr: 'Statut',
+      },
+      admin: {
+        description: {
+          en: 'Current status of the order (e.g., Payment Pending, In Preparation, etc.)',
+          nl: 'Huidige status van de bestelling (bijv. Betaling in afwachting, In voorbereiding, etc.)',
+          de: 'Aktueller Status der Bestellung (z.B. Zahlung ausstehend, In Vorbereitung, etc.)',
+          fr: 'Statut actuel de la commande (p.ex. Paiement en attente, En préparation, etc.)',
+        },
+        readOnly: true,
+      },
+    },
+    {
       name: 'order_type',
       type: 'select',
       options: [
