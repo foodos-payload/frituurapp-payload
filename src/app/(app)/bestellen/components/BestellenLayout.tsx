@@ -91,7 +91,7 @@ export default function BestellenLayout({
                 {/* Sticky Header */}
                 <div className="sticky top-0 z-50 bg-white">
                     <Header
-                        userLang={lang}
+
                         searchValue={searchTerm}
                         onSearchChange={(val) => setSearchTerm(val)}
                         onClearFilter={() => setSearchTerm('')}
