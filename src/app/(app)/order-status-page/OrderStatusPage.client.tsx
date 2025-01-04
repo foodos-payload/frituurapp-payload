@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useRef } from "react"
 
+type IntervalID = ReturnType<typeof setInterval>
+
 interface Order {
     id: string
     tempOrdNr?: number
@@ -19,7 +21,7 @@ export function OrderStatusPage({ hostSlug }: OrderStatusPageProps) {
     const [readyOrders, setReadyOrders] = useState<Order[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
-    const pollingRef = useRef<NodeJS.Timer | null>(null)
+    const pollingRef = useRef<IntervalID | null>(null)
 
     const [adImage, setAdImage] = useState<string | null>(null)
 
