@@ -1,7 +1,7 @@
 // File: /app/(app)/bestellen/components/HorizontalCategories.tsx
 'use client'
 
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 
 interface Category {
   id: string
@@ -15,25 +15,39 @@ type Props = {
   onCategoryClick: (slug: string) => void
 }
 
+/**
+ * A horizontally scrollable category bar that also anchor-links to #cat-{slug}.
+ * When `activeCategory` changes (e.g., from a scroll observer in ProductList),
+ * we auto-scroll so that the active category is visible within this container.
+ */
 export default function HorizontalCategories({
   categories,
   activeCategory,
   onCategoryClick,
 }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Whenever the "activeCategory" changes, we scroll that link into view.
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const activeLink = containerRef.current.querySelector<HTMLAnchorElement>(
+      `[data-slug="${activeCategory}"]`
+    )
+    if (activeLink) {
+      // Smoothly center the active link
+      activeLink.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      })
+    }
+  }, [activeCategory])
+
   return (
     <div
-      className="
-        w-full
-        flex
-        overflow-x-auto
-        gap-2
-        pb-1
-        bg-white
-        rounded
-        shadow-sm
-        font-medium
-        scroll-smooth
-      "
+      ref={containerRef}
+      className="w-full flex overflow-x-auto gap-2 pb-1 bg-white rounded shadow-sm font-medium scroll-smooth"
       style={{ scrollbarWidth: 'thin' }} // optional narrower scrollbar for Firefox
     >
       {categories.map((cat) => {
@@ -42,6 +56,7 @@ export default function HorizontalCategories({
           <a
             key={cat.id}
             href={`#cat-${cat.slug}`}
+            data-slug={cat.slug} // for the auto-scroll lookup
             onClick={() => onCategoryClick(cat.slug)}
             className={`
               whitespace-nowrap
