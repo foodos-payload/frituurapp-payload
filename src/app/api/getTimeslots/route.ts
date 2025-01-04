@@ -93,17 +93,25 @@ export async function GET(request: NextRequest) {
 
         // 3) Flatten the data here:
         for (const doc of timeslotResult.docs) {
-            const methodType = doc.method_id?.method_type || 'unknown'
+            const methodType = typeof doc.method_id === 'object' && doc.method_id !== null ? doc.method_id.method_type : 'unknown'
 
             // doc.week => { monday, tuesday, wednesday, ... }
             if (!doc.week) continue
-            const week = doc.week // e.g. { monday: [ {start_time, end_time}, ... ], tuesday: ... }
+
+            type TimeRange = {
+                start_time?: string;
+                end_time?: string;
+                interval_minutes?: number;
+                max_orders?: number;
+                status?: boolean;
+            };
+
+            const week = doc.week as Record<string, TimeRange[]>;
 
             // For each weekday key in `week`
             for (const weekday of Object.keys(week)) {
-                // The array of time range objects
-                const ranges = week[weekday]
-                if (!Array.isArray(ranges)) continue
+                const ranges = week[weekday];
+                if (!Array.isArray(ranges)) continue;
 
                 // Convert to day index
                 const dayIndex = dayIndexMap[weekday] ?? '0'

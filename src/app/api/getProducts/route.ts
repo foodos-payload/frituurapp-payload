@@ -212,6 +212,7 @@ export async function GET(request: NextRequest) {
                                         price: sub.linked_product.price_unified
                                             ? sub.linked_product.price
                                             : null,
+                                        old_price: sub.linked_product.old_price || null,
                                         image: sub.linked_product.image
                                             ? {
                                                 url: sub.linked_product.image?.s3_url || '',
@@ -274,6 +275,7 @@ export async function GET(request: NextRequest) {
                                             price: sub.linked_product.price_unified
                                                 ? sub.linked_product.price
                                                 : null,
+                                            old_price: sub.linked_product.old_price || null,
                                             image: sub.linked_product.image
                                                 ? {
                                                     url: sub.linked_product.image?.s3_url || '',

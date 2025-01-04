@@ -1,7 +1,31 @@
+// File: src/collections/ShopSettings/Timeslots/hooks/ensureUniqueTimeslotPerShop.ts
+
 import type { FieldHook } from 'payload';
 import { ValidationError } from 'payload';
 
-// This hook expects a "days" array with "time_ranges" in your timeslots collection
+interface WeekdayRange {
+    start_time: string;
+    end_time: string;
+    interval_minutes?: number;
+    max_orders?: number;
+    status?: boolean;
+}
+
+interface TimeslotDoc {
+    id: string;
+    method_id?: string;
+    shops?: string[];
+    week?: {
+        monday?: WeekdayRange[];
+        tuesday?: WeekdayRange[];
+        wednesday?: WeekdayRange[];
+        thursday?: WeekdayRange[];
+        friday?: WeekdayRange[];
+        saturday?: WeekdayRange[];
+        sunday?: WeekdayRange[];
+    };
+}
+
 export const ensureUniqueTimeslotPerShop: FieldHook = async ({
     data,
     req,
@@ -9,9 +33,9 @@ export const ensureUniqueTimeslotPerShop: FieldHook = async ({
     value,
     originalDoc,
 }) => {
+    // 1) Collect shops
     const shops = data?.shops || siblingData?.shops || originalDoc?.shops;
     const shopIDs = Array.isArray(shops) ? shops : [];
-
     if (shopIDs.length === 0) {
         throw new ValidationError({
             errors: [
@@ -23,69 +47,63 @@ export const ensureUniqueTimeslotPerShop: FieldHook = async ({
         });
     }
 
-    const methodId =
-        data?.method_id ||
-        siblingData?.method_id ||
-        originalDoc?.method_id;
+    // 2) Determine the methodId
+    const methodId = data?.method_id || siblingData?.method_id || originalDoc?.method_id;
 
-    // In your schema, 'days' is an array field. Each item has a 'day' and 'time_ranges'
-    const daysArray = data?.days || siblingData?.days || originalDoc?.days || [];
-    // For each day object, we store an array of time ranges
-    // e.g. dayItem.time_ranges => [ { start_time, end_time }, ...]
-
-    // If user didn't provide day or time_ranges,
-    // just skip logic
-    if (!daysArray.length) {
-        return value;
+    // 3) Grab new "week" object
+    const newWeekData = data?.week || siblingData?.week || originalDoc?.week || {};
+    if (!Object.keys(newWeekData).length) {
+        return value; // no changes
     }
 
-    // For each day in your new/updated doc, check for overlap in existing timeslots
-    for (const { day, time_ranges: newRanges } of daysArray) {
-        // If day or newRanges is missing, skip
-        if (!day || !newRanges) {
-            continue;
-        }
+    // 4) Query existing timeslots
+    const existingTimeslots = await req.payload.find({
+        collection: 'timeslots',
+        where: {
+            shops: { in: shopIDs },
+            method_id: { not_equals: methodId },
+        },
+        limit: 1000,
+        depth: 0,
+    });
 
-        // Query existing timeslots in the same shops, same day, different method
-        const existingTimeslots = await req.payload.find({
-            collection: 'timeslots',
-            where: {
-                shops: { in: shopIDs },
-                // "days" is an array of objects, so we specifically check
-                // if at least one item in "days" has a matching 'day'
-                'days.day': { equals: day },
-                method_id: { not_equals: methodId },
-            },
-            // overrideAccess?: true, // only if needed
-        });
+    const docs = existingTimeslots.docs as TimeslotDoc[];
 
-        // Check if there's overlap for that day
-        const isOverlap = existingTimeslots.docs.some((timeslot) => {
-            // timeslot.days is an array of day objects
-            return timeslot.days?.some((existingDay) => {
-                if (existingDay.day !== day) return false; // only compare the same day
-                // Compare each existingRange to each newRange
-                return existingDay.time_ranges?.some((existingRange) => {
-                    return newRanges.some((newRange: { start_time: string; end_time: string }) => {
-                        const overlap =
-                            newRange.start_time < existingRange.end_time &&
-                            newRange.end_time > existingRange.start_time;
-                        return overlap && timeslot.id !== originalDoc?.id;
-                    });
+    // 5) For each weekday key in newWeekData => check overlap
+    for (const dayKey of Object.keys(newWeekData) as (keyof TimeslotDoc['week'])[]) {
+        const newDayRanges = (newWeekData[dayKey] as WeekdayRange[]) || [];
+        if (!newDayRanges.length) continue;
+
+        for (const doc of docs) {
+            if (!doc.week) continue;
+
+            // Casting again to WeekdayRange[]
+            const existingDayRanges = (doc.week[dayKey] as WeekdayRange[]) || [];
+            if (!existingDayRanges.length) continue;
+
+            // Compare overlaps
+            const hasOverlap = newDayRanges.some(newRange => {
+                if (!newRange.start_time || !newRange.end_time) return false;
+                return existingDayRanges.some(existingRange => {
+                    if (!existingRange.start_time || !existingRange.end_time) return false;
+                    // e.g. "12:00" < "13:00" & "13:00" > "12:00"
+                    return (
+                        newRange.start_time < existingRange.end_time &&
+                        newRange.end_time > existingRange.start_time
+                    );
                 });
             });
-        });
 
-        if (isOverlap) {
-            throw new ValidationError({
-                errors: [
-                    {
-                        message:
-                            'Overlapping time ranges exist for the selected day(s) and shop(s) with different fulfillment methods.',
-                        path: 'days',
-                    },
-                ],
-            });
+            if (hasOverlap) {
+                throw new ValidationError({
+                    errors: [
+                        {
+                            message: `Overlapping time ranges exist on "${dayKey}" for these shops with a different method.`,
+                            path: `week.${dayKey}`,
+                        },
+                    ],
+                });
+            }
         }
     }
 

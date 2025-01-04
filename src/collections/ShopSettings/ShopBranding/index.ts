@@ -144,7 +144,8 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Couleur d’arrière-plan pour l’en-tête (si aucune image).',
                 },
             },
-            validate: (val) => {
+            validate: (val: string | string[] | null | undefined) => {
+                if (typeof val !== 'string') return true;
                 // Empty is OK if not required
                 if (!val) return true;
                 // Otherwise, must match 3 or 6-digit hex, optional leading "#"
@@ -169,10 +170,13 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Couleur d’arrière-plan pour les cartes de catégories du kiosque.',
                 },
             },
-            validate: (val) => {
+            validate: (val: string | string[] | null | undefined) => {
+                if (typeof val !== 'string') return true;
+                // Empty is OK if not required
                 if (!val) return true;
+                // Otherwise, must match 3 or 6-digit hex, optional leading "#"
                 const pattern = /^#?([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/;
-                return pattern.test(val.trim()) || 'Must be a valid hex color.';
+                return pattern.test(val.trim()) || 'Must be a valid hex color (e.g. "#FFF" or "#FFEE11")';
             },
         },
         {
@@ -192,10 +196,13 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Utilisé pour les boutons “Ajouter au panier” / “Payer” etc.',
                 },
             },
-            validate: (val) => {
+            validate: (val: string | string[] | null | undefined) => {
+                if (typeof val !== 'string') return true;
+                // Empty is OK if not required
                 if (!val) return true;
+                // Otherwise, must match 3 or 6-digit hex, optional leading "#"
                 const pattern = /^#?([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/;
-                return pattern.test(val.trim()) || 'Must be a valid hex color.';
+                return pattern.test(val.trim()) || 'Must be a valid hex color (e.g. "#FFF" or "#FFEE11")';
             },
         },
     ],

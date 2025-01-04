@@ -104,7 +104,7 @@ export default function ProductList({
     const observerRef = useRef<IntersectionObserver | null>(null);
 
     // A map of product ID => ref
-    const productRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+    const productRefs = useRef<Record<string, React.RefObject<HTMLDivElement | null>>>({});
 
     // create or retrieve a ref for each product
     function getOrCreateProductRef(productId: string) {

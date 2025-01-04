@@ -11,8 +11,6 @@ type ProductCardProps = {
     image?: { url: string; alt?: string };
     isPromotion?: boolean;
     old_price: number | null;
-    productRef: React.RefObject<HTMLDivElement>;
-    cartRef: React.RefObject<HTMLDivElement>;
 };
 
 type Branding = {
@@ -38,8 +36,8 @@ interface Props {
     handleAction?: (prod: ProductCardProps) => void;
 
     /** The element ref of your “Cart” (for measuring the final position). */
-    cartRef?: React.RefObject<HTMLDivElement>;
-    productRef?: React.RefObject<HTMLDivElement>;
+    cartRef?: React.RefObject<HTMLDivElement | null>;
+    productRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 /**
