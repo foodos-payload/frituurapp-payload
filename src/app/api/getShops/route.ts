@@ -6,6 +6,28 @@ import { getTenantAdminTenantAccessIDs } from '@/utilities/getTenantAccessIDs'
 export const dynamic = 'force-dynamic'
 // so we can read request headers, etc. without Next complaining
 
+/**
+ * @openapi
+ * /api/getShops:
+ *   get:
+ *     summary: Retrieve shops for the tenant
+ *     operationId: getShops
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: JSON object with tenant name and shops
+ *       '401':
+ *         description: Unauthorized (no user)
+ *       '403':
+ *         description: Forbidden for this tenant
+ *       '404':
+ *         description: Tenant not found
+ *       '500':
+ *         description: Unknown server error
+ */
+
+
 export async function GET(request: NextRequest) {
     try {
         // 1. Initialize your local Payload instance

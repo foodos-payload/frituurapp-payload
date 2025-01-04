@@ -4,6 +4,31 @@ import config from '@payload-config'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * @openapi
+ * /api/fulfillment:
+ *   get:
+ *     summary: Retrieve fulfillment methods for a shop
+ *     operationId: getFulfillmentMethods
+ *     parameters:
+ *       - name: host
+ *         in: query
+ *         required: true
+ *         description: The shop's slug
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: Array of fulfillment methods
+ *       '400':
+ *         description: Missing host param
+ *       '404':
+ *         description: No shop found
+ *       '500':
+ *         description: Failed to retrieve fulfillment methods
+ */
+
+
 export async function GET(request: NextRequest) {
     try {
         const payload = await getPayload({ config })

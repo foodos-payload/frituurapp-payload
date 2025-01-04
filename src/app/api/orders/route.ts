@@ -5,11 +5,51 @@ import config from '@payload-config'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * @openapi
+ * /api/orders:
+ *   get:
+ *     summary: Retrieve orders or one specific order
+ *     operationId: getOrders
+ *     parameters:
+ *       - name: host
+ *         in: query
+ *         required: true
+ *         description: The shop's slug
+ *         schema:
+ *           type: string
+ *       - name: orderId
+ *         in: query
+ *         required: false
+ *         description: If present, returns one specific order
+ *         schema:
+ *           type: integer
+ *       - name: view
+ *         in: query
+ *         required: false
+ *         description: "active => in_preparation, archived => complete"
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: Returns either one order or an array of orders
+ *       '400':
+ *         description: Missing host param
+ *       '403':
+ *         description: Order doesn't belong to this shop
+ *       '404':
+ *         description: Shop or order not found
+ *       '500':
+ *         description: Server error
+ */
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = request.nextUrl
         const host = searchParams.get('host')
         const orderId = searchParams.get('orderId')
+
+        const viewParam = searchParams.get('view')
 
         if (!host) {
             return NextResponse.json({ error: 'Host param required' }, { status: 400 })
@@ -17,6 +57,7 @@ export async function GET(request: NextRequest) {
 
         const payload = await getPayload({ config })
 
+        // 1) Find the shop by slug
         const shopResult = await payload.find({
             collection: 'shops',
             where: { slug: { equals: host } },
@@ -27,6 +68,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: `No shop found for host: ${host}` }, { status: 404 })
         }
 
+        // 2) If ?orderId => return that single order
         if (orderId) {
             const singleOrder = await payload.findByID({
                 collection: 'orders',
@@ -48,11 +90,18 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(singleOrder)
         }
 
+        let statuses: string[] = ['in_preparation', 'complete'] // original
+        if (viewParam === 'active') {
+            statuses = ['in_preparation']
+        } else if (viewParam === 'archived') {
+            statuses = ['complete']
+        }
+
         const inPrepAndCompleteOrders = await payload.find({
             collection: 'orders',
             where: {
                 shops: { in: [shop.id] },
-                status: { in: ['in_preparation', 'complete'] },
+                status: { in: statuses },
             },
             sort: '-tempOrdNr',
             limit: 50,

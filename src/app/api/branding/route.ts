@@ -5,6 +5,30 @@ import config from '@payload-config'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * @openapi
+ * /api/branding:
+ *   get:
+ *     summary: Get shop branding
+ *     operationId: getBranding
+ *     parameters:
+ *       - name: host
+ *         in: query
+ *         required: true
+ *         description: The shop's slug
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: Returns shop & branding
+ *       '400':
+ *         description: Missing host param
+ *       '404':
+ *         description: No shop found for host
+ *       '500':
+ *         description: Server error
+ */
+
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = req.nextUrl

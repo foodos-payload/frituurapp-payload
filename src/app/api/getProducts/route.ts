@@ -90,6 +90,38 @@ interface CategoryJSON {
 
 ////////////////////////////////////////////////////////////////////////
 
+
+/**
+ * @openapi
+ * /api/getProducts:
+ *   get:
+ *     summary: Retrieve categories & products
+ *     operationId: getProducts
+ *     parameters:
+ *       - name: host
+ *         in: query
+ *         required: true
+ *         description: The shop's slug
+ *         schema:
+ *           type: string
+ *       - name: lang
+ *         in: query
+ *         required: false
+ *         description: Language code (nl, en, de, fr)
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: Returns shop plus categorized products
+ *       '400':
+ *         description: Missing host param
+ *       '404':
+ *         description: No shop found
+ *       '500':
+ *         description: Server error
+ */
+
+
 export async function GET(request: NextRequest) {
     const payload = await getPayload({ config })
 
