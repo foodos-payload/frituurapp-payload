@@ -77,6 +77,7 @@ interface ProductJSON {
         alt: string
     } | null
     productpopups: PopupItemJSON[]
+    menuOrder: number
 }
 
 interface CategoryJSON {
@@ -331,10 +332,18 @@ export async function GET(request: NextRequest) {
                         : null,
 
                     productpopups: finalPopups,
+                    menuOrder: product.menuOrder || 0,
                 }
 
                 return prodJSON
             })
+                // 5) Sort by `menuOrder` ascending, then by `name_nl` alphabetically if there’s a tie
+                .sort((a, b) => {
+                    if (a.menuOrder !== b.menuOrder) {
+                        return a.menuOrder - b.menuOrder;
+                    }
+                    return a.name_nl.localeCompare(b.name_nl);
+                });
 
             // Return final category object
             const catJSON: CategoryJSON = {

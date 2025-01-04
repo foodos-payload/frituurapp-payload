@@ -268,6 +268,27 @@ export const Products: CollectionConfig = {
             },
         },
         {
+            name: 'menuOrder',
+            type: 'number',
+            label: {
+                en: 'Menu Order',
+                nl: 'Menuvolgorde',
+                de: 'Menüreihenfolge',
+                fr: 'Ordre de Menu',
+            },
+            required: false,
+            defaultValue: 0,
+            admin: {
+                position: 'sidebar',
+                description: {
+                    en: 'Products with a lower menuOrder appear first. If two items share the same menuOrder, they’re sorted alphabetically by name.',
+                    nl: 'Producten met een lagere menuOrder verschijnen eerst. Als twee items dezelfde menuOrder hebben, worden ze alfabetisch gesorteerd op naam.',
+                    de: 'Produkte mit einer niedrigeren menuOrder erscheinen zuerst. Wenn zwei Artikel dieselbe menuOrder haben, werden sie alphabetisch nach Name sortiert.',
+                    fr: 'Les produits ayant un ordre de menu plus faible apparaissent en premier. Si deux éléments partagent le même ordre, ils sont triés par ordre alphabétique.',
+                },
+            },
+        },
+        {
             name: 'isPromotion',
             type: 'checkbox',
             label: {

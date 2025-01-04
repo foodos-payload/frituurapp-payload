@@ -860,6 +860,10 @@ export interface Product {
    */
   price_delivery?: number | null;
   /**
+   * Products with a lower menuOrder appear first. If two items share the same menuOrder, they’re sorted alphabetically by name.
+   */
+  menuOrder?: number | null;
+  /**
    * Check if this product is on promotion. Old price field will appear.
    */
   isPromotion?: boolean | null;
@@ -2018,6 +2022,7 @@ export interface ProductsSelect<T extends boolean = true> {
   price_dinein?: T;
   price_takeaway?: T;
   price_delivery?: T;
+  menuOrder?: T;
   isPromotion?: T;
   old_price?: T;
   enable_stock?: T;
