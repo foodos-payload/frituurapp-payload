@@ -58,6 +58,7 @@ export default function HorizontalCategories({
             href={`#cat-${cat.slug}`}
             data-slug={cat.slug} // for the auto-scroll lookup
             onClick={() => onCategoryClick(cat.slug)}
+            style={{ borderRadius: '4px' }}
             className={`
               whitespace-nowrap
               px-4 py-2

@@ -8,6 +8,7 @@ import { CartProvider } from './cart/CartContext'
 import CartButton from './cart/CartButton'
 import CartDrawer from './cart/CartDrawer'
 import MenuDrawer from './menu/MenuDrawer'
+import '../bestellen.css';
 
 // Minimal shape for a product
 type Product = {
@@ -87,7 +88,7 @@ export default function BestellenLayout({
             />
 
             {/* Our main layout container */}
-            <div className="relative flex flex-col h-screen overflow-y-auto overflow-x-hidden w-full scroll-smooth">
+            <div className="main-container containercustommaxwidth relative flex flex-col h-screen overflow-y-auto overflow-x-hidden w-full scroll-smooth">
                 {/* Sticky Header */}
                 <div className="sticky top-0 z-50 bg-white">
                     <Header

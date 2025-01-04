@@ -75,7 +75,8 @@ export default function Header({
 
                     {/* MIDDLE (Desktop only): Search bar container */}
                     <div className="hidden md:flex items-center ml-auto mr-4 rounded-lg">
-                        <div className="
+
+                        <div style={{ borderRadius: '4px' }} className="
               relative 
               flex 
               items-center 
@@ -153,7 +154,7 @@ export default function Header({
             {/* MOBILE SEARCH BAR (collapsible), only if open */}
             {mobileSearchOpen && (
                 <div className="md:hidden bg-white px-2 shadow-sm pb-3">
-                    <div className="
+                    <div style={{ borderRadius: '4px' }} className="
             relative
             flex
             items-center
@@ -170,6 +171,7 @@ export default function Header({
                             placeholder="Search products..."
                             value={searchValue}
                             onChange={handleSearchChange}
+                            style={{ borderRadius: '4px' }}
                             className="
                 pl-8
                 pr-16

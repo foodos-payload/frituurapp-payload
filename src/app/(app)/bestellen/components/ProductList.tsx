@@ -203,7 +203,7 @@ export default function ProductList({
             </div>
 
             {/* MAIN COLUMN */}
-            <div style={{ flexGrow: 1, width: '100%' }}>
+            <div className="flex-grow w-full">
                 {/* HORIZONTAL categories on small screens */}
                 <div
                     className="block lg:hidden w-full bg-white overflow-auto"
@@ -233,23 +233,18 @@ export default function ProductList({
                         <section
                             key={cat.id}
                             id={`cat-${cat.slug}`}
-                            className="scroll-mt-[100px]"
-                            style={{ marginBottom: '2rem' }}
+                            className="scroll-mt-[100px] mb-8"
                         >
-                            <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+                            <h3 className="categoryname text-xl mt-8 mb-4 font-secondary font-love-of-thunder">
                                 {catLabel}
                             </h3>
 
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: '1rem',
-                                }}
-                            >
+                            {/* Grid with max 2 columns, plus responsive gap */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1 md:gap-4 lg:gap-5">
                                 {cat.products.map((prod) => {
                                     const displayName = pickProductName(prod, userLang)
                                     const displayDesc = pickDescription(prod, userLang)
+
                                     return (
                                         <ProductCard
                                             key={prod.id}
@@ -269,7 +264,7 @@ export default function ProductList({
 
                 {/* If no categories remain after filtering */}
                 {visibleSections.length === 0 && (
-                    <div style={{ marginTop: '2rem' }}>
+                    <div className="mt-8">
                         <h2>No products match your search.</h2>
                     </div>
                 )}
@@ -284,6 +279,8 @@ export default function ProductList({
             )}
         </div>
     )
+
+
 }
 
 /** Helpers */
