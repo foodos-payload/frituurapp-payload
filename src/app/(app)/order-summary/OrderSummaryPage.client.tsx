@@ -9,82 +9,83 @@ import React, {
 } from "react"
 import confetti from "canvas-confetti"
 
-// Example statuses you might have
 type OrderStatus =
     | "pending_payment"
     | "awaiting_preparation"
     | "in_preparation"
-    | "completed"
+    | "complete"
     | "cancelled"
-// etc.
 
-interface LineItem {
-    id: number
-    name: string
-    product_id?: number
-    quantity: number
-    // etc...
-    // Possibly an image to display
-    image?: {
-        src: string
+type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "unknown"
+
+interface Payment {
+    id: string
+    payment_method: { id: string; provider?: string }
+    amount: number
+}
+
+interface OrderDetail {
+    id: string
+    product: {
+        id: string
+        name_nl?: string
     }
-    total?: string
-    meta_data?: Array<{
-        id: number
-        display_key: string
-        display_value: string
-    }>
+    quantity: number
+    price?: number
+    tax?: number
+    subproducts?: any[]
 }
 
 interface Order {
     id: number
+    tempOrdNr?: number
     status: OrderStatus
-    date_created: string
+    fulfillmentMethod?: FulfillmentMethod
+    date_created?: string
     customer_note?: string
-    line_items?: LineItem[]
-    shipping_lines?: Array<{
-        method_id: string
-        instance_id: string
-    }>
-    discount_total?: string
-    downloadable_items?: any[]
-    // More fields as needed
+    order_details?: OrderDetail[]
+    payments?: Payment[]
 }
 
 interface OrderSummaryPageProps {
-    orderId: string     // e.g. from the URL
-    kioskMode?: boolean // detect from localStorage or props
+    orderId: string
+    kioskMode?: boolean
+    hostSlug: string
 }
 
-export function OrderSummaryPage({ orderId, kioskMode }: OrderSummaryPageProps) {
+export function OrderSummaryPage({
+    orderId,
+    kioskMode,
+    hostSlug,
+}: OrderSummaryPageProps) {
     const [order, setOrder] = useState<Order | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+    const [isInitialLoading, setIsInitialLoading] = useState(true)
+    const [isPolling, setIsPolling] = useState(false)
     const [errorMessage, setErrorMessage] = useState("")
-    const [countdown, setCountdown] = useState(30) // 30-second countdown for kiosk
+    const [countdown, setCountdown] = useState(30)
 
-    // We store the polling interval so we can clear it
-    const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
-    // We store an interval for the kiosk countdown
-    const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    // We'll store the previous status so we can detect transitions
+    const previousStatusRef = useRef<OrderStatus | null>(null)
 
-    // For order-complete audio
-    const orderCompletePlayCount = useRef(0)
-    const audioRef = useRef<HTMLAudioElement | null>(null)
+    // For polling
+    const pollingRef = useRef<NodeJS.Timeout | null>(null)
+    const countdownRef = useRef<NodeJS.Timeout | null>(null)
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // 1) Utility: trigger confetti multiple times
+    // 1) Confetti (No Sound)
     // ─────────────────────────────────────────────────────────────────────────────
     const triggerConfetti = useCallback(() => {
-        const duration = 5000 // 5 seconds
+        console.log(">>> Triggering confetti!")
+        const duration = 5000 // ms
         const animationEnd = Date.now() + duration
         const defaults = { spread: 70, origin: { y: 0.6 } }
 
         const interval = setInterval(() => {
             const timeLeft = animationEnd - Date.now()
             if (timeLeft <= 0) {
-                return clearInterval(interval)
+                clearInterval(interval)
+                return
             }
-            // Fire bursts from left + right
             confetti({
                 ...defaults,
                 particleCount: 200,
@@ -99,63 +100,65 @@ export function OrderSummaryPage({ orderId, kioskMode }: OrderSummaryPageProps) 
     }, [])
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // 2) Utility: play order-complete sound
+    // 2) Fetch Data & Poll
     // ─────────────────────────────────────────────────────────────────────────────
-    const playCompletionSound = useCallback(() => {
-        if (!audioRef.current) return
-        // Limit # of times
-        if (orderCompletePlayCount.current < 5) {
-            audioRef.current.play().catch((err) => {
-                console.error("Error playing completion sound:", err)
-            })
-            orderCompletePlayCount.current += 1
-            // chain the playback
-            audioRef.current.onended = () => {
-                playCompletionSound()
+    const fetchOrderData = useCallback(
+        async (isInitial: boolean) => {
+            try {
+                if (isInitial) {
+                    setIsInitialLoading(true)
+                    setErrorMessage("")
+                } else {
+                    setIsPolling(true)
+                }
+
+                const url =
+                    `/api/orders?host=${encodeURIComponent(hostSlug)}&orderId=${encodeURIComponent(orderId)}`
+                const res = await fetch(url, { cache: "no-store" })
+                if (!res.ok) {
+                    throw new Error(`Error fetching order: status ${res.status}`)
+                }
+
+                const data: Order = await res.json()
+                console.log(">>> Fetched order. New status =", data.status)
+
+                // Compare old vs. new
+                const prevStatus = previousStatusRef.current
+                console.log(">>> Previous status =", prevStatus)
+
+                // If we are transitioning to 'completed' => confetti
+                if (prevStatus !== "complete" && data.status === "complete") {
+                    console.log(">>> Transition to COMPLETED => confetti!")
+                    triggerConfetti()
+                    // stopPolling() // optional, so we don’t keep polling forever
+                }
+
+                // Update state
+                setOrder(data)
+                previousStatusRef.current = data.status
+
+                if (isInitial) {
+                    setIsInitialLoading(false)
+                } else {
+                    setIsPolling(false)
+                }
+            } catch (err: any) {
+                console.error(err)
+                if (isInitial) {
+                    setIsInitialLoading(false)
+                } else {
+                    setIsPolling(false)
+                }
+                setErrorMessage(err.message || "Could not find order.")
             }
-        }
-    }, [])
+        },
+        [hostSlug, orderId, triggerConfetti]
+    )
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // 3) Function to fetch an order by ID (from your route, e.g. /api/order?orderId=xxx)
-    // ─────────────────────────────────────────────────────────────────────────────
-    const fetchOrderData = useCallback(async () => {
-        setIsLoading(true)
-        setErrorMessage("")
-
-        try {
-            const url = `/api/order?orderId=${encodeURIComponent(orderId)}`
-            const res = await fetch(url, { cache: "no-store" })
-            if (!res.ok) {
-                throw new Error(`Error fetching order: status ${res.status}`)
-            }
-            const data = (await res.json()) as Order
-
-            // Check if status changed from not-completed => completed
-            if (order && order.status !== "completed" && data.status === "completed") {
-                // Trigger confetti & sound
-                triggerConfetti()
-                playCompletionSound()
-                // If you want to stop polling after completion:
-                stopPolling()
-            }
-            // Set new data
-            setOrder(data)
-            setIsLoading(false)
-        } catch (err: any) {
-            console.error(err)
-            setIsLoading(false)
-            setErrorMessage(err.message || "Could not find order.")
-        }
-    }, [orderId, order, triggerConfetti, playCompletionSound])
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // 4) Polling control: Start & Stop
-    // ─────────────────────────────────────────────────────────────────────────────
     const startPolling = useCallback(() => {
-        if (pollingRef.current) return // Already started
+        if (pollingRef.current) return
         pollingRef.current = setInterval(() => {
-            fetchOrderData()
+            fetchOrderData(false)
         }, 5000)
     }, [fetchOrderData])
 
@@ -167,7 +170,7 @@ export function OrderSummaryPage({ orderId, kioskMode }: OrderSummaryPageProps) 
     }, [])
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // 5) Kiosk countdown logic (if kiosk mode is true)
+    // 3) Kiosk Countdown
     // ─────────────────────────────────────────────────────────────────────────────
     const startCountdown = useCallback(() => {
         if (countdownRef.current) return
@@ -175,8 +178,6 @@ export function OrderSummaryPage({ orderId, kioskMode }: OrderSummaryPageProps) 
             setCountdown((prev) => {
                 if (prev <= 1) {
                     clearInterval(countdownRef.current!)
-                    // When it hits zero, do something:
-                    // E.g. auto-navigate to /kiosk or “New Order”
                     handleCreateNewOrderClick()
                     return 0
                 }
@@ -193,30 +194,22 @@ export function OrderSummaryPage({ orderId, kioskMode }: OrderSummaryPageProps) 
     }, [])
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // 6) Called once on mount: fetch order, maybe start polling,
-    //    set up audio, kiosk countdown, etc.
+    // 4) Lifecycle
     // ─────────────────────────────────────────────────────────────────────────────
     useEffect(() => {
-        // Preload the audio
-        audioRef.current = new Audio("/sounds/completion.mp3")
-        audioRef.current.load()
-
-        fetchOrderData().then(() => {
-            // If order isn't completed => start polling
-            if (order?.status !== "completed") {
+        // Initial fetch => store new status in ref
+        fetchOrderData(true).then(() => {
+            if (previousStatusRef.current !== "complete") {
                 startPolling()
             }
         })
 
-        // Only do countdown if kioskMode is true
         if (kioskMode) {
-            // Start after 2 seconds
             setTimeout(() => {
                 startCountdown()
             }, 2000)
         }
 
-        // Cleanup on unmount
         return () => {
             stopPolling()
             stopCountdown()
@@ -224,63 +217,90 @@ export function OrderSummaryPage({ orderId, kioskMode }: OrderSummaryPageProps) 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // If order changes from not-completed to completed in same render cycle, handle? 
-    // We rely on poll logic & fetch check above.
-
     // ─────────────────────────────────────────────────────────────────────────────
-    // 7) “Create New Order” click
+    // 5) Helpers
     // ─────────────────────────────────────────────────────────────────────────────
     const handleCreateNewOrderClick = () => {
-        // E.g. navigate away
         if (kioskMode) {
-            // e.g. window.location.href = "/kioskindex"
             console.log("Redirect kiosk mode to /kioskindex")
         } else {
-            // e.g. router.push("/")
             console.log("Redirect to /")
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // 8) Helper isDelivery/isTakeaway/isDineIn
-    // ─────────────────────────────────────────────────────────────────────────────
-    const isDelivery = useMemo(() => {
-        const shipping = order?.shipping_lines?.[0]
-        return shipping?.method_id === "free_shipping" && shipping?.instance_id === "1"
+    // Derive total paid
+    const totalPaid = useMemo(() => {
+        if (!order?.payments?.length) return 0
+        return order.payments.reduce((sum, p) => sum + (p.amount || 0), 0)
     }, [order])
 
-    const isTakeaway = useMemo(() => {
-        const shipping = order?.shipping_lines?.[0]
-        return (
-            shipping?.method_id === "pickup_location" && shipping?.instance_id === "0"
-        )
+    // Decide which GIF to show
+    const statusGif = useMemo(() => {
+        if (!order) return null
+        switch (order.status) {
+            case "awaiting_preparation":
+                return "/images/order_awaiting_preparation.gif"
+            case "in_preparation":
+                return "/images/order_preparing.gif"
+            case "complete":
+                return "/images/order_ready.gif"
+            default:
+                return null
+        }
     }, [order])
 
-    const isDineIn = useMemo(() => {
-        const shipping = order?.shipping_lines?.[0]
-        return (
-            shipping?.method_id === "free_shipping" && shipping?.instance_id === "2"
-        )
+    // Display daily “tempOrdNr” if available; fallback to `id`.
+    const displayedOrderNumber = order?.tempOrdNr ?? order?.id
+
+    // A textual label for statuses
+    const readableStatus = useMemo(() => {
+        if (!order) return ""
+        switch (order.status) {
+            case "pending_payment":
+                return "Pending Payment"
+            case "awaiting_preparation":
+                return "Awaiting Preparation"
+            case "in_preparation":
+                return "In Preparation"
+            case "complete":
+                return "Completed"
+            default:
+                return order.status
+        }
     }, [order])
 
+    // Some instructions
+    const isDelivery = order?.fulfillmentMethod === "delivery"
+    const isTakeaway = order?.fulfillmentMethod === "takeaway"
+    const isDineIn = order?.fulfillmentMethod === "dine_in"
+
+    const instructionsText = useMemo(() => {
+        if (isDelivery) return "Delivery instructions here..."
+        if (isTakeaway) return "Please proceed to the takeaway counter."
+        if (isDineIn) return "A staff member will bring your order to your table."
+        return ""
+    }, [isDelivery, isTakeaway, isDineIn])
+
     // ─────────────────────────────────────────────────────────────────────────────
-    // 9) Render the big layout
+    // 6) Render
     // ─────────────────────────────────────────────────────────────────────────────
-    if (isLoading) {
+    if (isInitialLoading) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh]">
-                <p>Loading order summary...</p>
+                <p className="text-2xl font-semibold">Loading order summary...</p>
             </div>
         )
     }
+
     if (errorMessage) {
         return (
             <div className="text-center p-8 text-red-500">
-                <h2>Error</h2>
+                <h2 className="text-2xl font-bold mb-2">Error</h2>
                 <p>{errorMessage}</p>
             </div>
         )
     }
+
     if (!order) {
         return (
             <div className="text-center p-8 text-gray-500">
@@ -289,166 +309,168 @@ export function OrderSummaryPage({ orderId, kioskMode }: OrderSummaryPageProps) 
         )
     }
 
-    // Extract or compute final data for display
-    // e.g. filter out "dummy product" items
-    const DUMMY_PRODUCT_ID = 1114
-    const filteredLineItems = order.line_items?.filter(
-        (item) => item.product_id !== DUMMY_PRODUCT_ID
-    ) || []
-
-    // Some label for status
-    const readableStatus = (() => {
-        switch (order.status) {
-            case "pending_payment":
-                return "Pending Payment"
-            case "awaiting_preparation":
-                return "Awaiting Preparation"
-            case "in_preparation":
-                return "In Preparation"
-            case "completed":
-                return "Completed"
-            default:
-                return order.status
-        }
-    })()
+    // Our main UI
+    const orderDetails = order.order_details || []
 
     return (
         <div
             className={
                 kioskMode
-                    ? "text-4xl w-full min-h-[600px] flex flex-col items-center"
-                    : "text-base w-full min-h-[600px] flex flex-col items-center p-8"
+                    ? "relative text-4xl w-full min-h-[600px] flex flex-col items-center"
+                    : "relative text-base w-full min-h-[600px] flex flex-col items-center p-8 text-gray-800"
             }
         >
-            {/* KioskAppHeaderHome or normal header */}
-            {kioskMode && (
-                <div className="w-full mb-8">
-                    {/* <KioskAppHeaderHome ... /> */}
-                    <h2 className="text-center text-3xl font-bold">Kiosk Header</h2>
+            {/* Show "Refreshing..." if we are poll-reloading */}
+            {isPolling && (
+                <div className="absolute top-2 right-2 bg-white/70 px-4 py-2 rounded shadow flex items-center gap-2 text-sm text-gray-600 z-50">
+                    <svg
+                        className="animate-spin -ml-1 mr-1 h-4 w-4 text-gray-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        />
+                        <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.374 0 0 5.374 0 12h4z"
+                        />
+                    </svg>
+                    Refreshing...
                 </div>
             )}
 
-            {/* Order number big text if kiosk */}
-            {kioskMode && (
-                <div className="mt-4 mb-8">
-                    <div className="w-[250px] h-[250px] bg-gray-200 rounded-full flex items-center justify-center shadow-lg text-6xl font-bold">
-                        #{order.id}
-                    </div>
-                </div>
-            )}
-
-            {/* Status with ring or confetti, etc. */}
+            {/* Big status area + optional gif */}
             <div className="my-4 flex flex-col items-center gap-4">
-                <div className="order-status-large relative text-3xl font-bold text-blue-600">
+                <div
+                    className={`order-status-large relative text-3xl font-bold ${order.status === "complete" ? "order-completed" : "text-blue-600"
+                        }`}
+                >
                     {readableStatus}
-                    {/* 
-            If order.status==="completed" => add class .order-completed 
-            Or do some ring effect 
-          */}
                 </div>
-                {/* Possibly an image for each status */}
-                {order.status === "in_preparation" && (
+                {statusGif && (
                     <img
-                        src="/images/order_preparing.gif"
-                        alt="Order is being prepared"
+                        src={statusGif}
+                        alt={`Order status: ${order.status}`}
                         className="w-[200px]"
                     />
-                )}
-                {order.status === "completed" && (
-                    <img
-                        src="/images/order_ready.gif"
-                        alt="Order is completed"
-                        className="w-[200px]"
-                    />
-                )}
-
-                {/* Maybe instructions if it's in "awaiting_preparation" */}
-                {order.status === "awaiting_preparation" && (
-                    <div className="mt-4 text-xl text-gray-600">
-                        We received your order and will start preparing soon!
-                    </div>
                 )}
             </div>
 
-            {/* If not kioskMode, show line items, totals, etc. */}
+            {/* If not kiosk => show your fancy ticket with some 'tear line' styling */}
             {!kioskMode && (
-                <div className="w-full max-w-3xl mt-8 p-4 bg-white shadow rounded">
-                    <div className="flex flex-col gap-3">
-                        <div>
-                            <strong>Order #:</strong> {order.id}
+                <div className="w-full max-w-md bg-white shadow-lg rounded-xl overflow-hidden relative">
+                    {/* top color bar => red */}
+                    <div className="bg-red-600 p-4 text-white flex items-center justify-between">
+                        <div className="font-bold text-lg uppercase tracking-wider">
+                            Frituur Ticket
                         </div>
-                        <div>
-                            <strong>Date Created:</strong> {order.date_created}
-                        </div>
-                        <div>
-                            <strong>Customer Note:</strong> {order.customer_note || "(none)"}
-                        </div>
+                        <div className="text-sm opacity-80">{hostSlug}</div>
                     </div>
-                    <hr className="my-4" />
-                    <div className="grid gap-4">
-                        {filteredLineItems.map((item) => (
-                            <div
-                                key={item.id}
-                                className="flex items-center justify-between gap-4"
-                            >
-                                {/* image */}
-                                <img
-                                    src={item.image?.src || "/images/placeholder.png"}
-                                    alt={item.name}
-                                    className="w-16 h-16 object-cover rounded"
-                                />
-                                <div className="flex-1">
-                                    <h4 className="font-semibold">{item.name}</h4>
-                                    {item.meta_data?.map((meta) => {
-                                        if (!meta.display_key.startsWith("_pao_")) {
-                                            return (
-                                                <div key={meta.id}>
-                                                    <strong>{meta.display_key}: </strong>
-                                                    {meta.display_value}
-                                                </div>
-                                            )
-                                        }
-                                        return null
-                                    })}
-                                </div>
-                                <div>x {item.quantity}</div>
-                                <div className="font-semibold">
-                                    {/* Format price if needed */}
-                                    €{item.total}
-                                </div>
+
+                    {/* main body => order info */}
+                    <div className="p-5 flex flex-col sm:flex-row items-center justify-between">
+                        <div className="text-center sm:text-left">
+                            <div className="text-2xl font-semibold mb-1">
+                                Order #{displayedOrderNumber}
                             </div>
-                        ))}
+                            <div className="text-gray-500 text-sm">
+                                {order.date_created || "No date"}
+                            </div>
+                        </div>
+                        <div className="mt-4 sm:mt-0 text-center sm:text-right">
+                            {order.customer_note && (
+                                <div className="text-xs text-gray-400 italic mt-1">
+                                    Note: {order.customer_note}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <hr className="my-4" />
-                    {/* Possibly shipping lines, discount, total, etc. */}
+
+                    {/* dashed "tear line" */}
+                    <div className="relative">
+                        <svg
+                            className="text-gray-400 mx-auto"
+                            width="100%"
+                            height="20"
+                            preserveAspectRatio="none"
+                        >
+                            <line
+                                x1="0"
+                                y1="10"
+                                x2="100%"
+                                y2="10"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeDasharray="6,6"
+                            />
+                        </svg>
+                    </div>
+
+                    {/* bottom area => details + instructions + total */}
+                    <div className="p-5 pt-3">
+                        <div className="font-medium text-lg mb-2">Order Details</div>
+                        {orderDetails.length < 1 ? (
+                            <p className="text-gray-500 text-sm">No products in order.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {orderDetails.map((detail) => (
+                                    <div
+                                        key={detail.id}
+                                        className="flex items-center justify-between text-sm"
+                                    >
+                                        <div className="flex-1 pr-2 font-semibold">
+                                            {detail.product?.name_nl || "Unnamed Product"}
+                                        </div>
+                                        <div>x {detail.quantity}</div>
+                                        <div className="ml-2 font-semibold">
+                                            €{detail.price?.toFixed(2) ?? "--"}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* instructions => e.g. "Takeaway instructions" */}
+                        {instructionsText && (
+                            <div className="mt-6 p-3 border border-dashed border-gray-300 rounded text-sm text-gray-600">
+                                {instructionsText}
+                            </div>
+                        )}
+
+                        {/* total area => sum of order.payments */}
+                        <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-end">
+                            <span className="text-lg font-bold">
+                                Total Paid: €{totalPaid.toFixed(2)}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* "New Order" button */}
+            {/* kiosk mode => big button with countdown */}
             {kioskMode ? (
                 <button
                     id="newOrderButton"
                     onClick={handleCreateNewOrderClick}
-                    className="bg-green-600 text-white px-8 py-4 mt-8"
+                    className="bg-green-600 text-white px-8 py-4 mt-8 rounded"
                 >
                     Create New Order ({countdown}s)
                 </button>
             ) : (
                 <button
                     onClick={handleCreateNewOrderClick}
-                    className="bg-green-600 text-white px-4 py-2 mt-8"
+                    className="bg-green-600 text-white px-4 py-2 mt-8 rounded"
                 >
                     Create New Order
                 </button>
-            )}
-
-            {/* For kiosk, maybe show a small text about shipping lines */}
-            {kioskMode && (
-                <div className="mt-8 text-2xl">
-                    {isDelivery && "Delivery instructions here..."}
-                    {isTakeaway && "Takeaway instructions here..."}
-                    {isDineIn && "Dine-in instructions here..."}
-                </div>
             )}
         </div>
     )
