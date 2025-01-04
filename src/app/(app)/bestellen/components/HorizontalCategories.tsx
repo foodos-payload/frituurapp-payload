@@ -71,6 +71,7 @@ export default function HorizontalCategories({
               // Let the parent know we clicked
               onCategoryClick(cat.slug)
             }}
+            style={{ borderRadius: '0.5rem' }}
             className={`
               whitespace-nowrap
               px-4 py-2

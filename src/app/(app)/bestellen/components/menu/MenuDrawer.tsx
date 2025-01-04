@@ -1,9 +1,14 @@
-// File: /app/(app)/bestellen/components/menu/MenuDrawer.tsx
 'use client'
 
-import React, { useEffect, MouseEvent } from 'react'
-import { FiX } from 'react-icons/fi'
-import { useRouter, useSearchParams } from 'next/navigation'
+import React, { useRef, MouseEvent } from 'react'
+import { CSSTransition } from 'react-transition-group'
+
+const LANGUAGES = [
+    { label: 'NL', value: 'nl', flagSrc: '/images/flags/nl-BE.svg' },
+    { label: 'EN', value: 'en', flagSrc: '/images/flags/en-UK.svg' },
+    { label: 'FR', value: 'fr', flagSrc: '/images/flags/fr-FR.svg' },
+    { label: 'DE', value: 'de', flagSrc: '/images/flags/de-DE.svg' },
+]
 
 type MenuDrawerProps = {
     isOpen: boolean
@@ -12,131 +17,163 @@ type MenuDrawerProps = {
     onLangChange: (langValue: string) => void
 }
 
-const LANGUAGES = [
-    { label: 'NL', value: 'nl' },
-    { label: 'EN', value: 'en' },
-    { label: 'FR', value: 'fr' },
-    { label: 'DE', value: 'de' },
-]
-
+/**
+ * MenuDrawer with TWO separate transitions:
+ *  - The overlay fade (behind the drawer),
+ *  - The drawer slide in from the left (on top).
+ */
 export default function MenuDrawer({
     isOpen,
     onClose,
     userLang,
     onLangChange,
 }: MenuDrawerProps) {
-    const router = useRouter()
-    const searchParams = useSearchParams()
+    // Refs for the two separate transitions
+    const overlayRef = useRef<HTMLDivElement>(null)
+    const drawerRef = useRef<HTMLDivElement>(null)
 
-    // Lock body scroll while the menu is open
-    useEffect(() => {
-        if (!isOpen) return
-        document.body.style.overflow = 'hidden'
-        return () => {
-            document.body.style.overflow = ''
-        }
-    }, [isOpen])
-
-    // If not open, render nothing
-    if (!isOpen) return null
-
-    // If you want to close the drawer when user clicks outside the panel
+    /** If user clicks outside the white panel => close. */
     function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
         if (e.target === e.currentTarget) {
             onClose()
         }
     }
 
-    // Update local state AND push the new lang param
     function handleLangClick(langValue: string) {
-        // 1) Update parent state (so immediate UI can reflect the new lang if you want)
         onLangChange(langValue)
-
-        // 2) Also push the new param to the URL
-        const current = new URLSearchParams(searchParams.toString())
-        current.set('lang', langValue)
-        router.push(`?${current.toString()}`)
     }
 
     return (
-        <div
-            className="
-                fixed inset-0
-                z-[9998]
-                flex
-                bg-black/50
-            "
-            onClick={handleOverlayClick}
-        >
-            {/* The panel that slides from the LEFT */}
-            <div
-                className="
-                    w-64
-                    bg-white
-                    h-full
-                    p-4
-                    flex
-                    flex-col
-                    transition-transform
-                    translate-x-0
-                "
-                onClick={(e) => e.stopPropagation()}
+        <>
+            {/* 
+        1) The black overlay fade in/out, behind the drawer.
+        If isOpen => fadeOverlay-enter, etc. 
+      */}
+            <CSSTransition
+                in={isOpen}
+                timeout={300}
+                classNames="fadeOverlay"
+                unmountOnExit
+                nodeRef={overlayRef}
             >
-                {/* Close button */}
-                <button
-                    onClick={onClose}
-                    className="ml-auto mb-2 text-gray-700 hover:text-black"
+                <div
+                    ref={overlayRef}
+                    onClick={handleOverlayClick}
+                    className="fixed inset-0 z-[9997] bg-black/50"
+                />
+            </CSSTransition>
+
+            {/*
+        2) The white drawer slides left-to-right, *on top* of the overlay.
+        If isOpen => slideDrawer-enter, etc.
+      */}
+            <CSSTransition
+                in={isOpen}
+                timeout={300}
+                classNames="slideDrawer"
+                unmountOnExit
+                nodeRef={drawerRef}
+            >
+                <div
+                    ref={drawerRef}
+                    className="
+            fixed
+            top-0 bottom-0 left-0
+            z-[9998]
+            w-11/12 max-w-lg
+            bg-white
+            shadow-lg
+            flex flex-col
+          "
                 >
-                    <FiX size={20} />
-                </button>
+                    {/* Close button */}
+                    <div className="relative flex justify-end p-2">
+                        <svg
+                            onClick={onClose}
+                            className="
+                cursor-pointer
+                absolute
+                top-6 right-8
+                bg-red-500
+                rounded-xl
+                shadow-xl
+                p-1.5
+                text-white
+              "
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="44"
+                            height="44"
+                            viewBox="0 0 512 512"
+                        >
+                            <path
+                                fill="none"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="42"
+                                d="M368 368L144 144M368 144L144 368"
+                            />
+                        </svg>
+                    </div>
 
-                {/* Placeholder brand/logo */}
-                <div className="flex items-center justify-center mb-4">
-                    <div className="text-gray-500 text-lg italic">
-                        [Placeholder Image/Logo]
+                    <div className="mt-8 text-center text-lg font-semibold">
+                        Menu
+                    </div>
+
+                    {/* Some links / language chooser */}
+                    <nav className="m-4 grid p-4 text-gray-500 gap-6">
+                        <div className="flex items-center gap-2 justify-center">
+                            <div className="language-switcher flex gap-2">
+                                {LANGUAGES.map((lang) => (
+                                    <img
+                                        key={lang.value}
+                                        src={lang.flagSrc}
+                                        alt={lang.label}
+                                        onClick={() => handleLangClick(lang.value)}
+                                        className={`
+                      w-8 h-8 cursor-pointer
+                      rounded
+                      border
+                      ${userLang === lang.value
+                                                ? 'border-blue-500'
+                                                : 'border-transparent hover:border-gray-300'
+                                            }
+                    `}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Login link */}
+                        <a
+                            href="/login"
+                            className="
+                flex items-center justify-center
+                p-3 w-60 mx-auto
+                text-md
+                bg-green-600
+                text-white
+                rounded-full
+                hover:bg-green-700
+              "
+                        >
+                            Login
+                        </a>
+
+                        {/* Another link */}
+                        <a href="/contact" className="text-center hover:text-blue-600">
+                            Contact
+                        </a>
+                    </nav>
+
+                    {/* Footer / version */}
+                    <div className="mt-auto text-center p-8 text-[10px] text-gray-400">
+                        <a href="/" title="4.0.15">
+                            Frituurapp v2.0
+                        </a>
                     </div>
                 </div>
-
-                {/* Language chooser */}
-                <div className="mb-4">
-                    <h3 className="font-semibold text-sm mb-2">Select Language:</h3>
-                    <div className="space-x-2">
-                        {LANGUAGES.map((lang) => (
-                            <button
-                                key={lang.value}
-                                className={`
-                                    px-2 py-1 rounded
-                                    ${userLang === lang.value
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-700'
-                                    }
-                                `}
-                                onClick={() => handleLangClick(lang.value)}
-                            >
-                                {lang.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* A small nav or links */}
-                <nav className="flex flex-col gap-2 mt-4 text-sm">
-                    <a href="/" className="hover:text-blue-500">
-                        Home
-                    </a>
-                    <a href="/my-account" className="hover:text-blue-500">
-                        My Account
-                    </a>
-                    <a href="/contact" className="hover:text-blue-500">
-                        Contact
-                    </a>
-                </nav>
-
-                {/* Footer area */}
-                <div className="mt-auto pt-4 text-xs text-center text-gray-400">
-                    Frituurapp v1.0
-                </div>
-            </div>
-        </div>
+            </CSSTransition>
+        </>
     )
 }

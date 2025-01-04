@@ -85,6 +85,7 @@ export default function ProductCard({
     return (
         <div
             onClick={handleCardClick}
+            style={{ borderRadius: '0.5rem' }}
             className={`
         relative
         border border-gray-300

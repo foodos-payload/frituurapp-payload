@@ -40,4 +40,79 @@
       max-width: 1080px;
     }
   }
-  
+
+/* Initial state: slide from left */
+.menu-drawer-enter {
+  transform: translateX(-100%);
+}
+.menu-drawer-enter.menu-drawer-enter-active {
+  transform: translateX(0%);
+  transition: transform 300ms ease-out;
+}
+
+/* Exiting state: slide out left */
+.menu-drawer-exit {
+  transform: translateX(0%);
+}
+.menu-drawer-exit.menu-drawer-exit-active {
+  transform: translateX(-100%);
+  transition: transform 300ms ease-out;
+}
+
+/**********************************
+ *  1) Fade overlay transitions
+ **********************************/
+ .fadeOverlay-enter {
+  opacity: 0;
+}
+.fadeOverlay-enter-active {
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+
+.fadeOverlay-exit {
+  opacity: 1;
+}
+.fadeOverlay-exit-active {
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+/**********************************
+ *  2) Slide drawer transitions
+ **********************************/
+.slideDrawer-enter {
+  transform: translateX(-100%);
+}
+.slideDrawer-enter-active {
+  transform: translateX(0%);
+  transition: transform 300ms ease-out;
+}
+
+.slideDrawer-exit {
+  transform: translateX(0%);
+}
+.slideDrawer-exit-active {
+  transform: translateX(-100%);
+  transition: transform 300ms ease-out;
+}
+
+/********************************
+ * 2) Cart panel slide (from right)
+ ********************************/
+ .slideCart-enter {
+  transform: translateX(100%);
+}
+.slideCart-enter-active {
+  transform: translateX(0%);
+  transition: transform 300ms ease-out;
+}
+
+.slideCart-exit {
+  transform: translateX(0%);
+}
+.slideCart-exit-active {
+  transform: translateX(100%);
+  transition: transform 300ms ease-out;
+}
+
