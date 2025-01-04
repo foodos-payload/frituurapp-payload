@@ -5,7 +5,6 @@ import { buildConfig } from 'payload';
 import { fileURLToPath } from 'url';
 import { s3Storage } from '@payloadcms/storage-s3';
 
-// Import all collections
 import { Pages } from './collections/Pages';
 import { Tenants } from './collections/Tenants';
 import Users from './collections/Users';

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { isSuperAdmin } from '../../access/isSuperAdmin';
+import { afterOperationHook } from './hooks/afterChange';
 
 export const Services: CollectionConfig = {
     slug: 'services',
@@ -11,6 +12,11 @@ export const Services: CollectionConfig = {
     },
     admin: {
         useAsTitle: 'title_nl',
+    },
+    hooks: {
+        afterOperation: [
+            afterOperationHook
+        ]
     },
     labels: {
         plural: {
@@ -37,44 +43,37 @@ export const Services: CollectionConfig = {
         {
             name: 'title_en',
             type: 'text',
-            required: true,
             label: 'Title (EN)',
         },
         {
             name: 'title_de',
             type: 'text',
-            required: true,
             label: 'Title (DE)',
         },
         {
             name: 'title_fr',
             type: 'text',
-            required: true,
             label: 'Title (FR)',
         },
         // Description fields (multilingual)
         {
             name: 'description_nl',
-            type: 'richText',
-            required: true,
+            type: 'textarea',
             label: 'Description (NL)',
         },
         {
             name: 'description_en',
-            type: 'richText',
-            required: true,
+            type: 'textarea',
             label: 'Description (EN)',
         },
         {
             name: 'description_de',
-            type: 'richText',
-            required: true,
+            type: 'textarea',
             label: 'Description (DE)',
         },
         {
             name: 'description_fr',
-            type: 'richText',
-            required: true,
+            type: 'textarea',
             label: 'Description (FR)',
         },
         // Pricing fields
@@ -87,6 +86,10 @@ export const Services: CollectionConfig = {
             name: 'yearly_price',
             type: 'text',
             required: true,
+        },
+        {
+            name: 'yearly_price_discount',
+            type: 'text',
         },
         // Demo and thumbnail
         {
@@ -151,6 +154,37 @@ export const Services: CollectionConfig = {
             required: false,
             admin: {
                 description: 'URL for additional information about the service',
+            },
+        },
+        // Add Stripe product and price IDs
+        {
+            name: 'stripe_monthly_product_id',
+            type: 'text',
+            required: false,
+            admin: {
+                hidden: true,
+            },
+        },
+        {
+            name: 'stripe_yearly_product_id',
+            type: 'text',
+            required: false,
+            admin: {
+                hidden: true,
+            },
+        },
+        {
+            name: 'stripe_monthly_price_id',
+            type: 'text',
+            admin: {
+                hidden: true,
+            },
+        },
+        {
+            name: 'stripe_yearly_price_id',
+            type: 'text',
+            admin: {
+                hidden: true,
             },
         },
     ],

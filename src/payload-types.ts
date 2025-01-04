@@ -1230,71 +1230,16 @@ export interface Order {
 export interface Service {
   id: string;
   title_nl: string;
-  title_en: string;
-  title_de: string;
-  title_fr: string;
-  description_nl: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  description_en: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  description_de: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  description_fr: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
+  title_en?: string | null;
+  title_de?: string | null;
+  title_fr?: string | null;
+  description_nl?: string | null;
+  description_en?: string | null;
+  description_de?: string | null;
+  description_fr?: string | null;
   monthly_price: string;
   yearly_price: string;
+  yearly_price_discount?: string | null;
   try_demo?: string | null;
   service_thumbnail: string | Media;
   /**
@@ -1318,6 +1263,10 @@ export interface Service {
    * URL for additional information about the service
    */
   get_more_info_url?: string | null;
+  stripe_monthly_product_id?: string | null;
+  stripe_yearly_product_id?: string | null;
+  stripe_monthly_price_id?: string | null;
+  stripe_yearly_price_id?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2034,6 +1983,7 @@ export interface ServicesSelect<T extends boolean = true> {
   description_fr?: T;
   monthly_price?: T;
   yearly_price?: T;
+  yearly_price_discount?: T;
   try_demo?: T;
   service_thumbnail?: T;
   referral_code?: T;
@@ -2042,6 +1992,10 @@ export interface ServicesSelect<T extends boolean = true> {
   service_last_update_date?: T;
   hide_for_tenants?: T;
   get_more_info_url?: T;
+  stripe_monthly_product_id?: T;
+  stripe_yearly_product_id?: T;
+  stripe_monthly_price_id?: T;
+  stripe_yearly_price_id?: T;
   updatedAt?: T;
   createdAt?: T;
 }
