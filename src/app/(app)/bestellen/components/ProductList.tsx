@@ -1,27 +1,26 @@
 // File: /app/(app)/bestellen/components/ProductList.tsx
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import HorizontalCategories from './HorizontalCategories';
-import VerticalCategories from './VerticalCategories';
-import ProductCard from './ProductCard';
-import ProductPopupFlow from './ProductPopupFlow';
-import { useCart } from './cart/CartContext';
+import React, { useState, useEffect, useRef } from "react";
+import HorizontalCategories from "./HorizontalCategories";
+import VerticalCategories from "./VerticalCategories";
+import ProductCard from "./ProductCard";
+import ProductPopupFlow from "./ProductPopupFlow";
+import { useCart } from "./cart/CartContext";
 
-// Minimal data structures
+/**
+ * Minimal data structures
+ */
 type Subproduct = {
     id: string;
     name_nl: string;
     price: number;
-    // ...
 };
 
 type PopupDoc = {
     id: string;
     popup_title_nl: string;
     multiselect: boolean;
-    minimum_option: number;
-    maximum_option: number;
     subproducts: Subproduct[];
 };
 
@@ -61,7 +60,7 @@ type Category = {
 type Branding = {
     categoryCardBgColor?: string;
     primaryColorCTA?: string;
-    // ... any others if needed
+    // ...
 };
 
 interface Props {
@@ -77,13 +76,16 @@ interface Props {
     mobileSearchOpen?: boolean;
 
     branding?: Branding;
+
+    /** The cart DOM ref, so we can measure its position. */
+    cartRef?: React.RefObject<HTMLDivElement>;
 }
 
+
 /**
- * ProductList that uses anchor-based navigation:
- * - Each category section is <section id="cat-slug">.
- * - HorizontalCategories / VerticalCategories link to href="#cat-slug".
- * - We maintain an "activeCategory" highlight via IntersectionObserver.
+ * ProductList that uses anchor-based navigation plus "fly" animations
+ * only for the no-popup case (direct add).
+ * If product has popups => open popup, wait for "product-added" event.
  */
 export default function ProductList({
     unfilteredCategories,
@@ -92,57 +94,58 @@ export default function ProductList({
     onCategoryClick,
     mobileSearchOpen = false,
     branding,
+    cartRef,
 }: Props) {
-    const [activeCategory, setActiveCategory] = useState(() => {
-        return unfilteredCategories[0]?.slug || '';
-    });
+    const [activeCategory, setActiveCategory] = useState(
+        () => unfilteredCategories[0]?.slug || ""
+    );
     const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
     const { addItem } = useCart();
     const observerRef = useRef<IntersectionObserver | null>(null);
 
-    // ===== Set up IntersectionObserver to highlight active category =====
+    // A map of product ID => ref
+    const productRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+
+    // create or retrieve a ref for each product
+    function getOrCreateProductRef(productId: string) {
+        if (!productRefs.current[productId]) {
+            productRefs.current[productId] = React.createRef<HTMLDivElement>();
+        }
+        return productRefs.current[productId];
+    }
+
+    // === IntersectionObserver to highlight active category
     useEffect(() => {
-        // 1) Grab all category <section id="cat-slug"> elements
-        //    but use the *filtered* list (the ones actually being rendered).
         const sections = filteredCategories
             .map((cat) => document.getElementById(`cat-${cat.slug}`))
             .filter(Boolean) as HTMLElement[];
 
-        // 2) Create observer
         const obs = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        const slug = entry.target.id.replace('cat-', '');
+                        const slug = entry.target.id.replace("cat-", "");
                         setActiveCategory(slug);
                     }
                 });
             },
             {
                 root: null,
-                // Adjust rootMargin to your needs:
-                // removing or lowering negative top margin helps reduce "skipping"
-                rootMargin: '0px 0px -50% 0px',
+                rootMargin: "0px 0px -50% 0px",
                 threshold: 0.0,
             }
         );
 
-        // **IMPORTANT**: Store the observer in observerRef
         observerRef.current = obs;
-
-        // 3) Observe all sections
         sections.forEach((sec) => obs.observe(sec));
 
-        // Cleanup
         return () => {
             sections.forEach((sec) => obs.unobserve(sec));
             obs.disconnect();
         };
-        // Depend on "filteredCategories" so it re-runs whenever the search changes what is rendered
     }, [filteredCategories]);
 
-    // Helper to reattach observer after a category jump
     function reconnectObserver() {
         const sections = unfilteredCategories
             .map((cat) => document.getElementById(`cat-${cat.slug}`))
@@ -150,31 +153,107 @@ export default function ProductList({
         sections.forEach((sec) => observerRef.current?.observe(sec));
     }
 
-    // ===== If user clicks a category in Horizontal/Vertical menus =====
     function handleCategoryClick(slug: string) {
-        if (onCategoryClick) onCategoryClick(slug);
-
-        // 1) Temporarily stop IntersectionObserver from overriding our highlight
+        onCategoryClick?.(slug);
         observerRef.current?.disconnect();
-
-        // 2) Immediately set highlight
         setActiveCategory(slug);
-
-        // 3) The <a> link will do normal anchor jump => no preventDefault
-        // 4) Wait ~800ms, then reconnect the observer
-        // (You can tweak the delay to 800, 1000, or 1700ms depending on how long the scroll usually takes)
         setTimeout(() => {
             observerRef.current && reconnectObserver();
         }, 800);
     }
 
-    // ===== If user clicks product or plus icon =====
+    // === Listen for "product-added" event from ProductPopupFlow
+    useEffect(() => {
+        function onProductAdded(e: Event) {
+            const custom = e as CustomEvent<{ productId: string; imageUrl?: string }>;
+            const { productId } = custom.detail;
+
+            // find the cardEl
+            const cardRef = productRefs.current[productId]?.current;
+            // find the cart DOM => we must check if cartRef is defined
+            if (!cardRef || !cartRef?.current) return;
+
+            flyFromCardToCart(cardRef, cartRef.current);
+        }
+
+        window.addEventListener("product-added", onProductAdded);
+        return () => {
+            window.removeEventListener("product-added", onProductAdded);
+        };
+    }, [cartRef]);
+
+    /**
+ * Animate a cloned <img> from the product card to the cart icon center.
+ * We'll call this from the "product-added" event or a direct click event.
+ */
+    function flyFromCardToCart(cardEl: HTMLDivElement, cartContainerEl: HTMLDivElement) {
+        // 1) Find the .product-img inside the card
+        const imgEl = cardEl.querySelector<HTMLImageElement>(".product-img");
+        if (!imgEl) return;
+
+        // 2) Clone the image
+        const flyingImg = imgEl.cloneNode(true) as HTMLImageElement;
+        flyingImg.style.position = "absolute";
+        flyingImg.style.zIndex = "9999";
+
+        // 3) Measure the original image bounding rect + scroll offset
+        const rect = imgEl.getBoundingClientRect();
+        const scrollX = window.scrollX || 0;
+        const scrollY = window.scrollY || 0;
+
+        // 4) Apply the starting width, height, left, top
+        flyingImg.style.width = `${rect.width}px`;
+        flyingImg.style.height = `${rect.height}px`;
+        flyingImg.style.left = `${rect.left + scrollX}px`;
+        flyingImg.style.top = `${rect.top + scrollY}px`;
+
+        // 5) Define transition + append to DOM
+        flyingImg.style.transition = "transform 1s ease-in-out, opacity 1s ease-in-out";
+        document.body.appendChild(flyingImg);
+
+        // 6) Check if there’s a child element with .cart-icon, or fallback to cartContainerEl
+        const cartIconEl = cartContainerEl.querySelector<HTMLElement>(".cart-icon");
+        const targetRect = cartIconEl
+            ? cartIconEl.getBoundingClientRect()
+            : cartContainerEl.getBoundingClientRect();
+
+        // 7) Next animation frame => apply final transform
+        requestAnimationFrame(() => {
+            const flyingRect = flyingImg.getBoundingClientRect();
+            const deltaX =
+                targetRect.left + targetRect.width / 2 - (flyingRect.left + flyingRect.width / 2);
+            const deltaY =
+                targetRect.top + targetRect.height / 2 - (flyingRect.top + flyingRect.height / 2);
+
+            flyingImg.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.1)`;
+            flyingImg.style.opacity = "0.3";
+        });
+
+        // 5) Remove after animation
+        setTimeout(() => {
+            flyingImg.remove();
+
+            // 6) Wiggle/pulse the .cart-icon
+            const iconEl = document.querySelector('.cart-icon') as HTMLElement | null;
+            if (iconEl) {
+                // Add the wiggle (or pulse) class
+                iconEl.classList.add('cart-wiggle');
+
+                // Remove it after 800ms (so it can re-trigger again next time)
+                setTimeout(() => {
+                    iconEl.classList.remove('cart-wiggle');
+                }, 800);
+            }
+        }, 1000);
+    }
+
+    // === If user clicks a product or plus icon
     function handleProductClick(prod: Product) {
         const popups = prod.productpopups || [];
         const hasPopups = popups.some((p) => p.popup !== null);
 
-        // If no popups => directly add to cart
         if (!hasPopups) {
+            // No popups => directly add to cart, which triggers immediate local animation in the ProductCard
             addItem({
                 productId: prod.id,
                 productName: prod.name_nl,
@@ -187,14 +266,14 @@ export default function ProductList({
                     }
                     : undefined,
             });
-            // alert(`Added "${prod.name_nl}" to cart!`)
+            // We let ProductCard do the local spinner / fly on click.
         } else {
-            // Otherwise => open the popup flow
+            // Has popups => open the popup flow. Wait for "Bevestigen" => that triggers 'product-added' event.
             setActiveProduct(prod);
         }
     }
 
-    // Only keep categories that have products after filtering
+    // The final, visible categories
     const visibleSections = filteredCategories;
 
     return (
@@ -203,14 +282,14 @@ export default function ProductList({
             <div
                 className="hidden lg:block"
                 style={{
-                    width: '240px',
+                    width: "240px",
                     flexShrink: 0,
-                    position: 'sticky',
-                    top: '100px',
-                    alignSelf: 'flex-start',
-                    height: '70vh',
-                    overflow: 'auto',
-                    background: '#f9f9f9',
+                    position: "sticky",
+                    top: "100px",
+                    alignSelf: "flex-start",
+                    height: "70vh",
+                    overflow: "auto",
+                    background: "#f9f9f9",
                 }}
             >
                 <VerticalCategories
@@ -231,11 +310,11 @@ export default function ProductList({
                 <div
                     className="block lg:hidden w-full bg-white overflow-auto"
                     style={{
-                        marginBottom: '1rem',
-                        position: 'sticky',
+                        marginBottom: "1rem",
+                        position: "sticky",
                         top: mobileSearchOpen ? 120 : 80,
                         zIndex: 50,
-                        background: '#fff',
+                        background: "#fff",
                     }}
                 >
                     <HorizontalCategories
@@ -255,21 +334,22 @@ export default function ProductList({
                     const catLabel = pickCategoryName(cat, userLang);
 
                     return (
-                        <section
-                            key={cat.id}
-                            id={`cat-${cat.slug}`}
-                            className="scroll-mt-[100px] mb-8"
-                        >
+                        <section key={cat.id} id={`cat-${cat.slug}`} className="scroll-mt-[100px] mb-8">
                             <h3 className="categoryname text-xl mt-3 mb-4 font-secondary font-love-of-thunder">
                                 {catLabel}
                             </h3>
 
-                            {/* Grid with max 2 columns, plus responsive gap */}
+                            {/* Grid with max 2 columns */}
                             <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-4">
                                 {cat.products.map((prod) => {
-                                    // Build local display fields
+                                    // build local display fields
                                     const displayName = pickProductName(prod, userLang);
                                     const displayDesc = pickDescription(prod, userLang);
+
+                                    // create or retrieve the ref for this product
+                                    const productRef = getOrCreateProductRef(prod.id);
+
+                                    // Check if product has popups
                                     const popups = prod.productpopups || [];
                                     const hasPopups = popups.some((p) => p.popup !== null);
 
@@ -277,15 +357,16 @@ export default function ProductList({
                                         <ProductCard
                                             key={prod.id}
                                             product={{
-                                                ...prod, // includes isPromotion, image, etc.
+                                                ...prod,
                                                 displayName,
                                                 displayDesc,
                                             }}
-                                            // If product has no popups => we do the add-to-cart spinner
-                                            // If product does have popups => we skip the spinner & open popup instead
-                                            shouldShowSpinner={!hasPopups} // only show spinner if no popups
+                                            // We only show local spinner if NO popups
+                                            shouldShowSpinner={!hasPopups}
                                             handleAction={() => handleProductClick(prod)}
                                             branding={branding}
+                                            cartRef={cartRef}
+                                            productRef={productRef}
                                         />
                                     );
                                 })}
@@ -294,7 +375,7 @@ export default function ProductList({
                     );
                 })}
 
-                {/* If no categories remain after filtering */}
+                {/* No categories after filtering */}
                 {visibleSections.length === 0 && (
                     <div className="mt-8">
                         <h2>No products match your search.</h2>
@@ -302,12 +383,13 @@ export default function ProductList({
                 )}
             </div>
 
-            {/* PRODUCT POPUP FLOW */}
+            {/* If a popup is opened */}
             {activeProduct && (
                 <ProductPopupFlow
                     product={activeProduct}
                     onClose={() => setActiveProduct(null)}
                     branding={branding}
+                    cartRef={cartRef}
                 />
             )}
         </div>
@@ -317,11 +399,11 @@ export default function ProductList({
 /** Helper to pick category name in the correct language */
 function pickCategoryName(cat: Category, lang?: string): string {
     switch (lang) {
-        case 'en':
+        case "en":
             return cat.name_en || cat.name_nl;
-        case 'fr':
+        case "fr":
             return cat.name_fr || cat.name_nl;
-        case 'de':
+        case "de":
             return cat.name_de || cat.name_nl;
         default:
             return cat.name_nl;
@@ -331,11 +413,11 @@ function pickCategoryName(cat: Category, lang?: string): string {
 /** Helper to pick product name in correct language */
 function pickProductName(prod: Product, lang?: string): string {
     switch (lang) {
-        case 'en':
+        case "en":
             return prod.name_en || prod.name_nl;
-        case 'fr':
+        case "fr":
             return prod.name_fr || prod.name_nl;
-        case 'de':
+        case "de":
             return prod.name_de || prod.name_nl;
         default:
             return prod.name_nl;
@@ -345,11 +427,11 @@ function pickProductName(prod: Product, lang?: string): string {
 /** Helper to pick product description in correct language */
 function pickDescription(prod: Product, lang?: string): string | undefined {
     switch (lang) {
-        case 'en':
+        case "en":
             return prod.description_en || prod.description_nl;
-        case 'fr':
+        case "fr":
             return prod.description_fr || prod.description_nl;
-        case 'de':
+        case "de":
             return prod.description_de || prod.description_nl;
         default:
             return prod.description_nl;

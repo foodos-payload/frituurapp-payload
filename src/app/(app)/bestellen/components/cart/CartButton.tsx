@@ -100,8 +100,8 @@ export default function CartButton({ onClick, branding }: Props) {
               font-semibold
             "
                     >
-                        <div className="relative">
-                            <FiShoppingCart className="mr-5" />
+                        <div className="relative text-2xl">
+                            <FiShoppingCart className="mr-5 cart-icon" />
 
                             {/* Red badge for itemCount */}
                             {itemCount > 0 && (
@@ -117,6 +117,7 @@ export default function CartButton({ onClick, branding }: Props) {
                     px-2
                     -top-4
                     py-1
+                    
                   "
                                 >
                                     {itemCount}

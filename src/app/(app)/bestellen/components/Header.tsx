@@ -184,16 +184,17 @@ export default function Header({
                                     className="
                     absolute
                     right-2
-                    text-sm
-                    px-2
+                    text-md
+                    px-3
                     py-1
+                    font-bold
                     bg-red-500
                     text-white
                     rounded
                     hover:bg-red-600
                   "
                                 >
-                                    Clear
+                                    X
                                 </button>
                             )}
                         </div>

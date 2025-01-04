@@ -1,7 +1,7 @@
 // File: /app/(app)/bestellen/components/BestellenLayout.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import ProductList from './ProductList';
 import Header from './Header';
 import {
@@ -148,6 +148,8 @@ export default function BestellenLayout({
         setEditingProduct(null);
     }
 
+    const cartRef = useRef<HTMLDivElement>(null);
+
     return (
         <CartProvider>
             {/* LEFT-SIDE MENU DRAWER */}
@@ -206,59 +208,13 @@ export default function BestellenLayout({
                         setSearchTerm('');
                     }}
                     branding={branding}
+                    cartRef={cartRef}
                 />
 
-                {/* DEBUG: Show JSON data of `categorizedProducts` */}
-                <div className="mt-4 px-2">
-                    <button
-                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
-                        onClick={() => setShowJsonModal(true)}
-                    >
-                        Show JSON
-                    </button>
-                </div>
-
-                {/* The JSON modal overlay */}
-                {showJsonModal && (
-                    <div
-                        className="
-              fixed 
-              inset-0 
-              z-50
-              flex 
-              items-center 
-              justify-center
-              bg-black 
-              bg-opacity-50
-            "
-                    >
-                        <div className="relative w-11/12 max-w-3xl bg-white rounded shadow-lg p-6">
-                            <button
-                                className="absolute top-2 right-2 text-gray-600 hover:text-black"
-                                onClick={() => setShowJsonModal(false)}
-                            >
-                                ✕
-                            </button>
-                            <h2 className="text-lg font-bold mb-2">Raw JSON from API</h2>
-                            <div className="max-h-96 overflow-auto p-2 bg-gray-100 rounded text-sm">
-                                <pre className="whitespace-pre-wrap">
-                                    {JSON.stringify(categorizedProducts, null, 2)}
-                                </pre>
-                            </div>
-                            <div className="mt-4 flex justify-end">
-                                <button
-                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                    onClick={() => setShowJsonModal(false)}
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Floating Cart Button (bottom-right) */}
-                <CartButton onClick={() => setShowCartDrawer(true)} branding={branding} />
+                <div ref={cartRef} style={{ position: 'relative', zIndex: 49 }}>
+                    <CartButton onClick={() => setShowCartDrawer(true)} branding={branding} />
+                </div>
             </div>
 
             {/* PRODUCT POPUP for “Bewerken” if editingItem is set */}
@@ -269,6 +225,7 @@ export default function BestellenLayout({
                     editingItemSignature={editingLineSignature} // Pass the signature to be updated
                     onClose={handleCloseEditFlow}
                     branding={branding}
+                    cartRef={cartRef}
                 />
             )}
         </CartProvider>

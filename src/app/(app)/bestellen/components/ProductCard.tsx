@@ -11,6 +11,8 @@ type ProductCardProps = {
     image?: { url: string; alt?: string };
     isPromotion?: boolean;
     old_price: number | null;
+    productRef: React.RefObject<HTMLDivElement>;
+    cartRef: React.RefObject<HTMLDivElement>;
 };
 
 type Branding = {
@@ -34,6 +36,9 @@ interface Props {
      * - if has popups => open the popup
      */
     handleAction?: (prod: ProductCardProps) => void;
+
+    /** The element ref of your “Cart” (for measuring the final position). */
+    cartRef?: React.RefObject<HTMLDivElement>;
 }
 
 /**
@@ -45,6 +50,8 @@ export default function ProductCard({
     shouldShowSpinner = false,
     handleAction,
     branding,
+    cartRef,
+    productRef,
 }: Props) {
     // Local spinner state if we want to show it
     const [loadingState, setLoadingState] = useState<"idle" | "loading" | "check">("idle");
@@ -66,30 +73,115 @@ export default function ProductCard({
         }, 1000);
     }
 
+    // *** FLY ANIMATION SNIPPET ***
+    async function flyToCart(e: React.MouseEvent, imgEl: HTMLImageElement | null) {
+        if (!cartRef?.current || !imgEl) return;
+
+        // 1) Clone the product image
+        const flyingImg = imgEl.cloneNode(true) as HTMLImageElement;
+        flyingImg.style.position = "absolute";
+        flyingImg.style.zIndex = "9999";
+        flyingImg.style.width = `${imgEl.offsetWidth}px`;
+        flyingImg.style.height = `${imgEl.offsetHeight}px`;
+
+        // Use scrollX/scrollY if page is scrolled
+        const scrollX = window.scrollX || 0;
+        const scrollY = window.scrollY || 0;
+
+        // Position it at the image's current spot
+        const rect = imgEl.getBoundingClientRect();
+        flyingImg.style.left = `${rect.left + scrollX}px`;
+        flyingImg.style.top = `${rect.top + scrollY}px`;
+
+        // Make it animate more slowly
+        flyingImg.style.transition = "transform 1s ease-in-out, opacity 1s ease-in-out";
+        document.body.appendChild(flyingImg);
+
+        // 2) Find the actual cart-icon or fallback to entire cartRef
+        const iconEl = cartRef.current.querySelector(".cart-icon") as HTMLElement | null;
+        const cartRect = iconEl
+            ? iconEl.getBoundingClientRect()
+            : cartRef.current.getBoundingClientRect();
+
+        // 3) Calculate center → center offset
+        const flyingRect = flyingImg.getBoundingClientRect();
+        const deltaX =
+            (cartRect.left + cartRect.width / 2) -
+            (flyingRect.left + flyingRect.width / 2);
+        const deltaY =
+            (cartRect.top + cartRect.height / 2) -
+            (flyingRect.top + flyingRect.height / 2);
+
+        // 4) Trigger transform
+        requestAnimationFrame(() => {
+            flyingImg.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.1)`;
+            flyingImg.style.opacity = "0.3";
+        });
+
+        // 5) Remove after animation
+        setTimeout(() => {
+            flyingImg.remove();
+
+            // 6) Wiggle/pulse the .cart-icon
+            const iconEl = cartRef.current?.querySelector('.cart-icon') as HTMLElement | null;
+            if (iconEl) {
+                // Add the wiggle (or pulse) class
+                iconEl.classList.add('cart-wiggle');
+
+                // Remove it after 800ms (so it can re-trigger again next time)
+                setTimeout(() => {
+                    iconEl.classList.remove('cart-wiggle');
+                }, 800);
+            }
+        }, 1000);
+    }
+
     /**
      * Called when entire card is clicked.
      */
-    function handleCardClick() {
+    function handleCardClick(e: React.MouseEvent) {
+        e.stopPropagation();
         if (!handleAction) return;
+
+
 
         // Parent does either "add to cart" or "open popup"
         handleAction(product);
 
         // If we want local spinner => run it
         if (shouldShowSpinner) {
+            // 1) We'll do the "fly" animation. We must find the product image DOM node:
+            //    Make sure your root div has class "product-card-outer"
+            //    and the <img> has class "product-img"
+            const cardEl = (e.currentTarget as HTMLElement).closest(
+                ".product-card-outer"
+            ) as HTMLElement;
+            const imgEl = cardEl?.querySelector(".product-img") as HTMLImageElement | null;
+
+            // 2) Start the animation
+            flyToCart(e, imgEl);
             runLocalSpinner();
         }
     }
 
-    /**
-     * Called when plus button is clicked. We skip the card-click.
-     */
+    // Called when plus button is clicked
     function handlePlusClick(e: React.MouseEvent) {
         e.stopPropagation();
         if (!handleAction) return;
 
+        // 3) The rest of your logic
         handleAction(product);
         if (shouldShowSpinner) {
+            // 1) We'll do the "fly" animation. We must find the product image DOM node:
+            //    Make sure your root div has class "product-card-outer"
+            //    and the <img> has class "product-img"
+            const cardEl = (e.currentTarget as HTMLElement).closest(
+                ".product-card-outer"
+            ) as HTMLElement;
+            const imgEl = cardEl?.querySelector(".product-img") as HTMLImageElement | null;
+
+            // 2) Start the animation
+            flyToCart(e, imgEl);
             runLocalSpinner();
         }
     }
@@ -100,12 +192,16 @@ export default function ProductCard({
     // 2) Inline style for the plus button's border color on hover
     const plusButtonBorder = hoverPlus ? brandCTA : "transparent";
 
-    // Render
+
+
     return (
+        // ---------------   ADD THE CLASS "product-card-outer" HERE  ---------------
         <div
             onClick={handleCardClick}
             style={{ borderRadius: "0.5rem" }}
+            ref={productRef}
             className={`
+        product-card-outer
         relative
         border border-gray-300
         rounded-lg
@@ -124,7 +220,7 @@ export default function ProductCard({
             {product.isPromotion && (
                 <div
                     className="absolute top-0 left-0 text-white text-md font-semibold px-2 py-1 rounded z-20"
-                    style={{ backgroundColor: brandCTA || 'red' }} // fallback to "red" if no brand color
+                    style={{ backgroundColor: brandCTA || "red" }}
                 >
                     Promotion
                 </div>
@@ -133,10 +229,11 @@ export default function ProductCard({
             {/* Left: image area */}
             <div className="w-2/5 h-full flex items-center justify-center bg-gray-50">
                 {product.image?.url ? (
+                    // ---------------  ADD THE CLASS "product-img" HERE  ---------------
                     <img
                         src={product.image.url}
                         alt={product.image.alt || product.displayName}
-                        className="w-full h-full object-cover mix-blend-multiply"
+                        className="product-img w-full h-full object-cover mix-blend-multiply"
                     />
                 ) : (
                     <div className="text-gray-300 text-md p-4">No Image</div>
@@ -147,9 +244,7 @@ export default function ProductCard({
             <div className="w-3/5 p-4 flex flex-col justify-between relative">
                 {/* Title / Desc */}
                 <div>
-                    <h2 className="text-lg font-bold mb-1 line-clamp-2">
-                        {product.displayName}
-                    </h2>
+                    <h2 className="text-lg font-bold mb-1 line-clamp-2">{product.displayName}</h2>
                     {product.displayDesc && (
                         <p className="text-md text-gray-600 line-clamp-3 mb-2">
                             {product.displayDesc}
@@ -161,13 +256,11 @@ export default function ProductCard({
                 <div className="mt-2">
                     {typeof product.price === "number" ? (
                         <>
-                            {/* If the product is on promotion and has an old_price => show strikethrough old_price */}
                             {product.isPromotion && product.old_price && (
                                 <span className="text-sm text-gray-500 line-through mr-2">
                                     €{product.old_price.toFixed(2)}
                                 </span>
                             )}
-                            {/* Actual (current) price */}
                             <span className="text-lg font-semibold text-gray-800">
                                 €{product.price.toFixed(2)}
                             </span>
@@ -199,7 +292,7 @@ export default function ProductCard({
                     }}
                 >
                     {loadingState === "loading" ? (
-                        // Minimal spinner
+                        /* Minimal spinner */
                         <svg
                             width="16"
                             height="16"
@@ -207,7 +300,6 @@ export default function ProductCard({
                             className="animate-spin"
                             strokeWidth="3"
                             fill="none"
-                            // Instead of text-green-600 => brand color
                             style={{ color: brandCTA }}
                             stroke="currentColor"
                         >
@@ -215,18 +307,12 @@ export default function ProductCard({
                             <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
                         </svg>
                     ) : loadingState === "check" ? (
-                        // Check icon => stroke brandCTA
-                        <svg
-                            width="16"
-                            height="16"
-                            fill="none"
-                            stroke={brandCTA}
-                            strokeWidth="3"
-                        >
+                        /* Check icon => stroke brandCTA */
+                        <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="3">
                             <path d="M2 8l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                     ) : (
-                        // The plus icon => stroke brandCTA
+                        /* The plus icon => stroke brandCTA */
                         <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="2">
                             <path d="M8 3v10M3 8h10" strokeLinecap="round" />
                         </svg>
