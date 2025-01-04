@@ -8,13 +8,13 @@
 
   /* Hide scrollbar in Chrome, Safari, Opera using the ::-webkit-scrollbar pseudo-element */
 .main-container::-webkit-scrollbar {
-    display: none;
+    /* display: none; */
   }
   
   /* Hide scrollbar in IE, Edge, Firefox by removing scrollbar style */
   .main-container {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;     /* Firefox */
+    /* -ms-overflow-style: none; 
+    scrollbar-width: none;    */
   }
 
 @media (min-width: 640px) {
@@ -141,4 +141,38 @@
 
 .animate-slideUp {
   animation: slideUp 0.4s ease-out forwards;
+}
+
+.flying-img {
+  pointer-events: none; /* so it doesn't interfere with clicks */
+  transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+}
+
+/* Example wiggle animation */
+@keyframes wigglePulse {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  15% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  30% {
+    transform: scale(1.1) rotate(-5deg);
+  }
+  45% {
+    transform: scale(1.1) rotate(4deg);
+  }
+  60% {
+    transform: scale(1.1) rotate(-4deg);
+  }
+  75% {
+    transform: scale(1.1) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.cart-wiggle {
+  animation: wigglePulse 0.8s ease-in-out forwards;
 }

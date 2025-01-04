@@ -45,11 +45,64 @@ type Product = {
     // ...
 };
 
+type Branding = {
+    /** e.g. "#ECAA02" or some other brand color */
+    primaryColorCTA?: string;
+    // ...
+};
+
 interface Props {
     product: Product;
     editingItem?: CartItem;
     editingItemSignature?: string;
     onClose: () => void;
+    branding?: Branding;
+    cartRef?: React.RefObject<HTMLDivElement | null>; // Allow 'null'
+
+}
+
+function flyToCart(cartRef: React.RefObject<HTMLDivElement>, sourceImg: HTMLImageElement | null) {
+    if (!cartRef.current || !sourceImg) return;
+
+    // 1) Clone
+    const flyingImg = sourceImg.cloneNode(true) as HTMLImageElement;
+    flyingImg.style.position = 'absolute';
+    flyingImg.style.zIndex = '9999';
+
+    // Measure the “hidden img”
+    const rect = sourceImg.getBoundingClientRect();
+    const scrollX = window.scrollX || 0;
+    const scrollY = window.scrollY || 0;
+
+    flyingImg.style.width = `${rect.width}px`;
+    flyingImg.style.height = `${rect.height}px`;
+    flyingImg.style.left = `${rect.left + scrollX}px`;
+    flyingImg.style.top = `${rect.top + scrollY}px`;
+    flyingImg.style.transition = 'transform 1s ease-in-out, opacity 1s ease-in-out';
+    document.body.appendChild(flyingImg);
+
+    // 2) Destination
+    const cartIcon = cartRef.current.querySelector('.cart-icon') as HTMLElement | null;
+    const cartRect = cartIcon
+        ? cartIcon.getBoundingClientRect()
+        : cartRef.current.getBoundingClientRect();
+
+    // 3) Animate
+    requestAnimationFrame(() => {
+        const flyingRect = flyingImg.getBoundingClientRect();
+        const deltaX =
+            cartRect.left + cartRect.width / 2 - (flyingRect.left + flyingRect.width / 2);
+        const deltaY =
+            cartRect.top + cartRect.height / 2 - (flyingRect.top + flyingRect.height / 2);
+
+        flyingImg.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.1)`;
+        flyingImg.style.opacity = '0.3';
+    });
+
+    // 4) Cleanup
+    setTimeout(() => {
+        flyingImg.remove();
+    }, 1200);
 }
 
 export default function ProductPopupFlow({
@@ -57,6 +110,8 @@ export default function ProductPopupFlow({
     editingItem,
     editingItemSignature,
     onClose,
+    branding,
+    cartRef,
 }: Props) {
     const { addItem, updateItem } = useCart();
 
@@ -180,6 +235,15 @@ export default function ProductPopupFlow({
                 subproducts: chosenSubs,
                 hasPopups: true,
             });
+            // 2) Construct event detail: pass product ID, image url, etc.
+            window.dispatchEvent(new CustomEvent('product-added', {
+                detail: {
+                    productId: product.id,
+                    // maybe the main banner image’s URL
+                    imageUrl: product.image?.url || '',
+                    // if you need more details, pass them
+                }
+            }));
         }
         onClose();
     }
@@ -191,6 +255,9 @@ export default function ProductPopupFlow({
 
     // === NEW: build a "selectedItems" array to display on top ===
     const selectedItems = gatherAllSelectedItems(sortedPopups, selectedOptions);
+
+    // === 6) Gather brand color or fallback
+    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
     return (
         <div
@@ -220,6 +287,20 @@ export default function ProductPopupFlow({
           animate-slideUp
         "
             >
+                {product.image?.url && (
+                    <img
+                        src={encodeURI(product.image.url)}
+                        alt={product.image.alt || product.name_nl}
+                        className="popup-fly-img" // a special class
+                        style={{
+                            visibility: 'hidden',
+                            width: 0,
+                            height: 0,
+                            position: 'absolute',
+                        }}
+                    />
+                )}
+
                 {/* Sticky Image Banner */}
                 <div className="relative sticky top-0 z-10 w-full h-[150px] md:h-[200px]">
                     {product.image?.url && (
@@ -326,16 +407,22 @@ export default function ProductPopupFlow({
                                 <div
                                     key={sub.id}
                                     onClick={() => handleSubproductClick(sub)}
-                                    style={{ borderRadius: '0.5rem' }}
+                                    style={{
+                                        borderRadius: "0.5rem",
+                                        // If selected => dynamic border color = brandCTA
+                                        borderLeftWidth: isSelected ? "4px" : "1px",
+                                        borderLeftColor: isSelected ? brandCTA : "#d1d5db", // #d1d5db ~ border-gray-300
+                                        borderStyle: "solid",
+                                    }}
                                     className={`
-                    relative
-                    flex flex-col justify-between
-                    p-2 border rounded-lg text-center cursor-pointer transition
-                    ${isSelected
-                                            ? 'bg-gray-100 border-l-4 border-green-500'
-                                            : 'border-gray-300'
+                                    relative
+                                    flex flex-col justify-between
+                                    p-2 rounded-lg text-center cursor-pointer transition
+                                    ${isSelected
+                                            ? "bg-gray-100"
+                                            : "border border-gray-300" // fallback for non-left sides
                                         }
-                  `}
+                                  `}
                                 >
                                     {/* Possibly an image */}
                                     <div className="flex-grow flex items-center justify-center mb-4">
@@ -362,7 +449,7 @@ export default function ProductPopupFlow({
 
                                     {/* Checkmark if selected */}
                                     {isSelected && (
-                                        <div className="absolute bottom-2 right-2 text-green-500">
+                                        <div className="absolute bottom-2 right-2" style={{ color: brandCTA }}>
                                             <FiCheckCircle size={24} />
                                         </div>
                                     )}
@@ -390,6 +477,7 @@ export default function ProductPopupFlow({
                 rounded-full
                 hover:bg-gray-600
                 transition
+                text-xl
               "
                         >
                             Terug
@@ -400,15 +488,18 @@ export default function ProductPopupFlow({
 
                     <button
                         onClick={handleNext}
+                        style={{
+                            backgroundColor: brandCTA,
+                            color: "#ffffff",
+                        }}
                         className="
-              bg-green-600 text-white
               px-4 py-2
               rounded-full
-              hover:bg-green-700
               transition
+              text-xl
             "
                     >
-                        {currentIndex < sortedPopups.length - 1 ? 'Volgende' : 'Bevestigen'}
+                        {currentIndex < sortedPopups.length - 1 ? "Volgende" : "Bevestigen"}
                     </button>
                 </div>
             </div>

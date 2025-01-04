@@ -5,14 +5,21 @@ import { CSSTransition } from 'react-transition-group';
 import { useCart, CartItem, getLineItemSignature } from './CartContext';
 import { FiX, FiTrash2 } from 'react-icons/fi';
 
+type Branding = {
+    categoryCardBgColor?: string;
+    primaryColorCTA?: string;
+    // ... any others if needed
+};
+
 type Props = {
     isOpen: boolean;
     onClose: () => void;
     /** Called when user wants to "edit" a popup-based item. */
     onEditItem?: (item: CartItem) => void;
+    branding?: Branding;
 };
 
-export default function CartDrawer({ isOpen, onClose, onEditItem }: Props) {
+export default function CartDrawer({ isOpen, onClose, onEditItem, branding }: Props) {
     const {
         items,
         updateItemQuantity,
@@ -23,6 +30,8 @@ export default function CartDrawer({ isOpen, onClose, onEditItem }: Props) {
 
     const overlayRef = useRef<HTMLDivElement>(null);
     const drawerRef = useRef<HTMLDivElement>(null);
+
+    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
     /**
      * Close drawer if user clicks outside the drawer
@@ -261,11 +270,15 @@ export default function CartDrawer({ isOpen, onClose, onEditItem }: Props) {
                                 onClick={() => {
                                     // e.g. location.href = '/checkout'
                                 }}
-                                style={{ borderRadius: '0.5rem' }}
+
+                                style={{
+                                    borderRadius: '0.5rem',
+                                    backgroundColor: brandCTA,
+                                }}
                                 className="
-                  bg-green-600 text-white
+                  text-white
                   block w-full p-3 text-lg text-center rounded-lg shadow-md
-                  font-semibold hover:bg-green-700
+                  font-semibold 
                 "
                             >
                                 Afrekenen

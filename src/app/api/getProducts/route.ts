@@ -20,6 +20,7 @@ interface LinkedProductJSON {
     description_nl?: string
     priceUnified: boolean
     price: number | null
+    old_price: number | null
     image?: {
         url: string
         alt: string
@@ -63,6 +64,7 @@ interface ProductJSON {
     description_fr: string
     priceUnified: boolean
     price: number | null
+    old_price: number | null
     priceDineIn: number | null
     priceTakeaway: number | null
     priceDelivery: number | null
@@ -307,6 +309,7 @@ export async function GET(request: NextRequest) {
 
                     priceUnified: product.price_unified || false,
                     price: product.price_unified ? product.price : null,
+                    old_price: product.old_price || null,
                     priceDineIn: product.price_unified ? null : product.price_dinein || null,
                     priceTakeaway: product.price_unified ? null : product.price_takeaway || null,
                     priceDelivery: product.price_unified ? null : product.price_delivery || null,

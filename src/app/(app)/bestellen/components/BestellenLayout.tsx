@@ -1,7 +1,7 @@
 // File: /app/(app)/bestellen/components/BestellenLayout.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import ProductList from './ProductList';
 import Header from './Header';
 import {
@@ -19,16 +19,40 @@ import '../bestellen.css';
  * Minimal shape for a product in your categories.
  * (Add more fields if needed.)
  */
+type Subproduct = {
+    id: string;
+    name_nl: string;
+    price: number;
+};
+
+type PopupDoc = {
+    id: string;
+    popup_title_nl: string;
+    multiselect: boolean;
+    subproducts: Subproduct[];
+};
+
+type PopupItem = {
+    order: number;
+    popup: PopupDoc | null;
+};
+
 type Product = {
     id: string;
     name_nl: string;
     name_en?: string;
-    name_de?: string;
     name_fr?: string;
+    name_de?: string;
+    description_nl?: string;
+    description_en?: string;
+    description_fr?: string;
+    description_de?: string;
     price: number | null;
+    old_price: number | null;
     image?: { url: string; alt: string };
     webdescription?: string;
     isPromotion?: boolean;
+    productpopups?: PopupItem[];
     // ...
 };
 
@@ -46,6 +70,26 @@ interface Props {
     shopSlug: string;
     categorizedProducts: Category[];
     userLang?: string;
+    /** Branding fetched from your /api/branding endpoint. */
+    branding?: {
+        /** URL-encoded absolute path to the site logo (optional). */
+        logoUrl?: string;
+
+        /** URL-encoded absolute path to an advertisement image for order status, etc. */
+        adImage?: string;
+
+        /** A site header background color in hex (e.g. "#0f1820"). */
+        headerBackgroundColor?: string;
+
+        /** A category-card background color in hex (e.g. "#ECAA02"). */
+        categoryCardBgColor?: string;
+
+        /** A primary CTA color in hex (used for "Add to Cart" or "Checkout" buttons). */
+        primaryColorCTA?: string;
+
+        siteTitle?: string;
+
+    };
 }
 
 /**
@@ -58,6 +102,8 @@ export default function BestellenLayout({
     shopSlug,
     categorizedProducts,
     userLang,
+    branding,
+
 }: Props) {
     const [showJsonModal, setShowJsonModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -127,6 +173,8 @@ export default function BestellenLayout({
         setEditingProduct(null);
     }
 
+    const cartRef = useRef<HTMLDivElement>(null);
+
     return (
         <CartProvider>
             {/* LEFT-SIDE MENU DRAWER */}
@@ -135,6 +183,7 @@ export default function BestellenLayout({
                 onClose={() => setShowMenuDrawer(false)}
                 userLang={lang}
                 onLangChange={(newLang) => setLang(newLang)}
+                branding={branding}
             />
 
             {/* RIGHT-SIDE CART DRAWER */}
@@ -142,6 +191,7 @@ export default function BestellenLayout({
                 isOpen={showCartDrawer}
                 onClose={() => setShowCartDrawer(false)}
                 onEditItem={handleEditItem}
+                branding={branding}
             />
 
             {/* MAIN LAYOUT CONTAINER */}
@@ -168,6 +218,7 @@ export default function BestellenLayout({
                         onMenuClick={() => setShowMenuDrawer(true)}
                         mobileSearchOpen={mobileSearchOpen}
                         setMobileSearchOpen={setMobileSearchOpen}
+                        branding={branding}
                     />
                 </div>
 
@@ -181,59 +232,14 @@ export default function BestellenLayout({
                         // If user clicks a category in the UI, optionally reset the search
                         setSearchTerm('');
                     }}
+                    branding={branding}
+                    cartRef={cartRef}
                 />
 
-                {/* DEBUG: Show JSON data of `categorizedProducts` */}
-                <div className="mt-4 px-2">
-                    <button
-                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
-                        onClick={() => setShowJsonModal(true)}
-                    >
-                        Show JSON
-                    </button>
-                </div>
-
-                {/* The JSON modal overlay */}
-                {showJsonModal && (
-                    <div
-                        className="
-              fixed 
-              inset-0 
-              z-50
-              flex 
-              items-center 
-              justify-center
-              bg-black 
-              bg-opacity-50
-            "
-                    >
-                        <div className="relative w-11/12 max-w-3xl bg-white rounded shadow-lg p-6">
-                            <button
-                                className="absolute top-2 right-2 text-gray-600 hover:text-black"
-                                onClick={() => setShowJsonModal(false)}
-                            >
-                                ✕
-                            </button>
-                            <h2 className="text-lg font-bold mb-2">Raw JSON from API</h2>
-                            <div className="max-h-96 overflow-auto p-2 bg-gray-100 rounded text-sm">
-                                <pre className="whitespace-pre-wrap">
-                                    {JSON.stringify(categorizedProducts, null, 2)}
-                                </pre>
-                            </div>
-                            <div className="mt-4 flex justify-end">
-                                <button
-                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                    onClick={() => setShowJsonModal(false)}
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Floating Cart Button (bottom-right) */}
-                <CartButton onClick={() => setShowCartDrawer(true)} />
+                <div ref={cartRef} style={{ position: 'relative', zIndex: 49 }}>
+                    <CartButton onClick={() => setShowCartDrawer(true)} branding={branding} />
+                </div>
             </div>
 
             {/* PRODUCT POPUP for “Bewerken” if editingItem is set */}
@@ -243,6 +249,8 @@ export default function BestellenLayout({
                     editingItem={editingItem}             // Pass the existing cart item
                     editingItemSignature={editingLineSignature} // Pass the signature to be updated
                     onClose={handleCloseEditFlow}
+                    branding={branding}
+                    cartRef={cartRef}
                 />
             )}
         </CartProvider>

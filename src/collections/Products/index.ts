@@ -268,6 +268,44 @@ export const Products: CollectionConfig = {
             },
         },
         {
+            name: 'isPromotion',
+            type: 'checkbox',
+            label: {
+                en: 'Promotion',
+                nl: 'Promotie',
+                de: 'Werbeaktion',
+                fr: 'Promotion',
+            },
+            defaultValue: false,
+            admin: {
+                description: {
+                    en: 'Check if this product is on promotion. Old price field will appear.',
+                    nl: 'Vink aan als dit product in promotie is. Oude prijsveld verschijnt.',
+                    de: 'Ankreuzen, wenn dieses Produkt in Aktion ist. Altes Preisfeld wird angezeigt.',
+                    fr: 'Cochez si ce produit est en promotion. Le champ de l’ancien prix apparaîtra.',
+                },
+            },
+        },
+        {
+            name: 'old_price',
+            type: 'number',
+            label: {
+                en: 'Old Price',
+                nl: 'Oude Prijs',
+                de: 'Alter Preis',
+                fr: 'Ancien Prix',
+            },
+            admin: {
+                condition: (data) => data?.isPromotion === true, // only show when isPromotion = true
+                description: {
+                    en: 'Please put the old (original) price here, and use the normal price field for the new price.',
+                    nl: 'Vul hier de oude (oorspronkelijke) prijs in, en gebruik het normale prijsveld voor de nieuwe prijs.',
+                    de: 'Bitte tragen Sie hier den alten (ursprünglichen) Preis ein und verwenden Sie das normale Preisfeld für den neuen Preis.',
+                    fr: 'Veuillez mettre ici l’ancien prix (d’origine), et utiliser le champ de prix normal pour le nouveau prix.',
+                },
+            },
+        },
+        {
             name: 'enable_stock',
             type: 'checkbox',
             label: {

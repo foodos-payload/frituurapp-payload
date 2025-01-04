@@ -1,28 +1,36 @@
-// File: /app/(app)/bestellen/components/Header.tsx
 'use client';
 
 import React, { useRef, useEffect } from 'react';
 import { FiMenu, FiSearch, FiX } from 'react-icons/fi';
+
+interface BrandingProps {
+    /** e.g. "#0f1820" */
+    headerBackgroundColor?: string;
+    /** e.g. "https://payload.s3.../DeFrietpostlogo (1).png" */
+    logoUrl?: string;
+    /** e.g. "Frituur Den Overkant" */
+    siteTitle?: string;
+}
 
 interface HeaderProps {
     searchValue: string;
     onSearchChange: (newValue: string) => void;
     onClearFilter: () => void;
     onMenuClick: () => void;
-
-    /** We'll pass the parent's state for mobile search: */
     mobileSearchOpen: boolean;
     setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
+
+    /** Optional branding (logo + background color + siteTitle, etc.) */
+    branding?: BrandingProps;
 }
 
 /**
  * Header with:
- * - Left: Brand / Logo
+ * - Left: Brand / Logo (from branding.logoUrl / branding.siteTitle), always visible
  * - Middle (desktop only): Search bar + Clear
  * - Right: Mobile search icon + Menu icon
- *
- * On mobile, toggles a small search bar when the search icon is tapped.
- * If toggled open => automatically focus the mobile search input.
+ * - If `headerBackgroundColor` != "#ffffff", all header text/icons become white.
+ * - The search bar always remains white with dark text, to keep it readable.
  */
 export default function Header({
     searchValue,
@@ -31,26 +39,20 @@ export default function Header({
     onMenuClick,
     mobileSearchOpen,
     setMobileSearchOpen,
+    branding,
 }: HeaderProps) {
-    // 1) Track ref to the mobile search input so we can auto-focus it.
+    // 1) Mobile search auto-focus
     const mobileInputRef = useRef<HTMLInputElement>(null);
 
-    // 2) Whenever mobileSearchOpen goes TRUE, focus the input
     useEffect(() => {
         if (mobileSearchOpen) {
-            // Slight delay to ensure DOM is rendered
             setTimeout(() => {
                 mobileInputRef.current?.focus();
             }, 50);
         }
     }, [mobileSearchOpen]);
 
-    /** Called when user types in desktop or mobile search input. */
-    function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
-        onSearchChange(e.target.value);
-    }
-
-    /** Toggle the mobile search bar. If closing => optionally clear. */
+    /** Toggle the mobile search bar */
     function toggleMobileSearch() {
         if (mobileSearchOpen) {
             onClearFilter();
@@ -58,10 +60,50 @@ export default function Header({
         setMobileSearchOpen(!mobileSearchOpen);
     }
 
+    /** Handle input changes */
+    function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+        onSearchChange(e.target.value);
+    }
+
+    // A) Decide on background color & "isDark" mode for header icons/text
+    const bgColor = branding?.headerBackgroundColor?.trim() || '#ffffff';
+    const isCustomBG =
+        bgColor.toLowerCase() !== '#ffffff' && bgColor.toLowerCase() !== '#fff';
+
+    // B) If we have a logo => encode spaces
+    let encodedLogoUrl: string | undefined;
+    if (branding?.logoUrl) {
+        encodedLogoUrl = encodeURI(branding.logoUrl);
+        console.log('[Header] Using logo URL:', encodedLogoUrl);
+    }
+
+    // C) Site title (fallback if none)
+    const displayedSiteTitle = branding?.siteTitle || 'YourSiteTitle';
+
+    // D) Classes that switch header text/icons to white if `isCustomBG`, but the
+    //    *search bar* remains white with dark text so it’s readable on dark BG.
+    const containerClasses = `
+    sticky top-0 z-40 shadow-sm
+    ${isCustomBG ? 'text-white' : 'text-gray-700'}
+  `;
+
+    const iconBtnClasses = `
+    p-2
+    ${isCustomBG ? 'text-white hover:text-white/80' : 'text-gray-700 hover:text-black'}
+  `;
+
+    const mobileIconBtnClasses = `
+    md:hidden
+    ${iconBtnClasses}
+  `;
+
     return (
         <>
             {/* Outer header container */}
-            <header className="sticky top-0 z-40 bg-white shadow-sm">
+            <header
+                className={containerClasses}
+                style={{ backgroundColor: bgColor }}
+            >
                 <div
                     className="
             w-full
@@ -77,19 +119,28 @@ export default function Header({
             containercustommaxwidth
           "
                 >
-                    {/* LEFT: Brand / Logo */}
+                    {/* LEFT: Brand / Logo + Title (always visible) */}
                     <div className="flex items-center space-x-2">
-                        {/* Example: brand logo replaced with text */}
-                        <div className="text-gray-700 font-bold text-sm md:text-lg">
-                            [Your Logo]
-                        </div>
-                        <span className="hidden md:inline text-gray-500 text-base font-secondary">
-                            {/* Additional site title if needed */}
-                            YourSiteTitle
+                        {encodedLogoUrl ? (
+                            <img
+                                src={encodedLogoUrl}
+                                alt="Site Logo"
+                                className="h-8 object-contain"
+                            />
+                        ) : (
+                            // Fallback text if no branding.logoUrl
+                            <div className="font-bold text-sm md:text-lg">
+                                [Your Logo]
+                            </div>
+                        )}
+
+                        {/* Always show site title to the right */}
+                        <span className="text-base font-semibold">
+                            {displayedSiteTitle}
                         </span>
                     </div>
 
-                    {/* MIDDLE (Desktop only): Search bar container */}
+                    {/* MIDDLE (Desktop) => Search bar (always white w/ dark text) */}
                     <div className="hidden md:flex items-center ml-auto mr-4 rounded-lg">
                         <div
                             style={{ borderRadius: '4px' }}
@@ -99,18 +150,16 @@ export default function Header({
                 items-center 
                 rounded-lg
                 shadow-inner     
-                bg-gray-50       
+                bg-white
                 border 
                 border-gray-300
               "
                         >
-                            {/* Icon absolutely positioned */}
                             <FiSearch
-                                className="absolute left-2 text-gray-400 rounded-lg"
+                                className="absolute left-2 text-gray-400"
                                 size={18}
                             />
-
-                            {/* Search input (DESKTOP) */}
+                            {/* Search input (DESKTOP) => always dark text */}
                             <input
                                 type="text"
                                 placeholder="Search products..."
@@ -125,7 +174,6 @@ export default function Header({
                   bg-transparent
                   rounded-lg
                   focus:outline-none
-                  focus:border-red-500
                 "
                             />
 
@@ -136,36 +184,31 @@ export default function Header({
                                     className="
                     absolute
                     right-2
-                    text-sm
-                    px-2
+                    text-md
+                    px-3
                     py-1
+                    font-bold
                     bg-red-500
                     text-white
                     rounded
                     hover:bg-red-600
                   "
                                 >
-                                    Clear
+                                    X
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    {/* RIGHT: Mobile search icon + Menu hamburger */}
+                    {/* RIGHT: Mobile icons */}
                     <div className="flex items-center gap-2">
-                        {/* MOBILE search icon (hidden on md+) */}
-                        <button
-                            className="md:hidden p-2 text-gray-700 hover:text-black"
-                            onClick={toggleMobileSearch}
-                        >
+                        {/* MOBILE Search Icon */}
+                        <button className={mobileIconBtnClasses} onClick={toggleMobileSearch}>
                             {mobileSearchOpen ? <FiX size={20} /> : <FiSearch size={20} />}
                         </button>
 
                         {/* Menu Icon (Hamburger) */}
-                        <button
-                            onClick={onMenuClick}
-                            className="p-2 text-gray-700 hover:text-black"
-                        >
+                        <button className={iconBtnClasses} onClick={onMenuClick}>
                             <FiMenu size={24} />
                         </button>
                     </div>
@@ -183,14 +226,13 @@ export default function Header({
               items-center
               rounded-lg
               shadow-inner
-              bg-gray-50
+              bg-white
               border
               border-gray-300
             "
                     >
-                        <FiSearch className="absolute left-2 text-gray-400 rounded-lg" size={18} />
-
-                        {/* The mobile search input (with ref) */}
+                        <FiSearch className="absolute left-2 text-gray-400" size={18} />
+                        {/* The mobile search input (with ref) => also dark text */}
                         <input
                             ref={mobileInputRef}
                             type="text"
@@ -208,7 +250,6 @@ export default function Header({
                 bg-transparent
                 rounded-lg
                 focus:outline-none
-                focus:border-red-500
               "
                         />
 

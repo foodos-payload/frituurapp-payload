@@ -1,14 +1,15 @@
+// File: /app/(...)/bestellen/collections/ShopSettings/ShopBranding/index.ts
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
-import { baseListFilter } from '../FulfillmentMethods/access/baseListFilter'; // or any baseListFilter
-import { canMutateBranding } from './access/byTenant'; // you can create a small Access function or reuse
-import { readAccess } from '../FulfillmentMethods/access/readAccess'; // or your own read access
+import { baseListFilter } from '../FulfillmentMethods/access/baseListFilter';
+import { canMutateBranding } from './access/byTenant';
+import { readAccess } from '../FulfillmentMethods/access/readAccess';
 
 export const ShopBranding: CollectionConfig = {
     slug: 'shop-branding',
     access: {
-        create: canMutateBranding,  // or any custom Access function
+        create: canMutateBranding,
         read: readAccess,
         update: canMutateBranding,
         delete: canMutateBranding,
@@ -32,8 +33,11 @@ export const ShopBranding: CollectionConfig = {
         },
     },
     fields: [
-        tenantField,         // ensure branding is scoped by tenant
-        shopsField,          // link branding doc(s) to one or more shops
+        // 1) Tenant + Shops link
+        tenantField,
+        shopsField,
+
+        // 2) Basic text field
         {
             name: 'siteTitle',
             type: 'text',
@@ -53,11 +57,13 @@ export const ShopBranding: CollectionConfig = {
                 },
             },
         },
+
+        // 3) Header image
         {
             name: 'siteHeaderImg',
-            type: 'upload',   // or 'relationship' if you prefer
-            relationTo: 'media',    // must match your Media collection slug
-            required: false,        // make optional
+            type: 'upload',
+            relationTo: 'media',
+            required: false,
             label: {
                 en: 'Header Image',
                 nl: 'Headerafbeelding',
@@ -73,6 +79,30 @@ export const ShopBranding: CollectionConfig = {
                 },
             },
         },
+
+        // 4) Site Logo
+        {
+            name: 'siteLogo',
+            type: 'upload',
+            relationTo: 'media',
+            required: false,
+            label: {
+                en: 'Site Logo',
+                nl: 'Site Logo',
+                de: 'Site Logo',
+                fr: 'Logo du Site',
+            },
+            admin: {
+                description: {
+                    en: 'Logo displayed in header or top corner (optional).',
+                    nl: 'Logo weergegeven in de header of hoek (optioneel).',
+                    de: 'Logo in der Kopfzeile oder Ecke (optional).',
+                    fr: 'Logo affiché dans l’en-tête ou dans un coin (facultatif).',
+                },
+            },
+        },
+
+        // 5) Advertisement image
         {
             name: 'adImage',
             type: 'upload',
@@ -80,17 +110,92 @@ export const ShopBranding: CollectionConfig = {
             required: false,
             label: {
                 en: 'Advertisement Image',
-                nl: 'Advertisement Image',
-                de: 'Advertisement Image',
-                fr: 'Advertisement Image',
+                nl: 'Advertentieafbeelding',
+                de: 'Werbebild',
+                fr: 'Image publicitaire',
             },
             admin: {
                 description: {
-                    en: 'Advertisement Image for the order status page.',
-                    nl: 'Advertisement Image for the order status page.',
-                    de: 'Advertisement Image for the order status page.',
-                    fr: 'Advertisement Image for the order status page.',
+                    en: 'Advertisement image for the order status page.',
+                    nl: 'Advertentieafbeelding voor de pagina met bestelstatus.',
+                    de: 'Werbebild für die Bestellstatus-Seite.',
+                    fr: 'Image publicitaire pour la page de statut de commande.',
                 },
+            },
+        },
+
+        // 6) Plain text color fields with a HEX validation
+        //    They only allow values like "#abc", "#abcd", "#AABBCC", or "AABBCC".
+
+        {
+            name: 'headerBackgroundColor',
+            type: 'text',
+            label: {
+                en: 'Header Background Color',
+                nl: 'Achtergrondkleur koptekst',
+                de: 'Hintergrundfarbe Kopfzeile',
+                fr: 'Couleur d’arrière-plan de l’en-tête',
+            },
+            admin: {
+                description: {
+                    en: 'Background color for the site header (if no image).',
+                    nl: 'Achtergrondkleur voor de header (als er geen afbeelding is).',
+                    de: 'Hintergrundfarbe für die Kopfzeile (falls kein Bild).',
+                    fr: 'Couleur d’arrière-plan pour l’en-tête (si aucune image).',
+                },
+            },
+            validate: (val) => {
+                // Empty is OK if not required
+                if (!val) return true;
+                // Otherwise, must match 3 or 6-digit hex, optional leading "#"
+                const pattern = /^#?([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/;
+                return pattern.test(val.trim()) || 'Must be a valid hex color (e.g. "#FFF" or "#FFEE11")';
+            },
+        },
+        {
+            name: 'categoryCardBgColor',
+            type: 'text',
+            label: {
+                en: 'Category Card Background',
+                nl: 'Achtergrondcategorielkaart',
+                de: 'Kategorie-Kartenhintergrund',
+                fr: 'Arrière-plan de la carte catégorie',
+            },
+            admin: {
+                description: {
+                    en: 'Background color for category cards in kiosk.',
+                    nl: 'Achtergrondkleur voor categoricards in de kiosk.',
+                    de: 'Hintergrundfarbe für Kategoriekarten im Kiosk.',
+                    fr: 'Couleur d’arrière-plan pour les cartes de catégories du kiosque.',
+                },
+            },
+            validate: (val) => {
+                if (!val) return true;
+                const pattern = /^#?([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/;
+                return pattern.test(val.trim()) || 'Must be a valid hex color.';
+            },
+        },
+        {
+            name: 'primaryColorCTA',
+            type: 'text',
+            label: {
+                en: 'Primary CTA Color',
+                nl: 'Primaire CTA-kleur',
+                de: 'Primäre CTA-Farbe',
+                fr: 'Couleur CTA Principale',
+            },
+            admin: {
+                description: {
+                    en: 'Used for “Add to Cart” / “Checkout” buttons, etc.',
+                    nl: 'Gebruikt voor “Toevoegen aan winkelwagen” / “Afrekenen” knoppen, enz.',
+                    de: 'Verwendet für “In den Warenkorb” / “Zur Kasse” Buttons usw.',
+                    fr: 'Utilisé pour les boutons “Ajouter au panier” / “Payer” etc.',
+                },
+            },
+            validate: (val) => {
+                if (!val) return true;
+                const pattern = /^#?([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/;
+                return pattern.test(val.trim()) || 'Must be a valid hex color.';
             },
         },
     ],
