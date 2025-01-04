@@ -393,6 +393,10 @@ export interface ShopBranding {
    * Large background image for the kiosk header.
    */
   siteHeaderImg?: (string | null) | Media;
+  /**
+   * Advertisement Image for the order status page.
+   */
+  adImage?: (string | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -1538,6 +1542,7 @@ export interface ShopBrandingSelect<T extends boolean = true> {
   shops?: T;
   siteTitle?: T;
   siteHeaderImg?: T;
+  adImage?: T;
   updatedAt?: T;
   createdAt?: T;
 }

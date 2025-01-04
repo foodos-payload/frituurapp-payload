@@ -73,5 +73,25 @@ export const ShopBranding: CollectionConfig = {
                 },
             },
         },
+        {
+            name: 'adImage',
+            type: 'upload',
+            relationTo: 'media',
+            required: false,
+            label: {
+                en: 'Advertisement Image',
+                nl: 'Advertisement Image',
+                de: 'Advertisement Image',
+                fr: 'Advertisement Image',
+            },
+            admin: {
+                description: {
+                    en: 'Advertisement Image for the order status page.',
+                    nl: 'Advertisement Image for the order status page.',
+                    de: 'Advertisement Image for the order status page.',
+                    fr: 'Advertisement Image for the order status page.',
+                },
+            },
+        },
     ],
 };
