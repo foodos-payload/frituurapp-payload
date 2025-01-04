@@ -117,7 +117,7 @@ export default function ProductCard({
                         className="w-full h-full object-cover mix-blend-multiply"
                     />
                 ) : (
-                    <div className="text-gray-300 text-md p-4">No image</div>
+                    <div className="text-gray-300 text-md p-4"></div>
                 )}
             </div>
 
