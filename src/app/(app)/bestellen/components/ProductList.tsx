@@ -93,37 +93,38 @@ export default function ProductList({
     // ===== Set up IntersectionObserver to highlight active category =====
     useEffect(() => {
         // 1) Grab all category <section id="cat-slug"> elements
-        const sections = unfilteredCategories
+        //    but use the *filtered* list (the ones actually being rendered).
+        const sections = filteredCategories
             .map((cat) => document.getElementById(`cat-${cat.slug}`))
-            .filter(Boolean) as HTMLElement[]
+            .filter(Boolean) as HTMLElement[];
 
         // 2) Create observer
         const obs = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        const slug = entry.target.id.replace('cat-', '')
-                        setActiveCategory(slug)
+                        const slug = entry.target.id.replace('cat-', '');
+                        setActiveCategory(slug);
                     }
-                })
+                });
             },
             {
                 root: null,
                 rootMargin: '-30% 0px -70% 0px',
                 threshold: 0.0,
             }
-        )
-        observerRef.current = obs
+        );
 
         // 3) Observe all sections
-        sections.forEach((sec) => obs.observe(sec))
+        sections.forEach((sec) => obs.observe(sec));
 
+        // Cleanup
         return () => {
-            // Cleanup
-            sections.forEach((sec) => obs.unobserve(sec))
-            obs.disconnect()
-        }
-    }, [unfilteredCategories])
+            sections.forEach((sec) => obs.unobserve(sec));
+            obs.disconnect();
+        };
+        // IMPORTANT: Depend on "filteredCategories" so it re-runs whenever the user changes the search
+    }, [filteredCategories]);
 
     // Helper to reattach observer after a category jump
     function reconnectObserver() {
