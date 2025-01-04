@@ -304,7 +304,7 @@ export default function ProductList({
             </div>
 
             {/* MAIN COLUMN */}
-            <div className="flex-grow w-full">
+            <div className="flex-grow w-full pb-20">
                 {/* Horizontal categories on small screens */}
                 <div
                     className="block lg:hidden w-full bg-white overflow-auto"

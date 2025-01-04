@@ -975,6 +975,10 @@ export interface Category {
    */
   name_fr?: string | null;
   /**
+   * Determines the front-end order of categories (lowest first).
+   */
+  menuOrder?: number | null;
+  /**
    * Reference an image from the Media library.
    */
   image?: (string | null) | Media;
@@ -1983,6 +1987,7 @@ export interface CategoriesSelect<T extends boolean = true> {
   name_en?: T;
   name_de?: T;
   name_fr?: T;
+  menuOrder?: T;
   image?: T;
   modtime?: T;
   status?: T;

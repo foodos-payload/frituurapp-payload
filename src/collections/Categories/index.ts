@@ -163,7 +163,26 @@ export const Categories: CollectionConfig = {
                 },
             ],
         },
-
+        {
+            name: 'menuOrder',
+            type: 'number',
+            required: false,
+            label: {
+                en: 'Menu Order',
+                nl: 'Menuvolgorde',
+                de: 'Menüreihenfolge',
+                fr: 'Ordre du Menu',
+            },
+            defaultValue: 0,
+            admin: {
+                description: {
+                    en: 'Determines the front-end order of categories (lowest first).',
+                    nl: 'Bepaalt de volgorde van categorieën in de frontend (laagste eerst).',
+                    de: 'Bestimmt die Reihenfolge der Kategorien im Frontend (niedrigste zuerst).',
+                    fr: 'Détermine l’ordre d’affichage des catégories en front-end (du plus bas au plus élevé).',
+                },
+            },
+        },
         {
             name: 'image',
             type: 'relationship',

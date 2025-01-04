@@ -88,6 +88,7 @@ interface CategoryJSON {
     name_fr: string | null
     categoryPopups: PopupItemJSON[]
     products: ProductJSON[]
+    menuOrder: number
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -345,6 +346,7 @@ export async function GET(request: NextRequest) {
                 name_fr: cat.name_fr || null,
                 categoryPopups,
                 products,
+                menuOrder: cat.menuOrder || 0,
             }
 
             return catJSON

@@ -18,9 +18,6 @@ export default async function BestellenPage(context: any) {
     const apiProductsUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${hostSlug}&lang=${userLangQuery}`;
     const apiBrandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/branding?host=${hostSlug}`;
 
-    console.log('[BestellenPage] Fetching products from:', apiProductsUrl);
-    console.log('[BestellenPage] Fetching branding from:', apiBrandingUrl);
-
     // 3) Fetch both in parallel
     const [productsRes, brandingRes] = await Promise.all([
         fetch(apiProductsUrl, { cache: 'no-store' }),
@@ -45,8 +42,15 @@ export default async function BestellenPage(context: any) {
     const userLang = productsData?.userLang || 'nl';
     const rawBranding = brandingData?.branding || {};
 
-    console.log('[BestellenPage] productsData:', productsData);
-    console.log('[BestellenPage] rawBranding:', rawBranding);
+    // 5a) Sort by menuOrder ascending, then by name_nl alphabetically if same order
+    categorizedProducts.sort((a: any, b: any) => {
+        // Compare menuOrder first
+        if (a.menuOrder !== b.menuOrder) {
+            return a.menuOrder - b.menuOrder;
+        }
+        // If same menuOrder => compare by name_nl
+        return a.name_nl.localeCompare(b.name_nl);
+    });
 
     // 6) Convert payload branding to the shape your BestellenLayout wants
     // For example, if rawBranding.siteLogo?.s3_url is your main logo:
@@ -59,8 +63,6 @@ export default async function BestellenPage(context: any) {
         siteTitle: rawBranding.siteTitle ?? '',
         // Add more fields if needed
     };
-
-    console.log('[BestellenPage] final branding passed to <BestellenLayout>:', branding);
 
     // 7) Render the layout
     return (
