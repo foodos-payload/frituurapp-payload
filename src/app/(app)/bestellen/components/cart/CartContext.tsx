@@ -1,5 +1,5 @@
 // File: /app/(app)/bestellen/components/cart/CartContext.tsx
-'use client'
+'use client';
 
 import React, {
     createContext,
@@ -41,12 +41,12 @@ export type SubproductSelection = {
 };
 
 /**
- * The main item in your cart. Note we've renamed `basePrice` -> `price`.
+ * The main item in your cart.
  */
 export type CartItem = {
     productId: string;     // The main product's ID
     productName: string;   // e.g. product.name_nl
-    price: number;         // The main product's base price (renamed from basePrice)
+    price: number;         // The main product's base price
     quantity: number;      // How many
     note?: string;         // Optional user note
     image?: {
@@ -54,12 +54,11 @@ export type CartItem = {
         alt?: string;
     } | null;
 
-    // Subproduct choices
+    // Subproduct choices:
     subproducts?: SubproductSelection[];
 
-    // If you have tax or other fields, you can add them:
-    taxRate?: number;      // e.g. 6, 12, 21
-    // ...
+    hasPopups?: boolean;   // e.g. to show "Bewerken" button
+    taxRate?: number;      // e.g. 6, 12, 21, etc.
 };
 
 /**
@@ -68,21 +67,28 @@ export type CartItem = {
 type CartContextValue = {
     items: CartItem[];
 
+    /** Add a new line item or combine with existing if the "signature" matches. */
     addItem: (newItem: CartItem) => void;
-    updateItemQuantity: (productId: string, newQty: number) => void;
-    removeItem: (productId: string) => void;
+    /** Update partial fields on an existing item (subproducts, note, price, etc.). */
+    updateItem: (lineSignature: string, updates: Partial<CartItem>) => void;
+    /** Change quantity of an item. If quantity goes to 0 => remove. */
+    updateItemQuantity: (lineSignature: string, newQty: number) => void;
+    /** Remove an item entirely by its "signature." */
+    removeItem: (lineSignature: string) => void;
+    /** Clear entire cart. */
     clearCart: () => void;
 
-    // Optionally, get a total item count or total price
     getItemCount: () => number;
     getCartTotal: () => number;
 };
 
-// 1) Create the React context
+/**
+ * 1) React context
+ */
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 /**
- * 2) Custom hook to use the cart in components
+ * 2) Hook to consume the cart
  */
 export function useCart() {
     const context = useContext(CartContext);
@@ -93,13 +99,27 @@ export function useCart() {
 }
 
 /**
- * 3) The CartProvider component: manages items & logic
+ * 3) Utility: Create a unique "signature" string that
+ *    differentiates line items by productId, subproducts, note, etc.
+ */
+export function getLineItemSignature(item: CartItem): string {
+    // We'll gather an array of subproduct IDs (sorted to ensure consistent order):
+    const subIds = item.subproducts?.map((sp) => sp.id).sort() || [];
+    const notePart = item.note || ''; // or empty if none
+
+    // Combine them into, e.g.: "prodId|[sub1,sub2]|note=someNote"
+    // or you could JSON.stringify. Just ensure stable serialization.
+    return `${item.productId}|[${subIds.join(',')}]|note=${notePart}`;
+}
+
+/**
+ * 4) CartProvider: manages items & logic
  */
 export function CartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
 
     /**
-     * On first render, load from localStorage (if present).
+     * On mount, load from localStorage if available.
      */
     useEffect(() => {
         const stored = localStorage.getItem('cartItems');
@@ -113,78 +133,120 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, []);
 
     /**
-     * On every change, save to localStorage.
+     * On every change, store in localStorage.
      */
     useEffect(() => {
         localStorage.setItem('cartItems', JSON.stringify(items));
     }, [items]);
 
     /**
-     * addItem:
-     * If you want to differentiate items by subproducts, you'd need a more
-     * complex "isSameLineItem" function. For simplicity, we match on productId only.
+     * 4A) addItem: If a line item with the *same signature* exists => increment quantity,
+     * otherwise push as a separate line.
      */
     function addItem(newItem: CartItem) {
-        setItems((prev) => {
-            const existing = prev.find((i) => i.productId === newItem.productId);
+        const newSig = getLineItemSignature(newItem);
 
-            if (existing) {
-                // Combine or increment quantity
-                return prev.map((i) =>
-                    i.productId === newItem.productId
-                        ? {
+        setItems((prev) => {
+            // Check if there's an existing line with same signature:
+            const existingIndex = prev.findIndex(
+                (i) => getLineItemSignature(i) === newSig
+            );
+
+            if (existingIndex >= 0) {
+                // Found => combine quantity:
+                return prev.map((i, idx) => {
+                    if (idx === existingIndex) {
+                        return {
                             ...i,
                             quantity: i.quantity + newItem.quantity,
-                            // If you want to merge subproduct arrays differently, you'd do it here.
-                        }
-                        : i,
-                );
+                        };
+                    }
+                    return i;
+                });
             } else {
-                // Otherwise push new
+                // No match => add as new line
                 return [...prev, newItem];
             }
         });
     }
 
     /**
-     * updateItemQuantity:
-     * If newQty is zero, remove item from the cart entirely.
+     * 4B) updateItem: partial updates to an existing line item.
+     *     The user must pass the line "signature" from getLineItemSignature(...) 
+     *     so we know which line is being updated.
      */
-    function updateItemQuantity(productId: string, newQty: number) {
+    function updateItem(lineSignature: string, updates: Partial<CartItem>) {
+        setItems((prev) =>
+            prev.map((item) => {
+                const itemSig = getLineItemSignature(item);
+                if (itemSig === lineSignature) {
+                    // Merge partial updates. Possibly re-signature after subproduct changes:
+                    const updated = { ...item, ...updates };
+
+                    // If subproducts or note changed, we might need to re-check if a line with the new signature already exists:
+                    const newSig = getLineItemSignature(updated);
+
+                    if (newSig === itemSig) {
+                        // The signature didn't effectively change => just update in place.
+                        return updated;
+                    } else {
+                        // The signature changed => see if there's already a line with newSig, so we can combine them or keep separate.
+                        // Here we do a two-step approach:
+                        //  (1) We'll return updated (with the newSig) in place for now.
+                        //  (2) Then below we could do a second pass to combine if needed.
+                        return updated;
+                    }
+                }
+                return item;
+            })
+        );
+
+        // If you want to handle the scenario where an updated signature
+        // now matches an existing item => you'd do a second pass or approach here.
+    }
+
+    /**
+     * 4C) updateItemQuantity: If quantity=0 => remove line item.
+     */
+    function updateItemQuantity(lineSignature: string, newQty: number) {
         setItems((prev) =>
             prev
-                .map((item) =>
-                    item.productId === productId
-                        ? { ...item, quantity: newQty }
-                        : item,
-                )
-                .filter((item) => item.quantity > 0),
+                .map((item) => {
+                    const itemSig = getLineItemSignature(item);
+                    if (itemSig === lineSignature) {
+                        return { ...item, quantity: newQty };
+                    }
+                    return item;
+                })
+                .filter((item) => item.quantity > 0)
         );
     }
 
     /**
-     * removeItem: just filter out that productId.
+     * 4D) removeItem: just filter out that signature line.
      */
-    function removeItem(productId: string) {
-        setItems((prev) => prev.filter((item) => item.productId !== productId));
+    function removeItem(lineSignature: string) {
+        setItems((prev) =>
+            prev.filter((item) => getLineItemSignature(item) !== lineSignature)
+        );
     }
 
     /**
-     * clearCart: empty the array.
+     * 4E) clearCart: remove all.
      */
     function clearCart() {
         setItems([]);
     }
 
     /**
-     * getItemCount: sum up all `quantity`.
+     * 4F) getItemCount: sum quantity across all lines.
      */
     function getItemCount() {
         return items.reduce((sum, item) => sum + item.quantity, 0);
     }
 
     /**
-     * getCartTotal: sum up (product price * quantity) + subproduct extras.
+     * 4G) getCartTotal: sum up base price + subproduct extras for each line, times quantity.
      */
     function getCartTotal() {
         let total = 0;
@@ -198,25 +260,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
             if (cartItem.subproducts && cartItem.subproducts.length > 0) {
                 const sumSubs = cartItem.subproducts.reduce((acc, sp) => {
                     if (sp.linkedProduct) {
-                        // If there's a linked product, use linkedProduct.price if not null
                         return acc + (sp.linkedProduct.price ?? 0);
-                    } else {
-                        return acc + sp.price;
                     }
+                    return acc + sp.price;
                 }, 0);
+
                 subCost = sumSubs * cartItem.quantity;
             }
 
             total += baseCost + subCost;
         }
-
         return total;
     }
 
-    // 4) Provide everything to the context
+    /**
+     * Provide context value
+     */
     const value: CartContextValue = {
         items,
         addItem,
+        updateItem,
         updateItemQuantity,
         removeItem,
         clearCart,

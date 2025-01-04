@@ -1,44 +1,61 @@
-'use client'
+'use client';
 
-import React, { useRef, MouseEvent } from 'react'
-import { CSSTransition } from 'react-transition-group'
-import { useCart } from './CartContext'
-import { FiX } from 'react-icons/fi'
+import React, { useRef, MouseEvent } from 'react';
+import { CSSTransition } from 'react-transition-group';
+import { useCart, CartItem, getLineItemSignature } from './CartContext';
+import { FiX, FiTrash2 } from 'react-icons/fi';
 
 type Props = {
-    isOpen: boolean
-    onClose: () => void
-}
+    isOpen: boolean;
+    onClose: () => void;
+    /** Called when user wants to "edit" a popup-based item. */
+    onEditItem?: (item: CartItem) => void;
+};
 
-export default function CartDrawer({ isOpen, onClose }: Props) {
+export default function CartDrawer({ isOpen, onClose, onEditItem }: Props) {
     const {
         items,
         updateItemQuantity,
         removeItem,
         clearCart,
         getCartTotal,
-    } = useCart()
+    } = useCart();
 
-    // We want a fade for the overlay and a slide for the drawer
-    // So we keep separate refs for each part
-    const overlayRef = useRef<HTMLDivElement>(null)
-    const drawerRef = useRef<HTMLDivElement>(null)
+    const overlayRef = useRef<HTMLDivElement>(null);
+    const drawerRef = useRef<HTMLDivElement>(null);
 
+    /**
+     * Close drawer if user clicks outside the drawer
+     */
     function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
         if (e.target === e.currentTarget) {
-            onClose()
+            onClose();
         }
     }
 
-    function handleQuantityChange(productId: string, newQty: number) {
-        updateItemQuantity(productId, newQty)
+    /**
+     * Update the cart item’s quantity by line signature
+     */
+    function handleQuantityChange(item: CartItem, newQty: number) {
+        const lineSig = getLineItemSignature(item);
+        updateItemQuantity(lineSig, newQty);
     }
 
-    const cartTotal = getCartTotal()
+    /**
+     * Remove a cart item by line signature
+     */
+    function handleRemoveItem(item: CartItem) {
+        const lineSig = getLineItemSignature(item);
+        removeItem(lineSig);
+    }
+
+    const cartTotal = getCartTotal();
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    const hasItems = items.length > 0;
 
     return (
         <>
-            {/* 1) Fade in/out the dark overlay behind the cart */}
+            {/* Fade overlay */}
             <CSSTransition
                 in={isOpen}
                 timeout={300}
@@ -53,7 +70,7 @@ export default function CartDrawer({ isOpen, onClose }: Props) {
                 />
             </CSSTransition>
 
-            {/* 2) Slide in/out the cart panel (from right) */}
+            {/* Slide drawer */}
             <CSSTransition
                 in={isOpen}
                 timeout={300}
@@ -64,125 +81,200 @@ export default function CartDrawer({ isOpen, onClose }: Props) {
                 <div
                     ref={drawerRef}
                     className="
-            fixed 
-            top-0
-            right-0
-            bottom-0
-            z-[9999]
-            w-80
-            bg-white
-            p-4
-            flex
-            flex-col
-            shadow-lg
+            fixed top-0 bottom-0 right-0 z-[9999]
+            flex flex-col w-full max-w-lg md:w-11/12
+            bg-white shadow-lg overflow-hidden
           "
                 >
-                    {/* Close button */}
-                    <button
-                        onClick={onClose}
-                        className="ml-auto mb-2 text-gray-700 hover:text-black"
-                    >
-                        <FiX size={20} />
-                    </button>
+                    {/* Top Bar */}
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                        {/* Close */}
+                        <button
+                            onClick={onClose}
+                            title="Close Drawer"
+                            className="bg-red-500 text-white rounded-xl shadow-xl p-3"
+                            style={{ minWidth: '44px', minHeight: '44px' }}
+                        >
+                            <FiX className="w-6 h-6" />
+                        </button>
 
-                    <h2 className="text-lg font-bold mb-2">Your Cart</h2>
+                        {/* Title */}
+                        <h2 className="text-lg font-semibold">
+                            Winkelwagen <span className="text-sm">({itemCount})</span>
+                        </h2>
 
-                    {items.length === 0 && (
-                        <div className="flex-1 flex items-center justify-center text-gray-500">
-                            Cart is empty.
-                        </div>
-                    )}
-
-                    {/* Cart items */}
-                    <div className="flex-1 overflow-auto">
-                        {items.map((item) => (
-                            <div
-                                key={item.productId}
-                                className="border-b border-gray-200 py-2 flex items-center gap-2"
+                        {/* Clear entire cart */}
+                        {hasItems ? (
+                            <button
+                                onClick={clearCart}
+                                title="Clear entire cart"
+                                className="bg-white p-3 rounded-xl shadow hover:bg-gray-100 transition-colors"
+                                style={{ minWidth: '44px', minHeight: '44px' }}
                             >
-                                <div className="flex-1">
-                                    <div className="font-semibold">
-                                        {item.productName}
-                                        <span className="text-sm text-gray-600">
-                                            <br />
-                                            ( €{item.price.toFixed(2)} )
-                                        </span>
-                                    </div>
-                                    {item.subproducts && item.subproducts.length > 0 && (
-                                        <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
-                                            {item.subproducts.map((sp) => (
-                                                <li key={sp.id}>
-                                                    {sp.name_nl} (+€{sp.price.toFixed(2)})
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                    {item.note && (
-                                        <div className="text-sm italic mt-1">
-                                            Note: {item.note}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Quantity controls */}
-                                <div>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            className="px-2 py-1 border"
-                                            onClick={() =>
-                                                handleQuantityChange(
-                                                    item.productId,
-                                                    item.quantity - 1
-                                                )
-                                            }
-                                        >
-                                            -
-                                        </button>
-                                        <span className="w-6 text-center">{item.quantity}</span>
-                                        <button
-                                            className="px-2 py-1 border"
-                                            onClick={() =>
-                                                handleQuantityChange(
-                                                    item.productId,
-                                                    item.quantity + 1
-                                                )
-                                            }
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                    <button
-                                        className="text-xs text-red-500 mt-1"
-                                        onClick={() => removeItem(item.productId)}
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                                <FiTrash2 className="w-6 h-6 text-gray-700 hover:text-red-600" />
+                            </button>
+                        ) : (
+                            <div style={{ width: '44px', height: '44px' }} />
+                        )}
                     </div>
 
-                    {/* If not empty, show buttons */}
-                    {items.length > 0 && (
-                        <div className="mt-2">
+                    {/* Main content */}
+                    <div className="flex-1 overflow-y-auto">
+                        {!hasItems ? (
+                            <div className="text-gray-500 flex items-center justify-center h-full">
+                                Cart is empty.
+                            </div>
+                        ) : (
+                            <ul className="flex flex-col gap-4 p-4 md:p-6">
+                                {items.map((item) => {
+                                    const lineSig = getLineItemSignature(item);
+                                    return (
+                                        <li key={lineSig}>
+                                            <div
+                                                className="
+                          rounded-lg flex w-full
+                          overflow-hidden relative items-center
+                          bg-white shadow-sm
+                        "
+                                                style={{ minHeight: '80px' }}
+                                            >
+                                                {/* Thumbnail */}
+                                                {item.image?.url ? (
+                                                    <img
+                                                        src={item.image.url}
+                                                        alt={item.image.alt ?? item.productName}
+                                                        className="w-16 h-16 rounded-md object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-16 h-16 bg-gray-100" />
+                                                )}
+
+                                                {/* Right side */}
+                                                <div className="flex-1 min-h-[60px] ml-3">
+                                                    <div className="font-semibold text-md line-clamp-2">
+                                                        {item.productName}
+                                                    </div>
+
+                                                    {/* Subproducts */}
+                                                    {item.subproducts && item.subproducts.length > 0 && (
+                                                        <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
+                                                            {item.subproducts.map((sp) => (
+                                                                <li key={sp.id}>
+                                                                    {sp.name_nl} (+€{sp.price.toFixed(2)})
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+
+                                                    {/* Price */}
+                                                    <div className="text-sm mt-1 flex items-center">
+                                                        <span className="font-semibold">
+                                                            €{item.price.toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Quantity + actions */}
+                                                <div className="inline-flex gap-1 flex-col items-end mr-2">
+                                                    <div className="flex rounded bg-white text-sm leading-none shadow-sm">
+                                                        {/* Decrement */}
+                                                        <button
+                                                            title="Decrease Quantity"
+                                                            aria-label="Decrease Quantity"
+                                                            type="button"
+                                                            className="
+                                focus:outline-none border-r w-10 h-10
+                                border rounded-l border-gray-300
+                                hover:bg-gray-50
+                              "
+                                                            onClick={() =>
+                                                                handleQuantityChange(item, item.quantity - 1)
+                                                            }
+                                                        >
+                                                            -
+                                                        </button>
+
+                                                        <div
+                                                            className="
+                                flex items-center justify-center
+                                w-8 px-2 text-center text-sm
+                                border-y border-gray-300
+                              "
+                                                        >
+                                                            {item.quantity}
+                                                        </div>
+
+                                                        {/* Increment */}
+                                                        <button
+                                                            title="Increase Quantity"
+                                                            aria-label="Increase Quantity"
+                                                            type="button"
+                                                            className="
+                                focus:outline-none border-l w-10 h-10
+                                border rounded-r hover:bg-gray-50
+                                border-gray-300 p-2
+                              "
+                                                            onClick={() =>
+                                                                handleQuantityChange(item, item.quantity + 1)
+                                                            }
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Edit / Remove row */}
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        {item.hasPopups && onEditItem && (
+                                                            <button
+                                                                className="text-xs text-blue-500 hover:underline"
+                                                                onClick={() => onEditItem(item)}
+                                                            >
+                                                                Bewerken
+                                                            </button>
+                                                        )}
+
+                                                        {/* Remove single item */}
+                                                        <button
+                                                            className="
+                                text-sm text-gray-400
+                                hover:text-red-500 cursor-pointer
+                              "
+                                                            onClick={() => handleRemoveItem(item)}
+                                                            title="Remove this item"
+                                                        >
+                                                            <FiTrash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                    </div>
+
+                    {/* Footer total + checkout */}
+                    {hasItems && (
+                        <div className="px-8 mb-4 pt-3">
                             <button
-                                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 mb-2"
-                                onClick={clearCart}
-                            >
-                                Clear Cart
-                            </button>
-                            <button
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2"
                                 onClick={() => {
-                                    // e.g. window.location.href = '/checkout'
+                                    // e.g. location.href = '/checkout'
                                 }}
+                                style={{ borderRadius: '0.5rem' }}
+                                className="
+                  bg-green-600 text-white
+                  block w-full p-3 text-lg text-center rounded-lg shadow-md
+                  font-semibold hover:bg-green-700
+                "
                             >
-                                Proceed to Checkout ( €{cartTotal.toFixed(2)} )
+                                Afrekenen
+                                <span className="mx-2">€{cartTotal.toFixed(2)}</span>
                             </button>
                         </div>
                     )}
                 </div>
             </CSSTransition>
         </>
-    )
+    );
 }
