@@ -331,49 +331,84 @@ export interface Timeslot {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
-   * The fulfillment method associated with this timeslot.
+   * Fulfillment method associated with these day/time ranges.
    */
   method_id: string | FulfillmentMethod;
   /**
-   * Select the day / time for these time ranges.
+   * Define time ranges for each day of the week.
    */
-  days?:
-    | {
-        /**
-         * Select the day for these time ranges.
-         */
-        day: '1' | '2' | '3' | '4' | '5' | '6' | '7';
-        /**
-         * Define multiple time ranges for this day.
-         */
-        time_ranges?:
-          | {
-              /**
-               * Start time for this range (e.g., 13:00).
-               */
-              start_time: string;
-              /**
-               * End time for this range (e.g., 14:00).
-               */
-              end_time: string;
-              /**
-               * Interval in minutes for this range.
-               */
-              interval_minutes: number;
-              /**
-               * Maximum orders per interval. Leave empty for unlimited.
-               */
-              max_orders?: number | null;
-              /**
-               * Enable or disable this range.
-               */
-              status?: boolean | null;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
+  week?: {
+    monday?:
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
+    tuesday?:
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
+    wednesday?:
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
+    thursday?:
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
+    friday?:
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
+    saturday?:
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
+    sunday?:
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -1544,11 +1579,10 @@ export interface TimeslotsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
   method_id?: T;
-  days?:
+  week?:
     | T
     | {
-        day?: T;
-        time_ranges?:
+        monday?:
           | T
           | {
               start_time?: T;
@@ -1558,7 +1592,66 @@ export interface TimeslotsSelect<T extends boolean = true> {
               status?: T;
               id?: T;
             };
-        id?: T;
+        tuesday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        wednesday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        thursday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        friday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        saturday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        sunday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
       };
   updatedAt?: T;
   createdAt?: T;

@@ -1,10 +1,9 @@
+// File: src/collections/Timeslots/index.ts
 import type { CollectionConfig } from 'payload';
-
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateTimeslot } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
 import { readAccess } from './access/readAccess';
 
 export const Timeslots: CollectionConfig = {
@@ -17,7 +16,7 @@ export const Timeslots: CollectionConfig = {
     },
     admin: {
         baseListFilter,
-        useAsTitle: 'method_id',
+        useAsTitle: 'method_id', // Show the method in the list title
     },
     labels: {
         plural: {
@@ -35,182 +34,327 @@ export const Timeslots: CollectionConfig = {
     },
 
     fields: [
-        tenantField, // Ensure timeslots are scoped by tenant
-        shopsField, // Link timeslots to specific shops
+        tenantField,
+        shopsField,
         {
             name: 'method_id',
             type: 'relationship',
             label: {
                 en: 'Fulfillment Method',
-                nl: 'Afhandelingsmethode',
-                de: 'Erfüllungsmethode',
-                fr: 'Méthode de Réalisation',
+                // ...
             },
             relationTo: 'fulfillment-methods',
             required: true,
             admin: {
                 description: {
-                    en: 'The fulfillment method associated with this timeslot.',
-                    nl: 'De afhandelingsmethode die aan dit tijdvak is gekoppeld.',
-                    de: 'Die Erfüllungsmethode, die mit diesem Zeitfenster verknüpft ist.',
-                    fr: 'La méthode de réalisation associée à cette plage horaire.',
+                    en: 'Fulfillment method associated with these day/time ranges.',
+                    // ...
                 },
             },
         },
+
+        // Group all weekday arrays under "week"
         {
-            name: 'days',
-            type: 'array',
+            name: 'week',
+            type: 'group',
+            label: {
+                en: 'Weekly Time Ranges',
+            },
             admin: {
                 description: {
-                    en: 'Select the day / time for these time ranges.',
-                    nl: 'Selecteer de dag en tijd voor deze tijdvakken.',
-                    de: 'Wählen Sie den Tag für diese Zeitbereiche aus.',
-                    fr: 'Sélectionnez le jour pour ces plages horaires.',
+                    en: 'Define time ranges for each day of the week.',
                 },
             },
             fields: [
                 {
-                    name: 'day',
-                    type: 'select',
-                    label: {
-                        en: 'Day',
-                        nl: 'Dag',
-                        de: 'Tag',
-                        fr: 'Jour',
-                    },
-                    admin: {
-                        description: {
-                            en: 'Select the day for these time ranges.',
-                            nl: 'Selecteer de dag voor deze tijdvakken.',
-                            de: 'Wählen Sie den Tag für diese Zeitbereiche aus.',
-                            fr: 'Sélectionnez le jour pour ces plages horaires.',
-                        },
-                    },
-                    required: true,
-                    options: [
-                        { label: { en: 'Monday', nl: 'Maandag', de: 'Montag', fr: 'Lundi' }, value: '1' },
-                        { label: { en: 'Tuesday', nl: 'Dinsdag', de: 'Dienstag', fr: 'Mardi' }, value: '2' },
-                        { label: { en: 'Wednesday', nl: 'Woensdag', de: 'Mittwoch', fr: 'Mercredi' }, value: '3' },
-                        { label: { en: 'Thursday', nl: 'Donderdag', de: 'Donnerstag', fr: 'Jeudi' }, value: '4' },
-                        { label: { en: 'Friday', nl: 'Vrijdag', de: 'Freitag', fr: 'Vendredi' }, value: '5' },
-                        { label: { en: 'Saturday', nl: 'Zaterdag', de: 'Samstag', fr: 'Samedi' }, value: '6' },
-                        { label: { en: 'Sunday', nl: 'Zondag', de: 'Sonntag', fr: 'Dimanche' }, value: '7' },
-                    ],
-
-                },
-                {
-                    name: 'time_ranges',
+                    name: 'monday',
+                    label: { en: 'Monday' },
                     type: 'array',
-                    label: {
-                        en: 'Time Ranges',
-                        nl: 'Tijdvakken',
-                        de: 'Zeitbereiche',
-                        fr: 'Plages Horaires',
-                    },
-                    admin: {
-                        description: {
-                            en: 'Define multiple time ranges for this day.',
-                            nl: 'Definieer meerdere tijdvakken voor deze dag.',
-                            de: 'Definieren Sie mehrere Zeitbereiche für diesen Tag.',
-                            fr: 'Définissez plusieurs plages horaires pour ce jour.',
-                        },
+                    /**
+                     * The key to changing "Add Monday" to "Add Timeslot" is to set
+                     * `labels.singular` (and plural) here:
+                     */
+                    labels: {
+                        singular: 'Timeslot',
+                        plural: 'Timeslots',
                     },
                     fields: [
                         {
                             name: 'start_time',
-                            type: 'text', // Use 'text' to ensure input visibility
-                            label: {
-                                en: 'Start Time',
-                                nl: 'Starttijd',
-                                de: 'Startzeit',
-                                fr: 'Heure de Début',
-                            },
+                            type: 'text',
+                            label: { en: 'Start Time' },
                             required: true,
-                            admin: {
-                                description: {
-                                    en: 'Start time for this range (e.g., 13:00).',
-                                    nl: 'Starttijd voor dit tijdvak (bijv., 13:00).',
-                                    de: 'Startzeit für diesen Bereich (z. B., 13:00).',
-                                    fr: 'Heure de début pour cette plage (p.ex., 13:00).',
-                                },
-                            },
                         },
                         {
                             name: 'end_time',
-                            type: 'text', // Use 'text' to ensure input visibility
-                            label: {
-                                en: 'End Time',
-                                nl: 'Eindtijd',
-                                de: 'Endzeit',
-                                fr: 'Heure de Fin',
-                            },
+                            type: 'text',
+                            label: { en: 'End Time' },
                             required: true,
-                            admin: {
-                                description: {
-                                    en: 'End time for this range (e.g., 14:00).',
-                                    nl: 'Eindtijd voor dit tijdvak (bijv., 14:00).',
-                                    de: 'Endzeit für diesen Bereich (z. B., 14:00).',
-                                    fr: 'Heure de fin pour cette plage (p.ex., 14:00).',
-                                },
-                            },
                         },
                         {
                             name: 'interval_minutes',
                             type: 'number',
-                            label: {
-                                en: 'Interval (Minutes)',
-                                nl: 'Interval (Minuten)',
-                                de: 'Intervall (Minuten)',
-                                fr: 'Intervalle (Minutes)',
-                            },
-                            required: true,
+                            label: { en: 'Interval (Minutes)' },
                             defaultValue: 15,
-                            admin: {
-                                description: {
-                                    en: 'Interval in minutes for this range.',
-                                    nl: 'Interval in minuten voor dit tijdvak.',
-                                    de: 'Intervall in Minuten für diesen Bereich.',
-                                    fr: 'Intervalle en minutes pour cette plage.',
-                                },
-                            },
                         },
                         {
                             name: 'max_orders',
                             type: 'number',
-                            label: {
-                                en: 'Maximum Orders',
-                                nl: 'Maximale Bestellingen',
-                                de: 'Maximale Bestellungen',
-                                fr: 'Commandes Maximales',
-                            },
-                            required: false,
-                            admin: {
-                                description: {
-                                    en: 'Maximum orders per interval. Leave empty for unlimited.',
-                                    nl: 'Maximaal aantal bestellingen per interval. Laat leeg voor onbeperkt.',
-                                    de: 'Maximale Bestellungen pro Intervall. Leer lassen für unbegrenzt.',
-                                    fr: 'Nombre maximal de commandes par intervalle. Laissez vide pour illimité.',
-                                },
-                            },
+                            label: { en: 'Maximum Orders' },
                         },
                         {
                             name: 'status',
                             type: 'checkbox',
-                            label: {
-                                en: 'Status',
-                                nl: 'Status',
-                                de: 'Status',
-                                fr: 'Statut',
-                            },
+                            label: { en: 'Enabled' },
                             defaultValue: true,
-                            admin: {
-                                description: {
-                                    en: 'Enable or disable this range.',
-                                    nl: 'Schakel dit tijdvak in of uit.',
-                                    de: 'Aktivieren oder deaktivieren Sie diesen Bereich.',
-                                    fr: 'Activez ou désactivez cette plage.',
-                                },
-                            },
+                        },
+                    ],
+                },
+
+                {
+                    name: 'tuesday',
+                    label: { en: 'Tuesday' },
+                    type: 'array',
+                    labels: {
+                        singular: 'Timeslot',
+                        plural: 'Timeslots',
+                    },
+                    fields: [
+                        {
+                            name: 'start_time',
+                            type: 'text',
+                            label: { en: 'Start Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'end_time',
+                            type: 'text',
+                            label: { en: 'End Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'interval_minutes',
+                            type: 'number',
+                            label: { en: 'Interval (Minutes)' },
+                            defaultValue: 15,
+                        },
+                        {
+                            name: 'max_orders',
+                            type: 'number',
+                            label: { en: 'Maximum Orders' },
+                        },
+                        {
+                            name: 'status',
+                            type: 'checkbox',
+                            label: { en: 'Enabled' },
+                            defaultValue: true,
+                        },
+                    ],
+                },
+
+                // Repeat the same pattern for wednesday, thursday, friday, etc.
+                {
+                    name: 'wednesday',
+                    label: { en: 'Wednesday' },
+                    type: 'array',
+                    labels: {
+                        singular: 'Timeslot',
+                        plural: 'Timeslots',
+                    },
+                    fields: [
+                        // same as above
+                        {
+                            name: 'start_time',
+                            type: 'text',
+                            label: { en: 'Start Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'end_time',
+                            type: 'text',
+                            label: { en: 'End Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'interval_minutes',
+                            type: 'number',
+                            label: { en: 'Interval (Minutes)' },
+                            defaultValue: 15,
+                        },
+                        {
+                            name: 'max_orders',
+                            type: 'number',
+                            label: { en: 'Maximum Orders' },
+                        },
+                        {
+                            name: 'status',
+                            type: 'checkbox',
+                            label: { en: 'Enabled' },
+                            defaultValue: true,
+                        },
+                    ],
+                },
+                {
+                    name: 'thursday',
+                    label: { en: 'Thursday' },
+                    type: 'array',
+                    labels: {
+                        singular: 'Timeslot',
+                        plural: 'Timeslots',
+                    },
+                    fields: [
+                        // same as above
+                        {
+                            name: 'start_time',
+                            type: 'text',
+                            label: { en: 'Start Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'end_time',
+                            type: 'text',
+                            label: { en: 'End Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'interval_minutes',
+                            type: 'number',
+                            label: { en: 'Interval (Minutes)' },
+                            defaultValue: 15,
+                        },
+                        {
+                            name: 'max_orders',
+                            type: 'number',
+                            label: { en: 'Maximum Orders' },
+                        },
+                        {
+                            name: 'status',
+                            type: 'checkbox',
+                            label: { en: 'Enabled' },
+                            defaultValue: true,
+                        },
+                    ],
+                },
+                {
+                    name: 'friday',
+                    label: { en: 'Friday' },
+                    type: 'array',
+                    labels: {
+                        singular: 'Timeslot',
+                        plural: 'Timeslots',
+                    },
+                    fields: [
+                        // same as above
+                        {
+                            name: 'start_time',
+                            type: 'text',
+                            label: { en: 'Start Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'end_time',
+                            type: 'text',
+                            label: { en: 'End Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'interval_minutes',
+                            type: 'number',
+                            label: { en: 'Interval (Minutes)' },
+                            defaultValue: 15,
+                        },
+                        {
+                            name: 'max_orders',
+                            type: 'number',
+                            label: { en: 'Maximum Orders' },
+                        },
+                        {
+                            name: 'status',
+                            type: 'checkbox',
+                            label: { en: 'Enabled' },
+                            defaultValue: true,
+                        },
+                    ],
+                },
+                {
+                    name: 'saturday',
+                    label: { en: 'Saturday' },
+                    type: 'array',
+                    labels: {
+                        singular: 'Timeslot',
+                        plural: 'Timeslots',
+                    },
+                    fields: [
+                        // same as above
+                        {
+                            name: 'start_time',
+                            type: 'text',
+                            label: { en: 'Start Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'end_time',
+                            type: 'text',
+                            label: { en: 'End Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'interval_minutes',
+                            type: 'number',
+                            label: { en: 'Interval (Minutes)' },
+                            defaultValue: 15,
+                        },
+                        {
+                            name: 'max_orders',
+                            type: 'number',
+                            label: { en: 'Maximum Orders' },
+                        },
+                        {
+                            name: 'status',
+                            type: 'checkbox',
+                            label: { en: 'Enabled' },
+                            defaultValue: true,
+                        },
+                    ],
+                },
+                {
+                    name: 'sunday',
+                    label: { en: 'Sunday' },
+                    type: 'array',
+                    labels: {
+                        singular: 'Timeslot',
+                        plural: 'Timeslots',
+                    },
+                    fields: [
+                        // same as above
+                        {
+                            name: 'start_time',
+                            type: 'text',
+                            label: { en: 'Start Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'end_time',
+                            type: 'text',
+                            label: { en: 'End Time' },
+                            required: true,
+                        },
+                        {
+                            name: 'interval_minutes',
+                            type: 'number',
+                            label: { en: 'Interval (Minutes)' },
+                            defaultValue: 15,
+                        },
+                        {
+                            name: 'max_orders',
+                            type: 'number',
+                            label: { en: 'Maximum Orders' },
+                        },
+                        {
+                            name: 'status',
+                            type: 'checkbox',
+                            label: { en: 'Enabled' },
+                            defaultValue: true,
                         },
                     ],
                 },
