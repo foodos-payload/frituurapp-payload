@@ -1,46 +1,45 @@
-'use client'
+'use client';
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react';
 
 interface Category {
-  id: string
-  slug: string
-  label: string
+  id: string;
+  slug: string;
+  label: string;
 }
 
 type Props = {
-  categories: Category[]
-  activeCategory: string
-  /** Parent callback to let it “pause” the observer, etc. */
-  onCategoryClick: (slug: string) => void
-}
+  categories: Category[];
+  activeCategory: string;
+  onCategoryClick: (slug: string) => void;
+};
 
 /**
  * A horizontally scrollable category bar that also anchor-links to #cat-{slug}.
- * We'll NOT preventDefault, so the browser natively scrolls.
+ * We'll keep the anchor, and rely on ProductList to handle IntersectionObserver logic.
  */
 export default function HorizontalCategories({
   categories,
   activeCategory,
   onCategoryClick,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Whenever the activeCategory changes from IntersectionObserver, center it horizontally
+  // Whenever activeCategory changes from IntersectionObserver, center horizontally
   useEffect(() => {
-    if (!containerRef.current) return
+    if (!containerRef.current) return;
 
     const activeLink = containerRef.current.querySelector<HTMLAnchorElement>(
       `[data-slug="${activeCategory}"]`
-    )
+    );
     if (activeLink) {
       activeLink.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
         inline: 'center',
-      })
+      });
     }
-  }, [activeCategory])
+  }, [activeCategory]);
 
   return (
     <div
@@ -57,19 +56,20 @@ export default function HorizontalCategories({
         font-medium
         scroll-smooth
       "
-      style={{ scrollbarWidth: 'thin' }} // optional narrower scrollbar for Firefox
+      style={{ scrollbarWidth: 'thin' }}
     >
       {categories.map((cat) => {
-        const isActive = cat.slug === activeCategory
+        const isActive = cat.slug === activeCategory;
         return (
           <a
             key={cat.id}
-            href={`#cat-${cat.slug}`}
+            href={`#cat-${cat.slug}`} // keep anchor
             data-slug={cat.slug}
-            // No preventDefault => normal anchor scroll
-            onClick={() => {
-              // Let the parent know we clicked
-              onCategoryClick(cat.slug)
+            onClick={(e) => {
+              // Force the link to lose focus, so it doesn't keep a "clicked" style
+              e.currentTarget.blur();
+              // Let parent do IntersectionObserver disconnect & highlight
+              onCategoryClick(cat.slug);
             }}
             style={{ borderRadius: '0.5rem' }}
             className={`
@@ -88,8 +88,8 @@ export default function HorizontalCategories({
           >
             {cat.label}
           </a>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

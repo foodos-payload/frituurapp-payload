@@ -1,72 +1,73 @@
-'use client'
+// File: /app/(app)/bestellen/components/ProductList.tsx
+'use client';
 
-import React, { useState, useEffect, useRef } from 'react'
-import HorizontalCategories from './HorizontalCategories'
-import VerticalCategories from './VerticalCategories'
-import ProductCard from './ProductCard'
-import ProductPopupFlow from './ProductPopupFlow'
-import { useCart } from './cart/CartContext'
+import React, { useState, useEffect, useRef } from 'react';
+import HorizontalCategories from './HorizontalCategories';
+import VerticalCategories from './VerticalCategories';
+import ProductCard from './ProductCard';
+import ProductPopupFlow from './ProductPopupFlow';
+import { useCart } from './cart/CartContext';
 
 // Minimal data structures
 type Subproduct = {
-    id: string
-    name_nl: string
-    price: number
+    id: string;
+    name_nl: string;
+    price: number;
     // ...
-}
+};
 
 type PopupDoc = {
-    id: string
-    popup_title_nl: string
-    multiselect: boolean
-    minimum_option: number
-    maximum_option: number
-    subproducts: Subproduct[]
-}
+    id: string;
+    popup_title_nl: string;
+    multiselect: boolean;
+    minimum_option: number;
+    maximum_option: number;
+    subproducts: Subproduct[];
+};
 
 type PopupItem = {
-    order: number
-    popup: PopupDoc | null
-}
+    order: number;
+    popup: PopupDoc | null;
+};
 
 type Product = {
-    id: string
-    name_nl: string
-    name_en?: string
-    name_fr?: string
-    name_de?: string
-    description_nl?: string
-    description_en?: string
-    description_fr?: string
-    description_de?: string
-    price: number | null
-    image?: { url: string; alt: string }
-    webdescription?: string
-    isPromotion?: boolean
-    productpopups?: PopupItem[]
-}
+    id: string;
+    name_nl: string;
+    name_en?: string;
+    name_fr?: string;
+    name_de?: string;
+    description_nl?: string;
+    description_en?: string;
+    description_fr?: string;
+    description_de?: string;
+    price: number | null;
+    image?: { url: string; alt: string };
+    webdescription?: string;
+    isPromotion?: boolean;
+    productpopups?: PopupItem[];
+};
 
 type Category = {
-    id: string
-    slug: string
-    name_nl: string
-    name_en?: string
-    name_fr?: string
-    name_de?: string
-    products: Product[]
-}
+    id: string;
+    slug: string;
+    name_nl: string;
+    name_en?: string;
+    name_fr?: string;
+    name_de?: string;
+    products: Product[];
+};
 
 interface Props {
     /** The original, unfiltered categories for your menus. */
-    unfilteredCategories: Category[]
+    unfilteredCategories: Category[];
     /** The search-filtered categories for the main listing. */
-    filteredCategories: Category[]
+    filteredCategories: Category[];
     /** Current user language. */
-    userLang?: string
+    userLang?: string;
     /** Called when a category is clicked (e.g., to clear the search). */
-    onCategoryClick?: (slug: string) => void
+    onCategoryClick?: (slug: string) => void;
     /** If the mobile search is open, might adjust layout offset, etc. */
-    mobileSearchOpen?: boolean
+    mobileSearchOpen?: boolean;
 }
 
 /**
@@ -83,12 +84,12 @@ export default function ProductList({
     mobileSearchOpen = false,
 }: Props) {
     const [activeCategory, setActiveCategory] = useState(() => {
-        return unfilteredCategories[0]?.slug || ''
-    })
-    const [activeProduct, setActiveProduct] = useState<Product | null>(null)
+        return unfilteredCategories[0]?.slug || '';
+    });
+    const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
-    const { addItem } = useCart()
-    const observerRef = useRef<IntersectionObserver | null>(null)
+    const { addItem } = useCart();
+    const observerRef = useRef<IntersectionObserver | null>(null);
 
     // ===== Set up IntersectionObserver to highlight active category =====
     useEffect(() => {
@@ -110,10 +111,15 @@ export default function ProductList({
             },
             {
                 root: null,
-                rootMargin: '-30% 0px -70% 0px',
+                // Adjust rootMargin to your needs:
+                // removing or lowering negative top margin helps reduce "skipping"
+                rootMargin: '0px 0px -50% 0px',
                 threshold: 0.0,
             }
         );
+
+        // **IMPORTANT**: Store the observer in observerRef
+        observerRef.current = obs;
 
         // 3) Observe all sections
         sections.forEach((sec) => obs.observe(sec));
@@ -123,39 +129,39 @@ export default function ProductList({
             sections.forEach((sec) => obs.unobserve(sec));
             obs.disconnect();
         };
-        // IMPORTANT: Depend on "filteredCategories" so it re-runs whenever the user changes the search
+        // Depend on "filteredCategories" so it re-runs whenever the search changes what is rendered
     }, [filteredCategories]);
 
     // Helper to reattach observer after a category jump
     function reconnectObserver() {
         const sections = unfilteredCategories
             .map((cat) => document.getElementById(`cat-${cat.slug}`))
-            .filter(Boolean) as HTMLElement[]
-        sections.forEach((sec) => observerRef.current?.observe(sec))
+            .filter(Boolean) as HTMLElement[];
+        sections.forEach((sec) => observerRef.current?.observe(sec));
     }
 
     // ===== If user clicks a category in Horizontal/Vertical menus =====
     function handleCategoryClick(slug: string) {
-        // If the parent wants to do something else (e.g. clear search), call it:
-        if (onCategoryClick) onCategoryClick(slug)
+        if (onCategoryClick) onCategoryClick(slug);
 
         // 1) Temporarily stop IntersectionObserver from overriding our highlight
-        observerRef.current?.disconnect()
+        observerRef.current?.disconnect();
 
         // 2) Immediately set highlight
-        setActiveCategory(slug)
+        setActiveCategory(slug);
 
         // 3) The <a> link will do normal anchor jump => no preventDefault
-        // 4) Wait 800ms, then reconnect
+        // 4) Wait ~800ms, then reconnect the observer
+        // (You can tweak the delay to 800, 1000, or 1700ms depending on how long the scroll usually takes)
         setTimeout(() => {
-            observerRef.current && reconnectObserver()
-        }, 800)
+            observerRef.current && reconnectObserver();
+        }, 800);
     }
 
     // ===== If user clicks product or plus icon =====
     function handleProductClick(prod: Product) {
-        const popups = prod.productpopups || []
-        const hasPopups = popups.some((p) => p.popup !== null)
+        const popups = prod.productpopups || [];
+        const hasPopups = popups.some((p) => p.popup !== null);
 
         // If no popups => directly add to cart
         if (!hasPopups) {
@@ -170,16 +176,16 @@ export default function ProductList({
                         alt: prod.image.alt ?? prod.name_nl,
                     }
                     : undefined,
-            })
+            });
             // alert(`Added "${prod.name_nl}" to cart!`)
         } else {
             // Otherwise => open the popup flow
-            setActiveProduct(prod)
+            setActiveProduct(prod);
         }
     }
 
     // Only keep categories that have products after filtering
-    const visibleSections = filteredCategories
+    const visibleSections = filteredCategories;
 
     return (
         <div className="flex gap-4 w-full p-2 scroll-smooth containercustommaxwidth">
@@ -234,7 +240,7 @@ export default function ProductList({
 
                 {/* CATEGORY SECTIONS */}
                 {visibleSections.map((cat) => {
-                    const catLabel = pickCategoryName(cat, userLang)
+                    const catLabel = pickCategoryName(cat, userLang);
 
                     return (
                         <section
@@ -250,10 +256,10 @@ export default function ProductList({
                             <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-4">
                                 {cat.products.map((prod) => {
                                     // Build local display fields
-                                    const displayName = pickProductName(prod, userLang)
-                                    const displayDesc = pickDescription(prod, userLang)
-                                    const popups = prod.productpopups || []
-                                    const hasPopups = popups.some((p) => p.popup !== null)
+                                    const displayName = pickProductName(prod, userLang);
+                                    const displayDesc = pickDescription(prod, userLang);
+                                    const popups = prod.productpopups || [];
+                                    const hasPopups = popups.some((p) => p.popup !== null);
 
                                     return (
                                         <ProductCard
@@ -268,11 +274,11 @@ export default function ProductList({
                                             shouldShowSpinner={!hasPopups} // only show spinner if no popups
                                             handleAction={() => handleProductClick(prod)}
                                         />
-                                    )
+                                    );
                                 })}
                             </div>
                         </section>
-                    )
+                    );
                 })}
 
                 {/* If no categories remain after filtering */}
@@ -291,20 +297,20 @@ export default function ProductList({
                 />
             )}
         </div>
-    )
+    );
 }
 
 /** Helper to pick category name in the correct language */
 function pickCategoryName(cat: Category, lang?: string): string {
     switch (lang) {
         case 'en':
-            return cat.name_en || cat.name_nl
+            return cat.name_en || cat.name_nl;
         case 'fr':
-            return cat.name_fr || cat.name_nl
+            return cat.name_fr || cat.name_nl;
         case 'de':
-            return cat.name_de || cat.name_nl
+            return cat.name_de || cat.name_nl;
         default:
-            return cat.name_nl
+            return cat.name_nl;
     }
 }
 
@@ -312,13 +318,13 @@ function pickCategoryName(cat: Category, lang?: string): string {
 function pickProductName(prod: Product, lang?: string): string {
     switch (lang) {
         case 'en':
-            return prod.name_en || prod.name_nl
+            return prod.name_en || prod.name_nl;
         case 'fr':
-            return prod.name_fr || prod.name_nl
+            return prod.name_fr || prod.name_nl;
         case 'de':
-            return prod.name_de || prod.name_nl
+            return prod.name_de || prod.name_nl;
         default:
-            return prod.name_nl
+            return prod.name_nl;
     }
 }
 
@@ -326,12 +332,12 @@ function pickProductName(prod: Product, lang?: string): string {
 function pickDescription(prod: Product, lang?: string): string | undefined {
     switch (lang) {
         case 'en':
-            return prod.description_en || prod.description_nl
+            return prod.description_en || prod.description_nl;
         case 'fr':
-            return prod.description_fr || prod.description_nl
+            return prod.description_fr || prod.description_nl;
         case 'de':
-            return prod.description_de || prod.description_nl
+            return prod.description_de || prod.description_nl;
         default:
-            return prod.description_nl
+            return prod.description_nl;
     }
 }

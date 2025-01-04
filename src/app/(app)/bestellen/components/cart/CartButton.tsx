@@ -79,7 +79,6 @@ export default function CartButton({ onClick }: Props) {
               flex
               items-center
               justify-center
-              font-secondary font-love-of-thunder
               bg-blue-600   
               text-white
               p-2.5
@@ -87,10 +86,11 @@ export default function CartButton({ onClick }: Props) {
               focus:outline-none
               w-full md:w-auto
               text-lg
+              font-semibold
             "
                     >
                         <div className="relative">
-                            <FiShoppingCart className="mr-1" />
+                            <FiShoppingCart className="mr-5" />
 
                             {/* Red badge for itemCount */}
                             {itemCount > 0 && (
@@ -99,13 +99,13 @@ export default function CartButton({ onClick }: Props) {
                     absolute
                     bg-red-600
                     text-white
-                    text-[10px]
+                    text-[13px]
                     font-semibold
                     rounded-full
                     leading-none
-                    px-1
-                    -top-2
-                    
+                    px-2
+                    -top-4
+                    py-1
                   "
                                 >
                                     {itemCount}
