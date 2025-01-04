@@ -1,6 +1,6 @@
 import React from 'react'
 import { headers } from 'next/headers'
-import { OrderStatusPage } from './OrderStatusPage.client'
+import { OrderStatusPage } from './OrderStatusPage'
 
 export const dynamic = 'force-dynamic'
 
