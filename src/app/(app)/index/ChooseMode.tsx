@@ -1,44 +1,32 @@
+// File: /src/app/(app)/index/ChooseMode.client.tsx
 "use client"
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { useFulfillment } from "./hooks/useFulfillment"
 import { LanguageSwitcher } from "./components/LanguageSwitcher"
+
+interface FulfillmentMethod {
+    key: string
+    label: string
+    methodId: string
+}
 
 interface ChooseModeProps {
     shopSlug: string
+    fulfillmentOptions: FulfillmentMethod[]  // pass from page.tsx
 }
 
-export const ChooseMode: React.FC<ChooseModeProps> = ({ shopSlug }) => {
+export const ChooseMode: React.FC<ChooseModeProps> = ({ shopSlug, fulfillmentOptions }) => {
     const router = useRouter()
 
-    // 1) We do NOT exclude delivery here
-    const { fulfillmentOptions, isLoading } = useFulfillment({
-        shopSlug,
-        excludeDelivery: false,
-    })
+    // There's no more "isLoading", because we've done SSR fetch
+    // And there's no more `useFulfillment`.
 
     const handleSelectOption = (optionKey: "dine-in" | "takeaway" | "delivery") => {
         const found = fulfillmentOptions.find((f) => f.key === optionKey)
         if (!found) return
         localStorage.setItem("selectedShippingMethod", found.methodId)
         router.push("/bestellen")
-    }
-
-    if (isLoading) {
-        // Show same skeleton as before
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100">
-                <div className="bg-white shadow-lg rounded-lg p-8 max-w-screen-lg w-full text-center">
-                    <h1 className="text-3xl font-bold my-4">Loading modes...</h1>
-                    <div className="flex flex-wrap justify-center gap-4 mt-10">
-                        <div className="animate-pulse w-40 h-40 bg-gray-300 rounded-md" />
-                        <div className="animate-pulse w-40 h-40 bg-gray-300 rounded-md" />
-                        <div className="animate-pulse w-40 h-40 bg-gray-300 rounded-md" />
-                    </div>
-                </div>
-            </div>
-        )
     }
 
     // Evaluate which modes are available
@@ -60,8 +48,7 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({ shopSlug }) => {
                             className={`flex flex-col items-center w-48 h-56 p-4 border 
                 border-gray-200 rounded-md bg-white shadow
                 hover:scale-105 transition-transform
-                ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}
-              `}
+                ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DineInIcon.png"
@@ -79,8 +66,7 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({ shopSlug }) => {
                             className={`flex flex-col items-center w-48 h-56 p-4 border 
                 border-gray-200 rounded-md bg-white shadow
                 hover:scale-105 transition-transform
-                ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}
-              `}
+                ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/TakeAwayIcon.png"
@@ -98,8 +84,7 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({ shopSlug }) => {
                             className={`flex flex-col items-center w-48 h-56 p-4 border 
                 border-gray-200 rounded-md bg-white shadow
                 hover:scale-105 transition-transform
-                ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}
-              `}
+                ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DeliveryIcon.png"
@@ -111,7 +96,6 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({ shopSlug }) => {
                         </button>
                     </div>
 
-                    {/* Optionally show kiosk language switcher if desired */}
                     <div className="mt-8 flex justify-center">
                         <LanguageSwitcher />
                     </div>
