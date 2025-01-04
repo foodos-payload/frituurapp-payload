@@ -41,6 +41,7 @@ type Product = {
     description_fr?: string;
     description_de?: string;
     price: number | null;
+    old_price: number | null;
     image?: { url: string; alt: string };
     webdescription?: string;
     isPromotion?: boolean;
@@ -57,6 +58,12 @@ type Category = {
     products: Product[];
 };
 
+type Branding = {
+    categoryCardBgColor?: string;
+    primaryColorCTA?: string;
+    // ... any others if needed
+};
+
 interface Props {
     /** The original, unfiltered categories for your menus. */
     unfilteredCategories: Category[];
@@ -68,6 +75,8 @@ interface Props {
     onCategoryClick?: (slug: string) => void;
     /** If the mobile search is open, might adjust layout offset, etc. */
     mobileSearchOpen?: boolean;
+
+    branding?: Branding;
 }
 
 /**
@@ -82,6 +91,7 @@ export default function ProductList({
     userLang,
     onCategoryClick,
     mobileSearchOpen = false,
+    branding,
 }: Props) {
     const [activeCategory, setActiveCategory] = useState(() => {
         return unfilteredCategories[0]?.slug || '';
@@ -211,6 +221,7 @@ export default function ProductList({
                     }))}
                     activeCategory={activeCategory}
                     onCategoryClick={handleCategoryClick}
+                    branding={branding}
                 />
             </div>
 
@@ -235,6 +246,7 @@ export default function ProductList({
                         }))}
                         activeCategory={activeCategory}
                         onCategoryClick={handleCategoryClick}
+                        branding={branding}
                     />
                 </div>
 
@@ -273,6 +285,7 @@ export default function ProductList({
                                             // If product does have popups => we skip the spinner & open popup instead
                                             shouldShowSpinner={!hasPopups} // only show spinner if no popups
                                             handleAction={() => handleProductClick(prod)}
+                                            branding={branding}
                                         />
                                     );
                                 })}
@@ -294,6 +307,7 @@ export default function ProductList({
                 <ProductPopupFlow
                     product={activeProduct}
                     onClose={() => setActiveProduct(null)}
+                    branding={branding}
                 />
             )}
         </div>

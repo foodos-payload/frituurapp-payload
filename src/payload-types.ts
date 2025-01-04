@@ -394,9 +394,25 @@ export interface ShopBranding {
    */
   siteHeaderImg?: (string | null) | Media;
   /**
-   * Advertisement Image for the order status page.
+   * Logo displayed in header or top corner (optional).
+   */
+  siteLogo?: (string | null) | Media;
+  /**
+   * Advertisement image for the order status page.
    */
   adImage?: (string | null) | Media;
+  /**
+   * Background color for the site header (if no image).
+   */
+  headerBackgroundColor?: string | null;
+  /**
+   * Background color for category cards in kiosk.
+   */
+  categoryCardBgColor?: string | null;
+  /**
+   * Used for “Add to Cart” / “Checkout” buttons, etc.
+   */
+  primaryColorCTA?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -808,6 +824,14 @@ export interface Product {
    * Sale price for delivery.
    */
   price_delivery?: number | null;
+  /**
+   * Check if this product is on promotion. Old price field will appear.
+   */
+  isPromotion?: boolean | null;
+  /**
+   * Please put the old (original) price here, and use the normal price field for the new price.
+   */
+  old_price?: number | null;
   /**
    * Enable stock tracking for this product.
    */
@@ -1542,7 +1566,11 @@ export interface ShopBrandingSelect<T extends boolean = true> {
   shops?: T;
   siteTitle?: T;
   siteHeaderImg?: T;
+  siteLogo?: T;
   adImage?: T;
+  headerBackgroundColor?: T;
+  categoryCardBgColor?: T;
+  primaryColorCTA?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1886,6 +1914,8 @@ export interface ProductsSelect<T extends boolean = true> {
   price_dinein?: T;
   price_takeaway?: T;
   price_delivery?: T;
+  isPromotion?: T;
+  old_price?: T;
   enable_stock?: T;
   quantity?: T;
   tax?: T;

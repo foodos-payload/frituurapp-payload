@@ -45,11 +45,18 @@ type Product = {
     // ...
 };
 
+type Branding = {
+    /** e.g. "#ECAA02" or some other brand color */
+    primaryColorCTA?: string;
+    // ...
+};
+
 interface Props {
     product: Product;
     editingItem?: CartItem;
     editingItemSignature?: string;
     onClose: () => void;
+    branding?: Branding;
 }
 
 export default function ProductPopupFlow({
@@ -57,6 +64,7 @@ export default function ProductPopupFlow({
     editingItem,
     editingItemSignature,
     onClose,
+    branding,
 }: Props) {
     const { addItem, updateItem } = useCart();
 
@@ -192,6 +200,9 @@ export default function ProductPopupFlow({
     // === NEW: build a "selectedItems" array to display on top ===
     const selectedItems = gatherAllSelectedItems(sortedPopups, selectedOptions);
 
+    // === 6) Gather brand color or fallback
+    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+
     return (
         <div
             className="
@@ -326,16 +337,22 @@ export default function ProductPopupFlow({
                                 <div
                                     key={sub.id}
                                     onClick={() => handleSubproductClick(sub)}
-                                    style={{ borderRadius: '0.5rem' }}
+                                    style={{
+                                        borderRadius: "0.5rem",
+                                        // If selected => dynamic border color = brandCTA
+                                        borderLeftWidth: isSelected ? "4px" : "1px",
+                                        borderLeftColor: isSelected ? brandCTA : "#d1d5db", // #d1d5db ~ border-gray-300
+                                        borderStyle: "solid",
+                                    }}
                                     className={`
-                    relative
-                    flex flex-col justify-between
-                    p-2 border rounded-lg text-center cursor-pointer transition
-                    ${isSelected
-                                            ? 'bg-gray-100 border-l-4 border-green-500'
-                                            : 'border-gray-300'
+                                    relative
+                                    flex flex-col justify-between
+                                    p-2 rounded-lg text-center cursor-pointer transition
+                                    ${isSelected
+                                            ? "bg-gray-100"
+                                            : "border border-gray-300" // fallback for non-left sides
                                         }
-                  `}
+                                  `}
                                 >
                                     {/* Possibly an image */}
                                     <div className="flex-grow flex items-center justify-center mb-4">
@@ -362,7 +379,7 @@ export default function ProductPopupFlow({
 
                                     {/* Checkmark if selected */}
                                     {isSelected && (
-                                        <div className="absolute bottom-2 right-2 text-green-500">
+                                        <div className="absolute bottom-2 right-2" style={{ color: brandCTA }}>
                                             <FiCheckCircle size={24} />
                                         </div>
                                     )}
@@ -390,6 +407,7 @@ export default function ProductPopupFlow({
                 rounded-full
                 hover:bg-gray-600
                 transition
+                text-xl
               "
                         >
                             Terug
@@ -400,15 +418,18 @@ export default function ProductPopupFlow({
 
                     <button
                         onClick={handleNext}
+                        style={{
+                            backgroundColor: brandCTA,
+                            color: "#ffffff",
+                        }}
                         className="
-              bg-green-600 text-white
               px-4 py-2
               rounded-full
-              hover:bg-green-700
               transition
+              text-xl
             "
                     >
-                        {currentIndex < sortedPopups.length - 1 ? 'Volgende' : 'Bevestigen'}
+                        {currentIndex < sortedPopups.length - 1 ? "Volgende" : "Bevestigen"}
                     </button>
                 </div>
             </div>

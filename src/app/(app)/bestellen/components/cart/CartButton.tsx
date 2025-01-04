@@ -6,9 +6,16 @@ import { useRouter } from 'next/navigation'; // or 'next/router' if older Next
 import { FiShoppingCart, FiArrowLeft } from 'react-icons/fi';
 import { useCart } from './CartContext';
 
+type Branding = {
+    categoryCardBgColor?: string;
+    primaryColorCTA?: string;
+    // ... any others if needed
+};
+
 type Props = {
     /** Called when the user clicks "Continue to Cart" button */
     onClick: () => void;
+    branding?: Branding;
 };
 
 /**
@@ -16,12 +23,14 @@ type Props = {
  * - A "Go Back" button (hidden on mobile).
  * - A large "Continue to Cart" button with item count badge.
  */
-export default function CartButton({ onClick }: Props) {
+export default function CartButton({ onClick, branding }: Props) {
     const router = useRouter();
     const { items, getCartTotal } = useCart();
 
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = getCartTotal();
+
+    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
     // For the "Go Back" button
     function handleGoBack() {
@@ -72,14 +81,16 @@ export default function CartButton({ onClick }: Props) {
                 <div className="relative w-full md:w-auto flex justify-center md:flex-none">
                     <button
                         onClick={onClick}
-                        style={{ borderRadius: '0.5rem' }}
+                        style={{
+                            borderRadius: '0.5rem',
+                            backgroundColor: brandCTA,
+                        }}
                         className="
               whitespace-nowrap
               rounded-lg
               flex
               items-center
               justify-center
-              bg-blue-600   
               text-white
               p-2.5
               gap-2

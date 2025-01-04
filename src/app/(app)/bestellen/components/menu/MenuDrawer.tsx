@@ -10,11 +10,18 @@ const LANGUAGES = [
     { label: 'DE', value: 'de', flagSrc: '/images/flags/de-DE.svg' },
 ]
 
+type Branding = {
+    categoryCardBgColor?: string;
+    primaryColorCTA?: string;
+    // ... any others if needed
+};
+
 type MenuDrawerProps = {
     isOpen: boolean
     onClose: () => void
     userLang: string
     onLangChange: (langValue: string) => void
+    branding?: Branding;
 }
 
 /**
@@ -27,6 +34,7 @@ export default function MenuDrawer({
     onClose,
     userLang,
     onLangChange,
+    branding,
 }: MenuDrawerProps) {
     // Refs for the two separate transitions
     const overlayRef = useRef<HTMLDivElement>(null)
@@ -42,6 +50,8 @@ export default function MenuDrawer({
     function handleLangClick(langValue: string) {
         onLangChange(langValue)
     }
+
+    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
     return (
         <>
@@ -147,14 +157,18 @@ export default function MenuDrawer({
                         {/* Login link */}
                         <a
                             href="/login"
+                            style={{
+                                borderRadius: '0.5rem',
+                                backgroundColor: brandCTA,
+                            }}
                             className="
                 flex items-center justify-center
                 p-3 w-60 mx-auto
                 text-md
-                bg-green-600
+                
                 text-white
                 rounded-full
-                hover:bg-green-700
+               
               "
                         >
                             Login

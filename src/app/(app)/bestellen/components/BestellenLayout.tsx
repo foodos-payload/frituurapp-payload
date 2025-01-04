@@ -46,6 +46,26 @@ interface Props {
     shopSlug: string;
     categorizedProducts: Category[];
     userLang?: string;
+    /** Branding fetched from your /api/branding endpoint. */
+    branding?: {
+        /** URL-encoded absolute path to the site logo (optional). */
+        logoUrl?: string;
+
+        /** URL-encoded absolute path to an advertisement image for order status, etc. */
+        adImage?: string;
+
+        /** A site header background color in hex (e.g. "#0f1820"). */
+        headerBackgroundColor?: string;
+
+        /** A category-card background color in hex (e.g. "#ECAA02"). */
+        categoryCardBgColor?: string;
+
+        /** A primary CTA color in hex (used for "Add to Cart" or "Checkout" buttons). */
+        primaryColorCTA?: string;
+
+        siteTitle?: string;
+
+    };
 }
 
 /**
@@ -58,6 +78,7 @@ export default function BestellenLayout({
     shopSlug,
     categorizedProducts,
     userLang,
+    branding,
 }: Props) {
     const [showJsonModal, setShowJsonModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -135,6 +156,7 @@ export default function BestellenLayout({
                 onClose={() => setShowMenuDrawer(false)}
                 userLang={lang}
                 onLangChange={(newLang) => setLang(newLang)}
+                branding={branding}
             />
 
             {/* RIGHT-SIDE CART DRAWER */}
@@ -142,6 +164,7 @@ export default function BestellenLayout({
                 isOpen={showCartDrawer}
                 onClose={() => setShowCartDrawer(false)}
                 onEditItem={handleEditItem}
+                branding={branding}
             />
 
             {/* MAIN LAYOUT CONTAINER */}
@@ -168,6 +191,7 @@ export default function BestellenLayout({
                         onMenuClick={() => setShowMenuDrawer(true)}
                         mobileSearchOpen={mobileSearchOpen}
                         setMobileSearchOpen={setMobileSearchOpen}
+                        branding={branding}
                     />
                 </div>
 
@@ -181,6 +205,7 @@ export default function BestellenLayout({
                         // If user clicks a category in the UI, optionally reset the search
                         setSearchTerm('');
                     }}
+                    branding={branding}
                 />
 
                 {/* DEBUG: Show JSON data of `categorizedProducts` */}
@@ -233,7 +258,7 @@ export default function BestellenLayout({
                 )}
 
                 {/* Floating Cart Button (bottom-right) */}
-                <CartButton onClick={() => setShowCartDrawer(true)} />
+                <CartButton onClick={() => setShowCartDrawer(true)} branding={branding} />
             </div>
 
             {/* PRODUCT POPUP for “Bewerken” if editingItem is set */}
@@ -243,6 +268,7 @@ export default function BestellenLayout({
                     editingItem={editingItem}             // Pass the existing cart item
                     editingItemSignature={editingLineSignature} // Pass the signature to be updated
                     onClose={handleCloseEditFlow}
+                    branding={branding}
                 />
             )}
         </CartProvider>

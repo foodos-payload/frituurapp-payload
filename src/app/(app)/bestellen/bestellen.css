@@ -8,13 +8,13 @@
 
   /* Hide scrollbar in Chrome, Safari, Opera using the ::-webkit-scrollbar pseudo-element */
 .main-container::-webkit-scrollbar {
-    display: none;
+    /* display: none; */
   }
   
   /* Hide scrollbar in IE, Edge, Firefox by removing scrollbar style */
   .main-container {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;     /* Firefox */
+    /* -ms-overflow-style: none; 
+    scrollbar-width: none;    */
   }
 
 @media (min-width: 640px) {
