@@ -1,9 +1,8 @@
-// File: /app/(app)/bestellen/components/ProductCard.tsx
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 
-/** Minimal shape for what we display in the card. */
+/** Minimal shape for what the card displays. */
 type ProductCardProps = {
     id: string
     displayName: string
@@ -11,105 +10,103 @@ type ProductCardProps = {
     price: number | null
     image?: { url: string; alt?: string }
     isPromotion?: boolean
-    // isOutOfStock?: boolean
-    // isFeatured?: boolean
-    // any other fields from your data if needed
 }
 
 interface Props {
     product: ProductCardProps
-    onClick?: (p: ProductCardProps) => void
-    // If you want an out-of-stock or max-amount logic, you can pass them as props:
-    // isOutOfStock?: boolean
-    // isMaxAmountReached?: boolean
-    // handleAddToCart?: (p: ProductCardProps) => void
+    /**
+     * If `shouldShowSpinner` is true, we run the local spinner animation 
+     * after `handleAction` is called. If false, no spinner shown.
+     */
+    shouldShowSpinner?: boolean
+
+    /**
+     * The single callback from the parent that decides:
+     * - if no popups => do an add-to-cart
+     * - if has popups => open the popup
+     */
+    handleAction?: (prod: ProductCardProps) => void
 }
 
-export default function ProductCard({ product, onClick }: Props) {
-    // If you want a separate "Add to cart" click vs entire card click, you can separate them:
-    // function handleAddToCart(e: React.MouseEvent) {
-    //   e.stopPropagation()
-    //   if (handleAddToCart) handleAddToCart(product)
-    // }
+/**
+ * ProductCard that has an optional spinner animation 
+ * if `shouldShowSpinner` is true. 
+ */
+export default function ProductCard({
+    product,
+    shouldShowSpinner = false,
+    handleAction,
+}: Props) {
+    // Local spinner state if we want to show it
+    const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'check'>('idle')
 
-    const handleCardClick = () => {
-        if (onClick) onClick(product)
+    /**
+     * Trigger local spinner: set to "loading", then "check", then revert to "idle".
+     */
+    function runLocalSpinner() {
+        setLoadingState('loading')
+        setTimeout(() => {
+            setLoadingState('check')
+            setTimeout(() => {
+                setLoadingState('idle')
+            }, 1000)
+        }, 1000)
     }
 
+    /**
+     * Called when entire card is clicked.
+     */
+    function handleCardClick() {
+        if (!handleAction) return
+
+        // Parent does either "add to cart" or "open popup"
+        handleAction(product)
+
+        // If we want local spinner => run it
+        if (shouldShowSpinner) {
+            runLocalSpinner()
+        }
+    }
+
+    /**
+     * Called when plus button is clicked. We skip the card-click.
+     */
+    function handlePlusClick(e: React.MouseEvent) {
+        e.stopPropagation()
+        if (!handleAction) return
+
+        handleAction(product)
+        if (shouldShowSpinner) {
+            runLocalSpinner()
+        }
+    }
+
+    // Render
     return (
         <div
             onClick={handleCardClick}
             className={`
-        relative 
-        border border-gray-300 
-        rounded-lg 
-        overflow-hidden 
-        shadow-lg 
-        flex 
+        relative
+        border border-gray-300
+        rounded-lg
+        overflow-hidden
+        shadow-lg
+        flex
         bg-white
         cursor-pointer
         hover:shadow-xl
         transition-shadow
-        // if you had an isPromotion class, you could do: ${product.isPromotion ? 'is-promotion' : ''}
+        w-full
       `}
-            style={{ width: '100%', maxWidth: '420px', borderRadius: '4px' }} // Example max width
         >
-            {/* 
-        If you want an out-of-stock overlay or max-amount overlay, 
-        you could do something like:
-      */}
-            {/* 
-        {isOutOfStock && (
-          <div className="
-            absolute
-            inset-0
-            flex items-center justify-center
-            bg-black bg-opacity-50
-            text-white font-bold text-lg
-            z-10
-          ">
-            Out of Stock
-          </div>
-        )} 
-      */}
-
-            {/* If there's a "Promotion" label: */}
+            {/* Promotion badge */}
             {product.isPromotion && (
-                <div style={{ borderRadius: '4px' }} className="
-          absolute
-          top-3 left-3
-          bg-red-500 
-          text-white 
-          text-xs 
-          font-semibold 
-          px-2 py-1 
-          rounded
-          z-20
-        ">
+                <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded z-20">
                     Promotion
                 </div>
             )}
 
-            {/* 
-        If you have a "featured" label or something else:
-        {isFeatured && (
-          <div className="
-            absolute
-            top-3 right-3
-            bg-yellow-500 
-            text-white 
-            text-xs 
-            font-bold 
-            px-2 py-1 
-            rounded
-            z-20
-          ">
-            Featured
-          </div>
-        )} 
-      */}
-
-            {/* IMAGE side (40%) */}
+            {/* Left: image area */}
             <div className="w-2/5 h-full flex items-center justify-center bg-gray-50">
                 {product.image?.url ? (
                     <img
@@ -118,22 +115,16 @@ export default function ProductCard({ product, onClick }: Props) {
                         className="w-full h-full object-contain max-h-36"
                     />
                 ) : (
-                    <div className="text-gray-300 text-sm p-4">
-                        {/* fallback / placeholder */}
-                        No image
-                    </div>
+                    <div className="text-gray-300 text-sm p-4">No image</div>
                 )}
             </div>
 
-            {/* CONTENT side (60%) */}
-            <div className="w-3/5 p-3 flex flex-col justify-between relative">
+            {/* Right: Title, Desc, Price */}
+            <div className="w-3/5 p-4 flex flex-col justify-between relative">
                 <div>
-                    {/* Title */}
                     <h2 className="text-base font-bold mb-1 line-clamp-2">
                         {product.displayName}
                     </h2>
-
-                    {/* Description */}
                     {product.displayDesc && (
                         <p className="text-sm text-gray-600 line-clamp-3 mb-2">
                             {product.displayDesc}
@@ -141,7 +132,7 @@ export default function ProductCard({ product, onClick }: Props) {
                     )}
                 </div>
 
-                {/* Price row */}
+                {/* Price */}
                 <div className="mt-2">
                     {typeof product.price === 'number' ? (
                         <span className="text-lg font-semibold text-gray-800">
@@ -152,23 +143,46 @@ export default function ProductCard({ product, onClick }: Props) {
                     )}
                 </div>
 
-
-                <button
-                    style={{ borderRadius: '4px' }}
-                    className="
-              absolute 
-              bottom-2 right-2
-              text-lg 
-              bg-blue-600 
-              text-white 
-              px-2 py-0
-              rounded 
-              hover:bg-blue-700
-            "
+                {/* Plus button in bottom-right. */}
+                <div
+                    onClick={handlePlusClick}
+                    className={`
+            absolute bottom-0 right-[-1px]
+            bg-[#e6e6e7] text-gray-700
+            rounded-tl-lg
+            px-6 py-3
+            transition
+            border-t-0 border-l-0 border-transparent
+            hover:border-t-2 hover:border-l-2 hover:border-green-600
+          `}
+                    style={{ borderTopLeftRadius: '0.5rem' }}
                 >
-                    +
-                </button>
-
+                    {loadingState === 'loading' ? (
+                        // Minimal spinner
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            className="animate-spin text-green-600"
+                            strokeWidth="3"
+                            fill="none"
+                            stroke="currentColor"
+                        >
+                            <circle cx="12" cy="12" r="10" className="opacity-20" />
+                            <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                        </svg>
+                    ) : loadingState === 'check' ? (
+                        // Check icon
+                        <svg width="16" height="16" fill="none" stroke="green" strokeWidth="3">
+                            <path d="M2 8l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    ) : (
+                        // The plus icon
+                        <svg width="16" height="16" fill="none" stroke="green" strokeWidth="2">
+                            <path d="M8 3v10M3 8h10" strokeLinecap="round" />
+                        </svg>
+                    )}
+                </div>
             </div>
         </div>
     )

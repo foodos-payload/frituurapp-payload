@@ -7,7 +7,7 @@ import ProductCard from './ProductCard'
 import ProductPopupFlow from './ProductPopupFlow'
 import { useCart } from './cart/CartContext'
 
-// Minimal data types
+// Minimal data structures
 type Subproduct = {
     id: string
     name_nl: string
@@ -57,24 +57,23 @@ type Category = {
 }
 
 interface Props {
-    // For your top categories:
+    /** The original, unfiltered categories for your menus. */
     unfilteredCategories: Category[]
-    // The search-filtered categories for main listing:
+    /** The search-filtered categories for the main listing. */
     filteredCategories: Category[]
-    // If you want to use a language for picking text:
+    /** Current user language. */
     userLang?: string
-    // Called if the parent wants to do something on category-click (e.g. clear search).
+    /** Called when a category is clicked (e.g., to clear the search). */
     onCategoryClick?: (slug: string) => void
-    // If the mobile search is open, you might adjust layout offset, etc.
+    /** If the mobile search is open, might adjust layout offset, etc. */
     mobileSearchOpen?: boolean
 }
 
 /**
- * ProductList using an anchor-based approach:
- * - Each category section is <div id={"cat-"+slug}>.
- * - The categories in HorizontalCategories / VerticalCategories
- *   can link to `href="#cat-"+cat.slug`.
- * - We still maintain a small "activeCategory" logic (if you want to highlight).
+ * ProductList that uses anchor-based navigation:
+ * - Each category section is <section id="cat-slug">.
+ * - HorizontalCategories / VerticalCategories link to href="#cat-slug".
+ * - We maintain an "activeCategory" highlight via IntersectionObserver.
  */
 export default function ProductList({
     unfilteredCategories,
@@ -83,24 +82,22 @@ export default function ProductList({
     onCategoryClick,
     mobileSearchOpen = false,
 }: Props) {
-    const [activeCategory, setActiveCategory] = useState(
-        unfilteredCategories[0]?.slug || ''
-    )
+    const [activeCategory, setActiveCategory] = useState(() => {
+        return unfilteredCategories[0]?.slug || ''
+    })
     const [activeProduct, setActiveProduct] = useState<Product | null>(null)
 
     const { addItem } = useCart()
-
-    // We'll store the IntersectionObserver instance in a ref
     const observerRef = useRef<IntersectionObserver | null>(null)
 
-    // IntersectionObserver setup
+    // ===== Set up IntersectionObserver to highlight active category =====
     useEffect(() => {
-        // Gather section elements
+        // 1) Grab all category <section id="cat-slug"> elements
         const sections = unfilteredCategories
             .map((cat) => document.getElementById(`cat-${cat.slug}`))
             .filter(Boolean) as HTMLElement[]
 
-        // Create the observer
+        // 2) Create observer
         const obs = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
@@ -118,16 +115,17 @@ export default function ProductList({
         )
         observerRef.current = obs
 
-        // Observe each section
+        // 3) Observe all sections
         sections.forEach((sec) => obs.observe(sec))
 
         return () => {
+            // Cleanup
             sections.forEach((sec) => obs.unobserve(sec))
             obs.disconnect()
         }
     }, [unfilteredCategories])
 
-    // A helper to re-observe
+    // Helper to reattach observer after a category jump
     function reconnectObserver() {
         const sections = unfilteredCategories
             .map((cat) => document.getElementById(`cat-${cat.slug}`))
@@ -135,30 +133,30 @@ export default function ProductList({
         sections.forEach((sec) => observerRef.current?.observe(sec))
     }
 
-    // Called by HorizontalCategories
+    // ===== If user clicks a category in Horizontal/Vertical menus =====
     function handleCategoryClick(slug: string) {
-        // If you need to do something else (like clear searchTerm), you can do it here:
+        // If the parent wants to do something else (e.g. clear search), call it:
         if (onCategoryClick) onCategoryClick(slug)
 
-        // 1) Disconnect observer so it doesn't override
+        // 1) Temporarily stop IntersectionObserver from overriding our highlight
         observerRef.current?.disconnect()
 
-        // 2) We can also setActiveCategory for immediate highlight
+        // 2) Immediately set highlight
         setActiveCategory(slug)
 
-        // 3) The <a> link in HorizontalCategories will do a normal anchor jump
-        //    because we do not preventDefault.
-
-        // 4) After 800ms, reconnect
+        // 3) The <a> link will do normal anchor jump => no preventDefault
+        // 4) Wait 800ms, then reconnect
         setTimeout(() => {
             observerRef.current && reconnectObserver()
         }, 800)
     }
 
+    // ===== If user clicks product or plus icon =====
     function handleProductClick(prod: Product) {
         const popups = prod.productpopups || []
         const hasPopups = popups.some((p) => p.popup !== null)
 
+        // If no popups => directly add to cart
         if (!hasPopups) {
             addItem({
                 productId: prod.id,
@@ -166,13 +164,14 @@ export default function ProductList({
                 price: prod.price || 0,
                 quantity: 1,
             })
-            alert(`Added "${prod.name_nl}" to cart!`)
+            // alert(`Added "${prod.name_nl}" to cart!`)
         } else {
+            // Otherwise => open the popup flow
             setActiveProduct(prod)
         }
     }
 
-    // The final “visible” categories after filtering
+    // Only keep categories that have products after filtering
     const visibleSections = filteredCategories
 
     return (
@@ -204,7 +203,7 @@ export default function ProductList({
 
             {/* MAIN COLUMN */}
             <div className="flex-grow w-full">
-                {/* HORIZONTAL categories on small screens */}
+                {/* Horizontal categories on small screens */}
                 <div
                     className="block lg:hidden w-full bg-white overflow-auto"
                     style={{
@@ -229,6 +228,7 @@ export default function ProductList({
                 {/* CATEGORY SECTIONS */}
                 {visibleSections.map((cat) => {
                     const catLabel = pickCategoryName(cat, userLang)
+
                     return (
                         <section
                             key={cat.id}
@@ -240,20 +240,26 @@ export default function ProductList({
                             </h3>
 
                             {/* Grid with max 2 columns, plus responsive gap */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1 md:gap-4 lg:gap-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-4">
                                 {cat.products.map((prod) => {
+                                    // Build local display fields
                                     const displayName = pickProductName(prod, userLang)
                                     const displayDesc = pickDescription(prod, userLang)
+                                    const popups = prod.productpopups || []
+                                    const hasPopups = popups.some((p) => p.popup !== null)
 
                                     return (
                                         <ProductCard
                                             key={prod.id}
                                             product={{
-                                                ...prod,
+                                                ...prod, // includes isPromotion, image, etc.
                                                 displayName,
                                                 displayDesc,
                                             }}
-                                            onClick={() => handleProductClick(prod)}
+                                            // If product has no popups => we do the add-to-cart spinner
+                                            // If product does have popups => we skip the spinner & open popup instead
+                                            shouldShowSpinner={!hasPopups} // only show spinner if no popups
+                                            handleAction={() => handleProductClick(prod)}
                                         />
                                     )
                                 })}
@@ -279,11 +285,9 @@ export default function ProductList({
             )}
         </div>
     )
-
-
 }
 
-/** Helpers */
+/** Helper to pick category name in the correct language */
 function pickCategoryName(cat: Category, lang?: string): string {
     switch (lang) {
         case 'en':
@@ -297,28 +301,30 @@ function pickCategoryName(cat: Category, lang?: string): string {
     }
 }
 
-function pickProductName(p: Product, lang?: string): string {
+/** Helper to pick product name in correct language */
+function pickProductName(prod: Product, lang?: string): string {
     switch (lang) {
         case 'en':
-            return p.name_en || p.name_nl
+            return prod.name_en || prod.name_nl
         case 'fr':
-            return p.name_fr || p.name_nl
+            return prod.name_fr || prod.name_nl
         case 'de':
-            return p.name_de || p.name_nl
+            return prod.name_de || prod.name_nl
         default:
-            return p.name_nl
+            return prod.name_nl
     }
 }
 
-function pickDescription(p: Product, lang?: string): string | undefined {
+/** Helper to pick product description in correct language */
+function pickDescription(prod: Product, lang?: string): string | undefined {
     switch (lang) {
         case 'en':
-            return p.description_en || p.description_nl
+            return prod.description_en || prod.description_nl
         case 'fr':
-            return p.description_fr || p.description_nl
+            return prod.description_fr || prod.description_nl
         case 'de':
-            return p.description_de || p.description_nl
+            return prod.description_de || prod.description_nl
         default:
-            return p.description_nl
+            return prod.description_nl
     }
 }
