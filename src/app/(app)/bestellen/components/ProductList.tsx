@@ -83,82 +83,83 @@ export default function ProductList({
     onCategoryClick,
     mobileSearchOpen = false,
 }: Props) {
-    // Keep track of which category is "active" (for highlight).
     const [activeCategory, setActiveCategory] = useState(
         unfilteredCategories[0]?.slug || ''
     )
-
-    // Store the product currently in a popup flow.
     const [activeProduct, setActiveProduct] = useState<Product | null>(null)
 
-    // Access the cart to add items.
     const { addItem } = useCart()
 
-    // We can use an intersection observer or scroll listener to detect "active" section.
-    // This is optional. If you don't need to highlight the active category while scrolling,
-    // you can remove the code below. 
-    useEffect(() => {
-        // If we only want anchor navigation, we can skip the intersection logic.
-        // But here's a minimal approach to highlight the category based on scroll.
+    // We'll store the IntersectionObserver instance in a ref
+    const observerRef = useRef<IntersectionObserver | null>(null)
 
-        // 1) Grab all category sections that have an id="#cat-..."
+    // IntersectionObserver setup
+    useEffect(() => {
+        // Gather section elements
         const sections = unfilteredCategories
             .map((cat) => document.getElementById(`cat-${cat.slug}`))
             .filter(Boolean) as HTMLElement[]
 
-        // 2) We can create an observer to update "activeCategory" when a section is scrolled into view.
-        const observer = new IntersectionObserver(
+        // Create the observer
+        const obs = new IntersectionObserver(
             (entries) => {
-                // For each entry, if it's intersecting, setActiveCategory to that slug.
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        // The id might be "cat-<slug>"
                         const slug = entry.target.id.replace('cat-', '')
                         setActiveCategory(slug)
                     }
                 })
             },
             {
-                root: null, // or some container if needed
+                root: null,
                 rootMargin: '-30% 0px -70% 0px',
-                // This margin ensures the section is considered "active" 
-                // when it's ~30% from top and not scrolled far below.
                 threshold: 0.0,
             }
         )
+        observerRef.current = obs
 
-        sections.forEach((sec) => observer.observe(sec))
+        // Observe each section
+        sections.forEach((sec) => obs.observe(sec))
 
         return () => {
-            sections.forEach((sec) => observer.unobserve(sec))
-            observer.disconnect()
+            sections.forEach((sec) => obs.unobserve(sec))
+            obs.disconnect()
         }
     }, [unfilteredCategories])
 
-    /**
-     * handleCategoryClick: called by Horizontal/Vertical categories 
-     * if you want to do something (like clear search). 
-     */
-    function handleCategoryClick(slug: string) {
-        // If parent wants to do something on category click (e.g. clearFilter).
-        if (onCategoryClick) {
-            onCategoryClick(slug)
-        }
-        // Also set activeCategory if you want immediate highlight:
-        setActiveCategory(slug)
-        // Note that the browser will do the actual anchor scroll for us.
+    // A helper to re-observe
+    function reconnectObserver() {
+        const sections = unfilteredCategories
+            .map((cat) => document.getElementById(`cat-${cat.slug}`))
+            .filter(Boolean) as HTMLElement[]
+        sections.forEach((sec) => observerRef.current?.observe(sec))
     }
 
-    /**
-     * If a product has no popups, directly add it to cart.
-     * If it has popups, set it as active to show the ProductPopupFlow.
-     */
+    // Called by HorizontalCategories
+    function handleCategoryClick(slug: string) {
+        // If you need to do something else (like clear searchTerm), you can do it here:
+        if (onCategoryClick) onCategoryClick(slug)
+
+        // 1) Disconnect observer so it doesn't override
+        observerRef.current?.disconnect()
+
+        // 2) We can also setActiveCategory for immediate highlight
+        setActiveCategory(slug)
+
+        // 3) The <a> link in HorizontalCategories will do a normal anchor jump
+        //    because we do not preventDefault.
+
+        // 4) After 800ms, reconnect
+        setTimeout(() => {
+            observerRef.current && reconnectObserver()
+        }, 800)
+    }
+
     function handleProductClick(prod: Product) {
         const popups = prod.productpopups || []
         const hasPopups = popups.some((p) => p.popup !== null)
 
         if (!hasPopups) {
-            // Add direct to cart
             addItem({
                 productId: prod.id,
                 productName: prod.name_nl,
@@ -167,12 +168,11 @@ export default function ProductList({
             })
             alert(`Added "${prod.name_nl}" to cart!`)
         } else {
-            // Show the popup flow
             setActiveProduct(prod)
         }
     }
 
-    // Final array to render. (The parent has already done filtering.)
+    // The final “visible” categories after filtering
     const visibleSections = filteredCategories
 
     return (
@@ -235,7 +235,7 @@ export default function ProductList({
                             id={`cat-${cat.slug}`}
                             className="scroll-mt-[100px] mb-8"
                         >
-                            <h3 className="categoryname text-xl mt-8 mb-4 font-secondary font-love-of-thunder">
+                            <h3 className="categoryname text-xl mt-3 mb-4 font-secondary font-love-of-thunder">
                                 {catLabel}
                             </h3>
 

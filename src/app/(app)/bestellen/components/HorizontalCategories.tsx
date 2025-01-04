@@ -1,4 +1,3 @@
-// File: /app/(app)/bestellen/components/HorizontalCategories.tsx
 'use client'
 
 import React, { useEffect, useRef } from 'react'
@@ -12,13 +11,13 @@ interface Category {
 type Props = {
   categories: Category[]
   activeCategory: string
+  /** Parent callback to let it “pause” the observer, etc. */
   onCategoryClick: (slug: string) => void
 }
 
 /**
  * A horizontally scrollable category bar that also anchor-links to #cat-{slug}.
- * When `activeCategory` changes (e.g., from a scroll observer in ProductList),
- * we auto-scroll so that the active category is visible within this container.
+ * We'll NOT preventDefault, so the browser natively scrolls.
  */
 export default function HorizontalCategories({
   categories,
@@ -27,7 +26,7 @@ export default function HorizontalCategories({
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Whenever the "activeCategory" changes, we scroll that link into view.
+  // Whenever the activeCategory changes from IntersectionObserver, center it horizontally
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -35,7 +34,6 @@ export default function HorizontalCategories({
       `[data-slug="${activeCategory}"]`
     )
     if (activeLink) {
-      // Smoothly center the active link
       activeLink.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
@@ -47,7 +45,18 @@ export default function HorizontalCategories({
   return (
     <div
       ref={containerRef}
-      className="w-full flex overflow-x-auto gap-2 pb-1 bg-white rounded shadow-sm font-medium scroll-smooth"
+      className="
+        w-full
+        flex
+        overflow-x-auto
+        gap-2
+        pb-1
+        bg-white
+        rounded
+        shadow-sm
+        font-medium
+        scroll-smooth
+      "
       style={{ scrollbarWidth: 'thin' }} // optional narrower scrollbar for Firefox
     >
       {categories.map((cat) => {
@@ -56,9 +65,12 @@ export default function HorizontalCategories({
           <a
             key={cat.id}
             href={`#cat-${cat.slug}`}
-            data-slug={cat.slug} // for the auto-scroll lookup
-            onClick={() => onCategoryClick(cat.slug)}
-            style={{ borderRadius: '4px' }}
+            data-slug={cat.slug}
+            // No preventDefault => normal anchor scroll
+            onClick={() => {
+              // Let the parent know we clicked
+              onCategoryClick(cat.slug)
+            }}
             className={`
               whitespace-nowrap
               px-4 py-2

@@ -2,7 +2,7 @@
     display: flex;
     margin: auto;
     max-width: 100%;
-    padding: 0 1rem;
+    padding: 0 0rem;
   }
 
   /* Hide scrollbar in Chrome, Safari, Opera using the ::-webkit-scrollbar pseudo-element */
@@ -35,9 +35,9 @@
     }
   }
   
-  @media (min-width: 1280px) {
+  @media (min-width: 1080px) {
     .containercustommaxwidth {
-      max-width: 1280px;
+      max-width: 1080px;
     }
   }
   
