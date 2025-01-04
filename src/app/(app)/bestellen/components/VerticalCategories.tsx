@@ -33,7 +33,7 @@ export default function VerticalCategories({
         flex
         flex-col
         min-w-[200px]
-        max-w-[230px]
+        
         h-[70vh]
         overflow-y-auto
         bg-[#fbfafc]
@@ -54,6 +54,7 @@ export default function VerticalCategories({
             className={`
               block
               text-left
+              text-md
               px-3 py-2
               border-b border-gray-200
               cursor-pointer

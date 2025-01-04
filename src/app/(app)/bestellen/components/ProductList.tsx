@@ -163,6 +163,12 @@ export default function ProductList({
                 productName: prod.name_nl,
                 price: prod.price || 0,
                 quantity: 1,
+                image: prod.image
+                    ? {
+                        url: prod.image.url,
+                        alt: prod.image.alt ?? prod.name_nl,
+                    }
+                    : undefined,
             })
             // alert(`Added "${prod.name_nl}" to cart!`)
         } else {

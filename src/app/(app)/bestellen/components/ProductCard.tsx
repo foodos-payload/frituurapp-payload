@@ -116,18 +116,18 @@ export default function ProductCard({
                         className="w-full h-full object-contain max-h-36"
                     />
                 ) : (
-                    <div className="text-gray-300 text-sm p-4">No image</div>
+                    <div className="text-gray-300 text-md p-4">No image</div>
                 )}
             </div>
 
             {/* Right: Title, Desc, Price */}
             <div className="w-3/5 p-4 flex flex-col justify-between relative">
                 <div>
-                    <h2 className="text-base font-bold mb-1 line-clamp-2">
+                    <h2 className="text-lg font-bold mb-1 line-clamp-2">
                         {product.displayName}
                     </h2>
                     {product.displayDesc && (
-                        <p className="text-sm text-gray-600 line-clamp-3 mb-2">
+                        <p className="text-md text-gray-600 line-clamp-3 mb-2">
                             {product.displayDesc}
                         </p>
                     )}
@@ -140,7 +140,7 @@ export default function ProductCard({
                             €{product.price.toFixed(2)}
                         </span>
                     ) : (
-                        <span className="text-sm text-gray-500">Price on request</span>
+                        <span className="text-md text-gray-500">Price on request</span>
                     )}
                 </div>
 

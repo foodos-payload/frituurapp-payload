@@ -77,7 +77,7 @@ export default function HorizontalCategories({
               px-4 py-2
               border border-gray-300
               rounded-lg
-              text-sm
+              text-md
               cursor-pointer
               transition-colors
               ${isActive
