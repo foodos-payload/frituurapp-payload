@@ -1,5 +1,5 @@
 {
-  "id": "d039be05-0dd1-4c5e-9d87-acb209f592cb",
+  "id": "353fbd12-8b1c-4dcd-9e65-bd7220184032",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2093,6 +2093,311 @@
         "timeslots_rels_shops_fk": {
           "name": "timeslots_rels_shops_fk",
           "tableFrom": "timeslots_rels",
+          "tableTo": "shops",
+          "columnsFrom": [
+            "shops_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.shop_branding": {
+      "name": "shop_branding",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_title": {
+          "name": "site_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_header_img_id": {
+          "name": "site_header_img_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ad_image_id": {
+          "name": "ad_image_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "shop_branding_tenant_idx": {
+          "name": "shop_branding_tenant_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "shop_branding_site_header_img_idx": {
+          "name": "shop_branding_site_header_img_idx",
+          "columns": [
+            {
+              "expression": "site_header_img_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "shop_branding_ad_image_idx": {
+          "name": "shop_branding_ad_image_idx",
+          "columns": [
+            {
+              "expression": "ad_image_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "shop_branding_updated_at_idx": {
+          "name": "shop_branding_updated_at_idx",
+          "columns": [
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "shop_branding_created_at_idx": {
+          "name": "shop_branding_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "shop_branding_tenant_id_tenants_id_fk": {
+          "name": "shop_branding_tenant_id_tenants_id_fk",
+          "tableFrom": "shop_branding",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "shop_branding_site_header_img_id_media_id_fk": {
+          "name": "shop_branding_site_header_img_id_media_id_fk",
+          "tableFrom": "shop_branding",
+          "tableTo": "media",
+          "columnsFrom": [
+            "site_header_img_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "shop_branding_ad_image_id_media_id_fk": {
+          "name": "shop_branding_ad_image_id_media_id_fk",
+          "tableFrom": "shop_branding",
+          "tableTo": "media",
+          "columnsFrom": [
+            "ad_image_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.shop_branding_rels": {
+      "name": "shop_branding_rels",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "path": {
+          "name": "path",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shops_id": {
+          "name": "shops_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "shop_branding_rels_order_idx": {
+          "name": "shop_branding_rels_order_idx",
+          "columns": [
+            {
+              "expression": "order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "shop_branding_rels_parent_idx": {
+          "name": "shop_branding_rels_parent_idx",
+          "columns": [
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "shop_branding_rels_path_idx": {
+          "name": "shop_branding_rels_path_idx",
+          "columns": [
+            {
+              "expression": "path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "shop_branding_rels_shops_id_idx": {
+          "name": "shop_branding_rels_shops_id_idx",
+          "columns": [
+            {
+              "expression": "shops_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "shop_branding_rels_parent_fk": {
+          "name": "shop_branding_rels_parent_fk",
+          "tableFrom": "shop_branding_rels",
+          "tableTo": "shop_branding",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "shop_branding_rels_shops_fk": {
+          "name": "shop_branding_rels_shops_fk",
+          "tableFrom": "shop_branding_rels",
           "tableTo": "shops",
           "columnsFrom": [
             "shops_id"
@@ -6080,6 +6385,14 @@
           "primaryKey": false,
           "notNull": true
         },
+        "status": {
+          "name": "status",
+          "type": "enum_orders_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending_payment'"
+        },
         "order_type": {
           "name": "order_type",
           "type": "enum_orders_order_type",
@@ -8205,6 +8518,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "shop_branding_id": {
+          "name": "shop_branding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "reservation_entries_id": {
           "name": "reservation_entries_id",
           "type": "uuid",
@@ -8428,6 +8747,21 @@
           "columns": [
             {
               "expression": "timeslots_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payload_locked_documents_rels_shop_branding_id_idx": {
+          "name": "payload_locked_documents_rels_shop_branding_id_idx",
+          "columns": [
+            {
+              "expression": "shop_branding_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -8764,6 +9098,19 @@
           "tableTo": "timeslots",
           "columnsFrom": [
             "timeslots_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "payload_locked_documents_rels_shop_branding_fk": {
+          "name": "payload_locked_documents_rels_shop_branding_fk",
+          "tableFrom": "payload_locked_documents_rels",
+          "tableTo": "shop_branding",
+          "columnsFrom": [
+            "shop_branding_id"
           ],
           "columnsTo": [
             "id"
@@ -9377,6 +9724,16 @@
       "values": [
         "percentage",
         "fixed"
+      ]
+    },
+    "public.enum_orders_status": {
+      "name": "enum_orders_status",
+      "schema": "public",
+      "values": [
+        "pending_payment",
+        "awaiting_preparation",
+        "in_preparation",
+        "complete"
       ]
     },
     "public.enum_orders_order_type": {

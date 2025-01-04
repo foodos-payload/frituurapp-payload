@@ -12,12 +12,13 @@ export default async function OrderSummaryPageRoute({
         kiosk?: string
     }>
 }) {
-    const requestHeaders = headers()
-    const fullHost = requestHeaders.get('host') || ''
-    const hostSlug = fullHost.split('.')[0] || 'defaultShop'
 
     const { orderId = '999', kiosk = '' } = await promiseSearchParams
     const kioskMode = kiosk === 'true'
+
+    const requestHeaders = await headers()
+    const fullHost = requestHeaders.get('host') || ''
+    const hostSlug = fullHost.split('.')[0] || 'defaultShop'
 
     return (
         <main className="min-h-screen bg-white text-gray-800">
