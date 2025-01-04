@@ -39,6 +39,7 @@ interface Props {
 
     /** The element ref of your “Cart” (for measuring the final position). */
     cartRef?: React.RefObject<HTMLDivElement>;
+    productRef?: React.RefObject<HTMLDivElement>;
 }
 
 /**

@@ -19,16 +19,40 @@ import '../bestellen.css';
  * Minimal shape for a product in your categories.
  * (Add more fields if needed.)
  */
+type Subproduct = {
+    id: string;
+    name_nl: string;
+    price: number;
+};
+
+type PopupDoc = {
+    id: string;
+    popup_title_nl: string;
+    multiselect: boolean;
+    subproducts: Subproduct[];
+};
+
+type PopupItem = {
+    order: number;
+    popup: PopupDoc | null;
+};
+
 type Product = {
     id: string;
     name_nl: string;
     name_en?: string;
-    name_de?: string;
     name_fr?: string;
+    name_de?: string;
+    description_nl?: string;
+    description_en?: string;
+    description_fr?: string;
+    description_de?: string;
     price: number | null;
+    old_price: number | null;
     image?: { url: string; alt: string };
     webdescription?: string;
     isPromotion?: boolean;
+    productpopups?: PopupItem[];
     // ...
 };
 
@@ -79,6 +103,7 @@ export default function BestellenLayout({
     categorizedProducts,
     userLang,
     branding,
+
 }: Props) {
     const [showJsonModal, setShowJsonModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');

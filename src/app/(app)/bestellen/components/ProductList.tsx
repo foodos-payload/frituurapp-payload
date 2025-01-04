@@ -78,9 +78,8 @@ interface Props {
     branding?: Branding;
 
     /** The cart DOM ref, so we can measure its position. */
-    cartRef?: React.RefObject<HTMLDivElement>;
+    cartRef?: React.RefObject<HTMLDivElement | null>; // Allow 'null'
 }
-
 
 /**
  * ProductList that uses anchor-based navigation plus "fly" animations

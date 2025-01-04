@@ -57,7 +57,8 @@ interface Props {
     editingItemSignature?: string;
     onClose: () => void;
     branding?: Branding;
-    cartRef?: React.RefObject<HTMLDivElement>;
+    cartRef?: React.RefObject<HTMLDivElement | null>; // Allow 'null'
+
 }
 
 function flyToCart(cartRef: React.RefObject<HTMLDivElement>, sourceImg: HTMLImageElement | null) {
