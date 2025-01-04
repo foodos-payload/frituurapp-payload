@@ -3,6 +3,7 @@
     margin: auto;
     max-width: 100%;
     padding: 0 0rem;
+    align-items: center;
   }
 
   /* Hide scrollbar in Chrome, Safari, Opera using the ::-webkit-scrollbar pseudo-element */

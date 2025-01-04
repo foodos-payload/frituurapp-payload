@@ -98,6 +98,7 @@ export default function ProductCard({
         hover:shadow-xl
         transition-shadow
         w-full
+        max-h-[200px] 
       `}
         >
             {/* Promotion badge */}
@@ -113,7 +114,7 @@ export default function ProductCard({
                     <img
                         src={product.image.url}
                         alt={product.image.alt || product.displayName}
-                        className="w-full h-full object-contain max-h-36"
+                        className="w-full h-full object-cover mix-blend-multiply"
                     />
                 ) : (
                     <div className="text-gray-300 text-md p-4">No image</div>
@@ -126,8 +127,14 @@ export default function ProductCard({
                     <h2 className="text-lg font-bold mb-1 line-clamp-2">
                         {product.displayName}
                     </h2>
+
                     {product.displayDesc && (
-                        <p className="text-md text-gray-600 line-clamp-3 mb-2">
+                        <p className="
+              text-md
+              text-gray-600
+              line-clamp-3
+              mb-2
+            ">
                             {product.displayDesc}
                         </p>
                     )}

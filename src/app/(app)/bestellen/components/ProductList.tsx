@@ -182,7 +182,7 @@ export default function ProductList({
     const visibleSections = filteredCategories
 
     return (
-        <div className="flex gap-4 w-full p-2 scroll-smooth">
+        <div className="flex gap-4 w-full p-2 scroll-smooth containercustommaxwidth">
             {/* LEFT: vertical categories on large screens */}
             <div
                 className="hidden lg:block"

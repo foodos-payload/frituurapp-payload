@@ -1,48 +1,129 @@
 // File: /app/(app)/bestellen/components/cart/CartButton.tsx
-'use client'
+'use client';
 
-import React from 'react'
-import { FiShoppingCart } from 'react-icons/fi'
-import { useCart } from './CartContext'
+import React from 'react';
+import { useRouter } from 'next/navigation'; // or 'next/router' if older Next
+import { FiShoppingCart, FiArrowLeft } from 'react-icons/fi';
+import { useCart } from './CartContext';
 
 type Props = {
-    onClick: () => void
-}
+    /** Called when the user clicks "Continue to Cart" button */
+    onClick: () => void;
+};
 
+/**
+ * A bottom bar similar to the old Vue component:
+ * - A "Go Back" button (hidden on mobile).
+ * - A large "Continue to Cart" button with item count badge.
+ */
 export default function CartButton({ onClick }: Props) {
-    const { items, getCartTotal } = useCart()
+    const router = useRouter();
+    const { items, getCartTotal } = useCart();
 
-    // Sum total quantity
-    const itemCount = items.reduce((sum, i) => sum + i.quantity, 0)
-    // Cart total for all items + subproducts
-    const totalPrice = getCartTotal()
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalPrice = getCartTotal();
+
+    // For the "Go Back" button
+    function handleGoBack() {
+        // either navigate to homepage or history.back(), etc.
+        router.push('/');
+    }
 
     return (
-        <div className="flex justify-center items-center">
-            <button
-                onClick={onClick}
-                className="fixed bottom-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-full flex justify-center items-center gap-2"
-                style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }}
+        <div
+            className="
+        fixed bottom-0 left-0 w-full
+        bg-white    /* or your custom 'bg-color-footer' */
+        shadow-top   /* replicate old .shadow-top style if needed */
+        py-3
+        z-50
+        flex justify-center items-center
+      "
+        >
+            <div
+                className="
+          containercustommaxwidth container
+          flex justify-between items-center
+          px-4
+        "
             >
-                <FiShoppingCart size={18} />
+                {/* Go Back button: only visible on md+ screens */}
+                <button
+                    onClick={handleGoBack}
+                    style={{ borderRadius: '0.5rem' }}
+                    className="
+            hidden md:flex
+            rounded-lg
+            border border-[#CE2027]
+            text-[#CE2027]
+            font-bold
+            p-2.5
+            gap-2
+            items-center
+            justify-center
+            focus:outline-none
+          "
+                >
+                    <FiArrowLeft />
+                    <span>Go Back</span>
+                </button>
 
-                {/* Show the item count in a red badge */}
-                {itemCount > 0 && (
-                    <span className="bg-red-500 rounded-full px-2 py-0 text-xs">
-                        {itemCount}
-                    </span>
-                )}
+                {/* Large "Continue to Cart" button */}
+                <div className="relative w-full md:w-auto flex justify-center md:flex-none">
+                    <button
+                        onClick={onClick}
+                        style={{ borderRadius: '0.5rem' }}
+                        className="
+              whitespace-nowrap
+              rounded-lg
+              flex
+              items-center
+              justify-center
+              font-secondary font-love-of-thunder
+              bg-blue-600   
+              text-white
+              p-2.5
+              gap-2
+              focus:outline-none
+              w-full md:w-auto
+              text-lg
+            "
+                    >
+                        <div className="relative">
+                            <FiShoppingCart className="mr-1" />
 
-                {/* Show the total price in parentheses */}
-                {itemCount > 0 && (
-                    <span className="text-xs sm:text-sm">
-                        (€{totalPrice.toFixed(2)})
-                    </span>
-                )}
+                            {/* Red badge for itemCount */}
+                            {itemCount > 0 && (
+                                <span
+                                    className="
+                    absolute
+                    bg-red-600
+                    text-white
+                    text-[10px]
+                    font-semibold
+                    rounded-full
+                    leading-none
+                    px-1
+                    -top-2
+                    
+                  "
+                                >
+                                    {itemCount}
+                                </span>
+                            )}
+                        </div>
 
-                {/* 'AFREKENEN' text only on sm+ screens */}
-                <span className="hidden sm:inline">AFREKENEN</span>
-            </button>
+                        <span>Continue to Cart</span>
+
+                        {/* Show total price in parentheses if we have items */}
+                        {itemCount > 0 && (
+                            <span className="ml-1 text-sm">
+                                (€{totalPrice.toFixed(2)})
+                            </span>
+                        )}
+                    </button>
+                </div>
+            </div>
         </div>
-    )
+    );
 }

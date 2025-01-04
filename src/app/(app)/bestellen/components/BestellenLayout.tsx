@@ -148,7 +148,7 @@ export default function BestellenLayout({
             <div
                 className="
           main-container 
-          containercustommaxwidth 
+          
           relative 
           flex 
           flex-col 
@@ -160,7 +160,7 @@ export default function BestellenLayout({
         "
             >
                 {/* Sticky Header */}
-                <div className="sticky top-0 z-50 bg-white">
+                <div className="sticky top-0 z-50 bg-white w-full">
                     <Header
                         searchValue={searchTerm}
                         onSearchChange={(val) => setSearchTerm(val)}

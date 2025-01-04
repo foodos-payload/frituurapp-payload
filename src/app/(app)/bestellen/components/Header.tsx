@@ -60,6 +60,7 @@ export default function Header({
           items-center
           justify-between
           h-[80px]
+          containercustommaxwidth
         ">
                     {/* LEFT: Brand / Logo */}
                     <div className="flex items-center space-x-2">
