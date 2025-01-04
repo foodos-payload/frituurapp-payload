@@ -131,6 +131,24 @@ export const Orders: CollectionConfig = {
         },
         {
           label: {
+            en: 'Ready for Pickup',
+            nl: 'Klaar voor Afhaling',
+            de: 'Abholbereit',
+            fr: 'Prêt pour le Retrait',
+          },
+          value: 'ready_for_pickup',
+        },
+        {
+          label: {
+            en: 'In Delivery',
+            nl: 'Onderweg',
+            de: 'In Lieferung',
+            fr: 'En Cours de Livraison',
+          },
+          value: 'in_delivery',
+        },
+        {
+          label: {
             en: 'Complete',
             nl: 'Voltooid',
             de: 'Abgeschlossen',

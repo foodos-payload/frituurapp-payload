@@ -1212,7 +1212,13 @@ export interface Order {
   /**
    * Current status of the order (e.g., Payment Pending, In Preparation, etc.)
    */
-  status: 'pending_payment' | 'awaiting_preparation' | 'in_preparation' | 'complete';
+  status:
+    | 'pending_payment'
+    | 'awaiting_preparation'
+    | 'in_preparation'
+    | 'ready_for_pickup'
+    | 'in_delivery'
+    | 'complete';
   /**
    * Type of the order (e.g., POS, Web, or Kiosk).
    */
