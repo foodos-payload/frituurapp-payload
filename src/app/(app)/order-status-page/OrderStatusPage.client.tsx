@@ -98,7 +98,7 @@ export function OrderStatusPage({ hostSlug }: OrderStatusPageProps) {
                         In Preparation
                     </h2>
                     {isLoading ? (
-                        <p className="mt-4">Loading in preparation orders...</p>
+                        <p className="mt-4"></p>
                     ) : (
                         <ul className="mt-4 flex-grow grid grid-cols-2 gap-4">
                             {preparationOrders.map((order) => (
@@ -119,7 +119,7 @@ export function OrderStatusPage({ hostSlug }: OrderStatusPageProps) {
                         Ready
                     </h2>
                     {isLoading ? (
-                        <p className="mt-4">Loading ready orders...</p>
+                        <p className="mt-4"></p>
                     ) : (
                         <ul className="mt-4 flex-grow">
                             {readyOrders.map((order) => (
