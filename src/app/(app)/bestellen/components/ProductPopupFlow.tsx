@@ -6,18 +6,13 @@ import { useCart, CartItem } from './cart/CartContext';
 import { FiCheckCircle } from 'react-icons/fi';
 
 /**
- * Types for your subproducts, popups, product, etc.
+ * Minimal subproduct/link types
  */
 type LinkedProductData = {
     id: string;
     name_nl: string;
-    description_nl?: string;
-    priceUnified: boolean;
     price: number | null;
-    image?: {
-        url: string;
-        alt: string;
-    } | null;
+    image?: { url: string; alt: string } | null;
 };
 
 type Subproduct = {
@@ -32,9 +27,8 @@ type PopupDoc = {
     id: string;
     popup_title_nl: string;
     multiselect: boolean;
-    minimum_option: number;
-    maximum_option: number;
     subproducts: Subproduct[];
+    // ...
 };
 
 type PopupItem = {
@@ -42,61 +36,30 @@ type PopupItem = {
     popup: PopupDoc | null;
 };
 
-/**
- * Minimal shape for your parent "Product" that is being customized.
- */
 type Product = {
     id: string;
     name_nl: string;
-    price?: number | null; // the base product price
+    price?: number | null;
+    image?: { url: string; alt: string };
     productpopups?: PopupItem[];
-    image?: {
-        url: string;
-        alt: string;
-    };
     // ...
 };
 
 interface Props {
-    /** The product definition from your database, including popups. */
     product: Product;
-
-    /**
-     * If we are "editing" an existing cart item (with subproducts, etc.),
-     * we can pre-fill from editingItem.subproducts.
-     */
     editingItem?: CartItem;
-
-    /**
-     * The unique signature for the cart item being edited (from getLineItemSignature).
-     */
     editingItemSignature?: string;
-
-    /** Called when the popup flow is closed (after add or cancel). */
     onClose: () => void;
 }
 
-/**
- * ProductPopupFlow:
- * - Multi-step subproduct selection (like Vue).
- * - Slide-up + fade transitions.
- * - Sticky top banner with image & gradient overlay (like old Vue layout).
- * - “Tile-style” subproduct options in a grid (like in your Vue code).
- * - Checkmark icon on selected tiles.
- */
 export default function ProductPopupFlow({
     product,
     editingItem,
     editingItemSignature,
     onClose,
 }: Props) {
-    console.log('[ProductPopupFlow] product:', product);
-
     const { addItem, updateItem } = useCart();
 
-    /**
-     * A) Lock body scroll while mounted
-     */
     useEffect(() => {
         document.body.style.overflow = 'hidden';
         return () => {
@@ -104,44 +67,33 @@ export default function ProductPopupFlow({
         };
     }, []);
 
-    /**
-     * B) Sort + filter the product popups
-     */
+    // Sort + filter popups
     const sortedPopups = (product.productpopups || [])
         .filter((p) => p.popup !== null)
         .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    // If no popups exist => no flow needed
-    if (sortedPopups.length === 0) {
-        return null;
-    }
+    if (sortedPopups.length === 0) return null;
 
-    /**
-     * C) Track which step (popup index) we are on
-     */
+    // Step state
     const [currentIndex, setCurrentIndex] = useState(0);
     const currentPopupItem = sortedPopups[currentIndex];
     const popup = currentPopupItem?.popup;
-    if (!popup) return null; // safeguard
+    if (!popup) return null;
 
     const { popup_title_nl, multiselect, subproducts } = popup;
 
-    /**
-     * D) Maintain selected subproduct IDs for each popup
-     *    e.g. { [popupID]: ["sub-1", "sub-2"] }
-     */
+    // E.g. { [popupID]: [subId, subId] }
     const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>(() => {
         // If editing => we might prefill. For brevity, we do an empty approach.
         if (!editingItem || !editingItem.subproducts) return {};
         return {};
     });
 
+    // The chosen ID array for this step
     const popupID = popup.id;
     const currentSelections = selectedOptions[popupID] || [];
 
-    /**
-     * E) Handler: click a subproduct => toggle or single-select
-     */
+    // Handler: toggle or single-select
     function handleSubproductClick(sub: Subproduct) {
         const subID = sub.id;
         setSelectedOptions((prev) => {
@@ -149,14 +101,13 @@ export default function ProductPopupFlow({
             let newArray: string[] = [];
 
             if (multiselect) {
-                // Toggle
                 if (oldArray.includes(subID)) {
                     newArray = oldArray.filter((id) => id !== subID);
                 } else {
                     newArray = [...oldArray, subID];
                 }
             } else {
-                // Single select
+                // single select
                 newArray = [subID];
             }
 
@@ -167,9 +118,7 @@ export default function ProductPopupFlow({
         });
     }
 
-    /**
-     * F) Next / Back / Finish
-     */
+    // Next/back/finish
     function handleNext() {
         if (currentIndex >= sortedPopups.length - 1) {
             handleFinish();
@@ -177,25 +126,17 @@ export default function ProductPopupFlow({
             setCurrentIndex((i) => i + 1);
         }
     }
-
     function handleBack() {
-        if (currentIndex > 0) {
-            setCurrentIndex((i) => i - 1);
-        }
+        if (currentIndex > 0) setCurrentIndex((i) => i - 1);
     }
-
-    /**
-     * G) On Finish => gather chosen subproducts => add or update
-     */
     function handleFinish() {
-        // 1) Gather all chosen subproducts from all popups
+        // Gather subproducts from all steps
         const chosenSubs: { id: string; name_nl: string; price: number }[] = [];
 
         for (const popIt of sortedPopups) {
             if (!popIt.popup) continue;
             const pId = popIt.popup.id;
             const chosenIDs = selectedOptions[pId] || [];
-
             for (const sp of popIt.popup.subproducts) {
                 if (!chosenIDs.includes(sp.id)) continue;
 
@@ -215,10 +156,8 @@ export default function ProductPopupFlow({
             }
         }
 
-        // 2) Base product price
+        // If editing => update; else add
         const basePrice = product.price ?? 0;
-
-        // 3) If editing => update existing line item; else add new
         if (editingItem && editingItemSignature) {
             updateItem(editingItemSignature, {
                 price: basePrice,
@@ -242,23 +181,17 @@ export default function ProductPopupFlow({
                 hasPopups: true,
             });
         }
-
-        // 4) Close
         onClose();
     }
 
-    /**
-     * H) Close if user clicks the dark overlay
-     */
+    // Outside click => close
     function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
+        if (e.target === e.currentTarget) onClose();
     }
 
-    /**
-     * I) Render
-     */
+    // === NEW: build a "selectedItems" array to display on top ===
+    const selectedItems = gatherAllSelectedItems(sortedPopups, selectedOptions);
+
     return (
         <div
             className="
@@ -266,28 +199,20 @@ export default function ProductPopupFlow({
         flex flex-col
         items-center
         justify-end md:justify-center
-        modal-fade-bg
+        bg-black bg-opacity-70
+        transition-opacity duration-300
+        animate-fadeIn
       "
-            onClick={onClose}
+            onClick={handleOverlayClick}
         >
-            {/* Dark overlay fade */}
-            <div
-                className="
-          absolute inset-0
-          bg-black bg-opacity-70
-          transition-opacity duration-300
-          animate-fadeIn
-        "
-            />
-
-            {/* Main container => Slide up on mobile */}
+            {/* White popup container */}
             <div
                 onClick={(e) => e.stopPropagation()}
                 className="
           relative
           w-[100vw] md:w-[50vw]
           min-h-[70vh]
-          max-h-[100vh] md:max-h-[90vh] md:min-h-[50vh]
+          max-h-[90vh] md:min-h-[50vh]
           bg-white
           rounded-t-2xl md:rounded-b-2xl
           shadow-lg
@@ -297,35 +222,24 @@ export default function ProductPopupFlow({
             >
                 {/* Sticky Image Banner */}
                 <div className="relative sticky top-0 z-10 w-full h-[150px] md:h-[200px]">
-                    {/* Product image as background */}
                     {product.image?.url && (
-                        // Create a "safe" URL with spaces replaced (or fully encode)
                         (() => {
                             const safeUrl = encodeURI(product.image.url);
-
                             return (
                                 <div
-                                    className="
-          absolute inset-0
-          bg-cover bg-no-repeat bg-center
-          opacity-90
-        "
+                                    className="absolute inset-0 bg-cover bg-no-repeat bg-center opacity-90"
                                     style={{ backgroundImage: `url(${safeUrl})` }}
                                 />
                             );
                         })()
                     )}
-
-                    {/* Gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
 
-                    {/* Title, Price, & Close Button */}
+                    {/* Close Button + Title + Price */}
                     <div className="relative flex flex-col items-center justify-end h-full pb-4">
-                        {/* Close Button */}
                         <button
                             onClick={onClose}
                             className="
-                modal-close-button
                 absolute
                 top-4 right-4
                 bg-red-600 text-white
@@ -343,13 +257,15 @@ export default function ProductPopupFlow({
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
                             >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
                                     d="M6 18L18 6M6 6l12 12"
                                 />
                             </svg>
                         </button>
 
-                        {/* Product title + optional price in white */}
                         <div className="text-center text-white flex gap-2">
                             <h1 className="text-xl font-semibold font-secondary font-love-of-thunder">
                                 {product.name_nl}
@@ -364,13 +280,40 @@ export default function ProductPopupFlow({
                 </div>
 
                 {/* Main content area */}
-                <div className="flex-1 w-[95%] mx-auto mb-14 mt-20">
-                    {/* “Stap X van Y: popup_title_nl” */}
-                    <h2 className="text-xl font-semibold mb-12 mt-2 text-center">
+                <div className="flex-1 w-[95%] mx-auto mb-14 mt-5">
+                    {/* 1) Show the "selected items" row if any */}
+                    {selectedItems.length > 0 && (
+                        <div className="selected-items flex flex-row flex-wrap items-center gap-2 mb-6">
+                            {selectedItems.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="selected-item-tile animate-add flex items-center gap-1"
+                                >
+                                    <div className="w-20 h-20 flex items-center justify-center bg-gray-200 rounded-full">
+                                        {item.image?.url ? (
+                                            <img
+                                                src={item.image.url}
+                                                alt={item.image.alt || item.name_nl}
+                                                className="object-cover w-full h-full rounded-full"
+                                            />
+                                        ) : (
+                                            <span className="text-xs text-center px-2">
+                                                {item.name_nl}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {/* or label text next to it if you want */}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* 2) Step label */}
+                    <h2 className="text-xl font-semibold mt-20 mb-10 text-center">
                         {popup_title_nl}
                     </h2>
 
-                    {/* Subproduct “tile” grid */}
+                    {/* 3) Subproduct tile grid */}
                     <div className="grid gap-4 mt-4 grid-cols-2 md:grid-cols-3">
                         {subproducts.map((sub) => {
                             const useLinked = !!sub.linkedProduct;
@@ -417,14 +360,12 @@ export default function ProductPopupFlow({
                                         </span>
                                     </div>
 
-                                    {/* Checkmark in bottom-right if selected */}
+                                    {/* Checkmark if selected */}
                                     {isSelected && (
                                         <div className="absolute bottom-2 right-2 text-green-500">
-                                            {/* Using e.g. react-icons FaCheckCircle */}
                                             <FiCheckCircle size={24} />
                                         </div>
                                     )}
-
                                 </div>
                             );
                         })}
@@ -473,4 +414,42 @@ export default function ProductPopupFlow({
             </div>
         </div>
     );
+}
+
+/** A helper function to gather *all* selected subproducts across all popups. */
+function gatherAllSelectedItems(
+    sortedPopups: PopupItem[],
+    selectedOptions: Record<string, string[]>
+) {
+    // We'll create an array of "sub" with { id, name_nl, image }, etc.
+    // For sub.linkedProduct => use that data instead.
+    const results: Array<{
+        id: string;
+        name_nl: string;
+        image?: { url: string; alt?: string };
+    }> = [];
+
+    for (const popIt of sortedPopups) {
+        if (!popIt.popup) continue;
+        const chosenIDs = selectedOptions[popIt.popup.id] || [];
+        for (const sub of popIt.popup.subproducts) {
+            if (!chosenIDs.includes(sub.id)) continue;
+
+            if (sub.linkedProduct) {
+                results.push({
+                    id: sub.linkedProduct.id,
+                    name_nl: sub.linkedProduct.name_nl,
+                    image: sub.linkedProduct.image || undefined,
+                });
+            } else {
+                results.push({
+                    id: sub.id,
+                    name_nl: sub.name_nl,
+                    image: sub.image || undefined,
+                });
+            }
+        }
+    }
+
+    return results;
 }
