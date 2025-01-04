@@ -1,18 +1,18 @@
 // File: /app/(app)/bestellen/components/Header.tsx
-'use client'
+'use client';
 
-import React from 'react'
-import { FiMenu, FiSearch, FiX } from 'react-icons/fi'
+import React, { useRef, useEffect } from 'react';
+import { FiMenu, FiSearch, FiX } from 'react-icons/fi';
 
 interface HeaderProps {
-    searchValue: string
-    onSearchChange: (newValue: string) => void
-    onClearFilter: () => void
-    onMenuClick: () => void
+    searchValue: string;
+    onSearchChange: (newValue: string) => void;
+    onClearFilter: () => void;
+    onMenuClick: () => void;
 
     /** We'll pass the parent's state for mobile search: */
-    mobileSearchOpen: boolean
-    setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>
+    mobileSearchOpen: boolean;
+    setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
@@ -22,6 +22,7 @@ interface HeaderProps {
  * - Right: Mobile search icon + Menu icon
  *
  * On mobile, toggles a small search bar when the search icon is tapped.
+ * If toggled open => automatically focus the mobile search input.
  */
 export default function Header({
     searchValue,
@@ -31,36 +32,51 @@ export default function Header({
     mobileSearchOpen,
     setMobileSearchOpen,
 }: HeaderProps) {
-    // When user types in the input
+    // 1) Track ref to the mobile search input so we can auto-focus it.
+    const mobileInputRef = useRef<HTMLInputElement>(null);
+
+    // 2) Whenever mobileSearchOpen goes TRUE, focus the input
+    useEffect(() => {
+        if (mobileSearchOpen) {
+            // Slight delay to ensure DOM is rendered
+            setTimeout(() => {
+                mobileInputRef.current?.focus();
+            }, 50);
+        }
+    }, [mobileSearchOpen]);
+
+    /** Called when user types in desktop or mobile search input. */
     function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
-        onSearchChange(e.target.value)
+        onSearchChange(e.target.value);
     }
 
-    // Toggles the mobile search bar
+    /** Toggle the mobile search bar. If closing => optionally clear. */
     function toggleMobileSearch() {
-        // If open => user is closing => we optionally clear
         if (mobileSearchOpen) {
-            onClearFilter()
+            onClearFilter();
         }
-        setMobileSearchOpen(!mobileSearchOpen)
+        setMobileSearchOpen(!mobileSearchOpen);
     }
 
     return (
         <>
             {/* Outer header container */}
             <header className="sticky top-0 z-40 bg-white shadow-sm">
-                <div className="
-          w-full
-          max-w-7xl
-          mx-auto
-          px-4
-          py-2
-          md:py-3
-          flex
-          items-center
-          justify-between
-          h-[80px]
-        ">
+                <div
+                    className="
+            w-full
+            max-w-7xl
+            mx-auto
+            px-4
+            py-2
+            md:py-3
+            flex
+            items-center
+            justify-between
+            h-[80px]
+            containercustommaxwidth
+          "
+                >
                     {/* LEFT: Brand / Logo */}
                     <div className="flex items-center space-x-2">
                         {/* Example: brand logo replaced with text */}
@@ -75,20 +91,26 @@ export default function Header({
 
                     {/* MIDDLE (Desktop only): Search bar container */}
                     <div className="hidden md:flex items-center ml-auto mr-4 rounded-lg">
-                        <div className="
-              relative 
-              flex 
-              items-center 
-              rounded-lg
-              shadow-inner     
-              bg-gray-50       
-              border 
-              border-gray-300
-            ">
+                        <div
+                            style={{ borderRadius: '4px' }}
+                            className="
+                relative 
+                flex 
+                items-center 
+                rounded-lg
+                shadow-inner     
+                bg-gray-50       
+                border 
+                border-gray-300
+              "
+                        >
                             {/* Icon absolutely positioned */}
-                            <FiSearch className="absolute left-2 text-gray-400 rounded-lg" size={18} />
+                            <FiSearch
+                                className="absolute left-2 text-gray-400 rounded-lg"
+                                size={18}
+                            />
 
-                            {/* Search input */}
+                            {/* Search input (DESKTOP) */}
                             <input
                                 type="text"
                                 placeholder="Search products..."
@@ -96,18 +118,18 @@ export default function Header({
                                 onChange={handleSearchChange}
                                 className="
                   pl-8
-                  pr-20        /* create space on the right if you have a Clear button */
+                  pr-20
                   py-2
                   text-sm
                   text-gray-700
-                  bg-transparent   /* so the bg from parent shows through */
+                  bg-transparent
                   rounded-lg
                   focus:outline-none
                   focus:border-red-500
                 "
                             />
 
-                            {/* Clear button: absolutely position on the right if you want */}
+                            {/* Clear button if there's some text */}
                             {searchValue && (
                                 <button
                                     onClick={onClearFilter}
@@ -129,7 +151,7 @@ export default function Header({
                         </div>
                     </div>
 
-                    {/* RIGHT: Mobile search icon + Menu hamburger (for all screens or just mobile) */}
+                    {/* RIGHT: Mobile search icon + Menu hamburger */}
                     <div className="flex items-center gap-2">
                         {/* MOBILE search icon (hidden on md+) */}
                         <button
@@ -153,23 +175,29 @@ export default function Header({
             {/* MOBILE SEARCH BAR (collapsible), only if open */}
             {mobileSearchOpen && (
                 <div className="md:hidden bg-white px-2 shadow-sm pb-3">
-                    <div className="
-            relative
-            flex
-            items-center
-            rounded-lg
-            shadow-inner      /* optional */
-            bg-gray-50        /* optional */
-            border 
-            border-gray-300
-          ">
+                    <div
+                        style={{ borderRadius: '4px' }}
+                        className="
+              relative
+              flex
+              items-center
+              rounded-lg
+              shadow-inner
+              bg-gray-50
+              border
+              border-gray-300
+            "
+                    >
                         <FiSearch className="absolute left-2 text-gray-400 rounded-lg" size={18} />
 
+                        {/* The mobile search input (with ref) */}
                         <input
+                            ref={mobileInputRef}
                             type="text"
                             placeholder="Search products..."
                             value={searchValue}
                             onChange={handleSearchChange}
+                            style={{ borderRadius: '4px' }}
                             className="
                 pl-8
                 pr-16
@@ -206,5 +234,5 @@ export default function Header({
                 </div>
             )}
         </>
-    )
+    );
 }
