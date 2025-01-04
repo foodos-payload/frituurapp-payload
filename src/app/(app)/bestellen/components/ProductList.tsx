@@ -1,14 +1,13 @@
-// File: /app/(app)/bestellen/components/ProductList.tsx
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import HorizontalCategories from './HorizontalCategories'
 import VerticalCategories from './VerticalCategories'
 import ProductCard from './ProductCard'
 import ProductPopupFlow from './ProductPopupFlow'
 import { useCart } from './cart/CartContext'
 
-// Example data types (simplified for clarity)
+// Minimal data types
 type Subproduct = {
     id: string
     name_nl: string
@@ -58,161 +57,126 @@ type Category = {
 }
 
 interface Props {
-    /** The original, unfiltered categories for your menus. */
+    // For your top categories:
     unfilteredCategories: Category[]
-    /** The search-filtered categories for the main product listing. */
+    // The search-filtered categories for main listing:
     filteredCategories: Category[]
-    /** Current user language. */
+    // If you want to use a language for picking text:
     userLang?: string
-    /**
-     * If the parent wants to do something (like clearing the search) when a category is clicked,
-     * we can call this callback.
-     */
+    // Called if the parent wants to do something on category-click (e.g. clear search).
     onCategoryClick?: (slug: string) => void
+    // If the mobile search is open, you might adjust layout offset, etc.
+    mobileSearchOpen?: boolean
 }
 
+/**
+ * ProductList using an anchor-based approach:
+ * - Each category section is <div id={"cat-"+slug}>.
+ * - The categories in HorizontalCategories / VerticalCategories
+ *   can link to `href="#cat-"+cat.slug`.
+ * - We still maintain a small "activeCategory" logic (if you want to highlight).
+ */
 export default function ProductList({
     unfilteredCategories,
     filteredCategories,
     userLang,
     onCategoryClick,
+    mobileSearchOpen = false,
 }: Props) {
-    // We'll default to the first unfiltered category as "active".
-    const [activeCategory, setActiveCategory] = useState(() => {
-        return unfilteredCategories[0]?.slug || ''
-    })
+    // Keep track of which category is "active" (for highlight).
+    const [activeCategory, setActiveCategory] = useState(
+        unfilteredCategories[0]?.slug || ''
+    )
 
-    // If user clicks a product, we store it here to show the popup flow.
+    // Store the product currently in a popup flow.
     const [activeProduct, setActiveProduct] = useState<Product | null>(null)
 
-    // categoryRefs to track DOM positions of each category for scrolling logic
-    const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({})
-
-    // If we're scrolling programmatically, ignore scroll events that set activeCategory.
-    const [programmaticScroll, setProgrammaticScroll] = useState(false)
-
-    // Access the cart
+    // Access the cart to add items.
     const { addItem } = useCart()
 
-    // ===== Scroll listener: updates activeCategory based on scroll position =====
-    // ===== SCROLL LISTENER: update activeCategory as user scrolls =====
+    // We can use an intersection observer or scroll listener to detect "active" section.
+    // This is optional. If you don't need to highlight the active category while scrolling,
+    // you can remove the code below. 
     useEffect(() => {
-        function handleScroll() {
-            if (programmaticScroll) return
-            if (unfilteredCategories.length === 0) return
+        // If we only want anchor navigation, we can skip the intersection logic.
+        // But here's a minimal approach to highlight the category based on scroll.
 
-            const headerOffset = 200
-            const scrollY = window.scrollY + headerOffset
+        // 1) Grab all category sections that have an id="#cat-..."
+        const sections = unfilteredCategories
+            .map((cat) => document.getElementById(`cat-${cat.slug}`))
+            .filter(Boolean) as HTMLElement[]
 
-            let bestSlug = ''
-            let bestDist = Number.MAX_VALUE
-
-            for (const cat of unfilteredCategories) {
-                const el = categoryRefs.current[cat.slug]
-                if (!el) continue
-
-                const offsetTop = el.offsetTop
-                const dist = Math.abs(offsetTop - scrollY)
-                if (dist < bestDist) {
-                    bestDist = dist
-                    bestSlug = cat.slug
-                }
+        // 2) We can create an observer to update "activeCategory" when a section is scrolled into view.
+        const observer = new IntersectionObserver(
+            (entries) => {
+                // For each entry, if it's intersecting, setActiveCategory to that slug.
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        // The id might be "cat-<slug>"
+                        const slug = entry.target.id.replace('cat-', '')
+                        setActiveCategory(slug)
+                    }
+                })
+            },
+            {
+                root: null, // or some container if needed
+                rootMargin: '-30% 0px -70% 0px',
+                // This margin ensures the section is considered "active" 
+                // when it's ~30% from top and not scrolled far below.
+                threshold: 0.0,
             }
+        )
 
-            if (bestSlug && bestSlug !== activeCategory) {
-                setActiveCategory(bestSlug)
-            }
+        sections.forEach((sec) => observer.observe(sec))
+
+        return () => {
+            sections.forEach((sec) => observer.unobserve(sec))
+            observer.disconnect()
         }
+    }, [unfilteredCategories])
 
-        window.addEventListener('scroll', handleScroll, { passive: true })
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [unfilteredCategories, activeCategory, programmaticScroll])
-
-    // ===== Called when user clicks a category in a menu =====
-    // ===== USER CLICKS A CATEGORY FROM THE MENU =====
+    /**
+     * handleCategoryClick: called by Horizontal/Vertical categories 
+     * if you want to do something (like clear search). 
+     */
     function handleCategoryClick(slug: string) {
-        setProgrammaticScroll(true)
-
-        // 1) If we are currently filtering out that category (meaning it's not in filteredCategories),
-        //    we need to let the parent remove the filter first, then wait a bit, then scroll.
-        const isCategoryFilteredOut = !filteredCategories.some((cat) => cat.slug === slug)
-
-        if (isCategoryFilteredOut) {
-            // The parent can do something like setSearchTerm('') in onCategoryClick
-            if (onCategoryClick) {
-                onCategoryClick(slug)
-            }
-
-            // Then we wait a short time for the parent's re-render (the filter is cleared => category is visible).
-            setTimeout(() => {
-                scrollToCategory(slug)
-            }, 300)
-        } else {
-            // Otherwise, we can scroll immediately
-            if (onCategoryClick) {
-                onCategoryClick(slug)
-            }
-            scrollToCategory(slug)
+        // If parent wants to do something on category click (e.g. clearFilter).
+        if (onCategoryClick) {
+            onCategoryClick(slug)
         }
-    }
-
-    // Helper to actually do the smooth-scroll
-    function scrollToCategory(slug: string) {
-        const el = categoryRefs.current[slug]
-        if (el) {
-            el.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start', // We'll rely on scroll-margin-top to handle the offset
-            })
-        }
+        // Also set activeCategory if you want immediate highlight:
         setActiveCategory(slug)
-
-        setTimeout(() => {
-            setProgrammaticScroll(false)
-        }, 600)
+        // Note that the browser will do the actual anchor scroll for us.
     }
 
-
-    //--------------------------------------------
-    // 3) Product Click => open flow if popups, else add directly
-    //--------------------------------------------
+    /**
+     * If a product has no popups, directly add it to cart.
+     * If it has popups, set it as active to show the ProductPopupFlow.
+     */
     function handleProductClick(prod: Product) {
         const popups = prod.productpopups || []
-        // Does it have any non-null popups?
         const hasPopups = popups.some((p) => p.popup !== null)
 
         if (!hasPopups) {
-            // No popups => add directly to cart with quantity=1, no subproducts
+            // Add direct to cart
             addItem({
                 productId: prod.id,
                 productName: prod.name_nl,
                 price: prod.price || 0,
                 quantity: 1,
-                // If you want to store more fields from `prod` (like image?), do so:
-                // image: prod.image ? { ... } : undefined,
             })
             alert(`Added "${prod.name_nl}" to cart!`)
         } else {
-            // If productpopups exist, open the flow
+            // Show the popup flow
             setActiveProduct(prod)
         }
     }
 
-    // ===== 1) Build the category list for menus (using unfiltered categories) =====
-    const menuCategories = unfilteredCategories.map((cat) => ({
-        id: cat.id,
-        slug: cat.slug,
-        label: pickCategoryName(cat, userLang),
-    }))
-
-    // ===== 2) Build the category sections for main listing (using filtered categories) =====
-    // In Option B, the parent has already removed categories with 0 products if desired.
-    // So here, we can just use "filteredCategories" as the final list.
-    // But if you want to hide categories that are truly empty:
+    // Final array to render. (The parent has already done filtering.)
     const visibleSections = filteredCategories
 
     return (
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div className="flex gap-4 w-full p-2 scroll-smooth">
             {/* LEFT: vertical categories on large screens */}
             <div
                 className="hidden lg:block"
@@ -228,54 +192,64 @@ export default function ProductList({
                 }}
             >
                 <VerticalCategories
-                    categories={menuCategories}
+                    categories={unfilteredCategories.map((cat) => ({
+                        id: cat.id,
+                        slug: cat.slug,
+                        label: pickCategoryName(cat, userLang),
+                    }))}
                     activeCategory={activeCategory}
                     onCategoryClick={handleCategoryClick}
                 />
             </div>
 
             {/* MAIN COLUMN */}
-            <div style={{ flexGrow: 1 }}>
+            <div style={{ flexGrow: 1, width: '100%' }}>
                 {/* HORIZONTAL categories on small screens */}
                 <div
-                    className="block lg:hidden"
+                    className="block lg:hidden w-full bg-white overflow-auto"
                     style={{
                         marginBottom: '1rem',
                         position: 'sticky',
-                        top: 80,
+                        top: mobileSearchOpen ? 120 : 80,
                         zIndex: 50,
                         background: '#fff',
                     }}
                 >
                     <HorizontalCategories
-                        categories={menuCategories}
+                        categories={unfilteredCategories.map((cat) => ({
+                            id: cat.id,
+                            slug: cat.slug,
+                            label: pickCategoryName(cat, userLang),
+                        }))}
                         activeCategory={activeCategory}
                         onCategoryClick={handleCategoryClick}
                     />
                 </div>
 
-                {/* CATEGORY SECTIONS: map over your "filtered" array */}
+                {/* CATEGORY SECTIONS */}
                 {visibleSections.map((cat) => {
                     const catLabel = pickCategoryName(cat, userLang)
                     return (
-                        <div
+                        <section
                             key={cat.id}
-                            id={cat.slug}
-                            ref={(el) => {
-                                categoryRefs.current[cat.slug] = el
-                            }}
-                            className="scroll-mt-[100px]" // Or "scroll-mt-24" if you want Tailwind scale
+                            id={`cat-${cat.slug}`}
+                            className="scroll-mt-[100px]"
                             style={{ marginBottom: '2rem' }}
                         >
                             <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
                                 {catLabel}
                             </h3>
 
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '1rem',
+                                }}
+                            >
                                 {cat.products.map((prod) => {
                                     const displayName = pickProductName(prod, userLang)
                                     const displayDesc = pickDescription(prod, userLang)
-
                                     return (
                                         <ProductCard
                                             key={prod.id}
@@ -289,7 +263,7 @@ export default function ProductList({
                                     )
                                 })}
                             </div>
-                        </div>
+                        </section>
                     )
                 })}
 
@@ -312,7 +286,7 @@ export default function ProductList({
     )
 }
 
-/** Helpers for picking localized text. */
+/** Helpers */
 function pickCategoryName(cat: Category, lang?: string): string {
     switch (lang) {
         case 'en':

@@ -1,3 +1,4 @@
+// File: /app/(app)/bestellen/components/VerticalCategories.tsx
 'use client'
 
 import React, { useEffect } from 'react'
@@ -19,38 +20,54 @@ export default function VerticalCategories({
   activeCategory,
   onCategoryClick,
 }: Props) {
+  // Optional: log whenever activeCategory changes
   useEffect(() => {
     console.log('[VerticalCategories] activeCategory changed:', activeCategory)
   }, [activeCategory])
 
   return (
-    <div style={{ border: '1px solid #ccc', padding: '1rem' }}>
+    <div
+      className="
+        sticky
+        top-[120px]           /* or top-[80px], depending on your layout */
+        flex
+        flex-col
+        min-w-[200px]
+        max-w-[230px]
+        h-[70vh]
+        overflow-y-auto
+        bg-[#fbfafc]
+        rounded
+        shadow
+        font-medium
+        scroll-smooth          /* Enables smooth scrolling to anchor targets */
+      "
+    >
+      {categories.map((cat) => {
+        const isActive = cat.slug === activeCategory
 
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {categories.map((cat) => {
-          const isActive = cat.slug === activeCategory
-          return (
-            <li key={cat.id} style={{ margin: '0.5rem 0' }}>
-              <button
-                style={{
-                  backgroundColor: isActive ? '#ccc' : '#fff',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '0.5rem',
-                  cursor: 'pointer',
-                }}
-                onClick={() => {
-                  console.log(`[VerticalCategories] clicked ${cat.slug}`)
-                  onCategoryClick(cat.slug)
-                }}
-              >
-                {cat.label}
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+        return (
+          <a
+            key={cat.id}
+            href={`#cat-${cat.slug}`}       // Link to the <section id="cat-${slug}">
+            onClick={() => onCategoryClick(cat.slug)}
+            className={`
+              block
+              text-left
+              px-3 py-2
+              border-b border-gray-200
+              cursor-pointer
+              transition-colors
+              ${isActive
+                ? 'bg-blue-600 text-white'
+                : 'hover:bg-blue-600 hover:text-white bg-transparent'
+              }
+            `}
+          >
+            {cat.label}
+          </a>
+        )
+      })}
     </div>
   )
 }
