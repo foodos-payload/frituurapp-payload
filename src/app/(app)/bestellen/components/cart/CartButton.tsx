@@ -36,7 +36,7 @@ export default function CartButton({ onClick }: Props) {
         bg-white    /* or your custom 'bg-color-footer' */
         shadow-top   /* replicate old .shadow-top style if needed */
         py-3
-        z-50
+        z-49
         flex justify-center items-center
       "
         >
