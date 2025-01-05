@@ -17,9 +17,10 @@ type Props = {
     /** Called when user wants to "edit" a popup-based item. */
     onEditItem?: (item: CartItem) => void;
     branding?: Branding;
+    userLang?: string;
 };
 
-export default function CartDrawer({ isOpen, onClose, onEditItem, branding }: Props) {
+export default function CartDrawer({ isOpen, onClose, onEditItem, branding, userLang }: Props) {
     const {
         items,
         updateItemQuantity,
@@ -137,6 +138,10 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding }: Pr
                             <ul className="flex flex-col gap-4 p-4 md:p-6">
                                 {items.map((item) => {
                                     const lineSig = getLineItemSignature(item);
+
+                                    // 1) Retrieve the correct display name:
+                                    const displayName = pickCartItemName(item, userLang);
+
                                     return (
                                         <li key={lineSig}>
                                             <div
@@ -161,17 +166,21 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding }: Pr
                                                 {/* Right side */}
                                                 <div className="flex-1 min-h-[60px] ml-3">
                                                     <div className="font-semibold text-md line-clamp-2">
-                                                        {item.productName}
+                                                        {displayName}
                                                     </div>
 
                                                     {/* Subproducts */}
                                                     {item.subproducts && item.subproducts.length > 0 && (
                                                         <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
-                                                            {item.subproducts.map((sp) => (
-                                                                <li key={sp.id}>
-                                                                    {sp.name_nl} (+€{sp.price.toFixed(2)})
-                                                                </li>
-                                                            ))}
+                                                            {item.subproducts.map((sp) => {
+                                                                // 2) Retrieve subproduct name if you stored multiple languages in sp
+                                                                const subName = pickCartSubName(sp, userLang);
+                                                                return (
+                                                                    <li key={sp.id}>
+                                                                        {subName} (+€{sp.price.toFixed(2)})
+                                                                    </li>
+                                                                );
+                                                            })}
                                                         </ul>
                                                     )}
 
@@ -290,4 +299,35 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding }: Pr
             </CSSTransition>
         </>
     );
+}
+
+/** Helper to pick the correct product name from a CartItem */
+function pickCartItemName(item: CartItem, userLang: string): string {
+    switch (userLang) {
+        case 'en':
+            return item.productNameEN ?? item.productName;
+        case 'fr':
+            return item.productNameFR ?? item.productName;
+        case 'de':
+            return item.productNameDE ?? item.productName;
+        default:
+            return item.productNameNL ?? item.productName;
+    }
+}
+
+/** Helper to pick the correct subproduct name */
+function pickCartSubName(
+    sp: { name_nl: string; name_en?: string; name_de?: string; name_fr?: string },
+    userLang: string
+) {
+    switch (userLang) {
+        case 'en':
+            return sp.name_en ?? sp.name_nl;
+        case 'fr':
+            return sp.name_fr ?? sp.name_nl;
+        case 'de':
+            return sp.name_de ?? sp.name_nl;
+        default:
+            return sp.name_nl;
+    }
 }

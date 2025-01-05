@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import React, { useRef, MouseEvent } from 'react'
-import { CSSTransition } from 'react-transition-group'
+import React, { useRef, MouseEvent } from 'react';
+import { CSSTransition } from 'react-transition-group';
 
 const LANGUAGES = [
     { label: 'NL', value: 'nl', flagSrc: '/images/flags/nl-BE.svg' },
     { label: 'EN', value: 'en', flagSrc: '/images/flags/en-UK.svg' },
     { label: 'FR', value: 'fr', flagSrc: '/images/flags/fr-FR.svg' },
     { label: 'DE', value: 'de', flagSrc: '/images/flags/de-DE.svg' },
-]
+];
 
 type Branding = {
     categoryCardBgColor?: string;
@@ -17,17 +17,17 @@ type Branding = {
 };
 
 type MenuDrawerProps = {
-    isOpen: boolean
-    onClose: () => void
-    userLang: string
-    onLangChange: (langValue: string) => void
+    isOpen: boolean;
+    onClose: () => void;
+    userLang: string;
+    onLangChange: (langValue: string) => void;
     branding?: Branding;
-}
+};
 
 /**
- * MenuDrawer with TWO separate transitions:
- *  - The overlay fade (behind the drawer),
- *  - The drawer slide in from the left (on top).
+ * MenuDrawer with two separate transitions:
+ * - The overlay fade (behind the drawer),
+ * - The drawer slide in from the left (on top).
  */
 export default function MenuDrawer({
     isOpen,
@@ -37,21 +37,21 @@ export default function MenuDrawer({
     branding,
 }: MenuDrawerProps) {
     // Refs for the two separate transitions
-    const overlayRef = useRef<HTMLDivElement>(null)
-    const drawerRef = useRef<HTMLDivElement>(null)
+    const overlayRef = useRef<HTMLDivElement>(null);
+    const drawerRef = useRef<HTMLDivElement>(null);
 
     /** If user clicks outside the white panel => close. */
     function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
         if (e.target === e.currentTarget) {
-            onClose()
+            onClose();
         }
     }
 
     function handleLangClick(langValue: string) {
-        onLangChange(langValue)
+        onLangChange(langValue);
     }
 
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const brandCTA = branding?.primaryColorCTA || '#3b82f6';
 
     return (
         <>
@@ -130,31 +130,33 @@ export default function MenuDrawer({
                         Menu
                     </div>
 
-                    {/* Some links / language chooser */}
+                    {/* Language chooser + other links */}
                     <nav className="m-4 grid p-4 text-gray-500 gap-6">
                         <div className="flex items-center gap-2 justify-center">
                             <div className="language-switcher flex gap-2">
-                                {LANGUAGES.map((lang) => (
-                                    <img
-                                        key={lang.value}
-                                        src={lang.flagSrc}
-                                        alt={lang.label}
-                                        onClick={() => handleLangClick(lang.value)}
-                                        className={`
-                      w-8 h-8 cursor-pointer
-                      rounded
-                      border
-                      ${userLang === lang.value
-                                                ? 'border-blue-500'
-                                                : 'border-transparent hover:border-gray-300'
-                                            }
-                    `}
-                                    />
-                                ))}
+                                {LANGUAGES.map((lang) => {
+                                    const isActive = userLang === lang.value;
+                                    return (
+                                        <img
+                                            key={lang.value}
+                                            src={lang.flagSrc}
+                                            alt={lang.label}
+                                            onClick={() => handleLangClick(lang.value)}
+                                            className={`
+                        w-8 h-8 cursor-pointer
+                        rounded
+                        ${isActive
+                                                    ? 'border-2 border-green-600'
+                                                    : 'border border-transparent hover:border-gray-300'
+                                                }
+                      `}
+                                        />
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        {/* Login link */}
+                        {/* Example: a "Login" button */}
                         <a
                             href="/login"
                             style={{
@@ -165,10 +167,8 @@ export default function MenuDrawer({
                 flex items-center justify-center
                 p-3 w-60 mx-auto
                 text-md
-                
                 text-white
                 rounded-full
-               
               "
                         >
                             Login
@@ -189,5 +189,5 @@ export default function MenuDrawer({
                 </div>
             </CSSTransition>
         </>
-    )
+    );
 }

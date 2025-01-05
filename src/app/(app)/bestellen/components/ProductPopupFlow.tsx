@@ -10,14 +10,24 @@ import { FiCheckCircle } from 'react-icons/fi';
  */
 type LinkedProductData = {
     id: string;
+    /** Original field + translations */
     name_nl: string;
+    name_en?: string;
+    name_de?: string;
+    name_fr?: string;
+
     price: number | null;
-    image?: { url: string; alt: string } | null;
+    image?: { url: string; alt?: string } | null;
 };
 
 type Subproduct = {
     id: string;
+    /** Original field + translations */
     name_nl: string;
+    name_en?: string;
+    name_de?: string;
+    name_fr?: string;
+
     price: number;
     image?: { url: string; alt?: string } | null;
     linkedProduct?: LinkedProductData;
@@ -25,7 +35,12 @@ type Subproduct = {
 
 type PopupDoc = {
     id: string;
+    /** Original field + translations */
     popup_title_nl: string;
+    popup_title_en?: string;
+    popup_title_de?: string;
+    popup_title_fr?: string;
+
     multiselect: boolean;
     subproducts: Subproduct[];
     // ...
@@ -38,7 +53,12 @@ type PopupItem = {
 
 type Product = {
     id: string;
+    /** Original field + translations */
     name_nl: string;
+    name_en?: string;
+    name_de?: string;
+    name_fr?: string;
+
     price?: number | null;
     image?: { url: string; alt: string };
     productpopups?: PopupItem[];
@@ -58,9 +78,47 @@ interface Props {
     onClose: () => void;
     branding?: Branding;
     cartRef?: React.RefObject<HTMLDivElement | null>; // Allow 'null'
-
+    /** NEW: the current user language */
+    lang?: string;
 }
 
+/** A helper to pick the correct popup title depending on `lang`. */
+function pickPopupTitle(p: PopupDoc, lang?: string): string {
+    switch (lang) {
+        case 'en':
+            return p.popup_title_en ?? p.popup_title_nl;
+        case 'fr':
+            return p.popup_title_fr ?? p.popup_title_nl;
+        case 'de':
+            return p.popup_title_de ?? p.popup_title_nl;
+        default:
+            return p.popup_title_nl; // fallback
+    }
+}
+
+/** A helper to pick a subproduct's name in the correct language. */
+function pickSubproductName(
+    s: {
+        name_nl: string;
+        name_en?: string;
+        name_de?: string;
+        name_fr?: string;
+    },
+    lang?: string
+): string {
+    switch (lang) {
+        case 'en':
+            return s.name_en ?? s.name_nl;
+        case 'fr':
+            return s.name_fr ?? s.name_nl;
+        case 'de':
+            return s.name_de ?? s.name_nl;
+        default:
+            return s.name_nl;
+    }
+}
+
+/** Animate a cloned <img> from the popup to the cart. (Unused unless you call it.) */
 function flyToCart(cartRef: React.RefObject<HTMLDivElement>, sourceImg: HTMLImageElement | null) {
     if (!cartRef.current || !sourceImg) return;
 
@@ -69,7 +127,7 @@ function flyToCart(cartRef: React.RefObject<HTMLDivElement>, sourceImg: HTMLImag
     flyingImg.style.position = 'absolute';
     flyingImg.style.zIndex = '9999';
 
-    // Measure the “hidden img”
+    // measure the “hidden img”
     const rect = sourceImg.getBoundingClientRect();
     const scrollX = window.scrollX || 0;
     const scrollY = window.scrollY || 0;
@@ -90,10 +148,8 @@ function flyToCart(cartRef: React.RefObject<HTMLDivElement>, sourceImg: HTMLImag
     // 3) Animate
     requestAnimationFrame(() => {
         const flyingRect = flyingImg.getBoundingClientRect();
-        const deltaX =
-            cartRect.left + cartRect.width / 2 - (flyingRect.left + flyingRect.width / 2);
-        const deltaY =
-            cartRect.top + cartRect.height / 2 - (flyingRect.top + flyingRect.height / 2);
+        const deltaX = cartRect.left + cartRect.width / 2 - (flyingRect.left + flyingRect.width / 2);
+        const deltaY = cartRect.top + cartRect.height / 2 - (flyingRect.top + flyingRect.height / 2);
 
         flyingImg.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.1)`;
         flyingImg.style.opacity = '0.3';
@@ -112,6 +168,7 @@ export default function ProductPopupFlow({
     onClose,
     branding,
     cartRef,
+    lang, // <— new
 }: Props) {
     const { addItem, updateItem } = useCart();
 
@@ -135,7 +192,10 @@ export default function ProductPopupFlow({
     const popup = currentPopupItem?.popup;
     if (!popup) return null;
 
-    const { popup_title_nl, multiselect, subproducts } = popup;
+    // Instead of accessing popup_title_nl directly,
+    // we pick the correct string via `pickPopupTitle`.
+    const popupTitle = pickPopupTitle(popup, lang);
+    const { multiselect, subproducts } = popup;
 
     // E.g. { [popupID]: [subId, subId] }
     const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>(() => {
@@ -222,7 +282,14 @@ export default function ProductPopupFlow({
         } else {
             addItem({
                 productId: product.id,
-                productName: product.name_nl,
+                // The "active" productName that the user sees in the current language
+                productName: pickProductName(product, lang),
+
+                // All language versions, so you can reference them later in the cart
+                productNameNL: product.name_nl,
+                productNameEN: product.name_en ?? product.name_nl,
+                productNameDE: product.name_de ?? product.name_nl,
+                productNameFR: product.name_fr ?? product.name_nl,
                 price: basePrice,
                 quantity: 1,
                 image: product.image
@@ -236,14 +303,16 @@ export default function ProductPopupFlow({
                 hasPopups: true,
             });
             // 2) Construct event detail: pass product ID, image url, etc.
-            window.dispatchEvent(new CustomEvent('product-added', {
-                detail: {
-                    productId: product.id,
-                    // maybe the main banner image’s URL
-                    imageUrl: product.image?.url || '',
-                    // if you need more details, pass them
-                }
-            }));
+            window.dispatchEvent(
+                new CustomEvent('product-added', {
+                    detail: {
+                        productId: product.id,
+                        // maybe the main banner image’s URL
+                        imageUrl: product.image?.url || '',
+                        // if you need more details, pass them
+                    },
+                })
+            );
         }
         onClose();
     }
@@ -253,11 +322,11 @@ export default function ProductPopupFlow({
         if (e.target === e.currentTarget) onClose();
     }
 
-    // === NEW: build a "selectedItems" array to display on top ===
+    // === Gather "selected items" array for top row preview
     const selectedItems = gatherAllSelectedItems(sortedPopups, selectedOptions);
 
-    // === 6) Gather brand color or fallback
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    // Gather brand color or fallback
+    const brandCTA = branding?.primaryColorCTA || '#3b82f6';
 
     return (
         <div
@@ -303,17 +372,15 @@ export default function ProductPopupFlow({
 
                 {/* Sticky Image Banner */}
                 <div className="relative sticky top-0 z-10 w-full h-[150px] md:h-[200px]">
-                    {product.image?.url && (
-                        (() => {
-                            const safeUrl = encodeURI(product.image.url);
-                            return (
-                                <div
-                                    className="absolute inset-0 bg-cover bg-no-repeat bg-center opacity-90"
-                                    style={{ backgroundImage: `url(${safeUrl})` }}
-                                />
-                            );
-                        })()
-                    )}
+                    {product.image?.url && (() => {
+                        const safeUrl = encodeURI(product.image.url);
+                        return (
+                            <div
+                                className="absolute inset-0 bg-cover bg-no-repeat bg-center opacity-90"
+                                style={{ backgroundImage: `url(${safeUrl})` }}
+                            />
+                        );
+                    })()}
                     <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
 
                     {/* Close Button + Title + Price */}
@@ -338,23 +405,16 @@ export default function ProductPopupFlow({
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
 
                         <div className="text-center text-white flex gap-2">
                             <h1 className="text-xl font-semibold font-secondary font-love-of-thunder">
-                                {product.name_nl}
+                                {pickProductName(product, lang)}
                             </h1>
                             {typeof product.price === 'number' && (
-                                <span className="text-xl">
-                                    €{product.price.toFixed(2)}
-                                </span>
+                                <span className="text-xl">€{product.price.toFixed(2)}</span>
                             )}
                         </div>
                     </div>
@@ -378,9 +438,7 @@ export default function ProductPopupFlow({
                                                 className="object-cover w-full h-full rounded-full"
                                             />
                                         ) : (
-                                            <span className="text-xs text-center px-2">
-                                                {item.name_nl}
-                                            </span>
+                                            <span className="text-xs text-center px-2">{item.name_nl}</span>
                                         )}
                                     </div>
                                     {/* or label text next to it if you want */}
@@ -389,16 +447,17 @@ export default function ProductPopupFlow({
                         </div>
                     )}
 
-                    {/* 2) Step label */}
-                    <h2 className="text-xl font-semibold mt-20 mb-10 text-center">
-                        {popup_title_nl}
-                    </h2>
+                    {/* 2) Step label => use popupTitle instead of popup_title_nl */}
+                    <h2 className="text-xl font-semibold mt-20 mb-10 text-center">{popupTitle}</h2>
 
                     {/* 3) Subproduct tile grid */}
                     <div className="grid gap-4 mt-4 grid-cols-2 md:grid-cols-3">
                         {subproducts.map((sub) => {
                             const useLinked = !!sub.linkedProduct;
-                            const displayName = useLinked ? sub.linkedProduct!.name_nl : sub.name_nl;
+                            // Use your helper to pick correct name
+                            const displayName = useLinked
+                                ? pickSubproductName(sub.linkedProduct!, lang)
+                                : pickSubproductName(sub, lang);
                             const displayPrice = useLinked ? sub.linkedProduct!.price ?? 0 : sub.price;
                             const displayImage = useLinked ? sub.linkedProduct?.image : sub.image;
                             const isSelected = currentSelections.includes(sub.id);
@@ -408,21 +467,18 @@ export default function ProductPopupFlow({
                                     key={sub.id}
                                     onClick={() => handleSubproductClick(sub)}
                                     style={{
-                                        borderRadius: "0.5rem",
+                                        borderRadius: '0.5rem',
                                         // If selected => dynamic border color = brandCTA
-                                        borderLeftWidth: isSelected ? "4px" : "1px",
-                                        borderLeftColor: isSelected ? brandCTA : "#d1d5db", // #d1d5db ~ border-gray-300
-                                        borderStyle: "solid",
+                                        borderLeftWidth: isSelected ? '4px' : '1px',
+                                        borderLeftColor: isSelected ? brandCTA : '#d1d5db', // #d1d5db ~ border-gray-300
+                                        borderStyle: 'solid',
                                     }}
                                     className={`
-                                    relative
-                                    flex flex-col justify-between
-                                    p-2 rounded-lg text-center cursor-pointer transition
-                                    ${isSelected
-                                            ? "bg-gray-100"
-                                            : "border border-gray-300" // fallback for non-left sides
-                                        }
-                                  `}
+                    relative
+                    flex flex-col justify-between
+                    p-2 rounded-lg text-center cursor-pointer transition
+                    ${isSelected ? 'bg-gray-100' : 'border border-gray-300'}
+                  `}
                                 >
                                     {/* Possibly an image */}
                                     <div className="flex-grow flex items-center justify-center mb-4">
@@ -490,7 +546,7 @@ export default function ProductPopupFlow({
                         onClick={handleNext}
                         style={{
                             backgroundColor: brandCTA,
-                            color: "#ffffff",
+                            color: '#ffffff',
                         }}
                         className="
               px-4 py-2
@@ -499,7 +555,7 @@ export default function ProductPopupFlow({
               text-xl
             "
                     >
-                        {currentIndex < sortedPopups.length - 1 ? "Volgende" : "Bevestigen"}
+                        {currentIndex < sortedPopups.length - 1 ? 'Volgende' : 'Bevestigen'}
                     </button>
                 </div>
             </div>
@@ -544,3 +600,26 @@ function gatherAllSelectedItems(
 
     return results;
 }
+
+/** Helper to pick product name in the correct language. */
+function pickProductName(
+    product: {
+        name_nl: string;
+        name_en?: string;
+        name_de?: string;
+        name_fr?: string;
+    },
+    lang?: string
+): string {
+    switch (lang) {
+        case 'en':
+            return product.name_en ?? product.name_nl;
+        case 'fr':
+            return product.name_fr ?? product.name_nl;
+        case 'de':
+            return product.name_de ?? product.name_nl;
+        default:
+            return product.name_nl; // fallback
+    }
+}
+

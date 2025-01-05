@@ -258,6 +258,7 @@ export default function BestellenLayout({
                 onClose={() => setShowCartDrawer(false)}
                 onEditItem={handleEditItem}
                 branding={branding}
+                userLang={lang}
             />
 
             {/* MAIN LAYOUT CONTAINER */}
@@ -318,6 +319,7 @@ export default function BestellenLayout({
                     onClose={handleCloseEditFlow}
                     branding={branding}
                     cartRef={cartRef}
+                    lang={lang}
                 />
             )}
 
@@ -328,6 +330,7 @@ export default function BestellenLayout({
                     onClose={() => setActiveProductFromList(null)}
                     branding={branding}
                     cartRef={cartRef}
+                    lang={lang}
                 />
             )}
 

@@ -81,6 +81,7 @@ interface Props {
     cartRef?: React.RefObject<HTMLDivElement | null>; // Allow 'null'
 
     onOpenPopupFlow?: (prod: Product) => void;
+
 }
 
 /**
@@ -108,6 +109,9 @@ export default function ProductList({
 
     // A map of product ID => ref
     const productRefs = useRef<Record<string, React.RefObject<HTMLDivElement | null>>>({});
+
+    // The user’s chosen language, defaulting to 'nl'
+    const [lang, setLang] = useState(userLang || 'nl');
 
     // create or retrieve a ref for each product
     function getOrCreateProductRef(productId: string) {
@@ -258,7 +262,13 @@ export default function ProductList({
             // No popups => directly add to cart, which triggers immediate local animation in the ProductCard
             addItem({
                 productId: prod.id,
-                productName: prod.name_nl,
+                productName: pickProductName(prod, lang),
+
+                // All language versions, so you can reference them later in the cart
+                productNameNL: prod.name_nl,
+                productNameEN: prod.name_en ?? prod.name_nl,
+                productNameDE: prod.name_de ?? prod.name_nl,
+                productNameFR: prod.name_fr ?? prod.name_nl,
                 price: prod.price || 0,
                 quantity: 1,
                 image: prod.image
@@ -392,6 +402,7 @@ export default function ProductList({
                     onClose={() => setActiveProduct(null)}
                     branding={branding}
                     cartRef={cartRef}
+                    lang={lang}
                 />
             )}
         </div>

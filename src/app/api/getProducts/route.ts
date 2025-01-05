@@ -17,6 +17,9 @@ export const dynamic = 'force-dynamic'
 interface LinkedProductJSON {
     id: string
     name_nl: string
+    name_en: string | null
+    name_de: string | null
+    name_fr: string | null
     description_nl?: string
     priceUnified: boolean
     price: number | null
@@ -30,6 +33,9 @@ interface LinkedProductJSON {
 interface SubproductJSON {
     id: string
     name_nl: string
+    name_en: string | null
+    name_de: string | null
+    name_fr: string | null
     price: number
     image?: {
         url: string
@@ -41,6 +47,9 @@ interface SubproductJSON {
 interface PopupJSON {
     id: string
     popup_title_nl: string
+    popup_title_en: string | null
+    popup_title_de: string | null
+    popup_title_fr: string | null
     multiselect: boolean
     minimum_option: number
     maximum_option: number
@@ -187,6 +196,9 @@ export async function GET(request: NextRequest) {
                         ? {
                             id: catPopupItem.popup.id,
                             popup_title_nl: catPopupItem.popup.popup_title_nl,
+                            popup_title_en: catPopupItem.popup.popup_title_en || null,
+                            popup_title_de: catPopupItem.popup.popup_title_de || null,
+                            popup_title_fr: catPopupItem.popup.popup_title_fr || null,
                             multiselect: catPopupItem.popup.multiselect,
                             minimum_option: catPopupItem.popup.minimum_option,
                             maximum_option: catPopupItem.popup.maximum_option,
@@ -195,6 +207,9 @@ export async function GET(request: NextRequest) {
                                 const baseSub: SubproductJSON = {
                                     id: sub.id,
                                     name_nl: sub.name_nl,
+                                    name_en: sub.name_en || null,
+                                    name_de: sub.name_de || null,
+                                    name_fr: sub.name_fr || null,
                                     price: sub.price,
                                     image: sub.image
                                         ? {
@@ -209,6 +224,9 @@ export async function GET(request: NextRequest) {
                                     baseSub.linkedProduct = {
                                         id: sub.linked_product.id,
                                         name_nl: sub.linked_product.name_nl,
+                                        name_en: sub.linked_product.name_en || null,
+                                        name_de: sub.linked_product.name_de || null,
+                                        name_fr: sub.linked_product.name_fr || null,
                                         description_nl: sub.linked_product.description_nl,
                                         priceUnified: sub.linked_product.price_unified || false,
                                         price: sub.linked_product.price_unified
@@ -259,6 +277,9 @@ export async function GET(request: NextRequest) {
                                     const baseSub: SubproductJSON = {
                                         id: sub.id,
                                         name_nl: sub.name_nl,
+                                        name_en: sub.name_en || null,
+                                        name_de: sub.name_de || null,
+                                        name_fr: sub.name_fr || null,
                                         price: sub.price,
                                         image: sub.image
                                             ? {
@@ -272,6 +293,9 @@ export async function GET(request: NextRequest) {
                                         baseSub.linkedProduct = {
                                             id: sub.linked_product.id,
                                             name_nl: sub.linked_product.name_nl,
+                                            name_en: sub.linked_product.name_en || null,
+                                            name_de: sub.linked_product.name_de || null,
+                                            name_fr: sub.linked_product.name_fr || null,
                                             description_nl: sub.linked_product.description_nl,
                                             priceUnified: sub.linked_product.price_unified || false,
                                             price: sub.linked_product.price_unified

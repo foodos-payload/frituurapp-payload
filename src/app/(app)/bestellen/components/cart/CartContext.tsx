@@ -46,6 +46,10 @@ export type SubproductSelection = {
 export type CartItem = {
     productId: string;     // The main product's ID
     productName: string;   // e.g. product.name_nl
+    productNameNL?: string
+    productNameEN?: string
+    productNameDE?: string
+    productNameFR?: string
     price: number;         // The main product's base price
     quantity: number;      // How many
     note?: string;         // Optional user note
