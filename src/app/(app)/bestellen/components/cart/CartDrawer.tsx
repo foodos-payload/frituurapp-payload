@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useRef, MouseEvent } from 'react';
-import { useRouter } from "next/navigation"
-import { CSSTransition } from 'react-transition-group';
-import { useCart, CartItem, getLineItemSignature } from './CartContext';
-import { FiX, FiTrash2 } from 'react-icons/fi';
+import React, { useRef, MouseEvent } from "react";
+import { useRouter } from "next/navigation";
+import { CSSTransition } from "react-transition-group";
+import { useCart, CartItem, getLineItemSignature } from "./CartContext";
+import { FiX, FiTrash2 } from "react-icons/fi";
 
 type Branding = {
     categoryCardBgColor?: string;
@@ -22,7 +22,15 @@ type Props = {
     isKiosk?: boolean;
 };
 
-export default function CartDrawer({ isOpen, onClose, onEditItem, branding, userLang, isKiosk = false, }: Props) {
+export default function CartDrawer({
+    isOpen,
+    onClose,
+    onEditItem,
+    branding,
+    userLang,
+    isKiosk = false,
+}: Props) {
+    const router = useRouter();
     const {
         items,
         updateItemQuantity,
@@ -35,6 +43,9 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
     const drawerRef = useRef<HTMLDivElement>(null);
 
     const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const cartTotal = getCartTotal();
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    const hasItems = items.length > 0;
 
     /**
      * Close drawer if user clicks outside the drawer
@@ -61,9 +72,14 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
         removeItem(lineSig);
     }
 
-    const cartTotal = getCartTotal();
-    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-    const hasItems = items.length > 0;
+    // === Some kiosk-specific variables for minimal style adjustments ===
+    const kioskHeaderText = isKiosk ? "text-2xl" : "text-lg";
+    const kioskHeaderPadding = isKiosk ? "p-6" : "p-4";
+    const kioskEmptyText = isKiosk ? "text-xl" : "text-gray-500";
+    const kioskItemSpacing = isKiosk ? "gap-6" : "gap-4";
+    const kioskItemPadding = isKiosk ? "p-6 text-xl" : "p-4 md:p-6";
+    const kioskQuantityBtnSize = isKiosk ? "w-12 h-12 text-lg" : "w-10 h-10 text-sm";
+    const kioskFooterBtnText = isKiosk ? "text-2xl p-5" : "text-lg p-3";
 
     return (
         <>
@@ -86,33 +102,40 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
             <CSSTransition
                 in={isOpen}
                 timeout={300}
-                classNames="slideCart"
+                classNames={isKiosk ? "slideUpCart" : "fadeOverlay"}
                 unmountOnExit
                 nodeRef={drawerRef}
             >
                 <div
                     ref={drawerRef}
-                    className="
-            fixed top-0 bottom-0 right-0 z-[9999]
-            flex flex-col w-full max-w-lg md:w-11/12
-            bg-white shadow-lg overflow-hidden
-          "
+                    className={`
+                        fixed
+                        ${isKiosk ? "bottom-0 left-0 right-0 top-auto" : "top-0 right-0 bottom-0"}
+                        z-[9999]
+                        flex flex-col
+                        ${isKiosk ? "w-full min-h-[40vh] max-h-[90vh]" : "w-full max-w-lg"}
+                        ${isKiosk ? "rounded-t-2xl" : "md:w-11/12"}
+                        bg-white shadow-lg overflow-hidden
+                      `}
                 >
                     {/* Top Bar */}
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                    <div className={`flex items-center justify-between border-b border-gray-200 ${kioskHeaderPadding}`}>
                         {/* Close */}
                         <button
                             onClick={onClose}
                             title="Close Drawer"
                             className="bg-red-500 text-white rounded-xl shadow-xl p-3"
-                            style={{ minWidth: '44px', minHeight: '44px' }}
+                            style={{ minWidth: "44px", minHeight: "44px" }}
                         >
                             <FiX className="w-6 h-6" />
                         </button>
 
                         {/* Title */}
-                        <h2 className="text-lg font-semibold">
-                            Winkelwagen <span className="text-sm">({itemCount})</span>
+                        <h2 className={`${kioskHeaderText} font-semibold`}>
+                            Winkelwagen{" "}
+                            <span className={isKiosk ? "text-xl" : "text-sm"}>
+                                ({itemCount})
+                            </span>
                         </h2>
 
                         {/* Clear entire cart */}
@@ -121,28 +144,34 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                                 onClick={clearCart}
                                 title="Clear entire cart"
                                 className="bg-white p-3 rounded-xl shadow hover:bg-gray-100 transition-colors"
-                                style={{ minWidth: '44px', minHeight: '44px' }}
+                                style={{ minWidth: "44px", minHeight: "44px" }}
                             >
                                 <FiTrash2 className="w-6 h-6 text-gray-700 hover:text-red-600" />
                             </button>
                         ) : (
-                            <div style={{ width: '44px', height: '44px' }} />
+                            <div style={{ width: "44px", height: "44px" }} />
                         )}
                     </div>
 
                     {/* Main content */}
                     <div className="flex-1 overflow-y-auto">
                         {!hasItems ? (
-                            <div className="text-gray-500 flex items-center justify-center h-full">
+                            <div
+                                className={`
+                  flex items-center justify-center h-full
+                  ${kioskEmptyText}
+                `}
+                            >
                                 Cart is empty.
                             </div>
                         ) : (
-                            <ul className="flex flex-col gap-4 p-4 md:p-6">
+                            <ul className={`flex flex-col ${kioskItemSpacing} ${kioskItemPadding}`}>
                                 {items.map((item) => {
                                     const lineSig = getLineItemSignature(item);
-
-                                    // 1) Retrieve the correct display name:
-                                    const displayName = pickCartItemName(item, userLang ?? 'nl');
+                                    const displayName = pickCartItemName(
+                                        item,
+                                        userLang ?? "nl"
+                                    );
 
                                     return (
                                         <li key={lineSig}>
@@ -152,14 +181,15 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                           overflow-hidden relative items-center
                           bg-white shadow-sm
                         "
-                                                style={{ minHeight: '80px' }}
+                                                style={{ minHeight: isKiosk ? "110px" : "80px" }}
                                             >
                                                 {/* Thumbnail */}
                                                 {item.image?.url ? (
                                                     <img
                                                         src={item.image.url}
                                                         alt={item.image.alt ?? item.productName}
-                                                        className="w-16 h-16 rounded-md object-cover"
+                                                        className={`rounded-md object-cover ${isKiosk ? "w-20 h-20" : "w-16 h-16"
+                                                            }`}
                                                     />
                                                 ) : (
                                                     <div className="w-16 h-16 bg-gray-100" />
@@ -167,7 +197,10 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
 
                                                 {/* Right side */}
                                                 <div className="flex-1 min-h-[60px] ml-3">
-                                                    <div className="font-semibold text-md line-clamp-2">
+                                                    <div
+                                                        className={`font-semibold ${isKiosk ? "text-xl" : "text-md"
+                                                            } line-clamp-2`}
+                                                    >
                                                         {displayName}
                                                     </div>
 
@@ -175,8 +208,10 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                                                     {item.subproducts && item.subproducts.length > 0 && (
                                                         <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
                                                             {item.subproducts.map((sp) => {
-                                                                // 2) Retrieve subproduct name if you stored multiple languages in sp
-                                                                const subName = pickCartSubName(sp, userLang ?? 'nl');
+                                                                const subName = pickCartSubName(
+                                                                    sp,
+                                                                    userLang ?? "nl"
+                                                                );
                                                                 return (
                                                                     <li key={sp.id}>
                                                                         {subName} (+€{sp.price.toFixed(2)})
@@ -188,7 +223,8 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
 
                                                     {/* Price */}
                                                     <div className="text-sm mt-1 flex items-center">
-                                                        <span className="font-semibold">
+                                                        <span className={`font-semibold ${isKiosk ? "text-lg" : "text-md"
+                                                            }`}>
                                                             €{item.price.toFixed(2)}
                                                         </span>
                                                     </div>
@@ -196,17 +232,22 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
 
                                                 {/* Quantity + actions */}
                                                 <div className="inline-flex gap-1 flex-col items-end mr-2">
-                                                    <div className="flex rounded bg-white text-sm leading-none shadow-sm">
+                                                    <div
+                                                        className={`
+                              flex rounded bg-white text-sm leading-none shadow-sm
+                            `}
+                                                    >
                                                         {/* Decrement */}
                                                         <button
                                                             title="Decrease Quantity"
                                                             aria-label="Decrease Quantity"
                                                             type="button"
-                                                            className="
-                                focus:outline-none border-r w-10 h-10
+                                                            className={`
+                                focus:outline-none border-r
                                 border rounded-l border-gray-300
                                 hover:bg-gray-50
-                              "
+                                ${kioskQuantityBtnSize}
+                              `}
                                                             onClick={() =>
                                                                 handleQuantityChange(item, item.quantity - 1)
                                                             }
@@ -215,11 +256,13 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                                                         </button>
 
                                                         <div
-                                                            className="
+                                                            className={`
                                 flex items-center justify-center
-                                w-8 px-2 text-center text-sm
                                 border-y border-gray-300
-                              "
+                                text-center
+                                px-2
+                                ${isKiosk ? "w-10 text-lg" : "w-8 text-sm"}
+                              `}
                                                         >
                                                             {item.quantity}
                                                         </div>
@@ -229,11 +272,12 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                                                             title="Increase Quantity"
                                                             aria-label="Increase Quantity"
                                                             type="button"
-                                                            className="
-                                focus:outline-none border-l w-10 h-10
+                                                            className={`
+                                focus:outline-none border-l
                                 border rounded-r hover:bg-gray-50
                                 border-gray-300 p-2
-                              "
+                                ${kioskQuantityBtnSize}
+                              `}
                                                             onClick={() =>
                                                                 handleQuantityChange(item, item.quantity + 1)
                                                             }
@@ -243,26 +287,32 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                                                     </div>
 
                                                     {/* Edit / Remove row */}
-                                                    <div className="flex items-center gap-3 mt-1">
+                                                    <div className={`flex items-center gap-3 mt-1 ${isKiosk ? "text-lg" : ""
+                                                        }`}>
                                                         {item.hasPopups && onEditItem && (
                                                             <button
-                                                                className="text-xs text-blue-500 hover:underline"
+                                                                className={` text-blue-500 hover:underline ${isKiosk ? "text-lg" : "text-xs"
+                                                                    }`}
                                                                 onClick={() => onEditItem(item)}
                                                             >
-                                                                Bewerken
+                                                                <span className={` text-blue-500 hover:underline ${isKiosk ? "text-lg" : "text-xs"
+                                                                    }`}>Bewerken</span>
                                                             </button>
                                                         )}
 
                                                         {/* Remove single item */}
                                                         <button
-                                                            className="
+                                                            className={`
                                 text-sm text-gray-400
                                 hover:text-red-500 cursor-pointer
-                              "
+                                ${isKiosk ? "text-xl" : ""}
+                              `}
                                                             onClick={() => handleRemoveItem(item)}
                                                             title="Remove this item"
                                                         >
-                                                            <FiTrash2 size={16} />
+                                                            <FiTrash2
+                                                                size={isKiosk ? 20 : 16}
+                                                            />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -279,18 +329,18 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                         <div className="px-8 mb-4 pt-3">
                             <button
                                 onClick={() => {
-                                    router.push('/checkout')
+                                    router.push("/checkout");
                                 }}
-
                                 style={{
-                                    borderRadius: '0.5rem',
+                                    borderRadius: "0.5rem",
                                     backgroundColor: brandCTA,
                                 }}
-                                className="
+                                className={`
                   text-white
-                  block w-full p-3 text-lg text-center rounded-lg shadow-md
-                  font-semibold 
-                "
+                  block w-full text-center rounded-lg shadow-md
+                  font-semibold
+                  ${isKiosk ? "p-5 text-2xl" : "p-3 text-lg"}
+                `}
                             >
                                 Afrekenen
                                 <span className="mx-2">€{cartTotal.toFixed(2)}</span>
@@ -306,11 +356,11 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
 /** Helper to pick the correct product name from a CartItem */
 function pickCartItemName(item: CartItem, userLang: string): string {
     switch (userLang) {
-        case 'en':
+        case "en":
             return item.productNameEN ?? item.productName;
-        case 'fr':
+        case "fr":
             return item.productNameFR ?? item.productName;
-        case 'de':
+        case "de":
             return item.productNameDE ?? item.productName;
         default:
             return item.productNameNL ?? item.productName;
@@ -323,11 +373,11 @@ function pickCartSubName(
     userLang: string
 ) {
     switch (userLang) {
-        case 'en':
+        case "en":
             return sp.name_en ?? sp.name_nl;
-        case 'fr':
+        case "fr":
             return sp.name_fr ?? sp.name_nl;
-        case 'de':
+        case "de":
             return sp.name_de ?? sp.name_nl;
         default:
             return sp.name_nl;
