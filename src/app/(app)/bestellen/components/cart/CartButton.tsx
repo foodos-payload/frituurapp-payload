@@ -1,10 +1,9 @@
-// File: /app/(app)/bestellen/components/cart/CartButton.tsx
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation'; // or 'next/router' if older Next
-import { FiShoppingCart, FiArrowLeft } from 'react-icons/fi';
-import { useCart } from './CartContext';
+import React from "react";
+import { useRouter } from "next/navigation"; // or "next/router" if older Next
+import { FiShoppingCart, FiArrowLeft } from "react-icons/fi";
+import { useCart } from "./CartContext";
 
 type Branding = {
     categoryCardBgColor?: string;
@@ -21,10 +20,14 @@ type Props = {
 
 /**
  * A bottom bar similar to the old Vue component:
- * - A "Go Back" button (hidden on mobile).
+ * - A "Go Back" button (hidden on md+ screens).
  * - A large "Continue to Cart" button with item count badge.
  */
-export default function CartButton({ onClick, branding, isKiosk = false, }: Props) {
+export default function CartButton({
+    onClick,
+    branding,
+    isKiosk = false,
+}: Props) {
     const router = useRouter();
     const { items, getCartTotal } = useCart();
 
@@ -36,31 +39,39 @@ export default function CartButton({ onClick, branding, isKiosk = false, }: Prop
     // For the "Go Back" button
     function handleGoBack() {
         // either navigate to homepage or history.back(), etc.
-        router.push('/index');
+        router.push("/index");
     }
+
+    // 1) Conditionals for kiosk vs. normal
+    const outerPadding = isKiosk ? "py-6" : "py-3";
+    const buttonTextSize = isKiosk ? "text-3xl" : "text-lg";
+    const plusIconSize = isKiosk ? "text-4xl mr-4" : "text-2xl mr-5";
+    const badgeText = isKiosk ? "text-[18px]" : "text-[13px]";
+    const buttonPadding = isKiosk ? "py-4 px-5" : "p-2.5";
+    const priceSize = isKiosk ? "text-xl" : "text-md";
 
     return (
         <div
-            className="
+            className={`
         fixed bottom-0 left-0 w-full
-        bg-white    /* or your custom 'bg-color-footer' */
-        shadow-top   /* replicate old .shadow-top style if needed */
-        py-3
+        bg-white
+        shadow-top
+        ${outerPadding}
         z-49
         flex justify-center items-center
-      "
+      `}
         >
             <div
-                className="
+                className={`
           containercustommaxwidth container
           flex justify-between items-center
           px-4
-        "
+        `}
             >
                 {/* Go Back button: only visible on md+ screens */}
                 <button
                     onClick={handleGoBack}
-                    style={{ borderRadius: '0.5rem' }}
+                    style={{ borderRadius: "0.5rem" }}
                     className="
             hidden md:flex
             rounded-lg
@@ -75,7 +86,7 @@ export default function CartButton({ onClick, branding, isKiosk = false, }: Prop
           "
                 >
                     <FiArrowLeft />
-                    <span>Go Back</span>
+                    <span className={`${buttonTextSize}`}>Go Back</span>
                 </button>
 
                 {/* Large "Continue to Cart" button */}
@@ -83,43 +94,46 @@ export default function CartButton({ onClick, branding, isKiosk = false, }: Prop
                     <button
                         onClick={onClick}
                         style={{
-                            borderRadius: '0.5rem',
+                            borderRadius: "0.5rem",
                             backgroundColor: brandCTA,
                         }}
-                        className="
+                        className={`
               whitespace-nowrap
               rounded-lg
               flex
               items-center
               justify-center
               text-white
-              p-2.5
+              ${buttonPadding}
               gap-2
               focus:outline-none
               w-full md:w-auto
-              text-lg
+              ${buttonTextSize}
               font-semibold
-            "
+            `}
                     >
-                        <div className="relative text-2xl">
-                            <FiShoppingCart className="mr-5 cart-icon" />
+                        <div className={`relative ${plusIconSize}`}>
+                            <FiShoppingCart className="cart-icon" />
 
                             {/* Red badge for itemCount */}
                             {itemCount > 0 && (
                                 <span
-                                    className="
+                                    className={`
                     absolute
                     bg-red-600
                     text-white
-                    text-[13px]
                     font-semibold
                     rounded-full
                     leading-none
                     px-2
                     -top-4
                     py-1
-                    
-                  "
+                    ${badgeText}
+                  `}
+                                    style={{
+                                        // Slightly bigger badge on kiosk if you like:
+                                        transform: isKiosk ? "translateX(30%)" : "",
+                                    }}
                                 >
                                     {itemCount}
                                 </span>
@@ -130,7 +144,7 @@ export default function CartButton({ onClick, branding, isKiosk = false, }: Prop
 
                         {/* Show total price in parentheses if we have items */}
                         {itemCount > 0 && (
-                            <span className="ml-1 text-sm">
+                            <span className={`ml-1 text-sm ${priceSize}`}>
                                 (€{totalPrice.toFixed(2)})
                             </span>
                         )}
