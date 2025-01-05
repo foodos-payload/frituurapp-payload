@@ -25,7 +25,7 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({ shopSlug, fulfillmentOpt
     const handleSelectOption = (optionKey: "dine-in" | "takeaway" | "delivery") => {
         const found = fulfillmentOptions.find((f) => f.key === optionKey)
         if (!found) return
-        localStorage.setItem("selectedShippingMethod", found.methodId)
+        localStorage.setItem("selectedShippingMethod", found.key)
         router.push("/bestellen")
     }
 
