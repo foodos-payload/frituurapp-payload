@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, MouseEvent } from 'react';
+import { useRouter } from "next/navigation"
 import { CSSTransition } from 'react-transition-group';
 import { useCart, CartItem, getLineItemSignature } from './CartContext';
 import { FiX, FiTrash2 } from 'react-icons/fi';
@@ -278,7 +279,7 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                         <div className="px-8 mb-4 pt-3">
                             <button
                                 onClick={() => {
-                                    // e.g. location.href = '/checkout'
+                                    router.push('/checkout')
                                 }}
 
                                 style={{
