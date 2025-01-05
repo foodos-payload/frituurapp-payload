@@ -140,7 +140,7 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                                     const lineSig = getLineItemSignature(item);
 
                                     // 1) Retrieve the correct display name:
-                                    const displayName = pickCartItemName(item, userLang);
+                                    const displayName = pickCartItemName(item, userLang ?? 'nl');
 
                                     return (
                                         <li key={lineSig}>
@@ -174,7 +174,7 @@ export default function CartDrawer({ isOpen, onClose, onEditItem, branding, user
                                                         <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
                                                             {item.subproducts.map((sp) => {
                                                                 // 2) Retrieve subproduct name if you stored multiple languages in sp
-                                                                const subName = pickCartSubName(sp, userLang);
+                                                                const subName = pickCartSubName(sp, userLang ?? 'nl');
                                                                 return (
                                                                     <li key={sp.id}>
                                                                         {subName} (+€{sp.price.toFixed(2)})
