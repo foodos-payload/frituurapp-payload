@@ -326,7 +326,7 @@ export default function ProductCard({
                                 {product.displayName}
                             </h2>
                             {product.displayDesc && (
-                                <p className="text-lg pl-2 text-gray-600 line-clamp-4 mb-2 min-h-[30px]">
+                                <p className="text-lg pl-2 text-gray-600 line-clamp-4 mb-2 min-h-[60px]">
                                     {product.displayDesc}
                                 </p>
                             )}
