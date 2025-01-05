@@ -26,5 +26,28 @@
       "checkout": "Zur Kasse"
     },
     "popup": { "next": "Weiter", "back": "Zurück", "confirm": "Bestätigen" }
+  },
+  "kitchen": {
+    "topBar": {
+      "active_orders": "Aktive Bestellungen",
+      "archived_orders": "Archivierte Bestellungen"
+    },
+    "orderCard": {
+      "get_ready_by": "BEREIT BIS",
+      "deliver_by": "LIEFERN BIS",
+      "takeaway_by": "ABHOLEN BIS",
+      "cash": "BAR - NICHT BEZAHLT",
+      "prep_day": "VORBEREITUNGSTAG",
+      "recover": "Wiederherstellen",
+      "mark_complete": "Bestellung abschließen",
+      "updating": "Aktualisieren..."
+    },
+    "statuses": {
+      "awaiting_prep": "Warten auf Vorbereitung",
+      "in_preparation": "In Vorbereitung",
+      "ready_for_pickup": "Bereit zur Abholung",
+      "in_delivery": "In Lieferung",
+      "complete": "Abgeschlossen"
+    }
   }
 }

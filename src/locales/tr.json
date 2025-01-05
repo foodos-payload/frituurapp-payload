@@ -26,5 +26,28 @@
       "checkout": "Ödeme"
     },
     "popup": { "next": "Sonraki", "back": "Geri", "confirm": "Onayla" }
+  },
+  "kitchen": {
+    "topBar": {
+      "active_orders": "Aktif Siparişler",
+      "archived_orders": "Arşivlenmiş Siparişler"
+    },
+    "orderCard": {
+      "get_ready_by": "HAZIR OLMA ZAMANI",
+      "deliver_by": "TESLİM ZAMANI",
+      "takeaway_by": "PAKET SERVİS ZAMANI",
+      "cash": "NAKİT - ÖDENMEDİ",
+      "prep_day": "HAZIRLIK GÜNÜ",
+      "recover": "Kurtar",
+      "mark_complete": "Siparişi Tamamla",
+      "updating": "Güncelleniyor..."
+    },
+    "statuses": {
+      "awaiting_prep": "Hazırlık Bekleniyor",
+      "in_preparation": "Hazırlanıyor",
+      "ready_for_pickup": "Teslim Almaya Hazır",
+      "in_delivery": "Teslimatta",
+      "complete": "Tamamlandı"
+    }
   }
 }

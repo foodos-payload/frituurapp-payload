@@ -26,5 +26,28 @@
       "checkout": "Checkout"
     },
     "popup": { "next": "Next", "back": "Back", "confirm": "Confirm" }
+  },
+  "kitchen": {
+    "topBar": {
+      "active_orders": "Active Orders",
+      "archived_orders": "Archived Orders"
+    },
+    "orderCard": {
+      "get_ready_by": "GET READY BY",
+      "deliver_by": "DELIVER BY",
+      "takeaway_by": "TAKEAWAY BY",
+      "cash": "CASH - NOT PAID",
+      "prep_day": "PREP DAY",
+      "recover": "Recover",
+      "mark_complete": "Mark Order Complete",
+      "updating": "Updating..."
+    },
+    "statuses": {
+      "awaiting_prep": "Awaiting Preparation",
+      "in_preparation": "In Preparation",
+      "ready_for_pickup": "Ready for Pickup",
+      "in_delivery": "In Delivery",
+      "complete": "Completed"
+    }
   }
 }
