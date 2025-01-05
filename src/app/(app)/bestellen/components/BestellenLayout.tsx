@@ -90,7 +90,7 @@ interface Props {
 
         siteTitle?: string;
 
-
+        siteHeaderImg?: string;
 
     };
     isKiosk?: boolean;

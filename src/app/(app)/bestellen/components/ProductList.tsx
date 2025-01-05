@@ -301,12 +301,13 @@ export default function ProductList({
                     width: "240px",
                     flexShrink: 0,
                     position: "sticky",
-                    top: "100px",
+                    top: isKiosk ? "300px" : "100px",
                     alignSelf: "flex-start",
                     height: "70vh",
                     overflow: "auto",
                     background: "#f9f9f9",
                 }}
+
             >
                 <VerticalCategories
                     categories={unfilteredCategories.map((cat) => ({
@@ -381,8 +382,17 @@ export default function ProductList({
                     const catLabel = pickCategoryName(cat, userLang);
 
                     return (
-                        <section key={cat.id} id={`cat-${cat.slug}`} className="scroll-mt-[100px] mb-8">
-                            <h3 className="categoryname text-xl mt-3 mb-4 font-secondary font-love-of-thunder">
+                        <section key={cat.id} id={`cat-${cat.slug}`} className={`
+                            mb-8
+                            ${isKiosk ? "scroll-mt-[300px]" : "scroll-mt-[100px]"}
+                          `}>
+                            <h3
+                                className={`
+                                    categoryname 
+                                    mt-3 mb-4
+                                    ${isKiosk ? "text-2xl" : "text-xl"}
+                                `}
+                            >
                                 {catLabel}
                             </h3>
 

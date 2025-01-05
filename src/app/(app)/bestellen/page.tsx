@@ -61,6 +61,8 @@ export default async function BestellenPage(context: any) {
         categoryCardBgColor: rawBranding.categoryCardBgColor ?? '',
         primaryColorCTA: rawBranding.primaryColorCTA ?? '',
         siteTitle: rawBranding.siteTitle ?? '',
+        siteHeaderImg: rawBranding.siteHeaderImg?.s3_url ?? '', // ← ADD this line
+
         // Add more fields if needed
     };
 

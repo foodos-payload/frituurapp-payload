@@ -1,16 +1,14 @@
-'use client';
+"use client";
 
-import React, { useRef, useEffect } from 'react';
-import { FiMenu, FiSearch, FiX } from 'react-icons/fi';
+import React, { useRef, useEffect } from "react";
+import { FiMenu, FiSearch, FiX } from "react-icons/fi";
 
 interface BrandingProps {
-    /** e.g. "#0f1820" */
     headerBackgroundColor?: string;
-    /** e.g. "https://payload.s3.../DeFrietpostlogo (1).png" */
     logoUrl?: string;
-    /** e.g. "Frituur Den Overkant" */
     siteTitle?: string;
     siteHeaderImg?: string;
+    primaryColorCTA?: string;
 }
 
 interface HeaderProps {
@@ -21,18 +19,12 @@ interface HeaderProps {
     mobileSearchOpen: boolean;
     setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isKiosk?: boolean;
-
-    /** Optional branding (logo + background color + siteTitle, etc.) */
     branding?: BrandingProps;
 }
 
 /**
- * Header with:
- * - Left: Brand / Logo (from branding.logoUrl / branding.siteTitle), always visible
- * - Middle (desktop only): Search bar + Clear
- * - Right: Mobile search icon + Menu icon
- * - If `headerBackgroundColor` != "#ffffff", all header text/icons become white.
- * - The search bar always remains white with dark text, to keep it readable.
+ * If `isKiosk` => show a top banner + bigger search bar + no menu trigger.
+ * Else => normal search bar (the old style) + menu trigger + mobile search toggle.
  */
 export default function Header({
     searchValue,
@@ -41,14 +33,14 @@ export default function Header({
     onMenuClick,
     mobileSearchOpen,
     setMobileSearchOpen,
+    isKiosk = false,
     branding,
-    isKiosk,
 }: HeaderProps) {
-    // 1) Mobile search auto-focus
     const mobileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (mobileSearchOpen) {
+            // auto-focus the mobile search input
             setTimeout(() => {
                 mobileInputRef.current?.focus();
             }, 50);
@@ -63,52 +55,94 @@ export default function Header({
         setMobileSearchOpen(!mobileSearchOpen);
     }
 
-    /** Handle input changes */
     function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
         onSearchChange(e.target.value);
     }
 
-    // A) Decide on background color & "isDark" mode for header icons/text
-    const bgColor = branding?.headerBackgroundColor?.trim() || '#ffffff';
+    // Possibly use a custom background color for the header row
+    const bgColor = branding?.headerBackgroundColor?.trim() || "#ffffff";
     const isCustomBG =
-        bgColor.toLowerCase() !== '#ffffff' && bgColor.toLowerCase() !== '#fff';
+        bgColor.toLowerCase() !== "#ffffff" && bgColor.toLowerCase() !== "#fff";
 
-    // B) If we have a logo => encode spaces
+    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+
+    // Encode the brand’s logo
     let encodedLogoUrl: string | undefined;
     if (branding?.logoUrl) {
         encodedLogoUrl = encodeURI(branding.logoUrl);
-        console.log('[Header] Using logo URL:', encodedLogoUrl);
     }
 
-    // C) Site title (fallback if none)
-    const displayedSiteTitle = branding?.siteTitle || 'YourSiteTitle';
+    // Encode the brand’s siteHeaderImg for kiosk
+    let encodedsiteHeaderImg: string | undefined;
+    if (branding?.siteHeaderImg) {
+        encodedsiteHeaderImg = encodeURI(branding.siteHeaderImg);
+    }
+    const kioskBannerImg =
+        encodedsiteHeaderImg ||
+        "https://static.vecteezy.com/system/resources/previews/030/033/276/large_2x/burger-fry-souse-banner-free-space-text-mockup-fast-food-top-view-empty-professional-phonography-free-photo.jpg";
 
-    // D) Classes that switch header text/icons to white if `isCustomBG`, but the
-    //    *search bar* remains white with dark text so it’s readable on dark BG.
+    // If kiosk => we hide the menu icon
+    const showMenuTrigger = !isKiosk;
+
+    // If kiosk => banner + bigger text
+    const displayedSiteTitle = branding?.siteTitle || "YourSiteTitle";
+
+    // Classes to toggle text color if background is custom
     const containerClasses = `
     sticky top-0 z-40 shadow-sm
-    ${isCustomBG ? 'text-white' : 'text-gray-700'}
+    ${isCustomBG ? "text-white" : "text-gray-700"}
   `;
-
     const iconBtnClasses = `
     p-2
-    ${isCustomBG ? 'text-white hover:text-white/80' : 'text-gray-700 hover:text-black'}
-  `;
-
-    const mobileIconBtnClasses = `
-    md:hidden
-    ${iconBtnClasses}
+    ${isCustomBG ? "text-white hover:text-white/80" : "text-gray-700 hover:text-black"}
   `;
 
     return (
         <>
-            {/* Outer header container */}
+            {/* If kiosk => top banner with siteHeaderImg + big site title */}
+            {isKiosk && kioskBannerImg && (
+                <div
+                    className="
+            relative
+            w-full
+            h-60
+            bg-gray-200
+            bg-cover bg-center
+          "
+                    style={{ backgroundImage: `url('${kioskBannerImg}')` }}
+                >
+                    <h1
+                        className="
+              absolute
+              top-[20%]
+              left-2
+              text-white
+              text-4xl
+              font-bold
+              p-3
+              rounded-lg
+            "
+                        style={{
+                            backgroundColor: brandCTA,
+                            borderRadius: "0.5em",
+                        }}
+                    >
+                        {displayedSiteTitle}
+                    </h1>
+                </div>
+            )}
+
+            {/* The main header row => if kiosk => round top corners & shift up */}
             <header
-                className={containerClasses}
+                className={`
+          ${containerClasses}
+          ${isKiosk ? "rounded-t-3xl shadow-lg -mt-8" : ""}
+        `}
                 style={{ backgroundColor: bgColor }}
             >
                 <div
                     className="
+            containercustommaxwidth
             w-full
             max-w-7xl
             mx-auto
@@ -119,164 +153,226 @@ export default function Header({
             items-center
             justify-between
             h-[80px]
-            containercustommaxwidth
           "
                 >
-                    {/* LEFT: Brand / Logo + Title (always visible) */}
-                    <div className="flex items-center space-x-2">
+                    {/* LEFT: brand / logo */}
+                    <div className="flex items-center space-x-5">
                         {encodedLogoUrl ? (
                             <img
                                 src={encodedLogoUrl}
                                 alt="Site Logo"
-                                className="h-8 object-contain"
+                                className={isKiosk ? "object-contain h-14" : "object-contain h-8"}
                             />
                         ) : (
-                            // Fallback text if no branding.logoUrl
-                            <div className="font-bold text-sm md:text-lg">
-                                [Your Logo]
-                            </div>
+                            <div className="font-bold text-sm md:text-lg">[Your Logo]</div>
                         )}
 
-                        {/* Always show site title to the right */}
-                        <span className="text-base font-semibold">
-                            {displayedSiteTitle}
-                        </span>
+                        {/* Show site title on non-kiosk or if no kioskBannerImg */}
+                        {(!isKiosk || !kioskBannerImg) && (
+                            <span className="text-base font-semibold">
+                                {displayedSiteTitle}
+                            </span>
+                        )}
                     </div>
 
-                    {/* MIDDLE (Desktop) => Search bar (always white w/ dark text) */}
-                    <div className="hidden md:flex items-center ml-auto mr-4 rounded-lg">
-                        <div
-                            style={{ borderRadius: '4px' }}
-                            className="
-                relative 
-                flex 
-                items-center 
-                rounded-lg
-                shadow-inner     
-                bg-white
-                border 
-                border-gray-300
-              "
-                        >
-                            <FiSearch
-                                className="absolute left-2 text-gray-400"
-                                size={18}
-                            />
-                            {/* Search input (DESKTOP) => always dark text */}
-                            <input
-                                type="text"
-                                placeholder="Search products..."
-                                value={searchValue}
-                                onChange={handleSearchChange}
-                                className="
-                  pl-8
-                  pr-20
-                  py-2
-                  text-sm
-                  text-gray-700
-                  bg-transparent
-                  rounded-lg
-                  focus:outline-none
-                "
-                            />
-
-                            {/* Clear button if there's some text */}
-                            {searchValue && (
-                                <button
-                                    onClick={onClearFilter}
+                    {/* MIDDLE => search bar (kiosk vs. non-kiosk) */}
+                    {isKiosk ? (
+                        <div className="hidden sm:inline-flex max-w-[320px] w-[80%] ml-auto">
+                            {/* The container with border, shadow, and rounded corners */}
+                            <div className="
+      relative 
+      flex 
+      w-full 
+      shadow-sm 
+      border 
+      border-gray-300 
+      bg-gray-50 
+      rounded-xl
+    ">
+                                <FiSearch
                                     className="
-                    absolute
-                    right-2
-                    text-md
-                    px-3
-                    py-1
-                    font-bold
-                    bg-red-500
-                    text-white
-                    rounded
-                    hover:bg-red-600
-                  "
-                                >
-                                    X
-                                </button>
-                            )}
+          absolute 
+          left-3 
+          top-3 
+          z-10 
+          text-gray-400 
+          pointer-events-none
+        "
+                                    size={24}
+                                />
+                                <input
+                                    type="text"
+                                    className="
+          w-full
+          z-0
+          inline-flex
+          items-center
+          text-gray-700
+          py-3
+          pl-12
+          pr-16
+          text-lg
+          bg-transparent
+          rounded-lg
+          focus:outline-none
+        "
+                                    placeholder="Search"
+                                    value={searchValue}
+                                    onChange={handleSearchChange}
+                                />
+                                {searchValue && (
+                                    <span
+                                        className="
+            absolute 
+            right-2 
+            top-2
+            text-2xl 
+            cursor-pointer 
+            px-3 
+            py-1 
+            bg-red-500 
+            text-white 
+            rounded-xl
+            hover:bg-red-600
+          "
+                                        onClick={onClearFilter}
+                                    >
+                                        X
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                    </div>
-
-                    {/* RIGHT: Mobile icons */}
-                    <div className="flex items-center gap-2">
-                        {/* MOBILE Search Icon */}
-                        <button className={mobileIconBtnClasses} onClick={toggleMobileSearch}>
-                            {mobileSearchOpen ? <FiX size={20} /> : <FiSearch size={20} />}
-                        </button>
-
-                        {/* Menu Icon (Hamburger) */}
-                        <button className={iconBtnClasses} onClick={onMenuClick}>
-                            <FiMenu size={24} />
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            {/* MOBILE SEARCH BAR (collapsible), only if open */}
-            {mobileSearchOpen && (
-                <div className="md:hidden bg-white px-2 shadow-sm pb-3">
-                    <div
-                        style={{ borderRadius: '4px' }}
-                        className="
-              relative
-              flex
-              items-center
-              rounded-lg
-              shadow-inner
-              bg-white
-              border
-              border-gray-300
-            "
-                    >
-                        <FiSearch className="absolute left-2 text-gray-400" size={18} />
-                        {/* The mobile search input (with ref) => also dark text */}
-                        <input
-                            ref={mobileInputRef}
-                            type="text"
-                            placeholder="Search products..."
-                            value={searchValue}
-                            onChange={handleSearchChange}
-                            style={{ borderRadius: '4px' }}
-                            className="
-                pl-8
-                pr-16
-                py-2
-                w-full
-                text-sm
-                text-gray-700
-                bg-transparent
-                rounded-lg
-                focus:outline-none
-              "
-                        />
-
-                        {searchValue && (
-                            <button
-                                onClick={onClearFilter}
+                    ) : (
+                        // NON-KIOSK => restore your original snippet exactly
+                        <div className="hidden md:flex items-center ml-auto mr-4 rounded-lg">
+                            <div
+                                style={{ borderRadius: "4px" }}
                                 className="
-                  absolute
-                  right-2
-                  px-2
-                  py-1
-                  bg-red-500
-                  text-white
-                  rounded
-                  text-sm
-                  hover:bg-red-600
+                  relative
+                  flex
+                  items-center
+                  rounded-lg
+                  shadow-inner
+                  bg-white
+                  border
+                  border-gray-300
                 "
                             >
-                                Clear
+                                <FiSearch className="absolute left-2 text-gray-400" size={18} />
+                                {/* original placeholder text etc. */}
+                                <input
+                                    type="text"
+                                    placeholder="Search products..."
+                                    value={searchValue}
+                                    onChange={handleSearchChange}
+                                    className="
+                    pl-8
+                    pr-20
+                    py-2
+                    text-sm
+                    text-gray-700
+                    bg-transparent
+                    rounded-lg
+                    focus:outline-none
+                  "
+                                />
+
+                                {searchValue && (
+                                    <button
+                                        onClick={onClearFilter}
+                                        className="
+                      absolute
+                      right-2
+                      text-md
+                      px-3
+                      py-1
+                      font-bold
+                      bg-red-500
+                      text-white
+                      rounded
+                      hover:bg-red-600
+                    "
+                                    >
+                                        X
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* RIGHT => mobile icons if !kiosk */}
+                    <div className="flex items-center gap-2">
+                        {/* If kiosk => skip the mobile search icon. Otherwise show it */}
+                        {!isKiosk && (
+                            <button
+                                className={`sm:hidden ${iconBtnClasses}`}
+                                onClick={toggleMobileSearch}
+                            >
+                                {mobileSearchOpen ? <FiX size={20} /> : <FiSearch size={20} />}
+                            </button>
+                        )}
+
+                        {/* Show menu icon if not kiosk */}
+                        {showMenuTrigger && (
+                            <button className={iconBtnClasses} onClick={onMenuClick}>
+                                <FiMenu size={24} />
                             </button>
                         )}
                     </div>
-                </div>
-            )}
+                </div >
+            </header >
+
+            {/* MOBILE SEARCH BAR (collapsible), only if open & not kiosk */}
+            {
+                !isKiosk && mobileSearchOpen && (
+                    <div className="sm:hidden bg-white px-2 shadow-sm pb-3">
+                        <div className="relative flex w-full rounded-md shadow-sm">
+                            <FiSearch
+                                className="absolute left-2 top-2 z-10 opacity-50 pointer-events-none"
+                                size={20}
+                            />
+                            <input
+                                ref={mobileInputRef}
+                                type="text"
+                                className="
+                w-full
+                z-0
+                inline-flex
+                items-center
+                p-2
+                pl-10
+                text-xl
+                text-gray-500
+                border border-gray-300
+                rounded-md
+                shadow-inner
+                bg-gray-50
+                focus:outline-none
+              "
+                                placeholder="Search"
+                                value={searchValue}
+                                onChange={handleSearchChange}
+                            />
+                            {searchValue && (
+                                <span
+                                    className="
+                  absolute right-2 top-2 text-xs
+                  cursor-pointer
+                  p-1
+                  bg-red-500
+                  text-white
+                  rounded
+                  hover:bg-red-600
+                "
+                                    onClick={onClearFilter}
+                                >
+                                    Clear
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )
+            }
         </>
     );
 }
