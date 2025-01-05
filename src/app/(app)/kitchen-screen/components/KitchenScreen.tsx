@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react"
 import { TopBar } from "./TopBar"
-import { OrderCard } from "./OrderCard"
+import { OrderCard } from "../components/OrderCard/index"
 import { SkeletonOrderCard } from "./SkeletonOrderCard"
 
 type OrderStatus =
@@ -30,6 +30,8 @@ interface OrderDetail {
     }
 }
 interface Order {
+    fulfillment_method: string
+    order_type: string
     id: number
     status: OrderStatus
     tempOrdNr?: number
@@ -98,8 +100,29 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
                 const res = await fetch(url, { cache: "no-store" })
                 if (!res.ok) throw new Error(`Fetch error ${res.status}`)
                 const data = await res.json()
-                const fetched = data.orders || []
+                const fetched: Order[] = data.orders || []
 
+                // 1) Immediately bump kiosk/dine_in/awaiting_preparation => in_preparation
+                for (const ord of fetched) {
+                    if (
+                        ord.order_type === "kiosk" &&
+                        ord.fulfillment_method === "dine_in" &&
+                        ord.status === "awaiting_preparation"
+                    ) {
+                        try {
+                            const markUrl = `/api/orders/markInPreparation?host=${encodeURIComponent(
+                                hostSlug
+                            )}&orderId=${ord.id}`
+                            await fetch(markUrl, { method: "POST" })
+                            // Also update locally so the UI reflects new status
+                            ord.status = "in_preparation"
+                        } catch (markErr) {
+                            console.error("Error auto-bumping kiosk/dine_in order:", markErr)
+                        }
+                    }
+                }
+
+                // 2) Now proceed to set our local state
                 if (resetPage) {
                     setOrders(fetched)
                     setHasMore(fetched.length >= 50)
@@ -116,6 +139,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
         },
         [hostSlug, view, page]
     )
+
 
     // ─────────────────────────────────────────────────────────────────────────────
     // C) On mount => fetch orders, fetch counts, start polling
