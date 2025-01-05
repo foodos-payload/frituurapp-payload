@@ -33,14 +33,20 @@ export const Orders: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data, originalDoc, req }) => {
-        if (!originalDoc) {
+      async ({ data, originalDoc, req, operation }) => {
+
+
+        // 1) If new doc => auto-increment 'tempOrdNr' + 'id'
+        if (operation === 'create') {
+
           const today = new Date().toISOString().split('T')[0];
+
+          // 1a) Find lastOrder for tempOrdNr
           const lastOrder = await req.payload.find({
             collection: 'orders',
             where: {
               tenant: { equals: data.tenant },
-              shop: { equals: data.shops },
+              shops: { equals: data.shops },     // if field name is "shops" or "shop" => ensure it matches your schema
               createdAt: { greater_than: `${today}T00:00:00` },
             },
             sort: '-tempOrdNr',
@@ -48,7 +54,87 @@ export const Orders: CollectionConfig = {
           });
           const lastTempOrdNr = lastOrder.docs[0]?.tempOrdNr || 0;
           data.tempOrdNr = lastTempOrdNr + 1;
+
+          // 1b) Find lastFullOrder for numeric id
+          const lastFullOrder = await req.payload.find({
+            collection: 'orders',
+            where: {
+              tenant: { equals: data.tenant },
+              shops: { equals: data.shops },
+            },
+            sort: '-id',
+            limit: 1,
+          });
+          const lastId = lastFullOrder.docs[0]?.id ?? 0;
+          data.id = lastId + 1;
         }
+
+        // 2) Ensure tax for each order_detail + subproduct
+        if (data.order_details) {
+          for (const od of data.order_details) {
+            if (typeof od.tax === 'undefined') {
+              const productDoc = await req.payload.findByID({
+                collection: 'products',
+                id: od.product,
+              });
+              od.tax = productDoc?.tax ?? 21;
+            }
+
+            if (od.subproducts) {
+              for (const sub of od.subproducts) {
+                if (typeof sub.tax === 'undefined') {
+                  const spDoc = await req.payload.findByID({
+                    collection: 'subproducts',
+                    id: sub.subproduct,
+                  });
+                  sub.tax = spDoc?.tax ?? 21;
+                }
+              }
+            }
+          }
+        }
+
+        // 3) Calculate subtotal, total_tax, total
+        // 3) Calculate subtotal, total_tax, total
+        let subtotal = 0;
+        let totalTax = 0;
+
+        if (data.order_details) {
+          console.log('Calculating subtotal/totalTax...');
+          for (const od of data.order_details) {
+            // "price" is tax-included
+            const lineSubtotal = (od.price ?? 0) * (od.quantity ?? 1);
+
+            // fraction = tax% / (100 + tax%)
+            // e.g. if tax=6 => fraction= 6/106 => ~0.0566
+            const fraction = (od.tax ?? 21) / (100 + (od.tax ?? 21));
+            const lineTax = lineSubtotal * fraction;
+            const lineNet = lineSubtotal - lineTax;
+
+            // If subproducts are also tax-included, do the same approach:
+            if (od.subproducts) {
+              for (const sub of od.subproducts) {
+                const subLineSubtotal = (sub.price ?? 0) * (od.quantity ?? 1);
+                const subFraction =
+                  (sub.tax ?? 21) / (100 + (sub.tax ?? 21));
+                const subLineTax = subLineSubtotal * subFraction;
+                const subLineNet = subLineSubtotal - subLineTax;
+
+                subtotal += subLineNet;
+                totalTax += subLineTax;
+              }
+            }
+
+            subtotal += lineNet;
+            totalTax += lineTax;
+          }
+        }
+
+        data.subtotal = Math.round(subtotal * 100) / 100;
+        data.total_tax = Math.round(totalTax * 100) / 100;
+        // total = net + tax = (sum of lineSubtotal), so effectively the sum of typed prices
+        data.total = Math.round((subtotal + totalTax) * 100) / 100;
+
       },
     ],
   },
@@ -58,7 +144,7 @@ export const Orders: CollectionConfig = {
     {
       name: 'id',
       type: 'number',
-      required: true,
+      // required: true,
       unique: true,
       label: {
         en: 'Order ID',
@@ -79,7 +165,7 @@ export const Orders: CollectionConfig = {
     {
       name: 'tempOrdNr',
       type: 'number',
-      required: true,
+      // required: true,
       label: {
         en: 'Temporary Order Number',
         nl: 'Tijdelijk Bestellingsnummer',
@@ -252,7 +338,6 @@ export const Orders: CollectionConfig = {
         {
           name: 'tax',
           type: 'number',
-          required: true,
           label: {
             en: 'Tax',
             nl: 'BTW',
@@ -296,7 +381,6 @@ export const Orders: CollectionConfig = {
             {
               name: 'tax',
               type: 'number',
-              required: true,
               label: {
                 en: 'Subproduct Tax',
                 nl: 'BTW van Subproduct',
@@ -308,6 +392,7 @@ export const Orders: CollectionConfig = {
         },
       ],
     },
+
     {
       name: 'payments',
       type: 'array',
@@ -350,6 +435,99 @@ export const Orders: CollectionConfig = {
           },
         },
       ],
+    },
+    {
+      name: 'fulfillment_method',
+      type: 'select',
+      options: [
+        { label: 'Delivery', value: 'delivery' },
+        { label: 'Takeaway', value: 'takeaway' },
+        { label: 'Dine In', value: 'dine_in' },
+      ],
+      label: { en: 'Fulfillment Method' },
+    },
+    {
+      name: 'fulfillment_date',
+      type: 'date',
+      label: { en: 'Fulfillment Date' },
+    },
+    {
+      name: 'fulfillment_time',
+      type: 'text',
+      label: { en: 'Fulfillment Time' },
+    },
+    {
+      name: 'customer_details',
+      type: 'group',
+      label: { en: 'Customer Details' },
+      fields: [
+        {
+          name: 'firstName',
+          type: 'text',
+          label: { en: 'First Name' },
+        },
+        {
+          name: 'lastName',
+          type: 'text',
+          label: { en: 'Last Name' },
+        },
+        {
+          name: 'email',
+          type: 'text',
+          label: { en: 'Email' },
+        },
+        {
+          name: 'phone',
+          type: 'text',
+          label: { en: 'Phone' },
+        },
+        {
+          name: 'address',
+          type: 'text',
+          label: { en: 'Address' },
+        },
+        {
+          name: 'city',
+          type: 'text',
+          label: { en: 'City' },
+        },
+        {
+          name: 'postalCode',
+          type: 'text',
+          label: { en: 'Postal Code' },
+        },
+      ],
+    },
+    {
+      name: 'subtotal',
+      type: 'number',
+      label: {
+        en: 'Subtotal Amount',
+        // add other translations if needed
+      },
+      admin: {
+        readOnly: true, // We are calculating it automatically
+      },
+    },
+    {
+      name: 'total_tax',
+      type: 'number',
+      label: {
+        en: 'Total Tax',
+      },
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'total',
+      type: 'number',
+      label: {
+        en: 'Total Amount',
+      },
+      admin: {
+        readOnly: true,
+      },
     },
   ],
 };

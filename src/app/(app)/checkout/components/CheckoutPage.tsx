@@ -2,9 +2,12 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { FiTrash2 } from 'react-icons/fi'
+import FulfillmentMethodSelector from "./FulfillmentMethodSelector"
+import TimeSlotSelector from "./TimeSlotSelector"
+import CustomerDetailsForm from "./CustomerDetailsForm"
+import PaymentMethodSelector from "./PaymentMethodSelector"
+import OrderSummary from "./OrderSummary"
 
-// Minimal types
 export type PaymentMethod = {
     id: string
     label: string
@@ -20,7 +23,6 @@ export type Timeslot = {
 
 type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | ""
 
-/** Example subproduct shape (adjust if yours differs). */
 type Subproduct = {
     id: string
     name_nl: string
@@ -41,10 +43,8 @@ type CartItem = {
     subproducts?: Subproduct[]
 }
 
-// Props from page.tsx
 interface CheckoutPageProps {
     hostSlug: string
-    kioskMode?: boolean
     initialPaymentMethods: PaymentMethod[]
     initialTimeslots: Timeslot[]
 }
@@ -61,14 +61,13 @@ function getNextTenDates(): Date[] {
     return dates
 }
 
-/** Convert JS getDay() => your timeslot day (1=Mon .. 7=Sun). */
+/** Convert JS getDay() => your timeslot day (1=Mon..7=Sun). */
 function jsDayToTimeslotDay(jsDay: number): number {
     return jsDay === 0 ? 7 : jsDay // Sunday=0 => 7
 }
 
 export default function CheckoutPage({
     hostSlug,
-    kioskMode,
     initialPaymentMethods,
     initialTimeslots,
 }: CheckoutPageProps) {
@@ -78,41 +77,13 @@ export default function CheckoutPage({
     // (B) Fulfillment method
     const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>("")
 
-    // Flattened timeslots
+    // Timeslots
     const [allTimeslots] = useState<Timeslot[]>(initialTimeslots)
-    let finalTimeslots = allTimeslots
-    if (kioskMode) {
-        finalTimeslots = finalTimeslots.filter(ts => ts.fulfillmentMethod !== "dine_in")
-    }
-
-    const methodsWithTimeslots = new Set<string>(finalTimeslots.map(ts => ts.fulfillmentMethod))
-    const possibleMethods: FulfillmentMethod[] = ["delivery", "takeaway", "dine_in"].filter(
-        m => methodsWithTimeslots.has(m),
-    ) as FulfillmentMethod[]
 
     // (C) Date & Time
+    const nextTenDates = getNextTenDates()
     const [selectedDate, setSelectedDate] = useState("")
     const [selectedTime, setSelectedTime] = useState("")
-
-    const nextTenDates = getNextTenDates()
-
-    const relevantTimeslots = finalTimeslots.filter(ts => ts.fulfillmentMethod === fulfillmentMethod)
-    const availableDays = new Set(relevantTimeslots.map(ts => Number(ts.day)))
-
-    const validDates = nextTenDates.filter(d => {
-        const jsDay = d.getDay()
-        const tsDay = jsDayToTimeslotDay(jsDay)
-        return availableDays.has(tsDay)
-    })
-
-    let matchingTimesForSelectedDay: Timeslot[] = []
-    if (selectedDate && fulfillmentMethod !== "") {
-        const [y, m, da] = selectedDate.split("-").map(Number)
-        const realDate = new Date(y, (m || 1) - 1, da || 1)
-        const jsDay = realDate.getDay()
-        const tsDay = jsDayToTimeslotDay(jsDay).toString()
-        matchingTimesForSelectedDay = relevantTimeslots.filter(ts => ts.day === tsDay)
-    }
 
     // (D) Payment
     const [paymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods)
@@ -139,32 +110,46 @@ export default function CheckoutPage({
             try {
                 const parsed = JSON.parse(storedCart) as CartItem[]
                 setCartItems(parsed)
-            } catch { /* ignore */ }
+            } catch {
+                /* ignore */
+            }
         }
+
         const storedUser = localStorage.getItem("userData")
         if (storedUser) {
             try {
                 const parsed = JSON.parse(storedUser)
                 setLoggedInUser(parsed)
-            } catch { /* ignore */ }
+            } catch {
+                /* ignore */
+            }
+        }
+    }, [])
+
+    // On mount => maybe restore shipping method
+    useEffect(() => {
+        const storedMethod = localStorage.getItem("selectedShippingMethod") || ""
+        // Convert "dine-in" => "dine_in"
+        const correctedMethod = storedMethod === "dine-in" ? "dine_in" : storedMethod
+        if (
+            correctedMethod &&
+            ["delivery", "takeaway", "dine_in"].includes(correctedMethod)
+        ) {
+            setFulfillmentMethod(correctedMethod as FulfillmentMethod)
         }
     }, [])
 
     useEffect(() => {
-        const storedMethod = localStorage.getItem("selectedShippingMethod") || ""
-        // Convert "dine-in" => "dine_in"
-        const correctedMethod =
-            storedMethod === "dine-in" ? "dine_in" : storedMethod
-
-        if (correctedMethod && possibleMethods.includes(correctedMethod as FulfillmentMethod)) {
-            setFulfillmentMethod(correctedMethod as FulfillmentMethod)
+        if (fulfillmentMethod) {
+            // Convert "dine_in" -> "dine-in"
+            const storageValue = fulfillmentMethod === "dine_in"
+                ? "dine-in"
+                : fulfillmentMethod;
+            localStorage.setItem("selectedShippingMethod", storageValue);
         }
-    }, [possibleMethods])
+    }, [fulfillmentMethod]);
 
-    /**
-     *  Recalc total whenever cartItems changes.
-     *  We add (base price + subproduct sum) * quantity
-     */
+    // Recalc total whenever cart changes
     useEffect(() => {
         const sum = cartItems.reduce((acc, item) => {
             const subTotal = item.subproducts?.reduce((acc2, sp) => acc2 + sp.price, 0) || 0
@@ -178,56 +163,99 @@ export default function CheckoutPage({
         setCartItems(prevItems => {
             const newCart = prevItems.map(item => {
                 if (item.productId === productId) {
-                    return { ...item, quantity: item.quantity + 1 };
+                    return { ...item, quantity: item.quantity + 1 }
                 }
-                return item;
-            });
-            localStorage.setItem("cartItems", JSON.stringify(newCart));
-            return newCart;
-        });
+                return item
+            })
+            localStorage.setItem("cartItems", JSON.stringify(newCart))
+            return newCart
+        })
     }
 
     function handleDecrease(productId: string) {
         setCartItems(prevItems => {
             const newCart = prevItems.map(item => {
                 if (item.productId === productId && item.quantity > 1) {
-                    return { ...item, quantity: item.quantity - 1 };
+                    return { ...item, quantity: item.quantity - 1 }
                 }
-                return item;
-            });
-            localStorage.setItem("cartItems", JSON.stringify(newCart));
-            return newCart;
-        });
+                return item
+            })
+            localStorage.setItem("cartItems", JSON.stringify(newCart))
+            return newCart
+        })
     }
 
     function handleRemoveItem(productId: string) {
         setCartItems(prevItems => {
-            const newCart = prevItems.filter(item => item.productId !== productId);
-            localStorage.setItem("cartItems", JSON.stringify(newCart));
-            return newCart;
-        });
+            const newCart = prevItems.filter(item => item.productId !== productId)
+            localStorage.setItem("cartItems", JSON.stringify(newCart))
+            return newCart
+        })
     }
 
-
-
     // (H) Final checkout
-    function handleCheckout() {
-        console.log("Proceeding to checkout with data:", {
-            kioskMode,
-            fulfillmentMethod,
-            selectedDate,
-            selectedTime,
-            paymentMethod: selectedPaymentId,
-            surname,
-            lastName,
-            address,
-            city,
-            postalCode,
-            phone,
-            email,
-            cartItems,
-            couponCode,
-        })
+    async function handleCheckout() {
+        // 1. Collect data from state:
+        const payloadData = {
+            tenant: hostSlug,
+            shop: hostSlug,
+            orderType: "web",
+            status: "pending_payment",
+            fulfillmentMethod,   // e.g. 'delivery'
+            fulfillmentDate: selectedDate,
+            fulfillmentTime: selectedTime,
+            customerDetails: {
+                firstName: surname,    // or rename these as needed
+                lastName,
+                email,
+                phone,
+                address,
+                city,
+                postalCode,
+            },
+            orderDetails: cartItems.map(item => ({
+                product: item.productId,
+                quantity: item.quantity,
+                price: item.price,
+                subproducts: item.subproducts?.map(sp => ({
+                    subproduct: sp.id,
+                    price: sp.price,
+                })) || [],
+            })),
+            payments: [
+                {
+                    payment_method: selectedPaymentId,
+                    amount: cartTotal,
+                },
+            ],
+        }
+
+        // 2. Validate
+        if (!canProceed()) {
+            alert("Please fill in required fields and pick a payment method.")
+            return
+        }
+
+        // 3. POST to your new API route
+        try {
+            const res = await fetch("/api/submitOrder", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payloadData),
+            })
+            const json = await res.json()
+
+            if (!json.success) {
+                alert("Order creation failed: " + json.message)
+                return
+            }
+
+            alert("Order successfully created! Order ID: " + json.order.id)
+            // Optionally redirect or clear cart here
+        } catch (err) {
+            console.error("Error submitting order:", err)
+            alert("Error submitting order. Check console for more details.")
+        }
     }
 
     // (I) Mock login
@@ -241,43 +269,26 @@ export default function CheckoutPage({
     }
 
     function canProceed(): boolean {
-        // 1) Must have a fulfillment method
         if (!fulfillmentMethod) return false
-
-        // 2) Must have a date & time selected
         if (!selectedDate || !selectedTime) return false
-
-        // 3) Must have a payment method selected
         if (!selectedPaymentId) return false
 
-        // 4) Check required fields for each fulfillment method
         switch (fulfillmentMethod) {
             case "takeaway":
-                // required: surname, lastName, phone
                 if (!surname || !lastName || !phone) return false
                 break
-
             case "delivery":
-                // required: surname, lastName, phone, address, city, postalCode
                 if (!surname || !lastName || !phone || !address || !city || !postalCode) return false
                 break
-
             case "dine_in":
-                // required: surname
                 if (!surname) return false
                 break
-
             default:
-                // If we somehow got an unrecognized method, block proceed
                 return false
         }
-
-        // If everything passes, return true
         return true
     }
 
-
-    // Layout
     return (
         <div className="flex w-full min-h-screen">
             {/* LEFT column */}
@@ -299,440 +310,78 @@ export default function CheckoutPage({
                 </div>
 
                 {/* (B) Fulfillment method */}
-                <div className="space-y-3">
-                    <h2 className="text-xl font-bold">Fulfillment Method</h2>
-                    <div className="flex gap-3">
-                        {possibleMethods.length === 0 ? (
-                            <p className="text-red-600">
-                                No timeslots defined, so no fulfillment methods to choose from.
-                            </p>
-                        ) : (
-                            possibleMethods.map(method => (
-                                <button
-                                    key={method}
-                                    onClick={() => {
-                                        setFulfillmentMethod(method)
-                                        setSelectedDate("")
-                                        setSelectedTime("")
-                                    }}
-                                    className={`p-3 rounded border w-[130px] text-center font-semibold
-                                        ${fulfillmentMethod === method
-                                            ? "bg-blue-100 border-blue-400"
-                                            : "bg-white border-gray-300"
-                                        }`}
-                                >
-                                    {method === "delivery"
-                                        ? "Delivery"
-                                        : method === "takeaway"
-                                            ? "Takeaway"
-                                            : "Dine In"}
-                                </button>
-                            ))
-                        )}
-                    </div>
-                </div>
+                <FulfillmentMethodSelector
+                    allTimeslots={allTimeslots}
+                    fulfillmentMethod={fulfillmentMethod}
+                    setFulfillmentMethod={m => {
+                        setFulfillmentMethod(m)
+                        setSelectedDate("")
+                        setSelectedTime("")
+                    }}
+                />
 
-                {/* (C) When => show if picked */}
+                {/* (C) Date/time selector */}
                 {fulfillmentMethod !== "" && (
-                    <div className="space-y-3">
-                        <h2 className="text-xl font-bold">When</h2>
-
-                        {/* Date */}
-                        <label className="block text-sm font-semibold">Select Date</label>
-                        <select
-                            className="border p-2 rounded w-full"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                        >
-                            <option value="">Select a date</option>
-                            {validDates.map(dateObj => {
-                                const year = dateObj.getFullYear()
-                                const month = String(dateObj.getMonth() + 1).padStart(2, '0')
-                                const day = String(dateObj.getDate()).padStart(2, '0')
-                                const dateStr = `${year}-${month}-${day}`
-                                const displayStr = dateObj.toLocaleDateString("en-GB", {
-                                    weekday: "short",
-                                    day: "numeric",
-                                    month: "short",
-                                })
-                                return (
-                                    <option key={dateStr} value={dateStr}>
-                                        {displayStr}
-                                    </option>
-                                )
-                            })}
-                        </select>
-
-                        {/* Time */}
-                        <label className="block text-sm font-semibold">Select Time</label>
-                        <select
-                            className="border p-2 rounded w-full"
-                            value={selectedTime}
-                            onChange={(e) => setSelectedTime(e.target.value)}
-                        >
-                            <option value="">Select a time</option>
-                            {matchingTimesForSelectedDay.map(ts => (
-                                <option
-                                    key={`${ts.id}-${ts.day}-${ts.time}`}
-                                    value={ts.time}
-                                    disabled={ts.isFullyBooked}
-                                >
-                                    {ts.time}
-                                    {ts.isFullyBooked ? " (Fully Booked)" : ""}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    <TimeSlotSelector
+                        fulfillmentMethod={fulfillmentMethod}
+                        allTimeslots={allTimeslots}
+                        nextTenDates={nextTenDates}
+                        selectedDate={selectedDate}
+                        setSelectedDate={setSelectedDate}
+                        selectedTime={selectedTime}
+                        setSelectedTime={setSelectedTime}
+                    />
                 )}
 
-                {/* (D) Your details */}
+                {/* (D) Customer details */}
                 {fulfillmentMethod !== "" && (
-                    <div className="space-y-3">
-                        <h2 className="text-xl font-bold">Your Details</h2>
-
-                        {/* Always show Surname + Email */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-sm font-semibold">Surname</label>
-                                <input
-                                    value={surname}
-                                    onChange={e => setSurname(e.target.value)}
-                                    className="border p-2 rounded w-full"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold">
-                                    Email (optional)
-                                </label>
-                                <input
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                    type="email"
-                                    className="border p-2 rounded w-full"
-                                />
-                            </div>
-                        </div>
-
-                        {/* If TAKEAWAY => Last Name + Phone */}
-                        {fulfillmentMethod === "takeaway" && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-sm font-semibold">Last Name</label>
-                                    <input
-                                        value={lastName}
-                                        onChange={e => setLastName(e.target.value)}
-                                        className="border p-2 rounded w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold">Phone</label>
-                                    <input
-                                        value={phone}
-                                        onChange={e => setPhone(e.target.value)}
-                                        className="border p-2 rounded w-full"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* If DELIVERY => show ALL fields */}
-                        {fulfillmentMethod === "delivery" && (
-                            <>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-semibold">Last Name</label>
-                                        <input
-                                            value={lastName}
-                                            onChange={e => setLastName(e.target.value)}
-                                            className="border p-2 rounded w-full"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold">Phone</label>
-                                        <input
-                                            value={phone}
-                                            onChange={e => setPhone(e.target.value)}
-                                            className="border p-2 rounded w-full"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold">Address</label>
-                                    <input
-                                        value={address}
-                                        onChange={e => setAddress(e.target.value)}
-                                        className="border p-2 rounded w-full"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-semibold">City</label>
-                                        <input
-                                            value={city}
-                                            onChange={e => setCity(e.target.value)}
-                                            className="border p-2 rounded w-full"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold">Postal Code</label>
-                                        <input
-                                            value={postalCode}
-                                            onChange={e => setPostalCode(e.target.value)}
-                                            className="border p-2 rounded w-full"
-                                        />
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    <CustomerDetailsForm
+                        fulfillmentMethod={fulfillmentMethod}
+                        surname={surname}
+                        setSurname={setSurname}
+                        lastName={lastName}
+                        setLastName={setLastName}
+                        address={address}
+                        setAddress={setAddress}
+                        city={city}
+                        setCity={setCity}
+                        postalCode={postalCode}
+                        setPostalCode={setPostalCode}
+                        phone={phone}
+                        setPhone={setPhone}
+                        email={email}
+                        setEmail={setEmail}
+                    />
                 )}
 
-                {/* (E) Pay with */}
-                <div className="space-y-3 mb-16">
-                    <h2 className="text-xl font-bold">Pay With</h2>
-                    <div className="flex gap-3 flex-wrap">
-                        {paymentMethods.map(pm => (
-                            <button
-                                key={pm.id}
-                                onClick={() => setSelectedPaymentId(pm.id)}
-                                className={`p-3 rounded border w-[120px] text-center
-                                    ${selectedPaymentId === pm.id
-                                        ? "bg-green-100 border-green-400"
-                                        : "bg-white border-gray-300"
-                                    }`}
-                            >
-                                {pm.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                {/* (E) Payment methods */}
+                <PaymentMethodSelector
+                    paymentMethods={paymentMethods}
+                    selectedPaymentId={selectedPaymentId}
+                    setSelectedPaymentId={setSelectedPaymentId}
+                />
+
+                {/* Extra bottom padding when in mobile */}
+                <div className="mb-16"></div>
             </div>
 
             {/* RIGHT column => order summary */}
             <div className="hidden md:block md:w-1/2 lg:w-1/3 p-4">
-                <div className="sticky top-4 space-y-6">
-                    {/* Section title */}
-                    <div>
-                        <h2 className="text-2xl font-bold mb-1">Order Summary</h2>
-                        <p className="text-gray-500 text-sm">
-                            Review your items and confirm below.
-                        </p>
-                    </div>
-
-                    {/* Main card container */}
-                    <div className="bg-white rounded-lg p-4 shadow-md space-y-4">
-                        {/* Cart items */}
-                        {cartItems.length === 0 ? (
-                            <p className="text-gray-500">No items in cart.</p>
-                        ) : (
-                            <ul className="flex flex-col gap-4">
-                                {cartItems.map((item) => {
-                                    // For display:
-                                    const displayName = item.productName || "Untitled Product"
-
-                                    // Sum subproducts
-                                    const subTotal =
-                                        item.subproducts?.reduce((acc, sp) => acc + sp.price, 0) || 0
-
-                                    // Final line
-                                    const linePrice = (item.price + subTotal) * item.quantity
-
-                                    return (
-                                        <li
-                                            key={item.id}
-                                            className="
-                                              w-full 
-                                              flex 
-                                              items-center 
-                                              rounded-lg 
-                                              border border-gray-200
-                                              p-3 
-                                              gap-3 
-                                              bg-white
-                                              hover:shadow-sm
-                                            "
-                                        >
-                                            {/* LEFT: minus / quantity / plus */}
-                                            <div className="flex flex-col justify-center items-center mr-2">
-                                                <button
-                                                    onClick={() => handleDecrease(item.productId)}
-                                                    className="
-                                                      w-8 h-8 
-                                                      flex items-center justify-center 
-                                                      text-base 
-                                                      font-semibold
-                                                      text-gray-600
-                                                      hover:text-gray-900
-                                                      border border-gray-300 
-                                                      rounded-t 
-                                                      bg-gray-50 
-                                                      hover:bg-gray-100
-                                                    "
-                                                >
-                                                    –
-                                                </button>
-                                                <div
-                                                    className="
-                                                      w-8 h-8 
-                                                      flex items-center justify-center
-                                                      font-bold
-                                                      bg-blue-50 
-                                                      text-blue-700
-                                                      border-y border-gray-300
-                                                    "
-                                                >
-                                                    {item.quantity}
-                                                </div>
-                                                <button
-                                                    onClick={() => handleIncrease(item.productId)}
-                                                    className="
-                                                      w-8 h-8 
-                                                      flex items-center justify-center 
-                                                      text-base
-                                                      font-semibold 
-                                                      text-gray-600
-                                                      hover:text-gray-900
-                                                      border border-gray-300 
-                                                      rounded-b 
-                                                      bg-gray-50 
-                                                      hover:bg-gray-100
-                                                    "
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-
-                                            {/* MIDDLE: product image */}
-                                            {item.image?.url ? (
-                                                <img
-                                                    src={item.image.url}
-                                                    alt={item.image.alt || displayName}
-                                                    className="w-16 h-16 rounded-md object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-16 h-16 bg-gray-200 rounded-md" />
-                                            )}
-
-                                            {/* RIGHT: name, subproducts, remove icon, line total */}
-                                            <div className="flex-1 flex flex-col justify-between">
-                                                {/* Top row */}
-                                                <div className="flex justify-between">
-                                                    <h3 className="font-semibold text-sm sm:text-base text-gray-800">
-                                                        {displayName}
-                                                    </h3>
-                                                    <button
-                                                        onClick={() => handleRemoveItem(item.id)}
-                                                        title="Remove this item"
-                                                        className="
-                                                          text-gray-400 
-                                                          hover:text-red-500 
-                                                          transition-colors
-                                                        "
-                                                    >
-                                                        <FiTrash2 className="w-5 h-5" />
-                                                    </button>
-                                                </div>
-
-                                                {/* Subproduct listing */}
-                                                {item.subproducts && item.subproducts.length > 0 && (
-                                                    <ul className="mt-1 text-sm text-gray-600 pl-4 list-outside list-disc space-y-1">
-                                                        {item.subproducts.map(sp => (
-                                                            <li key={sp.id}>
-                                                                ➔ {sp.name_nl}{" "}
-                                                                <span className="text-gray-500">
-                                                                    (+€{sp.price.toFixed(2)})
-                                                                </span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                )}
-
-                                                {/* Price */}
-                                                <div className="mt-1 text-lg sm:text-xl font-semibold text-gray-800">
-                                                    €{linePrice.toFixed(2)}
-                                                </div>
-                                            </div>
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-                        )}
-
-                        {/* Coupon + QR */}
-                        <div className="flex flex-col sm:flex-row items-center gap-3">
-                            <input
-                                value={couponCode}
-                                onChange={(e) => setCouponCode(e.target.value)}
-                                placeholder="Coupon code?"
-                                className="
-                                  flex-1
-                                  border border-gray-300 
-                                  rounded-md 
-                                  py-2 px-3 
-                                  focus:outline-none 
-                                  focus:border-blue-500
-                                "
-                            />
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => {
-                                        alert("Not yet implemented: apply coupon " + couponCode)
-                                    }}
-                                    className="
-                                      bg-gray-200 hover:bg-gray-300 
-                                      text-gray-700
-                                      rounded-md 
-                                      px-3 py-2 
-                                      transition-colors
-                                    "
-                                >
-                                    Apply
-                                </button>
-                                <button
-                                    onClick={handleScanQR}
-                                    className="
-                                      bg-gray-200 hover:bg-gray-300
-                                      text-gray-700
-                                      rounded-md 
-                                      px-3 py-2
-                                      transition-colors
-                                    "
-                                >
-                                    QR
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Grand total + CTA */}
-                        <div className="pt-3 border-t border-gray-200">
-                            <div className="flex justify-between items-center mb-3">
-                                <span className="text-gray-700 font-medium text-lg">Total</span>
-                                <span className="text-gray-900 font-bold text-xl">
-                                    €{cartTotal.toFixed(2)}
-                                </span>
-                            </div>
-                            <button
-                                onClick={handleCheckout}
-                                disabled={!canProceed()}
-                                className={`
-                                        w-full 
-                                        bg-blue-600 
-                                        hover:bg-blue-700 
-                                        text-white 
-                                        font-medium 
-                                        py-2 
-                                        rounded-md 
-                                        focus:outline-none 
-                                        transition-colors
-                                        ${!canProceed() ? "opacity-50 cursor-not-allowed hover:bg-blue-600" : ""}
-                                    `}
-                            >
-                                Proceed to Checkout
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <OrderSummary
+                    cartItems={cartItems}
+                    cartTotal={cartTotal}
+                    couponCode={couponCode}
+                    setCouponCode={setCouponCode}
+                    handleIncrease={handleIncrease}
+                    handleDecrease={handleDecrease}
+                    handleRemoveItem={handleRemoveItem}
+                    handleScanQR={handleScanQR}
+                    handleApplyCoupon={() =>
+                        alert("Not yet implemented: apply coupon " + couponCode)
+                    }
+                    canProceed={canProceed}
+                    handleCheckout={handleCheckout}
+                />
             </div>
         </div>
     )
