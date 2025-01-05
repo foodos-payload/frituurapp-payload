@@ -322,11 +322,11 @@ export default function ProductCard({
                     {/* Extra wrapper for spacing */}
                     <div className="flex-1 p-2 flex flex-col justify-between">
                         <div>
-                            <h2 className="text-2xl pl-2 font-bold mb-1 line-clamp-2">
+                            <h2 className="text-2xl pl-2 font-bold mb-3 line-clamp-2">
                                 {product.displayName}
                             </h2>
                             {product.displayDesc && (
-                                <p className="text-lg pl-2 text-gray-600 line-clamp-3 mb-2">
+                                <p className="text-lg pl-2 text-gray-600 line-clamp-4 mb-2 min-h-[30px]">
                                     {product.displayDesc}
                                 </p>
                             )}
