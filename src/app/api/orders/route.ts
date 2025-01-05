@@ -92,10 +92,16 @@ export async function GET(request: NextRequest) {
 
         let statuses: string[] = ['in_preparation', 'complete'] // original
         if (viewParam === 'active') {
-            statuses = ['in_preparation']
+            statuses = [
+                'awaiting_preparation',
+                'in_preparation',
+                'ready_for_pickup',
+                'in_delivery',
+            ]
         } else if (viewParam === 'archived') {
             statuses = ['complete']
         }
+
 
         const inPrepAndCompleteOrders = await payload.find({
             collection: 'orders',

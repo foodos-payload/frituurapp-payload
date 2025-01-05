@@ -5,10 +5,10 @@ import config from '@payload-config'
 
 /**
  * @openapi
- * /api/orders/markAwaitingPreparation:
+ * /api/orders/markAwaitPreparation:
  *   post:
  *     summary: Mark an order as awaiting_preparation
- *     operationId: markOrderAwaitingPreparation
+ *     operationId: markOrderAwaitPreparation
  *     parameters:
  *       - name: host
  *         in: query

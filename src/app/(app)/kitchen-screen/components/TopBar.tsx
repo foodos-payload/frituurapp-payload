@@ -1,7 +1,6 @@
-// File: src/app/(app)/kitchen-screen/components/TopBar.tsx
 "use client"
 
-import React from "react"
+import React, { useEffect, useState } from "react"
 
 interface TopBarProps {
     currentView: "active" | "archived"
@@ -18,19 +17,28 @@ export function TopBar({
     activeCount,
     archivedCount,
 }: TopBarProps) {
+    const [timeString, setTimeString] = useState<string>(() => {
+        // Initialize with current local time
+        return new Date().toLocaleTimeString()
+    })
 
-    // This is a minimal approach to replicate the "red blinking" if new orders
-    // or "counts" from the old code
-    // Adjust as needed. For example, if activeCount increased => blink?
+    // Update time every second
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeString(new Date().toLocaleTimeString())
+        }, 1000)
+
+        // Cleanup the interval on unmount
+        return () => clearInterval(timer)
+    }, [])
 
     return (
         <div className="top-bar flex items-center justify-between mb-6">
-            {/* Left side: new order or waiting */}
-            <div className="pending-orders flex items-center gap-3">
-                <div className="count-box w-10 h-10 flex items-center justify-center rounded bg-gray-400 text-black font-bold">
-                    ??
+            {/* Left side: show local time */}
+            <div className="flex items-center gap-3">
+                <div className="time-box w-16 h-10 flex items-center justify-center rounded bg-gray-200 text-black font-bold text-sm">
+                    {timeString}
                 </div>
-                <div className="label font-bold text-lg">Waiting for orders</div>
             </div>
 
             {/* Right side: order-status buttons */}
