@@ -39,8 +39,7 @@ export default function CartButton({
 
     // For the "Go Back" button
     function handleGoBack() {
-        const isKioskMode = localStorage.getItem("kioskMode") === "true";
-        if (isKioskMode) {
+        if (isKiosk) {
             router.push("/index?kiosk=true");
         } else {
             router.push("/index");
