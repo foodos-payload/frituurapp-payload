@@ -36,7 +36,7 @@ export default function CartButton({ onClick, branding, isKiosk = false, }: Prop
     // For the "Go Back" button
     function handleGoBack() {
         // either navigate to homepage or history.back(), etc.
-        router.push('/');
+        router.push('/index');
     }
 
     return (
