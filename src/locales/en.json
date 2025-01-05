@@ -1,0 +1,9 @@
+{
+  "chooseMode.title": "Choose Your Mode",
+  "chooseMode.dineIn.label": "Dine In",
+  "chooseMode.dineIn.hint": "Enjoy your meal on-site",
+  "chooseMode.takeAway.label": "Takeaway",
+  "chooseMode.takeAway.hint": "Pick up your order",
+  "chooseMode.delivery.label": "Delivery",
+  "chooseMode.delivery.hint": "We bring it to you"
+}

@@ -3,7 +3,9 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { LanguageSwitcher } from "./components/LanguageSwitcher"
+import { LanguageSwitcher } from "../../components/LanguageSwitcher/LanguageSwitcher"
+import { useTranslation } from "@/context/TranslationsContext";
+
 
 interface FulfillmentMethod {
     key: string
@@ -18,6 +20,7 @@ interface ChooseModeProps {
 
 export const ChooseMode: React.FC<ChooseModeProps> = ({ shopSlug, fulfillmentOptions }) => {
     const router = useRouter()
+    const { t } = useTranslation();
 
     // There's no more "isLoading", because we've done SSR fetch
     // And there's no more `useFulfillment`.
@@ -38,7 +41,7 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({ shopSlug, fulfillmentOpt
         <div className="min-h-screen flex flex-col bg-gray-100">
             <div className="flex justify-center items-center grow">
                 <div className="bg-white shadow-lg rounded-lg p-8 max-w-screen-lg w-full">
-                    <h1 className="text-3xl font-bold text-center mb-8">Choose Your Mode</h1>
+                    <h1 className="text-3xl font-bold text-center mb-8">{t("chooseMode.title")}</h1>
 
                     <div className="flex flex-wrap justify-center gap-6">
                         {/* Dine In */}

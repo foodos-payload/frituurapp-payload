@@ -3,7 +3,7 @@
 
 import React, { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { LanguageSwitcher } from "../LanguageSwitcher"
+import { LanguageSwitcher } from "../../../../components/LanguageSwitcher/LanguageSwitcher"
 import { KioskAppHeaderHome } from "./KioskAppHeaderHome"
 
 interface FulfillmentMethod {

@@ -1,0 +1,9 @@
+{
+  "chooseMode.title": "Kies uw modus",
+  "chooseMode.dineIn.label": "Ter plaatse eten",
+  "chooseMode.dineIn.hint": "Geniet van uw maaltijd ter plaatse",
+  "chooseMode.takeAway.label": "Afhalen",
+  "chooseMode.takeAway.hint": "Haal uw bestelling op",
+  "chooseMode.delivery.label": "Bezorging",
+  "chooseMode.delivery.hint": "Wij brengen het naar u toe"
+}
