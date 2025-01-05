@@ -36,10 +36,12 @@ export default function CartButton({
 
     const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
-    // For the "Go Back" button
     function handleGoBack() {
-        // either navigate to homepage or history.back(), etc.
-        router.push("/index");
+        if (isKiosk) {
+            router.push("/index?kiosk=true");
+        } else {
+            router.push("/index");
+        }
     }
 
     // 1) Conditionals for kiosk vs. normal
