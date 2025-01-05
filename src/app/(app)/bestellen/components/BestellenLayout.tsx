@@ -1,7 +1,7 @@
 // File: /app/(app)/bestellen/components/BestellenLayout.tsx
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ProductList from './ProductList';
 import Header from './Header';
 import {
@@ -120,6 +120,68 @@ export default function BestellenLayout({
     const [editingItem, setEditingItem] = useState<CartItem | null>(null);
     const [editingLineSignature, setEditingLineSignature] = useState<string | null>(null);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [activeProductFromList, setActiveProductFromList] = useState<Product | null>(null);
+
+
+    //
+    // ===================== CUSTOM POPSTATE HOOKS ======================
+    //
+    // 1) We'll watch for `popstate` events to close drawers/popups
+    // 2) Whenever a drawer/popup opens, we push a new history entry
+    //
+    // 1) Single popstate effect to close any overlay
+    useEffect(() => {
+        function handlePopState() {
+            // If the Cart Drawer is open, close it
+            if (showCartDrawer) {
+                setShowCartDrawer(false);
+                window.history.pushState(null, "");
+                return;
+            }
+            // If the Menu Drawer is open, close it
+            if (showMenuDrawer) {
+                setShowMenuDrawer(false);
+                window.history.pushState(null, "");
+                return;
+            }
+            // If the "Cart Edit" popup is open
+            if (editingProduct) {
+                setEditingItem(null);
+                setEditingLineSignature(null);
+                setEditingProduct(null);
+                window.history.pushState(null, "");
+                return;
+            }
+            // If the "ProductList" popup is open
+            if (activeProductFromList) {
+                setActiveProductFromList(null);
+                window.history.pushState(null, "");
+                return;
+            }
+
+            // Otherwise, do nothing => actual back navigation
+        }
+
+        // If ANY overlay is opened => push a history entry
+        if (
+            showCartDrawer ||
+            showMenuDrawer ||
+            editingProduct ||
+            activeProductFromList
+        ) {
+            window.history.pushState(null, "");
+        }
+
+        window.addEventListener("popstate", handlePopState);
+        return () => {
+            window.removeEventListener("popstate", handlePopState);
+        };
+    }, [
+        showCartDrawer,
+        showMenuDrawer,
+        editingProduct,
+        activeProductFromList,
+    ]);
 
     // 1) Filter each category’s products by `searchTerm`
     const filteredCategories = categorizedProducts.map((cat) => {
@@ -171,6 +233,10 @@ export default function BestellenLayout({
         setEditingItem(null);
         setEditingLineSignature(null);
         setEditingProduct(null);
+    }
+
+    function handleOpenPopupFlow(product: Product) {
+        setActiveProductFromList(product);
     }
 
     const cartRef = useRef<HTMLDivElement>(null);
@@ -234,6 +300,7 @@ export default function BestellenLayout({
                     }}
                     branding={branding}
                     cartRef={cartRef}
+                    onOpenPopupFlow={handleOpenPopupFlow}
                 />
 
                 {/* Floating Cart Button (bottom-right) */}
@@ -253,6 +320,17 @@ export default function BestellenLayout({
                     cartRef={cartRef}
                 />
             )}
+
+            {/* If user opens popup from ProductList => ProductPopupFlow */}
+            {activeProductFromList && (
+                <ProductPopupFlow
+                    product={activeProductFromList}
+                    onClose={() => setActiveProductFromList(null)}
+                    branding={branding}
+                    cartRef={cartRef}
+                />
+            )}
+
         </CartProvider>
     );
 }

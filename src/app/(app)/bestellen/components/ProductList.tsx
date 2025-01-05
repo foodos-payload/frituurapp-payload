@@ -79,6 +79,8 @@ interface Props {
 
     /** The cart DOM ref, so we can measure its position. */
     cartRef?: React.RefObject<HTMLDivElement | null>; // Allow 'null'
+
+    onOpenPopupFlow?: (prod: Product) => void;
 }
 
 /**
@@ -94,6 +96,7 @@ export default function ProductList({
     mobileSearchOpen = false,
     branding,
     cartRef,
+    onOpenPopupFlow,
 }: Props) {
     const [activeCategory, setActiveCategory] = useState(
         () => unfilteredCategories[0]?.slug || ""
@@ -268,7 +271,7 @@ export default function ProductList({
             // We let ProductCard do the local spinner / fly on click.
         } else {
             // Has popups => open the popup flow. Wait for "Bevestigen" => that triggers 'product-added' event.
-            setActiveProduct(prod);
+            onOpenPopupFlow?.(prod);
         }
     }
 
