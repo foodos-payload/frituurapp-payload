@@ -28,10 +28,12 @@ type Subproduct = {
 }
 
 type CartItem = {
+    productName: string
+    productId: string
     id: string
-    name: string         // e.g. "Bicky Burger"
+    name: string
     quantity: number
-    price: number        // base price
+    price: number
     image?: {
         url?: string
         alt?: string

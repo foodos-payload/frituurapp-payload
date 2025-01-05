@@ -26,27 +26,29 @@ export function useTranslation() {
     return context;
 }
 
-const localesContext = require.context("../locales", false, /\.json$/);
-
-function loadAllLocales() {
+async function loadAllLocales() {
     const allTranslations: Record<string, TranslationDictionary> = {};
 
     const allowedLangCodes = ["nl", "en", "fr", "de"];
 
-    localesContext.keys().forEach((filename) => {
-        const langCode = filename.replace("./", "").replace(".json", "");
-
-        if (!allowedLangCodes.includes(langCode)) return;
-
-        const fileModule = localesContext(filename);
-        allTranslations[langCode] = fileModule;
-    });
+    for (const langCode of allowedLangCodes) {
+        try {
+            const fileModule = await import(`../locales/${langCode}.json`);
+            allTranslations[langCode] = fileModule.default;
+        } catch (error) {
+            console.error(`Error loading locale ${langCode}:`, error);
+        }
+    }
     return allTranslations;
 }
 
 export function TranslationProvider({ children }: { children: React.ReactNode }) {
     const [locale, setLocale] = useState<Language>("nl"); // default
-    const translationsMap = loadAllLocales();
+    const [translationsMap, setTranslationsMap] = useState<Record<string, TranslationDictionary>>({});
+
+    useEffect(() => {
+        loadAllLocales().then(setTranslationsMap);
+    }, []);
 
     const availableLocales = Object.keys(translationsMap);
 
@@ -58,7 +60,7 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
     }, []);
 
     useEffect(() => {
-        localStorage.setItem("userLocale", locale);
+        const dict = translationsMap[locale] ?? {};
     }, [locale]);
 
     function t(key: string): string {
