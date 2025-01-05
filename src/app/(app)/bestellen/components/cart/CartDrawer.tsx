@@ -102,7 +102,7 @@ export default function CartDrawer({
             <CSSTransition
                 in={isOpen}
                 timeout={300}
-                classNames={isKiosk ? "slideUpCart" : "fadeOverlay"}
+                classNames={isKiosk ? "slideUpCart" : "slideCart"}
                 unmountOnExit
                 nodeRef={drawerRef}
             >
