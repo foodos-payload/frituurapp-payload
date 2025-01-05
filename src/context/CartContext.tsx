@@ -29,6 +29,7 @@ export type LinkedProductData = {
  * A subproduct selection might contain references to a 'linkedProduct'.
  */
 export type SubproductSelection = {
+    tax_dinein: any;
     /** The subproduct’s actual UUID or any other ID */
     subproductId: string
 

@@ -168,12 +168,22 @@ export default function CheckoutPage({
             return
         }
 
+        // 2) Figure out which status to set
+        let selectedStatus: string = "pending_payment"
+
+        // For example: if the user chose a PaymentMethod labeled 'Cash on Delivery',
+        // set status = 'awaiting_preparation' immediately:
+        const pmDoc = paymentMethods.find(pm => pm.id === selectedPaymentId)
+        if (pmDoc && pmDoc.label.toLowerCase().includes("cash")) {
+            selectedStatus = "awaiting_preparation"
+        }
+
         // 2) Build the payload
         const payloadData = {
             tenant: hostSlug,
             shop: hostSlug,
             orderType: "web",
-            status: "pending_payment",
+            status: selectedStatus,
             fulfillmentMethod,
             fulfillmentDate: selectedDate,
             fulfillmentTime: selectedTime,
