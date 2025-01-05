@@ -1273,11 +1273,11 @@ export interface Order {
    */
   id: number;
   /**
-   * Temporary order number for daily purposes.
+   * Temporary order number for daily usage.
    */
   tempOrdNr?: number | null;
   /**
-   * Current status of the order (e.g., Payment Pending, In Preparation, etc.)
+   * Current status of the order.
    */
   status:
     | 'pending_payment'
@@ -1287,11 +1287,11 @@ export interface Order {
     | 'in_delivery'
     | 'complete';
   /**
-   * Type of the order (e.g., POS, Web, or Kiosk).
+   * Type of order (POS, Web, or Kiosk).
    */
   order_type: 'pos' | 'web' | 'kiosk';
   /**
-   * List of products in the order.
+   * List of products in the order (line items).
    */
   order_details?:
     | {
@@ -1299,11 +1299,24 @@ export interface Order {
         quantity: number;
         price: number;
         tax?: number | null;
+        tax_dinein?: number | null;
+        name_nl?: string | null;
+        name_en?: string | null;
+        name_de?: string | null;
+        name_fr?: string | null;
         subproducts?:
           | {
-              subproduct: string | Subproduct;
+              /**
+               * An ID or code for this subproduct if needed (no relationship).
+               */
+              subproductId?: string | null;
+              name_nl?: string | null;
+              name_en?: string | null;
+              name_de?: string | null;
+              name_fr?: string | null;
               price: number;
               tax?: number | null;
+              tax_dinein?: number | null;
               id?: string | null;
             }[]
           | null;
@@ -1975,12 +1988,22 @@ export interface OrdersSelect<T extends boolean = true> {
         quantity?: T;
         price?: T;
         tax?: T;
+        tax_dinein?: T;
+        name_nl?: T;
+        name_en?: T;
+        name_de?: T;
+        name_fr?: T;
         subproducts?:
           | T
           | {
-              subproduct?: T;
+              subproductId?: T;
+              name_nl?: T;
+              name_en?: T;
+              name_de?: T;
+              name_fr?: T;
               price?: T;
               tax?: T;
+              tax_dinein?: T;
               id?: T;
             };
         id?: T;

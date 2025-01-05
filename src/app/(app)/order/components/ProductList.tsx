@@ -6,7 +6,7 @@ import HorizontalCategories from "./HorizontalCategories";
 import VerticalCategories from "./VerticalCategories";
 import ProductCard from "./ProductCard";
 import ProductPopupFlow from "./ProductPopupFlow";
-import { useCart } from "./cart/CartContext";
+import { useCart } from "../../../../context/CartContext";
 import { useTranslation } from "@/context/TranslationsContext";
 
 /**
@@ -16,6 +16,8 @@ type Subproduct = {
     id: string;
     name_nl: string;
     price: number;
+    tax?: number | null;
+    tax_dinein?: number | null;
 };
 
 type PopupDoc = {
@@ -46,6 +48,8 @@ type Product = {
     webdescription?: string;
     isPromotion?: boolean;
     productpopups?: PopupItem[];
+    tax?: number | null;
+    tax_dinein?: number | null;
 };
 
 type Category = {
@@ -283,6 +287,9 @@ export default function ProductList({
                         alt: prod.image.alt ?? prod.name_nl,
                     }
                     : undefined,
+
+                taxRate: prod.tax ?? 0,
+                taxRateDineIn: prod.tax_dinein ?? 0
             });
             // We let ProductCard do the local spinner / fly on click.
         } else {

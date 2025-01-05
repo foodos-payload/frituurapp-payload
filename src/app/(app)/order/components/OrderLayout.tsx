@@ -5,10 +5,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import ProductList from './ProductList';
 import Header from './Header';
 import {
-    CartProvider,
     CartItem,
     getLineItemSignature, // <-- Make sure to export this from your CartContext
-} from './cart/CartContext';
+} from '../../../../context/CartContext';
 import CartButton from './cart/CartButton';
 import CartDrawer from './cart/CartDrawer';
 import MenuDrawer from './menu/MenuDrawer';
@@ -23,6 +22,8 @@ type Subproduct = {
     id: string;
     name_nl: string;
     price: number;
+    tax?: number | null;
+    tax_dinein?: number | null;
 };
 
 type PopupDoc = {
@@ -53,6 +54,8 @@ type Product = {
     webdescription?: string;
     isPromotion?: boolean;
     productpopups?: PopupItem[];
+    tax?: number | null;
+    tax_dinein?: number | null;
     // ...
 };
 
@@ -271,7 +274,7 @@ export default function OrderLayout({
     const cartRef = useRef<HTMLDivElement>(null);
 
     return (
-        <CartProvider>
+        <div>
             {/* LEFT-SIDE MENU DRAWER */}
             <MenuDrawer
                 isOpen={showMenuDrawer}
@@ -368,7 +371,7 @@ export default function OrderLayout({
                 />
             )}
 
-        </CartProvider>
+        </div>
     );
 }
 

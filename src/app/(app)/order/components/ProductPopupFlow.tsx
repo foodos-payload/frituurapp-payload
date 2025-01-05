@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, MouseEvent } from "react";
-import { useCart, CartItem } from "./cart/CartContext";
+import { useCart, CartItem } from "../../../../context/CartContext";
 import { FiCheckCircle } from "react-icons/fi";
 import { useTranslation } from "@/context/TranslationsContext";
 /**
@@ -15,6 +15,8 @@ type LinkedProductData = {
     name_fr?: string;
     price: number | null;
     image?: { url: string; alt?: string } | null;
+    tax?: number | null;
+    tax_dinein?: number | null;
 };
 
 type Subproduct = {
@@ -26,6 +28,8 @@ type Subproduct = {
     price: number;
     image?: { url: string; alt?: string } | null;
     linkedProduct?: LinkedProductData;
+    tax?: number | null;
+    tax_dinein?: number | null;
 };
 
 /**
@@ -62,6 +66,8 @@ type Product = {
     price?: number | null;
     image?: { url: string; alt: string };
     productpopups?: PopupItem[];
+    tax?: number | null;
+    tax_dinein?: number | null;
 };
 
 type Branding = {
@@ -293,53 +299,107 @@ export default function ProductPopupFlow({
 
     function handleFinish() {
         setErrorMessage("");
-        // same final check
+
+        // 1) Final check on minimum_option for the *current* (last) popup
         if (popup.minimum_option && popup.minimum_option > 0) {
             const chosenIDs = selectedOptions[popup.id] || [];
             if (chosenIDs.length < popup.minimum_option) {
-                setErrorMessage(
-                    `Je moet minstens ${popup.minimum_option} optie(s) kiezen!`
-                );
+                setErrorMessage(`Je moet minstens ${popup.minimum_option} optie(s) kiezen!`);
                 return;
             }
         }
 
-        // Gather subproducts from all steps
-        const chosenSubs: { id: string; name_nl: string; price: number }[] = [];
+        // 2) Gather subproducts from *all* popups into chosenSubs
+        //    We'll do it by checking `selectedOptions[pId]` for each popup
+        const chosenSubs: Array<{
+            subproductId: string;
+            name_nl: string;
+            name_en?: string;
+            name_de?: string;
+            name_fr?: string;
+            price: number;
+            tax?: number | null;
+            tax_dinein?: number | null;
+            image?: {
+                url: string;
+                alt?: string;
+            };
+        }> = [];
 
         for (const popIt of sortedPopups) {
-            // If no popup => skip
-            if (!popIt.popup) continue;
+            if (!popIt.popup) continue; // skip if no popup
             const pId = popIt.popup.id;
             const chosenIDs = selectedOptions[pId] || [];
+
+            // For each subproduct in this popup
             for (const sp of popIt.popup.subproducts) {
+                // Only if user has chosen this subproduct
                 if (!chosenIDs.includes(sp.id)) continue;
 
                 if (sp.linkedProduct) {
+                    // If subproduct is linked => use data from sp.linkedProduct
                     chosenSubs.push({
-                        id: sp.linkedProduct.id,
+                        subproductId: sp.linkedProduct.id,
+
+                        // Multi-lingual names
                         name_nl: sp.linkedProduct.name_nl,
+                        name_en: sp.linkedProduct.name_en ?? sp.linkedProduct.name_nl,
+                        name_de: sp.linkedProduct.name_de ?? sp.linkedProduct.name_nl,
+                        name_fr: sp.linkedProduct.name_fr ?? sp.linkedProduct.name_nl,
+
+                        // Price & tax
                         price: sp.linkedProduct.price ?? 0,
+                        tax: sp.linkedProduct.tax ?? null,
+                        tax_dinein: sp.linkedProduct.tax_dinein ?? null,
+
+                        image: sp.linkedProduct.image
+                            ? {
+                                url: sp.linkedProduct.image.url,
+                                alt: sp.linkedProduct.image.alt ?? sp.linkedProduct.name_nl,
+                            }
+                            : undefined,
                     });
                 } else {
+                    // Normal subproduct
                     chosenSubs.push({
-                        id: sp.id,
+                        subproductId: sp.id,
                         name_nl: sp.name_nl,
+                        name_en: sp.name_en ?? sp.name_nl,
+                        name_de: sp.name_de ?? sp.name_nl,
+                        name_fr: sp.name_fr ?? sp.name_nl,
+
+                        // Use sp.price
                         price: sp.price,
+
+                        // If sp.tax or sp.tax_dinein exist, store them. Otherwise default to null or 0:
+                        tax: typeof sp.tax === "number" ? sp.tax : null,
+                        tax_dinein: typeof sp.tax_dinein === "number" ? sp.tax_dinein : null,
+
+                        image: sp.image
+                            ? {
+                                url: sp.image.url,
+                                alt: sp.image.alt ?? sp.name_nl,
+                            }
+                            : undefined,
                     });
                 }
             }
         }
 
-        const basePrice = product.price ?? 0;
+        // 3) Define the basePrice and main product tax fields
+        const basePrice = product.price ?? 0
+        const mainTax = product.tax ?? 0
+        const mainTaxDinein = product.tax_dinein ?? 0
 
-        // If editing => update, else add
+        // 4) Add or update in cart
         if (editingItem && editingItemSignature) {
             updateItem(editingItemSignature, {
                 price: basePrice,
+                taxRate: mainTax,        // for example: store top-level product tax
+                taxRateDinein: mainTaxDinein,
                 subproducts: chosenSubs,
                 hasPopups: true,
-            });
+            })
         } else {
             addItem({
                 productId: product.id,
@@ -349,6 +409,8 @@ export default function ProductPopupFlow({
                 productNameDE: product.name_de ?? product.name_nl,
                 productNameFR: product.name_fr ?? product.name_nl,
                 price: basePrice,
+                taxRate: mainTax,         // for example: store top-level product tax
+                taxRateDinein: mainTaxDinein,
                 quantity: 1,
                 image: product.image
                     ? {
@@ -357,9 +419,11 @@ export default function ProductPopupFlow({
                     }
                     : undefined,
                 note: "",
-                subproducts: chosenSubs,
+                subproducts: chosenSubs, // The final array of subproducts
                 hasPopups: true,
-            });
+            })
+
+            // Optionally dispatch a "product-added" event for a cart animation or similar
             window.dispatchEvent(
                 new CustomEvent("product-added", {
                     detail: {
@@ -369,6 +433,7 @@ export default function ProductPopupFlow({
                 })
             );
         }
+
         onClose();
     }
 

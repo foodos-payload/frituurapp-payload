@@ -1,5 +1,6 @@
 import React from 'react'
 import { TranslationProvider } from "@/context/TranslationsContext";
+import { CartProvider } from '@/context/CartContext';
 
 import './globals.css'
 
@@ -14,7 +15,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html className={baseClass} lang="en">
-      <body><TranslationProvider>{children}</TranslationProvider></body>
+      <body><TranslationProvider><CartProvider>{children}</CartProvider></TranslationProvider></body>
     </html>
   )
 }

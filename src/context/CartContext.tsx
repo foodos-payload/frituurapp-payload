@@ -29,14 +29,32 @@ export type LinkedProductData = {
  * A subproduct selection might contain references to a 'linkedProduct'.
  */
 export type SubproductSelection = {
-    id: string;
-    name_nl: string;
-    price: number;
-    linkedProduct?: LinkedProductData;
+    /** The subproduct’s actual UUID or any other ID */
+    subproductId: string
+
+    /** Possibly store multi-language names */
+    name_nl: string
+    name_en?: string
+    name_de?: string
+    name_fr?: string
+
+    /** The user-chosen price (or from your product doc) */
+    price: number
+
+    /** If you want to store subproduct-level tax separately. */
+    tax?: number
+
+    /** If the subproduct is "linked" to a bigger product doc. */
+    linkedProduct?: LinkedProductData
+
+    /** Optional image */
     image?: {
-        url: string;
-        alt?: string;
-    } | null;
+        url: string
+        alt?: string
+    } | null
+
+    taxRate?: number;      // e.g. 6, 12, 21, etc.
+    taxRateDineIn?: number;
     // Feel free to add other fields if needed
 };
 
@@ -63,6 +81,7 @@ export type CartItem = {
 
     hasPopups?: boolean;   // e.g. to show "Bewerken" button
     taxRate?: number;      // e.g. 6, 12, 21, etc.
+    taxRateDineIn?: number;
 };
 
 /**
@@ -107,13 +126,14 @@ export function useCart() {
  *    differentiates line items by productId, subproducts, note, etc.
  */
 export function getLineItemSignature(item: CartItem): string {
-    // We'll gather an array of subproduct IDs (sorted to ensure consistent order):
-    const subIds = item.subproducts?.map((sp) => sp.id).sort() || [];
-    const notePart = item.note || ''; // or empty if none
+    // Gather subproduct IDs in a stable order:
+    const subIds = item.subproducts
+        ?.map(sp => sp.subproductId)  // <-- use `subproductId`
+        .sort() || []
 
-    // Combine them into, e.g.: "prodId|[sub1,sub2]|note=someNote"
-    // or you could JSON.stringify. Just ensure stable serialization.
-    return `${item.productId}|[${subIds.join(',')}]|note=${notePart}`;
+    const notePart = item.note || ''
+
+    return `${item.productId}|[${subIds.join(',')}]|note=${notePart}`
 }
 
 /**

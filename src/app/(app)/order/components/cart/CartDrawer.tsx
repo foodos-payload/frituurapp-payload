@@ -3,7 +3,7 @@
 import React, { useRef, MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CSSTransition } from "react-transition-group";
-import { useCart, CartItem, getLineItemSignature } from "./CartContext";
+import { useCart, CartItem, getLineItemSignature } from "../../../../../context/CartContext";
 import { FiX, FiTrash2 } from "react-icons/fi";
 import { useTranslation } from "@/context/TranslationsContext";
 

@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation"; // or "next/router" if older Next
 import { FiShoppingCart, FiArrowLeft } from "react-icons/fi";
-import { useCart } from "./CartContext";
+import { useCart } from "../../../../../context/CartContext";
 import { useTranslation } from "@/context/TranslationsContext";
 type Branding = {
     categoryCardBgColor?: string;

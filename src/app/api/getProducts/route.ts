@@ -28,6 +28,8 @@ interface LinkedProductJSON {
         url: string
         alt: string
     } | null
+    tax?: number | null
+    tax_dinein?: number | null
 }
 
 interface SubproductJSON {
@@ -42,6 +44,8 @@ interface SubproductJSON {
         alt: string
     } | null
     linkedProduct?: LinkedProductJSON
+    tax?: number | null;
+    tax_dinein?: number | null;
 }
 
 interface PopupJSON {
@@ -87,6 +91,8 @@ interface ProductJSON {
     } | null
     productpopups: PopupItemJSON[]
     menuOrder: number
+    tax?: number | null;
+    tax_dinein?: number | null;
 }
 
 interface CategoryJSON {
@@ -221,6 +227,8 @@ export async function GET(request: NextRequest) {
                                             alt: sub.image?.alt_text || '',
                                         }
                                         : null,
+                                    tax: sub.tax ?? null,
+                                    tax_dinein: sub.tax_table ?? null
                                 }
 
                                 // If subproduct is linked to a product, embed that product
@@ -243,6 +251,8 @@ export async function GET(request: NextRequest) {
                                                 alt: sub.linked_product.image?.alt_text || '',
                                             }
                                             : null,
+                                        tax: sub.linked_product.tax ?? null,
+                                        tax_dinein: sub.linked_product.tax_dinein ?? null,
                                     }
                                 }
 
@@ -291,6 +301,8 @@ export async function GET(request: NextRequest) {
                                                 alt: sub.image?.alt_text || '',
                                             }
                                             : null,
+                                        tax: sub.tax ?? null,
+                                        tax_dinein: sub.tax_table ?? null
                                     }
 
                                     if (sub.linked_product_enabled && sub.linked_product) {
@@ -312,6 +324,8 @@ export async function GET(request: NextRequest) {
                                                     alt: sub.linked_product.image?.alt_text || '',
                                                 }
                                                 : null,
+                                            tax: sub.linked_product.tax ?? null,
+                                            tax_dinein: sub.linked_product.tax_dinein ?? null,
                                         }
                                     }
 
@@ -361,6 +375,9 @@ export async function GET(request: NextRequest) {
 
                     productpopups: finalPopups,
                     menuOrder: product.menuOrder || 0,
+
+                    tax: product.tax ?? null,
+                    tax_dinein: product.tax_dinein ?? null,
                 }
 
                 return prodJSON

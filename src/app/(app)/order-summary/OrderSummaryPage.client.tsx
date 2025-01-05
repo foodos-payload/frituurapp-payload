@@ -8,6 +8,8 @@ import React, {
     useMemo,
 } from "react"
 import confetti from "canvas-confetti"
+import { useRouter } from "next/navigation" // <-- Import from next/navigation
+
 
 type OrderStatus =
     | "pending_payment"
@@ -58,6 +60,7 @@ export function OrderSummaryPage({
     kioskMode,
     hostSlug,
 }: OrderSummaryPageProps) {
+    const router = useRouter()
     const [order, setOrder] = useState<Order | null>(null)
     const [isInitialLoading, setIsInitialLoading] = useState(true)
     const [isPolling, setIsPolling] = useState(false)
@@ -222,9 +225,10 @@ export function OrderSummaryPage({
     // ─────────────────────────────────────────────────────────────────────────────
     const handleCreateNewOrderClick = () => {
         if (kioskMode) {
-            console.log("Redirect kiosk mode to /kioskindex")
+
+            router.push(`/index?kiosk=true`)
         } else {
-            console.log("Redirect to /")
+            router.push(`/index`)
         }
     }
 

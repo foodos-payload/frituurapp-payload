@@ -31,22 +31,26 @@ export const Orders: CollectionConfig = {
       fr: 'Commande',
     },
   },
+
   hooks: {
     beforeChange: [
       async ({ data, originalDoc, req, operation }) => {
-
+        console.log('\n=== Orders beforeChange Hook ===');
+        console.log('operation:', operation);
+        console.log('originalDoc:', originalDoc || 'No originalDoc => new order');
+        console.log('incoming data:', JSON.stringify(data, null, 2));
 
         // 1) If new doc => auto-increment 'tempOrdNr' + 'id'
         if (operation === 'create') {
-
+          console.log('Creating a new order => auto-incrementing tempOrdNr + id');
           const today = new Date().toISOString().split('T')[0];
 
-          // 1a) Find lastOrder for tempOrdNr
+          // (A) Find lastOrder for tempOrdNr
           const lastOrder = await req.payload.find({
             collection: 'orders',
             where: {
               tenant: { equals: data.tenant },
-              shops: { equals: data.shops },     // if field name is "shops" or "shop" => ensure it matches your schema
+              shops: { equals: data.shops },
               createdAt: { greater_than: `${today}T00:00:00` },
             },
             sort: '-tempOrdNr',
@@ -55,7 +59,7 @@ export const Orders: CollectionConfig = {
           const lastTempOrdNr = lastOrder.docs[0]?.tempOrdNr || 0;
           data.tempOrdNr = lastTempOrdNr + 1;
 
-          // 1b) Find lastFullOrder for numeric id
+          // (B) Find lastFullOrder for numeric id
           const lastFullOrder = await req.payload.find({
             collection: 'orders',
             where: {
@@ -69,54 +73,66 @@ export const Orders: CollectionConfig = {
           data.id = lastId + 1;
         }
 
-        // 2) Ensure tax for each order_detail + subproduct
+        // 2) Cross-check main product's price from the DB
         if (data.order_details) {
           for (const od of data.order_details) {
-            if (typeof od.tax === 'undefined') {
+            try {
+              // Attempt to find the real product doc
               const productDoc = await req.payload.findByID({
                 collection: 'products',
-                id: od.product,
+                id: od.product, // The relationship ID
               });
-              od.tax = productDoc?.tax ?? 21;
-            }
 
-            if (od.subproducts) {
-              for (const sub of od.subproducts) {
-                if (typeof sub.tax === 'undefined') {
-                  const spDoc = await req.payload.findByID({
-                    collection: 'subproducts',
-                    id: sub.subproduct,
-                  });
-                  sub.tax = spDoc?.tax ?? 21;
+              // If found => verify the client-provided price matches the official productDoc
+              if (productDoc) {
+                // Suppose your official "price" is productDoc.price if price_unified,
+                // or productDoc.price_dinein / productDoc.price_takeaway depending on the order's method, etc.
+                // We'll do the simplest check using productDoc.price:
+                const officialPrice = productDoc.price_unified
+                  ? productDoc.price // if price_unified => single price
+                  : productDoc.price; // or fallback logic
+
+                // Compare to the client's od.price:
+                if (typeof od.price === 'number' && od.price !== officialPrice) {
+                  throw new Error(
+                    `Price mismatch for product ${productDoc.name_nl}. Expected ${officialPrice}, got ${od.price}.`
+                  );
                 }
+
+                // You can also check tax if you want. If mismatch => throw error as well
+                // ...
+              } else {
+                console.warn(
+                  `Could NOT find product doc for ID ${od.product}, skipping cross-check.`
+                );
               }
+            } catch (err: any) {
+              console.error(
+                `Error verifying product price for product ID ${od.product}:`,
+                err
+              );
+              throw err; // re-throw to stop order creation
             }
           }
         }
 
-        // 3) Calculate subtotal, total_tax, total
-        // 3) Calculate subtotal, total_tax, total
-        let subtotal = 0;
-        let totalTax = 0;
-
+        // 3) (Optional) If you still want to recalc or log out totals, do it here
+        //    Or you can trust the front-end's subproduct pricing.
+        //    This snippet just logs them:
         if (data.order_details) {
-          console.log('Calculating subtotal/totalTax...');
-          for (const od of data.order_details) {
-            // "price" is tax-included
-            const lineSubtotal = (od.price ?? 0) * (od.quantity ?? 1);
+          let subtotal = 0;
+          let totalTax = 0;
 
-            // fraction = tax% / (100 + tax%)
-            // e.g. if tax=6 => fraction= 6/106 => ~0.0566
+          for (const od of data.order_details) {
+            const lineSubtotal = (od.price ?? 0) * (od.quantity ?? 1);
             const fraction = (od.tax ?? 21) / (100 + (od.tax ?? 21));
             const lineTax = lineSubtotal * fraction;
             const lineNet = lineSubtotal - lineTax;
 
-            // If subproducts are also tax-included, do the same approach:
             if (od.subproducts) {
               for (const sub of od.subproducts) {
                 const subLineSubtotal = (sub.price ?? 0) * (od.quantity ?? 1);
-                const subFraction =
-                  (sub.tax ?? 21) / (100 + (sub.tax ?? 21));
+                const subFraction = (sub.tax ?? 21) / (100 + (sub.tax ?? 21));
                 const subLineTax = subLineSubtotal * subFraction;
                 const subLineNet = subLineSubtotal - subLineTax;
 
@@ -128,134 +144,63 @@ export const Orders: CollectionConfig = {
             subtotal += lineNet;
             totalTax += lineTax;
           }
+
+          // Round to 2 decimals
+          data.subtotal = Math.round(subtotal * 100) / 100;
+          data.total_tax = Math.round(totalTax * 100) / 100;
+          data.total = Math.round((subtotal + totalTax) * 100) / 100;
+
+          console.log(
+            `Final recalculated => subtotal=${data.subtotal}, totalTax=${data.total_tax}, total=${data.total}`
+          );
         }
-
-        data.subtotal = Math.round(subtotal * 100) / 100;
-        data.total_tax = Math.round(totalTax * 100) / 100;
-        // total = net + tax = (sum of lineSubtotal), so effectively the sum of typed prices
-        data.total = Math.round((subtotal + totalTax) * 100) / 100;
-
       },
     ],
   },
+
   fields: [
+    // Tenant + Shop scoping
     tenantField,
     shopsField,
+
+    // Auto-increment ID fields
     {
       name: 'id',
       type: 'number',
-      // required: true,
       unique: true,
-      label: {
-        en: 'Order ID',
-        nl: 'Bestellings-ID',
-        de: 'Bestell-ID',
-        fr: 'ID de Commande',
-      },
+      label: { en: 'Order ID' },
       admin: {
-        description: {
-          en: 'Auto-incrementing identifier for the order.',
-          nl: 'Automatisch oplopende ID voor de bestelling.',
-          de: 'Autoinkrementierende ID für die Bestellung.',
-          fr: 'Identifiant auto-incrémenté pour la commande.',
-        },
+        description: { en: 'Auto-incrementing identifier for the order.' },
         readOnly: true,
       },
     },
     {
       name: 'tempOrdNr',
       type: 'number',
-      // required: true,
-      label: {
-        en: 'Temporary Order Number',
-        nl: 'Tijdelijk Bestellingsnummer',
-        de: 'Temporäre Bestellnummer',
-        fr: 'Numéro de Commande Temporaire',
-      },
+      label: { en: 'Temporary Order Number' },
       admin: {
-        description: {
-          en: 'Temporary order number for daily purposes.',
-          nl: 'Tijdelijk bestellingsnummer voor dagelijks gebruik.',
-          de: 'Temporäre Bestellnummer für tägliche Zwecke.',
-          fr: 'Numéro de commande temporaire à des fins quotidiennes.',
-        },
+        description: { en: 'Temporary order number for daily usage.' },
         readOnly: true,
       },
     },
+
+    // Order status / type
     {
       name: 'status',
       type: 'select',
       required: true,
       defaultValue: 'pending_payment',
       options: [
-        {
-          label: {
-            en: 'Pending Payment',
-            nl: 'Wacht op Betaling',
-            de: 'Zahlung ausstehend',
-            fr: 'En Attente de Paiement',
-          },
-          value: 'pending_payment',
-        },
-        {
-          label: {
-            en: 'Awaiting Preparation',
-            nl: 'Wacht op Voorbereiding',
-            de: 'Wartet auf Vorbereitung',
-            fr: 'En Attente de Préparation',
-          },
-          value: 'awaiting_preparation',
-        },
-        {
-          label: {
-            en: 'In Preparation',
-            nl: 'In Voorbereiding',
-            de: 'In Vorbereitung',
-            fr: 'En Préparation',
-          },
-          value: 'in_preparation',
-        },
-        {
-          label: {
-            en: 'Ready for Pickup',
-            nl: 'Klaar voor Afhaling',
-            de: 'Abholbereit',
-            fr: 'Prêt pour le Retrait',
-          },
-          value: 'ready_for_pickup',
-        },
-        {
-          label: {
-            en: 'In Delivery',
-            nl: 'Onderweg',
-            de: 'In Lieferung',
-            fr: 'En Cours de Livraison',
-          },
-          value: 'in_delivery',
-        },
-        {
-          label: {
-            en: 'Complete',
-            nl: 'Voltooid',
-            de: 'Abgeschlossen',
-            fr: 'Terminé',
-          },
-          value: 'complete',
-        },
+        { label: { en: 'Pending Payment' }, value: 'pending_payment' },
+        { label: { en: 'Awaiting Preparation' }, value: 'awaiting_preparation' },
+        { label: { en: 'In Preparation' }, value: 'in_preparation' },
+        { label: { en: 'Ready for Pickup' }, value: 'ready_for_pickup' },
+        { label: { en: 'In Delivery' }, value: 'in_delivery' },
+        { label: { en: 'Complete' }, value: 'complete' },
       ],
-      label: {
-        en: 'Status',
-        nl: 'Status',
-        de: 'Status',
-        fr: 'Statut',
-      },
+      label: { en: 'Status' },
       admin: {
-        description: {
-          en: 'Current status of the order (e.g., Payment Pending, In Preparation, etc.)',
-          nl: 'Huidige status van de bestelling (bijv. Betaling in afwachting, In voorbereiding, etc.)',
-          de: 'Aktueller Status der Bestellung (z.B. Zahlung ausstehend, In Vorbereitung, etc.)',
-          fr: 'Statut actuel de la commande (p.ex. Paiement en attente, En préparation, etc.)',
-        },
+        description: { en: 'Current status of the order.' },
         readOnly: true,
       },
     },
@@ -268,37 +213,21 @@ export const Orders: CollectionConfig = {
         { label: 'Kiosk', value: 'kiosk' },
       ],
       required: true,
-      label: {
-        en: 'Order Type',
-        nl: 'Type Bestelling',
-        de: 'Bestelltyp',
-        fr: 'Type de Commande',
-      },
+      label: { en: 'Order Type' },
       admin: {
-        description: {
-          en: 'Type of the order (e.g., POS, Web, or Kiosk).',
-          nl: 'Type van de bestelling (bijv., POS, Web of Kiosk).',
-          de: 'Typ der Bestellung (z. B., POS, Web oder Kiosk).',
-          fr: 'Type de commande (p.ex., POS, Web ou Kiosk).',
-        },
+        description: { en: 'Type of order (POS, Web, or Kiosk).' },
       },
     },
+
+    // ─────────────────────────────────────────────
+    // (A) order_details array
+    // ─────────────────────────────────────────────
     {
       name: 'order_details',
       type: 'array',
-      label: {
-        en: 'Order Details',
-        nl: 'Bestellingsdetails',
-        de: 'Bestelldetails',
-        fr: 'Détails de la Commande',
-      },
+      label: { en: 'Order Details' },
       admin: {
-        description: {
-          en: 'List of products in the order.',
-          nl: 'Lijst van producten in de bestelling.',
-          de: 'Liste der Produkte in der Bestellung.',
-          fr: 'Liste des produits dans la commande.',
-        },
+        description: { en: 'List of products in the order (line items).' },
       },
       fields: [
         {
@@ -306,109 +235,113 @@ export const Orders: CollectionConfig = {
           type: 'relationship',
           relationTo: 'products',
           required: true,
-          label: {
-            en: 'Product',
-            nl: 'Product',
-            de: 'Produkt',
-            fr: 'Produit',
-          },
+          label: { en: 'Product' },
         },
         {
           name: 'quantity',
           type: 'number',
           required: true,
-          label: {
-            en: 'Quantity',
-            nl: 'Hoeveelheid',
-            de: 'Menge',
-            fr: 'Quantité',
-          },
+          label: { en: 'Quantity' },
         },
         {
           name: 'price',
           type: 'number',
           required: true,
-          label: {
-            en: 'Price',
-            nl: 'Prijs',
-            de: 'Preis',
-            fr: 'Prix',
-          },
+          label: { en: 'Price' },
         },
         {
           name: 'tax',
           type: 'number',
-          label: {
-            en: 'Tax',
-            nl: 'BTW',
-            de: 'Steuer',
-            fr: 'Taxe',
-          },
+        },
+        {
+          name: 'tax_dinein',
+          type: 'number',
+        },
+        {
+          name: 'name_nl',
+          type: 'text',
+          label: { en: 'Product Name (Dutch)' },
+        },
+        {
+          name: 'name_en',
+          type: 'text',
+          label: { en: 'Product Name (English)' },
+        },
+        {
+          name: 'name_de',
+          type: 'text',
+          label: { en: 'Product Name (German)' },
+        },
+        {
+          name: 'name_fr',
+          type: 'text',
+          label: { en: 'Product Name (French)' },
         },
         {
           name: 'subproducts',
           type: 'array',
-          label: {
-            en: 'Subproducts',
-            nl: 'Subproducten',
-            de: 'Unterprodukte',
-            fr: 'Sous-produits',
-          },
+          label: { en: 'Subproducts' },
           fields: [
             {
-              name: 'subproduct',
-              type: 'relationship',
-              relationTo: 'subproducts',
-              required: true,
-              label: {
-                en: 'Subproduct',
-                nl: 'Subproduct',
-                de: 'Unterprodukt',
-                fr: 'Sous-produit',
+              name: 'subproductId',
+              type: 'text',
+              label: { en: 'Subproduct ID' },
+              admin: {
+                description: {
+                  en: 'An ID or code for this subproduct if needed (no relationship).',
+                },
               },
+            },
+            {
+              name: 'name_nl',
+              type: 'text',
+              label: { en: 'Subproduct Name (Dutch)' },
+            },
+            {
+              name: 'name_en',
+              type: 'text',
+              label: { en: 'Subproduct Name (English)' },
+            },
+            {
+              name: 'name_de',
+              type: 'text',
+              label: { en: 'Subproduct Name (German)' },
+            },
+            {
+              name: 'name_fr',
+              type: 'text',
+              label: { en: 'Subproduct Name (French)' },
             },
             {
               name: 'price',
               type: 'number',
               required: true,
-              label: {
-                en: 'Subproduct Price',
-                nl: 'Prijs van Subproduct',
-                de: 'Preis des Unterprodukts',
-                fr: 'Prix du Sous-produit',
-              },
+              label: { en: 'Subproduct Price' },
             },
             {
               name: 'tax',
               type: 'number',
-              label: {
-                en: 'Subproduct Tax',
-                nl: 'BTW van Subproduct',
-                de: 'Steuer des Unterprodukts',
-                fr: 'Taxe du Sous-produit',
-              },
+              label: { en: 'Subproduct Tax' },
+            },
+            {
+              name: 'tax_dinein',
+              type: 'number',
+              label: { en: 'Subproduct Dinein Tax' },
             },
           ],
         },
       ],
     },
 
+    // ─────────────────────────────────────────────
+    // (B) payments array
+    // ─────────────────────────────────────────────
     {
       name: 'payments',
       type: 'array',
-      label: {
-        en: 'Payments',
-        nl: 'Betalingen',
-        de: 'Zahlungen',
-        fr: 'Paiements',
-      },
+      label: { en: 'Payments' },
       admin: {
-        description: {
-          en: 'Payment details for the order.',
-          nl: 'Betalingsdetails voor de bestelling.',
-          de: 'Zahlungsdetails für die Bestellung.',
-          fr: 'Détails de paiement pour la commande.',
-        },
+        description: { en: 'Payment details for the order.' },
       },
       fields: [
         {
@@ -416,26 +349,20 @@ export const Orders: CollectionConfig = {
           type: 'relationship',
           relationTo: 'payment-methods',
           required: true,
-          label: {
-            en: 'Payment Method',
-            nl: 'Betalingsmethode',
-            de: 'Zahlungsmethode',
-            fr: 'Méthode de Paiement',
-          },
+          label: { en: 'Payment Method' },
         },
         {
           name: 'amount',
           type: 'number',
           required: true,
-          label: {
-            en: 'Amount',
-            nl: 'Bedrag',
-            de: 'Betrag',
-            fr: 'Montant',
-          },
+          label: { en: 'Amount' },
         },
       ],
     },
+
+    // ─────────────────────────────────────────────
+    // (C) fulfillment fields
+    // ─────────────────────────────────────────────
     {
       name: 'fulfillment_method',
       type: 'select',
@@ -456,78 +383,45 @@ export const Orders: CollectionConfig = {
       type: 'text',
       label: { en: 'Fulfillment Time' },
     },
+
+    // ─────────────────────────────────────────────
+    // (D) customer_details
+    // ─────────────────────────────────────────────
     {
       name: 'customer_details',
       type: 'group',
       label: { en: 'Customer Details' },
       fields: [
-        {
-          name: 'firstName',
-          type: 'text',
-          label: { en: 'First Name' },
-        },
-        {
-          name: 'lastName',
-          type: 'text',
-          label: { en: 'Last Name' },
-        },
-        {
-          name: 'email',
-          type: 'text',
-          label: { en: 'Email' },
-        },
-        {
-          name: 'phone',
-          type: 'text',
-          label: { en: 'Phone' },
-        },
-        {
-          name: 'address',
-          type: 'text',
-          label: { en: 'Address' },
-        },
-        {
-          name: 'city',
-          type: 'text',
-          label: { en: 'City' },
-        },
-        {
-          name: 'postalCode',
-          type: 'text',
-          label: { en: 'Postal Code' },
-        },
+        { name: 'firstName', type: 'text', label: { en: 'First Name' } },
+        { name: 'lastName', type: 'text', label: { en: 'Last Name' } },
+        { name: 'email', type: 'text', label: { en: 'Email' } },
+        { name: 'phone', type: 'text', label: { en: 'Phone' } },
+        { name: 'address', type: 'text', label: { en: 'Address' } },
+        { name: 'city', type: 'text', label: { en: 'City' } },
+        { name: 'postalCode', type: 'text', label: { en: 'Postal Code' } },
       ],
     },
+
+    // ─────────────────────────────────────────────
+    // (E) Totals (read-only)
+    // ─────────────────────────────────────────────
     {
       name: 'subtotal',
       type: 'number',
-      label: {
-        en: 'Subtotal Amount',
-        // add other translations if needed
-      },
-      admin: {
-        readOnly: true, // We are calculating it automatically
-      },
+      label: { en: 'Subtotal Amount' },
+      admin: { readOnly: true },
     },
     {
       name: 'total_tax',
       type: 'number',
-      label: {
-        en: 'Total Tax',
-      },
-      admin: {
-        readOnly: true,
-      },
+      label: { en: 'Total Tax' },
+      admin: { readOnly: true },
     },
     {
       name: 'total',
       type: 'number',
-      label: {
-        en: 'Total Amount',
-      },
-      admin: {
-        readOnly: true,
-      },
+      label: { en: 'Total Amount' },
+      admin: { readOnly: true },
     },
   ],
 };

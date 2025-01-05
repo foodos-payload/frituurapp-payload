@@ -2,12 +2,18 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+
+// 1) Import your global cart hook:
+import { useCart } from "@/context/CartContext"
+
 import FulfillmentMethodSelector from "./FulfillmentMethodSelector"
 import TimeSlotSelector from "./TimeSlotSelector"
 import CustomerDetailsForm from "./CustomerDetailsForm"
 import PaymentMethodSelector from "./PaymentMethodSelector"
 import OrderSummary from "./OrderSummary"
 
+// Payment method & timeslot types from your original code
 export type PaymentMethod = {
     id: string
     label: string
@@ -21,35 +27,17 @@ export type Timeslot = {
     isFullyBooked?: boolean
 }
 
+// The possible values for fulfillmentMethod
 type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | ""
 
-type Subproduct = {
-    id: string
-    name_nl: string
-    price: number
-}
-
-type CartItem = {
-    productName: string
-    productId: string
-    id: string
-    name: string
-    quantity: number
-    price: number
-    image?: {
-        url?: string
-        alt?: string
-    }
-    subproducts?: Subproduct[]
-}
-
+// Props provided by your server page
 interface CheckoutPageProps {
     hostSlug: string
     initialPaymentMethods: PaymentMethod[]
     initialTimeslots: Timeslot[]
 }
 
-/** Utility: Returns next 10 calendar dates (including 'today'). */
+// A helper: get next 10 days
 function getNextTenDates(): Date[] {
     const dates: Date[] = []
     const now = new Date()
@@ -61,9 +49,9 @@ function getNextTenDates(): Date[] {
     return dates
 }
 
-/** Convert JS getDay() => your timeslot day (1=Mon..7=Sun). */
+// Convert JS Sunday=0 => your timeslot day(1..7)
 function jsDayToTimeslotDay(jsDay: number): number {
-    return jsDay === 0 ? 7 : jsDay // Sunday=0 => 7
+    return jsDay === 0 ? 7 : jsDay
 }
 
 export default function CheckoutPage({
@@ -71,25 +59,63 @@ export default function CheckoutPage({
     initialPaymentMethods,
     initialTimeslots,
 }: CheckoutPageProps) {
-    // (A) Logged-in user (mock)
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const kioskMode = searchParams.get("kiosk") === "true"
+
+    // ─────────────────────────────────────────────────────────────────
+    // (A) Logged-in user
+    // ─────────────────────────────────────────────────────────────────
     const [loggedInUser, setLoggedInUser] = useState<{ firstName?: string } | null>(null)
 
+    useEffect(() => {
+        const storedUser = localStorage.getItem("userData")
+        if (storedUser) {
+            try {
+                const parsed = JSON.parse(storedUser)
+                setLoggedInUser(parsed)
+            } catch {
+                // ignore
+            }
+        }
+    }, [])
+
+    // ─────────────────────────────────────────────────────────────────
     // (B) Fulfillment method
+    // ─────────────────────────────────────────────────────────────────
     const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>("")
 
-    // Timeslots
+    useEffect(() => {
+        const storedMethod = localStorage.getItem("selectedShippingMethod") || ""
+        const correctedMethod = storedMethod === "dine-in" ? "dine_in" : storedMethod
+        if (["delivery", "takeaway", "dine_in"].includes(correctedMethod)) {
+            setFulfillmentMethod(correctedMethod as FulfillmentMethod)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (fulfillmentMethod) {
+            const storageValue = (fulfillmentMethod === "dine_in") ? "dine-in" : fulfillmentMethod
+            localStorage.setItem("selectedShippingMethod", storageValue)
+        }
+    }, [fulfillmentMethod])
+
+    // ─────────────────────────────────────────────────────────────────
+    // (C) Timeslots + Payment
+    // ─────────────────────────────────────────────────────────────────
     const [allTimeslots] = useState<Timeslot[]>(initialTimeslots)
-
-    // (C) Date & Time
     const nextTenDates = getNextTenDates()
-    const [selectedDate, setSelectedDate] = useState("")
-    const [selectedTime, setSelectedTime] = useState("")
 
-    // (D) Payment
     const [paymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods)
     const [selectedPaymentId, setSelectedPaymentId] = useState("")
 
-    // (E) Customer details
+    // (C1) Date/time
+    const [selectedDate, setSelectedDate] = useState("")
+    const [selectedTime, setSelectedTime] = useState("")
+
+    // ─────────────────────────────────────────────────────────────────
+    // (D) Customer details
+    // ─────────────────────────────────────────────────────────────────
     const [surname, setSurname] = useState("")
     const [lastName, setLastName] = useState("")
     const [address, setAddress] = useState("")
@@ -98,114 +124,61 @@ export default function CheckoutPage({
     const [phone, setPhone] = useState("")
     const [email, setEmail] = useState("")
 
-    // (F) Cart & coupon
-    const [cartItems, setCartItems] = useState<CartItem[]>([])
-    const [cartTotal, setCartTotal] = useState(0)
+    // ─────────────────────────────────────────────────────────────────
+    // (E) Coupon code
+    // ─────────────────────────────────────────────────────────────────
     const [couponCode, setCouponCode] = useState("")
 
-    // On mount => load cart + user
-    useEffect(() => {
-        const storedCart = localStorage.getItem("cartItems")
-        if (storedCart) {
-            try {
-                const parsed = JSON.parse(storedCart) as CartItem[]
-                setCartItems(parsed)
-            } catch {
-                /* ignore */
-            }
-        }
+    // ─────────────────────────────────────────────────────────────────
+    // (F) Using the global cart context
+    // ─────────────────────────────────────────────────────────────────
+    const {
+        items: cartItems,
+        getCartTotal,
+        clearCart,
+        // If you want to do plus/minus, you might define `updateItemQuantity` or removeItem
+        // removeItem, updateItemQuantity, etc.
+    } = useCart()
 
-        const storedUser = localStorage.getItem("userData")
-        if (storedUser) {
-            try {
-                const parsed = JSON.parse(storedUser)
-                setLoggedInUser(parsed)
-            } catch {
-                /* ignore */
-            }
-        }
-    }, [])
+    // We'll compute the total from `getCartTotal()`:
+    const cartTotal = getCartTotal()
 
-    // On mount => maybe restore shipping method
-    useEffect(() => {
-        const storedMethod = localStorage.getItem("selectedShippingMethod") || ""
-        // Convert "dine-in" => "dine_in"
-        const correctedMethod = storedMethod === "dine-in" ? "dine_in" : storedMethod
-        if (
-            correctedMethod &&
-            ["delivery", "takeaway", "dine_in"].includes(correctedMethod)
-        ) {
-            setFulfillmentMethod(correctedMethod as FulfillmentMethod)
-        }
-    }, [])
-
-    useEffect(() => {
-        if (fulfillmentMethod) {
-            // Convert "dine_in" -> "dine-in"
-            const storageValue = fulfillmentMethod === "dine_in"
-                ? "dine-in"
-                : fulfillmentMethod;
-            localStorage.setItem("selectedShippingMethod", storageValue);
-        }
-    }, [fulfillmentMethod]);
-
-    // Recalc total whenever cart changes
-    useEffect(() => {
-        const sum = cartItems.reduce((acc, item) => {
-            const subTotal = item.subproducts?.reduce((acc2, sp) => acc2 + sp.price, 0) || 0
-            return acc + (item.price + subTotal) * item.quantity
-        }, 0)
-        setCartTotal(sum)
-    }, [cartItems])
-
-    // (G) Cart item modification
+    // Example stubs for plus/minus (if you haven't implemented them in your context):
     function handleIncrease(productId: string) {
-        setCartItems(prevItems => {
-            const newCart = prevItems.map(item => {
-                if (item.productId === productId) {
-                    return { ...item, quantity: item.quantity + 1 }
-                }
-                return item
-            })
-            localStorage.setItem("cartItems", JSON.stringify(newCart))
-            return newCart
-        })
+        // You might do: find the cart line item, then call `updateItemQuantity(...)`
+        // Or if you have a simpler approach, do it here. But be sure it updates the global cart.
+        alert("handleIncrease not yet implemented in global cart.")
     }
 
     function handleDecrease(productId: string) {
-        setCartItems(prevItems => {
-            const newCart = prevItems.map(item => {
-                if (item.productId === productId && item.quantity > 1) {
-                    return { ...item, quantity: item.quantity - 1 }
-                }
-                return item
-            })
-            localStorage.setItem("cartItems", JSON.stringify(newCart))
-            return newCart
-        })
+        alert("handleDecrease not yet implemented in global cart.")
     }
 
     function handleRemoveItem(productId: string) {
-        setCartItems(prevItems => {
-            const newCart = prevItems.filter(item => item.productId !== productId)
-            localStorage.setItem("cartItems", JSON.stringify(newCart))
-            return newCart
-        })
+        alert("handleRemoveItem not yet implemented in global cart.")
     }
 
-    // (H) Final checkout
+    // ─────────────────────────────────────────────────────────────────
+    // (G) Final checkout
+    // ─────────────────────────────────────────────────────────────────
     async function handleCheckout() {
-        // 1. Collect data from state:
+        // 1) Validation
+        if (!canProceed()) {
+            alert("Please fill in all required fields and pick a payment method.")
+            return
+        }
+
+        // 2) Build the payload
         const payloadData = {
             tenant: hostSlug,
             shop: hostSlug,
             orderType: "web",
             status: "pending_payment",
-            fulfillmentMethod,   // e.g. 'delivery'
+            fulfillmentMethod,
             fulfillmentDate: selectedDate,
             fulfillmentTime: selectedTime,
             customerDetails: {
-                firstName: surname,    // or rename these as needed
+                firstName: surname,
                 lastName,
                 email,
                 phone,
@@ -213,13 +186,27 @@ export default function CheckoutPage({
                 city,
                 postalCode,
             },
+            // Convert the cart lines into "order_details"
             orderDetails: cartItems.map(item => ({
                 product: item.productId,
+                name_nl: item.productNameNL, // or item.productName if you prefer
+                name_en: item.productNameEN,
+                name_de: item.productNameDE,
+                name_fr: item.productNameFR,
+
+                tax: item.taxRate,
+                tax_dinein: item.taxRateDineIn,
                 quantity: item.quantity,
                 price: item.price,
                 subproducts: item.subproducts?.map(sp => ({
-                    subproduct: sp.id,
+                    subproductId: sp.subproductId,
+                    name_nl: sp.name_nl,
+                    name_en: sp.name_en,
+                    name_de: sp.name_de,
+                    name_fr: sp.name_fr,
                     price: sp.price,
+                    tax: sp.tax,
+                    tax_dinein: sp.tax_dinein,
                 })) || [],
             })),
             payments: [
@@ -230,13 +217,6 @@ export default function CheckoutPage({
             ],
         }
 
-        // 2. Validate
-        if (!canProceed()) {
-            alert("Please fill in required fields and pick a payment method.")
-            return
-        }
-
-        // 3. POST to your new API route
         try {
             const res = await fetch("/api/submitOrder", {
                 method: "POST",
@@ -244,30 +224,30 @@ export default function CheckoutPage({
                 body: JSON.stringify(payloadData),
             })
             const json = await res.json()
-
             if (!json.success) {
                 alert("Order creation failed: " + json.message)
                 return
             }
 
-            alert("Order successfully created! Order ID: " + json.order.id)
-            // Optionally redirect or clear cart here
+            // 3) Clear cart from context:
+            clearCart()
+
+            // 4) Go to order-summary page, optionally pass kiosk param
+            const kioskParam = kioskMode ? "&kiosk=true" : ""
+            router.push(`/order-summary?orderId=${json.order.id}${kioskParam}`)
         } catch (err) {
             console.error("Error submitting order:", err)
             alert("Error submitting order. Check console for more details.")
         }
     }
 
-    // (I) Mock login
-    function handleLoginClick() {
-        console.log("Navigate to login page or show login modal")
+    // A back button
+    function handleBackClick() {
+        const kioskParam = kioskMode ? "?kiosk=true" : ""
+        router.push(`/order${kioskParam}`)
     }
 
-    // (J) Coupon scanning
-    function handleScanQR() {
-        alert("Open camera / Not implemented yet.")
-    }
-
+    // A quick check to see if we can proceed
     function canProceed(): boolean {
         if (!fulfillmentMethod) return false
         if (!selectedDate || !selectedTime) return false
@@ -289,11 +269,34 @@ export default function CheckoutPage({
         return true
     }
 
+    // If the user is not logged in => optional logic:
+    function handleLoginClick() {
+        console.log("Navigate to login page or show a login modal, etc.")
+    }
+
+    // Just stubs
+    function handleScanQR() {
+        alert("ScanQR not implemented.")
+    }
+    function handleApplyCoupon() {
+        alert(`Applying coupon code: ${couponCode} (not implemented).`)
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Return the UI
+    // ─────────────────────────────────────────────────────────────────
     return (
         <div className="flex w-full min-h-screen">
-            {/* LEFT column */}
+            {/* Left column */}
             <div className="w-full md:w-1/2 lg:w-2/3 overflow-y-auto p-4 space-y-6">
-                {/* (A) Hello user or login */}
+                <button
+                    onClick={handleBackClick}
+                    className="bg-gray-200 text-gray-700 px-3 py-2 rounded"
+                >
+                    ← Back
+                </button>
+
+                {/* (A) Hello user / login */}
                 <div className="mb-2">
                     {loggedInUser ? (
                         <div className="text-lg font-semibold">
@@ -313,14 +316,14 @@ export default function CheckoutPage({
                 <FulfillmentMethodSelector
                     allTimeslots={allTimeslots}
                     fulfillmentMethod={fulfillmentMethod}
-                    setFulfillmentMethod={m => {
+                    setFulfillmentMethod={(m) => {
                         setFulfillmentMethod(m)
                         setSelectedDate("")
                         setSelectedTime("")
                     }}
                 />
 
-                {/* (C) Date/time selector */}
+                {/* (C) Date/time */}
                 {fulfillmentMethod !== "" && (
                     <TimeSlotSelector
                         fulfillmentMethod={fulfillmentMethod}
@@ -361,13 +364,13 @@ export default function CheckoutPage({
                     setSelectedPaymentId={setSelectedPaymentId}
                 />
 
-                {/* Extra bottom padding when in mobile */}
                 <div className="mb-16"></div>
             </div>
 
-            {/* RIGHT column => order summary */}
+            {/* Right column => order summary */}
             <div className="hidden md:block md:w-1/2 lg:w-1/3 p-4">
                 <OrderSummary
+                    // We'll pass the current cart items and total, or let OrderSummary also use cart context
                     cartItems={cartItems}
                     cartTotal={cartTotal}
                     couponCode={couponCode}
@@ -376,9 +379,7 @@ export default function CheckoutPage({
                     handleDecrease={handleDecrease}
                     handleRemoveItem={handleRemoveItem}
                     handleScanQR={handleScanQR}
-                    handleApplyCoupon={() =>
-                        alert("Not yet implemented: apply coupon " + couponCode)
-                    }
+                    handleApplyCoupon={handleApplyCoupon}
                     canProceed={canProceed}
                     handleCheckout={handleCheckout}
                 />

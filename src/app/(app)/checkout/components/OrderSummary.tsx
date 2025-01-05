@@ -1,43 +1,64 @@
 // File: src/app/(app)/checkout/components/OrderSummary.tsx
-"use client"
+"use client";
 
-import React from "react"
-import { FiTrash2 } from 'react-icons/fi'
-import { CartItem } from "./CheckoutPage"
+import React from "react";
+import { FiTrash2 } from "react-icons/fi";
+
+// 1) Import your cart context hook + item type + getLineItemSignature:
+import { useCart, CartItem, getLineItemSignature } from "@/context/CartContext";
 
 interface OrderSummaryProps {
-    cartItems: CartItem[]
-    cartTotal: number
-    couponCode: string
-    setCouponCode: (value: string) => void
+    couponCode: string;
+    setCouponCode: (value: string) => void;
 
-    handleIncrease: (productId: string) => void
-    handleDecrease: (productId: string) => void
-    handleRemoveItem: (productId: string) => void
+    // We'll keep the same scanning + apply coupon logic
+    handleScanQR: () => void;
+    handleApplyCoupon: () => void;
 
-    handleScanQR: () => void
-    handleApplyCoupon: () => void
-
-    canProceed: () => boolean
-    handleCheckout: () => void
+    // For final checkout
+    canProceed: () => boolean;
+    handleCheckout: () => void;
 }
 
 export default function OrderSummary({
-    cartItems,
-    cartTotal,
     couponCode,
     setCouponCode,
-
-    handleIncrease,
-    handleDecrease,
-    handleRemoveItem,
-
     handleScanQR,
     handleApplyCoupon,
-
     canProceed,
     handleCheckout,
 }: OrderSummaryProps) {
+    // 2) Access the cart
+    const { items: cartItems, getCartTotal, updateItemQuantity, removeItem } = useCart();
+    const cartTotal = getCartTotal();
+
+    // 3) Logic for plus / minus / remove
+    function handleIncrease(productId: string) {
+        const item = cartItems.find((ci) => ci.productId === productId);
+        if (!item) return;
+
+        const lineSig = getLineItemSignature(item);
+        updateItemQuantity(lineSig, item.quantity + 1);
+    }
+
+    function handleDecrease(productId: string) {
+        const item = cartItems.find((ci) => ci.productId === productId);
+        if (!item) return;
+
+        if (item.quantity > 1) {
+            const lineSig = getLineItemSignature(item);
+            updateItemQuantity(lineSig, item.quantity - 1);
+        }
+    }
+
+    function handleRemoveItem(productId: string) {
+        const item = cartItems.find((ci) => ci.productId === productId);
+        if (!item) return;
+
+        const lineSig = getLineItemSignature(item);
+        removeItem(lineSig);
+    }
+
     return (
         <div className="sticky top-4 space-y-6">
             {/* Title */}
@@ -54,14 +75,13 @@ export default function OrderSummary({
                 ) : (
                     <ul className="flex flex-col gap-4">
                         {cartItems.map((item, itemIndex) => {
-                            // Display name fallback
-                            const displayName = item.productName || "Untitled Product"
+                            const displayName = item.productName || "Untitled Product";
 
-                            // Sum of subproduct prices
-                            const subTotal = item.subproducts?.reduce((acc, sp) => acc + sp.price, 0) || 0
-
-                            // Final line amount
-                            const linePrice = (item.price + subTotal) * item.quantity
+                            // Subproduct total
+                            const subTotal =
+                                item.subproducts?.reduce((acc, sp) => acc + sp.price, 0) || 0;
+                            // Final line price
+                            const linePrice = (item.price + subTotal) * item.quantity;
 
                             return (
                                 <li
@@ -163,9 +183,11 @@ export default function OrderSummary({
                                         {item.subproducts && item.subproducts.length > 0 && (
                                             <ul className="mt-1 text-sm text-gray-600 pl-4 list-outside list-disc space-y-1">
                                                 {item.subproducts.map((sp, subIndex) => (
-                                                    <li key={`${sp.id}-${subIndex}`}>
+                                                    <li key={`${sp.subproductId}-${subIndex}`}>
                                                         ➔ {sp.name_nl}{" "}
-                                                        <span className="text-gray-500">(+€{sp.price.toFixed(2)})</span>
+                                                        <span className="text-gray-500">
+                                                            (+€{sp.price.toFixed(2)})
+                                                        </span>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -177,7 +199,7 @@ export default function OrderSummary({
                                         </div>
                                     </div>
                                 </li>
-                            )
+                            );
                         })}
                     </ul>
                 )}
@@ -246,7 +268,10 @@ export default function OrderSummary({
               rounded-md 
               focus:outline-none 
               transition-colors
-              ${!canProceed() ? "opacity-50 cursor-not-allowed hover:bg-blue-600" : ""}
+              ${!canProceed()
+                                ? "opacity-50 cursor-not-allowed hover:bg-blue-600"
+                                : ""
+                            }
             `}
                     >
                         Proceed to Checkout
@@ -254,5 +279,5 @@ export default function OrderSummary({
                 </div>
             </div>
         </div>
-    )
+    );
 }
