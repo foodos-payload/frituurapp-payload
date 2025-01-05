@@ -148,6 +148,17 @@ export default function CheckoutPage({
         }
     }, [])
 
+    useEffect(() => {
+        const storedMethod = localStorage.getItem("selectedShippingMethod") || ""
+        // Convert "dine-in" => "dine_in"
+        const correctedMethod =
+            storedMethod === "dine-in" ? "dine_in" : storedMethod
+
+        if (correctedMethod && possibleMethods.includes(correctedMethod as FulfillmentMethod)) {
+            setFulfillmentMethod(correctedMethod as FulfillmentMethod)
+        }
+    }, [possibleMethods])
+
     /**
      *  Recalc total whenever cartItems changes.
      *  We add (base price + subproduct sum) * quantity
@@ -161,37 +172,41 @@ export default function CheckoutPage({
     }, [cartItems])
 
     // (G) Cart item modification
-    function handleRemoveItem(id: string) {
-        setCartItems(prev => {
-            const newCart = prev.filter(i => i.id !== id)
-            localStorage.setItem("cartItems", JSON.stringify(newCart))
-            return newCart
-        })
-    }
-    function handleIncrease(id: string) {
-        setCartItems(prev => {
-            const newCart = prev.map(i => {
-                if (i.id === id) {
-                    return { ...i, quantity: i.quantity + 1 }
+    function handleIncrease(productId: string) {
+        setCartItems(prevItems => {
+            const newCart = prevItems.map(item => {
+                if (item.productId === productId) {
+                    return { ...item, quantity: item.quantity + 1 };
                 }
-                return i
-            })
-            localStorage.setItem("cartItems", JSON.stringify(newCart))
-            return newCart
-        })
+                return item;
+            });
+            localStorage.setItem("cartItems", JSON.stringify(newCart));
+            return newCart;
+        });
     }
-    function handleDecrease(id: string) {
-        setCartItems(prev => {
-            const newCart = prev.map(i => {
-                if (i.id === id && i.quantity > 1) {
-                    return { ...i, quantity: i.quantity - 1 }
+
+    function handleDecrease(productId: string) {
+        setCartItems(prevItems => {
+            const newCart = prevItems.map(item => {
+                if (item.productId === productId && item.quantity > 1) {
+                    return { ...item, quantity: item.quantity - 1 };
                 }
-                return i
-            })
-            localStorage.setItem("cartItems", JSON.stringify(newCart))
-            return newCart
-        })
+                return item;
+            });
+            localStorage.setItem("cartItems", JSON.stringify(newCart));
+            return newCart;
+        });
     }
+
+    function handleRemoveItem(productId: string) {
+        setCartItems(prevItems => {
+            const newCart = prevItems.filter(item => item.productId !== productId);
+            localStorage.setItem("cartItems", JSON.stringify(newCart));
+            return newCart;
+        });
+    }
+
+
 
     // (H) Final checkout
     function handleCheckout() {
@@ -222,6 +237,43 @@ export default function CheckoutPage({
     function handleScanQR() {
         alert("Open camera / Not implemented yet.")
     }
+
+    function canProceed(): boolean {
+        // 1) Must have a fulfillment method
+        if (!fulfillmentMethod) return false
+
+        // 2) Must have a date & time selected
+        if (!selectedDate || !selectedTime) return false
+
+        // 3) Must have a payment method selected
+        if (!selectedPaymentId) return false
+
+        // 4) Check required fields for each fulfillment method
+        switch (fulfillmentMethod) {
+            case "takeaway":
+                // required: surname, lastName, phone
+                if (!surname || !lastName || !phone) return false
+                break
+
+            case "delivery":
+                // required: surname, lastName, phone, address, city, postalCode
+                if (!surname || !lastName || !phone || !address || !city || !postalCode) return false
+                break
+
+            case "dine_in":
+                // required: surname
+                if (!surname) return false
+                break
+
+            default:
+                // If we somehow got an unrecognized method, block proceed
+                return false
+        }
+
+        // If everything passes, return true
+        return true
+    }
+
 
     // Layout
     return (
@@ -502,7 +554,7 @@ export default function CheckoutPage({
                                             {/* LEFT: minus / quantity / plus */}
                                             <div className="flex flex-col justify-center items-center mr-2">
                                                 <button
-                                                    onClick={() => handleDecrease(item.id)}
+                                                    onClick={() => handleDecrease(item.productId)}
                                                     className="
                                                       w-8 h-8 
                                                       flex items-center justify-center 
@@ -531,7 +583,7 @@ export default function CheckoutPage({
                                                     {item.quantity}
                                                 </div>
                                                 <button
-                                                    onClick={() => handleIncrease(item.id)}
+                                                    onClick={() => handleIncrease(item.productId)}
                                                     className="
                                                       w-8 h-8 
                                                       flex items-center justify-center 
@@ -660,17 +712,19 @@ export default function CheckoutPage({
                             </div>
                             <button
                                 onClick={handleCheckout}
-                                className="
-                                  w-full 
-                                  bg-blue-600 
-                                  hover:bg-blue-700 
-                                  text-white 
-                                  font-medium 
-                                  py-2 
-                                  rounded-md 
-                                  focus:outline-none 
-                                  transition-colors
-                                "
+                                disabled={!canProceed()}
+                                className={`
+                                        w-full 
+                                        bg-blue-600 
+                                        hover:bg-blue-700 
+                                        text-white 
+                                        font-medium 
+                                        py-2 
+                                        rounded-md 
+                                        focus:outline-none 
+                                        transition-colors
+                                        ${!canProceed() ? "opacity-50 cursor-not-allowed hover:bg-blue-600" : ""}
+                                    `}
                             >
                                 Proceed to Checkout
                             </button>
