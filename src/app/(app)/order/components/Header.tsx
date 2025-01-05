@@ -3,6 +3,9 @@
 import React, { useRef, useEffect } from "react";
 import { FiMenu, FiSearch, FiX } from "react-icons/fi";
 
+import { useTranslation } from "@/context/TranslationsContext";
+
+
 interface BrandingProps {
     headerBackgroundColor?: string;
     logoUrl?: string;
@@ -36,6 +39,7 @@ export default function Header({
     isKiosk = false,
     branding,
 }: HeaderProps) {
+    const { t } = useTranslation();
     const mobileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -262,7 +266,7 @@ export default function Header({
                                 {/* original placeholder text etc. */}
                                 <input
                                     type="text"
-                                    placeholder="Search products..."
+                                    placeholder={t("order.header.search")}
                                     value={searchValue}
                                     onChange={handleSearchChange}
                                     className="

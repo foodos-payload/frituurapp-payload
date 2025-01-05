@@ -1,14 +1,11 @@
+// File: /src/app/(app)/order/components/MenuDrawer.tsx
 "use client";
 
 import React, { useRef, MouseEvent } from "react";
 import { CSSTransition } from "react-transition-group";
-
-const LANGUAGES = [
-    { label: "NL", value: "nl", flagSrc: "/images/flags/nl-BE.svg" },
-    { label: "EN", value: "en", flagSrc: "/images/flags/en-UK.svg" },
-    { label: "FR", value: "fr", flagSrc: "/images/flags/fr-FR.svg" },
-    { label: "DE", value: "de", flagSrc: "/images/flags/de-DE.svg" },
-];
+// 1) Import your LanguageSwitcher (adjust path as needed)
+import { LanguageSwitcher } from "../../../../components/LanguageSwitcher/LanguageSwitcher";
+import { useTranslation } from "@/context/TranslationsContext";
 
 type Branding = {
     categoryCardBgColor?: string;
@@ -36,6 +33,8 @@ export default function MenuDrawer({
     onLangChange,
     branding,
 }: MenuDrawerProps) {
+    const { t } = useTranslation();
+
     // Refs for the two separate transitions
     const overlayRef = useRef<HTMLDivElement>(null);
     const drawerRef = useRef<HTMLDivElement>(null);
@@ -48,13 +47,11 @@ export default function MenuDrawer({
     }
 
     /** 
-     * Called when a language is clicked.
-     * 1) Construct new query params with ?lang=langValue
-     * 2) Update the browser's URL
-     * 3) Call the parent's onLangChange
+     * Called when a language is clicked from the LanguageSwitcher.
+     * Just pass it up so the parent can do what it needs to do
+     * (like storing in localStorage, or re-routing, etc.).
      */
-    function handleLangClick(langValue: string) {
-        // Just call parent
+    function handleLangChange(langValue: string) {
         onLangChange(langValue);
     }
 
@@ -62,7 +59,7 @@ export default function MenuDrawer({
 
     return (
         <>
-            {/** 1) The overlay fade transition */}
+            {/* 1) The overlay fade transition */}
             <CSSTransition
                 in={isOpen}
                 timeout={300}
@@ -77,7 +74,7 @@ export default function MenuDrawer({
                 />
             </CSSTransition>
 
-            {/** 2) The white drawer slide transition */}
+            {/* 2) The white drawer slide transition */}
             <CSSTransition
                 in={isOpen}
                 timeout={300}
@@ -88,29 +85,29 @@ export default function MenuDrawer({
                 <div
                     ref={drawerRef}
                     className="
-            fixed
-            top-0 bottom-0 left-0
-            z-[9998]
-            w-11/12 max-w-lg
-            bg-white
-            shadow-lg
-            flex flex-col
-          "
+                        fixed
+                        top-0 bottom-0 left-0
+                        z-[9998]
+                        w-11/12 max-w-lg
+                        bg-white
+                        shadow-lg
+                        flex flex-col
+                    "
                 >
                     {/* Close button */}
                     <div className="relative flex justify-end p-2">
                         <svg
                             onClick={onClose}
                             className="
-                cursor-pointer
-                absolute
-                top-6 right-8
-                bg-red-500
-                rounded-xl
-                shadow-xl
-                p-1.5
-                text-white
-              "
+                                cursor-pointer
+                                absolute
+                                top-6 right-8
+                                bg-red-500
+                                rounded-xl
+                                shadow-xl
+                                p-1.5
+                                text-white
+                            "
                             xmlns="http://www.w3.org/2000/svg"
                             width="44"
                             height="44"
@@ -127,55 +124,38 @@ export default function MenuDrawer({
                         </svg>
                     </div>
 
-                    <div className="mt-8 text-center text-lg font-semibold">Menu</div>
+                    <div className="mt-8 text-center text-lg font-semibold">
+                        {t("order.menu.title")}
+                    </div>
 
                     {/* Language chooser + other links */}
                     <nav className="m-4 grid p-4 text-gray-500 gap-6">
-                        <div className="flex items-center gap-2 justify-center">
-                            <div className="language-switcher flex gap-2">
-                                {LANGUAGES.map((lang) => {
-                                    const isActive = userLang === lang.value;
-                                    return (
-                                        <img
-                                            key={lang.value}
-                                            src={lang.flagSrc}
-                                            alt={lang.label}
-                                            onClick={() => handleLangClick(lang.value)}
-                                            className={`
-                        w-8 h-8 cursor-pointer
-                        rounded
-                        ${isActive
-                                                    ? "border-2 border-green-600"
-                                                    : "border border-transparent hover:border-gray-300"
-                                                }
-                      `}
-                                        />
-                                    );
-                                })}
-                            </div>
+                        {/* 2) Our LanguageSwitcher replaces the old map of flags */}
+                        <div className="flex items-center justify-center">
+                            <LanguageSwitcher
+                                userLang={userLang}
+                                onLangChange={handleLangChange}
+                            />
                         </div>
 
                         {/* Example: a "Login" button */}
                         <a
                             href="/login"
-                            style={{
-                                borderRadius: "0.5rem",
-                                backgroundColor: brandCTA,
-                            }}
+                            style={{ borderRadius: "0.5rem", backgroundColor: brandCTA }}
                             className="
-                flex items-center justify-center
-                p-3 w-60 mx-auto
-                text-md
-                text-white
-                rounded-full
-              "
+                                flex items-center justify-center
+                                p-3 w-60 mx-auto
+                                text-md
+                                text-white
+                                rounded-full
+                            "
                         >
-                            Login
+                            {t("order.menu.login")}
                         </a>
 
                         {/* Another link */}
                         <a href="/contact" className="text-center hover:text-blue-600">
-                            Contact
+                            {t("order.menu.contact")}
                         </a>
                     </nav>
 

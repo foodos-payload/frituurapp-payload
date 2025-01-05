@@ -1,0 +1,30 @@
+{
+  "chooseMode": {
+    "title": "Buradan sipariş verin",
+    "dineIn": {
+      "label": "Yerinde yemek",
+      "hint": "Siparişinizi burada yiyin."
+    },
+    "takeAway": {
+      "label": "Paket servis",
+      "hint": "Siparişinizi alın."
+    },
+    "delivery": {
+      "label": "Teslimat",
+      "hint": "Siparişinizi kapınıza teslim edin."
+    }
+  },
+  "order": {
+    "menu": { "title": "Menü", "login": "Giriş", "contact": "İletişim" },
+    "productlist": { "no_products": "Aramanız için ürün bulunamadı" },
+    "header": { "search": "Ürünleri ara..." },
+    "footer": { "go_back": "Geri dön", "continue_to_cart": "Sepete devam et" },
+    "cart": {
+      "title": "Sepet",
+      "empty": "Sepetiniz boş",
+      "edit_product": "Düzenle",
+      "checkout": "Ödeme"
+    },
+    "popup": { "next": "Sonraki", "back": "Geri", "confirm": "Onayla" }
+  }
+}

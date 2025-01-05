@@ -1,4 +1,3 @@
-// /src/app/(app)/index/components/LanguageSwitcher.tsx
 "use client";
 import React from "react";
 import { useTranslation } from "@/context/TranslationsContext";
@@ -7,9 +6,10 @@ export const LanguageSwitcher: React.FC = () => {
     const { locale, setLocale, availableLocales } = useTranslation();
 
     return (
-        <div className="flex gap-8 items-center">
+        <div className="flex gap-3 items-center">
             {availableLocales.map((langCode) => {
                 const isActive = langCode === locale;
+
                 return (
                     <img
                         key={langCode}
@@ -17,9 +17,13 @@ export const LanguageSwitcher: React.FC = () => {
                         alt={langCode}
                         onClick={() => setLocale(langCode)}
                         className={`
-                            h-20 cursor-pointer transition-transform
-                            ${isActive ? "border-4 border-color-brand-primary scale-110" : ""}
-                        `}
+              h-10 cursor-pointer
+              transition-all duration-300 ease-in-out
+              ${isActive
+                                ? "scale-110 opacity-100"
+                                : "opacity-40 hover:opacity-80 hover:scale-105"
+                            }
+            `}
                     />
                 );
             })}

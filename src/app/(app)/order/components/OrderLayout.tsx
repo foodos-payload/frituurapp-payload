@@ -1,4 +1,4 @@
-// File: /app/(app)/bestellen/components/BestellenLayout.tsx
+// File: /app/(app)/order/components/OrderLayout.tsx
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -13,7 +13,7 @@ import CartButton from './cart/CartButton';
 import CartDrawer from './cart/CartDrawer';
 import MenuDrawer from './menu/MenuDrawer';
 import ProductPopupFlow from './ProductPopupFlow';
-import '../bestellen.css';
+import '../order.css';
 
 /**
  * Minimal shape for a product in your categories.
@@ -97,12 +97,12 @@ interface Props {
 }
 
 /**
- * The main layout for “Bestellen”:
+ * The main layout for “order”:
  * - Wraps everything in <CartProvider>.
  * - Renders a <Header>, <MenuDrawer>, <CartDrawer>.
  * - Renders <ProductList> with the filtered categories.
  */
-export default function BestellenLayout({
+export default function OrderLayout({
     shopSlug,
     categorizedProducts,
     userLang,

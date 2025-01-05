@@ -3,7 +3,7 @@
 import React, { useState, useEffect, MouseEvent } from "react";
 import { useCart, CartItem } from "./cart/CartContext";
 import { FiCheckCircle } from "react-icons/fi";
-
+import { useTranslation } from "@/context/TranslationsContext";
 /**
  * Minimal subproduct/link types
  */
@@ -181,6 +181,7 @@ export default function ProductPopupFlow({
     lang,
     isKiosk = false,
 }: Props) {
+    const { t } = useTranslation();
     const { addItem, updateItem } = useCart();
 
     useEffect(() => {
@@ -645,7 +646,7 @@ export default function ProductPopupFlow({
                 ${isKiosk ? "text-2xl px-6 py-3" : "text-xl px-4 py-2"}
               `}
                         >
-                            Terug
+                            {t("order.popup.back")}
                         </button>
                     ) : (
                         <div />
@@ -660,7 +661,7 @@ export default function ProductPopupFlow({
               ${isKiosk ? "text-2xl px-6 py-3" : "text-xl px-4 py-2"}
             `}
                     >
-                        {currentIndex < sortedPopups.length - 1 ? "Volgende" : "Bevestigen"}
+                        {currentIndex < sortedPopups.length - 1 ? t("order.popup.next") : t("order.popup.confirm")}
                     </button>
                 </div>
             </div>

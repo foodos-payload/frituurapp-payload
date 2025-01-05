@@ -1,11 +1,11 @@
-// File: /app/(app)/bestellen/page.tsx
+// File: /app/(app)/order/page.tsx
 import React from 'react';
 import { headers } from 'next/headers';
-import BestellenLayout from './components/BestellenLayout';
+import OrderLayout from './components/OrderLayout';
 
 export const dynamic = 'force-dynamic';
 
-export default async function BestellenPage(context: any) {
+export default async function OrderPage(context: any) {
     // 1) Get querystring data (e.g. ?lang=en or ?kiosk=true)
     const searchParams = context?.searchParams || {};
     const kioskParam = searchParams.kiosk; // e.g. "true" or undefined
@@ -52,7 +52,7 @@ export default async function BestellenPage(context: any) {
         return a.name_nl.localeCompare(b.name_nl);
     });
 
-    // 6) Convert payload branding to the shape your BestellenLayout wants
+    // 6) Convert payload branding to the shape your OrderLayout wants
     // For example, if rawBranding.siteLogo?.s3_url is your main logo:
     const branding = {
         logoUrl: rawBranding.siteLogo?.s3_url ?? '',
@@ -71,7 +71,7 @@ export default async function BestellenPage(context: any) {
 
     // 8) Render the layout
     return (
-        <BestellenLayout
+        <OrderLayout
             shopSlug={hostSlug}
             categorizedProducts={categorizedProducts}
             branding={branding}

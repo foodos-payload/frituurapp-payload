@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CSSTransition } from "react-transition-group";
 import { useCart, CartItem, getLineItemSignature } from "./CartContext";
 import { FiX, FiTrash2 } from "react-icons/fi";
+import { useTranslation } from "@/context/TranslationsContext";
 
 type Branding = {
     categoryCardBgColor?: string;
@@ -30,6 +31,7 @@ export default function CartDrawer({
     userLang,
     isKiosk = false,
 }: Props) {
+    const { t } = useTranslation()
     const router = useRouter();
     const {
         items,
@@ -132,7 +134,7 @@ export default function CartDrawer({
 
                         {/* Title */}
                         <h2 className={`${kioskHeaderText} font-semibold`}>
-                            Winkelwagen{" "}
+                            {t("order.cart.title")}{" "}
                             <span className={isKiosk ? "text-xl" : "text-sm"}>
                                 ({itemCount})
                             </span>
@@ -162,7 +164,7 @@ export default function CartDrawer({
                   ${kioskEmptyText}
                 `}
                             >
-                                Cart is empty.
+                                {t("order.cart.empty")}
                             </div>
                         ) : (
                             <ul className={`flex flex-col ${kioskItemSpacing} ${kioskItemPadding}`}>
@@ -296,7 +298,7 @@ export default function CartDrawer({
                                                                 onClick={() => onEditItem(item)}
                                                             >
                                                                 <span className={` text-blue-500 hover:underline ${isKiosk ? "text-lg" : "text-xs"
-                                                                    }`}>Bewerken</span>
+                                                                    }`}>{t("order.cart.edit_product")}</span>
                                                             </button>
                                                         )}
 
@@ -342,7 +344,7 @@ export default function CartDrawer({
                   ${isKiosk ? "p-5 text-2xl" : "p-3 text-lg"}
                 `}
                             >
-                                Afrekenen
+                                {t("order.cart.checkout")}{" "}
                                 <span className="mx-2">€{cartTotal.toFixed(2)}</span>
                             </button>
                         </div>

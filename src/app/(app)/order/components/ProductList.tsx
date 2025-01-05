@@ -1,4 +1,4 @@
-// File: /app/(app)/bestellen/components/ProductList.tsx
+// File: /app/(app)/order/components/ProductList.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -7,6 +7,7 @@ import VerticalCategories from "./VerticalCategories";
 import ProductCard from "./ProductCard";
 import ProductPopupFlow from "./ProductPopupFlow";
 import { useCart } from "./cart/CartContext";
+import { useTranslation } from "@/context/TranslationsContext";
 
 /**
  * Minimal data structures
@@ -103,6 +104,7 @@ export default function ProductList({
     onOpenPopupFlow,
     isKiosk,
 }: Props) {
+    const { t } = useTranslation();
     const [activeCategory, setActiveCategory] = useState(
         () => unfilteredCategories[0]?.slug || ""
     );
@@ -436,7 +438,7 @@ export default function ProductList({
                 {/* No categories after filtering */}
                 {visibleSections.length === 0 && (
                     <div className="mt-8">
-                        <h2>No products match your search.</h2>
+                        <h2>{t("order.productlist.no_products")}</h2>
                     </div>
                 )}
             </div>

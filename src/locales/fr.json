@@ -1,9 +1,30 @@
 {
-  "chooseMode.title": "Choisissez votre mode",
-  "chooseMode.dineIn.label": "Sur place",
-  "chooseMode.dineIn.hint": "Profitez de votre repas sur place",
-  "chooseMode.takeAway.label": "À emporter",
-  "chooseMode.takeAway.hint": "Récupérez votre commande",
-  "chooseMode.delivery.label": "Livraison",
-  "chooseMode.delivery.hint": "Nous vous l'apportons"
+  "chooseMode": {
+    "title": "Commander ici",
+    "dineIn": {
+      "label": "Manger sur place",
+      "hint": "Profitez de votre commande chez nous."
+    },
+    "takeAway": {
+      "label": "À emporter",
+      "hint": "Récupérez votre commande."
+    },
+    "delivery": {
+      "label": "Livraison",
+      "hint": "Faites-vous livrer votre commande à domicile."
+    }
+  },
+  "order": {
+    "menu": { "title": "Menu", "login": "Connexion", "contact": "Contact" },
+    "productlist": { "no_products": "Aucun produit trouvé pour votre recherche" },
+    "header": { "search": "Rechercher des produits..." },
+    "footer": { "go_back": "Retour", "continue_to_cart": "Continuer vers le panier" },
+    "cart": {
+      "title": "Panier",
+      "empty": "Votre panier est vide",
+      "edit_product": "Modifier",
+      "checkout": "Passer à la caisse"
+    },
+    "popup": { "next": "Suivant", "back": "Retour", "confirm": "Confirmer" }
+  }
 }

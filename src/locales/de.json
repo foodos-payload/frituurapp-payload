@@ -1,9 +1,30 @@
 {
-  "chooseMode.title": "Wählen Sie Ihren Modus",
-  "chooseMode.dineIn.label": "Im Restaurant essen",
-  "chooseMode.dineIn.hint": "Genießen Sie Ihre Mahlzeit vor Ort",
-  "chooseMode.takeAway.label": "Mitnehmen",
-  "chooseMode.takeAway.hint": "Holen Sie Ihre Bestellung ab",
-  "chooseMode.delivery.label": "Lieferung",
-  "chooseMode.delivery.hint": "Wir bringen es zu Ihnen"
+  "chooseMode": {
+    "title": "Hier order",
+    "dineIn": {
+      "label": "Im Restaurant essen",
+      "hint": "Genießen Sie Ihre Bestellung bei uns."
+    },
+    "takeAway": {
+      "label": "Zum Mitnehmen",
+      "hint": "Holen Sie Ihre Bestellung ab."
+    },
+    "delivery": {
+      "label": "Lieferung",
+      "hint": "Lassen Sie sich Ihre Bestellung nach Hause liefern."
+    }
+  },
+  "order": {
+    "menu": { "title": "Menü", "login": "Anmelden", "contact": "Kontakt" },
+    "productlist": { "no_products": "Keine Produkte für Ihre Suche gefunden" },
+    "header": { "search": "Produkte suchen..." },
+    "footer": { "go_back": "Zurück", "continue_to_cart": "Zum Warenkorb" },
+    "cart": {
+      "title": "Warenkorb",
+      "empty": "Ihr Warenkorb ist leer",
+      "edit_product": "Bearbeiten",
+      "checkout": "Zur Kasse"
+    },
+    "popup": { "next": "Weiter", "back": "Zurück", "confirm": "Bestätigen" }
+  }
 }

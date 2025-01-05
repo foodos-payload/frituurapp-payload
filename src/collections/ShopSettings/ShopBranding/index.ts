@@ -1,4 +1,4 @@
-// File: /app/(...)/bestellen/collections/ShopSettings/ShopBranding/index.ts
+// File: /app/(...)/order/collections/ShopSettings/ShopBranding/index.ts
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';

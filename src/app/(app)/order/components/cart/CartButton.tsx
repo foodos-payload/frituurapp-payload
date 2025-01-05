@@ -4,7 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation"; // or "next/router" if older Next
 import { FiShoppingCart, FiArrowLeft } from "react-icons/fi";
 import { useCart } from "./CartContext";
-
+import { useTranslation } from "@/context/TranslationsContext";
 type Branding = {
     categoryCardBgColor?: string;
     primaryColorCTA?: string;
@@ -28,6 +28,7 @@ export default function CartButton({
     branding,
     isKiosk = false,
 }: Props) {
+    const { t } = useTranslation();
     const router = useRouter();
     const { items, getCartTotal } = useCart();
 
@@ -36,8 +37,10 @@ export default function CartButton({
 
     const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
+    // For the "Go Back" button
     function handleGoBack() {
-        if (isKiosk) {
+        const isKioskMode = localStorage.getItem("kioskMode") === "true";
+        if (isKioskMode) {
             router.push("/index?kiosk=true");
         } else {
             router.push("/index");
@@ -88,7 +91,7 @@ export default function CartButton({
           "
                 >
                     <FiArrowLeft />
-                    <span className={`${buttonTextSize}`}>Go Back</span>
+                    <span className={`${buttonTextSize}`}>{t("order.footer.go_back")}</span>
                 </button>
 
                 {/* Large "Continue to Cart" button */}
@@ -142,7 +145,7 @@ export default function CartButton({
                             )}
                         </div>
 
-                        <span>Continue to Cart</span>
+                        <span>{t("order.footer.continue_to_cart")}</span>
 
                         {/* Show total price in parentheses if we have items */}
                         {itemCount > 0 && (

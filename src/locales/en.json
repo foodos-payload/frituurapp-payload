@@ -1,9 +1,30 @@
 {
-  "chooseMode.title": "Choose Your Mode",
-  "chooseMode.dineIn.label": "Dine In",
-  "chooseMode.dineIn.hint": "Enjoy your meal on-site",
-  "chooseMode.takeAway.label": "Takeaway",
-  "chooseMode.takeAway.hint": "Pick up your order",
-  "chooseMode.delivery.label": "Delivery",
-  "chooseMode.delivery.hint": "We bring it to you"
+  "chooseMode": {
+    "title": "Order here",
+    "dineIn": {
+      "label": "Dine in",
+      "hint": "Enjoy your order at our place."
+    },
+    "takeAway": {
+      "label": "Takeaway",
+      "hint": "Pick up your order."
+    },
+    "delivery": {
+      "label": "Delivery",
+      "hint": "Get your order delivered to your doorstep."
+    }
+  },
+  "order": {
+    "menu": { "title": "Menu", "login": "Login", "contact": "Contact" },
+    "productlist": { "no_products": "No products found for your search" },
+    "header": { "search": "Search products..." },
+    "footer": { "go_back": "Go back", "continue_to_cart": "Continue to cart" },
+    "cart": {
+      "title": "Cart",
+      "empty": "Your cart is empty",
+      "edit_product": "Edit",
+      "checkout": "Checkout"
+    },
+    "popup": { "next": "Next", "back": "Back", "confirm": "Confirm" }
+  }
 }
