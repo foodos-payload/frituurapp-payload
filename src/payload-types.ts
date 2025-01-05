@@ -1275,7 +1275,7 @@ export interface Order {
   /**
    * Temporary order number for daily purposes.
    */
-  tempOrdNr: number;
+  tempOrdNr?: number | null;
   /**
    * Current status of the order (e.g., Payment Pending, In Preparation, etc.)
    */
@@ -1298,12 +1298,12 @@ export interface Order {
         product: string | Product;
         quantity: number;
         price: number;
-        tax: number;
+        tax?: number | null;
         subproducts?:
           | {
               subproduct: string | Subproduct;
               price: number;
-              tax: number;
+              tax?: number | null;
               id?: string | null;
             }[]
           | null;
@@ -1320,6 +1320,21 @@ export interface Order {
         id?: string | null;
       }[]
     | null;
+  fulfillment_method?: ('delivery' | 'takeaway' | 'dine_in') | null;
+  fulfillment_date?: string | null;
+  fulfillment_time?: string | null;
+  customer_details?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+  };
+  subtotal?: number | null;
+  total_tax?: number | null;
+  total?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1977,6 +1992,23 @@ export interface OrdersSelect<T extends boolean = true> {
         amount?: T;
         id?: T;
       };
+  fulfillment_method?: T;
+  fulfillment_date?: T;
+  fulfillment_time?: T;
+  customer_details?:
+    | T
+    | {
+        firstName?: T;
+        lastName?: T;
+        email?: T;
+        phone?: T;
+        address?: T;
+        city?: T;
+        postalCode?: T;
+      };
+  subtotal?: T;
+  total_tax?: T;
+  total?: T;
   updatedAt?: T;
   createdAt?: T;
 }
