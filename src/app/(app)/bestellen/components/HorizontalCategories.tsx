@@ -1,17 +1,23 @@
 "use client";
 
-import React, { useEffect, useRef, MouseEvent } from "react";
+import React, { useRef, useEffect, MouseEvent } from "react";
 
 interface Category {
   id: string;
   slug: string;
+
+  // The default "label" plus optional translations:
   label: string;
+  name_nl: string;
+  name_en?: string;
+  name_de?: string;
+  name_fr?: string;
+  image?: { url: string; alt: string };
 }
 
 type Branding = {
-  /** e.g. "#ECAA02" or "#0f1820" */
   categoryCardBgColor?: string;
-  // you can add more branding fields
+  // ...
 };
 
 type Props = {
@@ -19,22 +25,40 @@ type Props = {
   activeCategory: string;
   onCategoryClick: (slug: string) => void;
   branding?: Branding;
+  userLang?: string;
 };
 
 /**
- * A horizontally scrollable category bar that anchor-links to #cat-slug.
- * We'll keep the anchor, and rely on ProductList for IntersectionObserver logic.
- * We override the default "blue" with `branding.categoryCardBgColor` if provided.
+ * A horizontally scrollable category bar with minimal styling changes.
+ * This version handles translations but does not do anything special for kiosk mode.
  */
 export default function HorizontalCategories({
   categories,
   activeCategory,
   onCategoryClick,
   branding,
+  userLang,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Center the active link horizontally whenever activeCategory changes
+  // We'll use this color for "active" + "hover" states if provided
+  const brandBgColor = branding?.categoryCardBgColor || "#3b82f6";
+
+  function handleMouseEnter(e: MouseEvent<HTMLAnchorElement>, isActive: boolean) {
+    if (!isActive) {
+      e.currentTarget.style.backgroundColor = brandBgColor;
+      e.currentTarget.style.color = "#ffffff";
+    }
+  }
+
+  function handleMouseLeave(e: MouseEvent<HTMLAnchorElement>, isActive: boolean) {
+    if (!isActive) {
+      e.currentTarget.style.backgroundColor = "";
+      e.currentTarget.style.color = "";
+    }
+  }
+
+  // Auto-scroll the active link into view horizontally
   useEffect(() => {
     if (!containerRef.current) return;
     const activeLink = containerRef.current.querySelector<HTMLAnchorElement>(
@@ -49,39 +73,12 @@ export default function HorizontalCategories({
     }
   }, [activeCategory]);
 
-  // We'll use this color for "active" + "hover" states if present
-  const brandBgColor = branding?.categoryCardBgColor || "#3b82f6";
-  // ^ fallback to a Tailwind-like "blue-600" if none provided
-
-  function handleMouseEnter(e: MouseEvent<HTMLAnchorElement>, isActive: boolean) {
-    if (!isActive) {
-      // For hover on a non-active item => brand color
-      e.currentTarget.style.backgroundColor = brandBgColor;
-      e.currentTarget.style.color = "#ffffff";
-    }
-  }
-
-  function handleMouseLeave(e: MouseEvent<HTMLAnchorElement>, isActive: boolean) {
-    if (!isActive) {
-      // Restore defaults for non-active
-      e.currentTarget.style.backgroundColor = "";
-      e.currentTarget.style.color = "";
-    }
-  }
-
   return (
     <div
       ref={containerRef}
       className="
-        w-full
-        flex
-        overflow-x-auto
-        gap-2
-        pb-1
-        bg-white
-        rounded
-        shadow-sm
-        font-medium
+        w-full flex overflow-x-auto gap-2 pb-1
+        bg-white rounded shadow-sm font-medium
         scroll-smooth
       "
       style={{ scrollbarWidth: "thin" }}
@@ -92,17 +89,14 @@ export default function HorizontalCategories({
         return (
           <a
             key={cat.id}
-            href={`#cat-${cat.slug}`} // anchor link
+            href={`#cat-${cat.slug}`}
             data-slug={cat.slug}
             onClick={(e) => {
-              // Let the parent do IntersectionObserver logic
               onCategoryClick(cat.slug);
-              // remove focus style
               e.currentTarget.blur();
             }}
             onMouseEnter={(e) => handleMouseEnter(e, isActive)}
             onMouseLeave={(e) => handleMouseLeave(e, isActive)}
-            // If this category is active => inline style the brand color
             style={
               isActive
                 ? {
@@ -121,10 +115,8 @@ export default function HorizontalCategories({
               cursor-pointer
               transition-colors
               ${isActive
-                ? // active => brand color, white text
-                ""
-                : // non-active => default gray
-                "bg-gray-100 text-gray-700"
+                ? "" /* Active => brand color + white text from style{} */
+                : "bg-gray-100 text-gray-700"
               }
             `}
           >

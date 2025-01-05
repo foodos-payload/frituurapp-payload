@@ -16,6 +16,7 @@ type Props = {
     /** Called when the user clicks "Continue to Cart" button */
     onClick: () => void;
     branding?: Branding;
+    isKiosk?: boolean;
 };
 
 /**
@@ -23,7 +24,7 @@ type Props = {
  * - A "Go Back" button (hidden on mobile).
  * - A large "Continue to Cart" button with item count badge.
  */
-export default function CartButton({ onClick, branding }: Props) {
+export default function CartButton({ onClick, branding, isKiosk = false, }: Props) {
     const router = useRouter();
     const { items, getCartTotal } = useCart();
 

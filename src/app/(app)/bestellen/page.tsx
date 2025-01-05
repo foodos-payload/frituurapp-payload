@@ -6,16 +6,16 @@ import BestellenLayout from './components/BestellenLayout';
 export const dynamic = 'force-dynamic';
 
 export default async function BestellenPage(context: any) {
-    // 1) Get querystring data (e.g. ?lang=en)
+    // 1) Get querystring data (e.g. ?lang=en or ?kiosk=true)
     const searchParams = context?.searchParams || {};
+    const kioskParam = searchParams.kiosk; // e.g. "true" or undefined
     // Next 15.1 => must await headers():
     const requestHeaders = await headers();
     const fullHost = requestHeaders.get('host') || '';
     const hostSlug = fullHost.split('.')[0] || 'defaultShop';
-    const userLangQuery = searchParams.lang ?? 'nl';
 
     // 2) Build API endpoints
-    const apiProductsUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${hostSlug}&lang=${userLangQuery}`;
+    const apiProductsUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${hostSlug}`;
     const apiBrandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/branding?host=${hostSlug}`;
 
     // 3) Fetch both in parallel
@@ -64,13 +64,16 @@ export default async function BestellenPage(context: any) {
         // Add more fields if needed
     };
 
-    // 7) Render the layout
+    // 7) Detect kiosk mode: if `?kiosk=true` => isKiosk = true
+    const isKiosk = kioskParam === 'true';
+
+    // 8) Render the layout
     return (
         <BestellenLayout
             shopSlug={hostSlug}
             categorizedProducts={categorizedProducts}
-            userLang={userLang}
             branding={branding}
+            isKiosk={isKiosk}
         />
     );
 }

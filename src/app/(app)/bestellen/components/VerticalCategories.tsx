@@ -6,6 +6,11 @@ interface Category {
   id: string;
   slug: string;
   label: string;
+  name_nl: string;
+  name_en?: string;
+  name_de?: string;
+  name_fr?: string;
+  image?: { url: string; alt: string };
 }
 
 type Branding = {
@@ -19,6 +24,7 @@ type Props = {
   activeCategory: string;
   onCategoryClick: (slug: string) => void;
   branding?: Branding;
+  isKiosk?: boolean;
 };
 
 export default function VerticalCategories({
@@ -26,6 +32,7 @@ export default function VerticalCategories({
   activeCategory,
   onCategoryClick,
   branding,
+  isKiosk,
 }: Props) {
   // Optional: log whenever activeCategory changes
   useEffect(() => {
@@ -34,7 +41,6 @@ export default function VerticalCategories({
 
   // We'll use this brand color as fallback if none is provided
   const brandBgColor = branding?.categoryCardBgColor || "#3b82f6";
-  // #3b82f6 is close to "blue-600" in Tailwind
 
   // For hover changes on non-active items:
   function handleMouseEnter(e: MouseEvent<HTMLAnchorElement>, isActive: boolean) {
@@ -54,11 +60,9 @@ export default function VerticalCategories({
 
   return (
     <div
-      className="
-        sticky
-        top-[120px]    
-        flex
-        flex-col
+      className={`
+        sticky top-[120px]
+        flex flex-col
         min-w-[200px]
         h-[70vh]
         overflow-y-auto
@@ -67,37 +71,52 @@ export default function VerticalCategories({
         shadow
         font-medium
         scroll-smooth
-      "
+        ${isKiosk ? "p-2 gap-2" : ""}
+      `}
     >
       {categories.map((cat) => {
         const isActive = cat.slug === activeCategory;
         return (
           <a
             key={cat.id}
-            href={`#cat-${cat.slug}`}  // anchor to your section in ProductList
+            href={`#cat-${cat.slug}`} // anchor to your section in ProductList
             onClick={() => onCategoryClick(cat.slug)}
             onMouseEnter={(e) => handleMouseEnter(e, isActive)}
             onMouseLeave={(e) => handleMouseLeave(e, isActive)}
-            // active => brand color, else transparent
             style={
               isActive
-                ? {
-                  backgroundColor: brandBgColor,
-                  color: "#fff",
-                }
+                ? { backgroundColor: brandBgColor, color: "#fff" }
                 : { backgroundColor: "transparent" }
             }
-            className="
+            className={`
               block
               text-left
               text-md
-              px-3 py-2
               border-b border-gray-200
               cursor-pointer
               transition-colors
-            "
+              ${isKiosk ? "px-4 py-4 rounded-[0.5em] text-xl" : "px-3 py-2"}
+            `}
           >
-            {cat.label}
+            {isKiosk && (
+              <div className="mb-2 flex justify-center">
+                {cat.image?.url ? (
+                  <img
+                    src={cat.image.url}
+                    alt={cat.image.alt || cat.label}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                ) : (
+                  // Render a placeholder if no image, 
+                  // so each kiosk tile has the same height
+                  <div className="w-16 h-16 bg-gray-200 rounded" />
+                )}
+              </div>
+            )}
+
+            <div className={isKiosk ? "text-center font-semibold" : ""}>
+              {cat.label}
+            </div>
           </a>
         );
       })}

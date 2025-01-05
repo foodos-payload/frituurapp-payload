@@ -96,6 +96,10 @@ interface CategoryJSON {
     name_en: string | null
     name_de: string | null
     name_fr: string | null
+    image?: {
+        url: string
+        alt: string
+    } | null
     categoryPopups: PopupItemJSON[]
     products: ProductJSON[]
     menuOrder: number
@@ -377,6 +381,12 @@ export async function GET(request: NextRequest) {
                 name_en: cat.name_en || null,
                 name_de: cat.name_de || null,
                 name_fr: cat.name_fr || null,
+                image: cat.image
+                    ? {
+                        url: cat.image?.s3_url || '',
+                        alt: cat.image?.alt_text || '',
+                    }
+                    : null,
                 categoryPopups,
                 products,
                 menuOrder: cat.menuOrder || 0,

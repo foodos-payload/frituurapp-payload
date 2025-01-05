@@ -80,6 +80,7 @@ interface Props {
     cartRef?: React.RefObject<HTMLDivElement | null>; // Allow 'null'
     /** NEW: the current user language */
     lang?: string;
+    isKiosk?: boolean;
 }
 
 /** A helper to pick the correct popup title depending on `lang`. */
@@ -168,7 +169,8 @@ export default function ProductPopupFlow({
     onClose,
     branding,
     cartRef,
-    lang, // <— new
+    lang,
+    isKiosk,
 }: Props) {
     const { addItem, updateItem } = useCart();
 

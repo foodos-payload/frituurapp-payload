@@ -54,6 +54,7 @@ type Category = {
     name_en?: string;
     name_fr?: string;
     name_de?: string;
+    image?: { url: string; alt: string };
     products: Product[];
 };
 
@@ -82,6 +83,8 @@ interface Props {
 
     onOpenPopupFlow?: (prod: Product) => void;
 
+    isKiosk?: boolean;
+
 }
 
 /**
@@ -98,6 +101,7 @@ export default function ProductList({
     branding,
     cartRef,
     onOpenPopupFlow,
+    isKiosk,
 }: Props) {
     const [activeCategory, setActiveCategory] = useState(
         () => unfilteredCategories[0]?.slug || ""
@@ -308,11 +312,30 @@ export default function ProductList({
                     categories={unfilteredCategories.map((cat) => ({
                         id: cat.id,
                         slug: cat.slug,
+                        // We'll default to the correct language label
                         label: pickCategoryName(cat, userLang),
+
+                        // We can also pass the raw translations if needed for kiosk UI, etc.
+                        name_nl: cat.name_nl,
+                        name_en: cat.name_en || cat.name_nl,
+                        name_fr: cat.name_fr || cat.name_nl,
+                        name_de: cat.name_de || cat.name_nl,
+
+                        // If cat.image is present, build an object { url, alt },
+                        // else pass undefined
+                        image: cat.image
+                            ? {
+                                url: cat.image.url,
+                                // Fallback alt text could be cat.name_nl or label
+                                alt: cat.image.alt ?? cat.name_nl,
+                            }
+                            : undefined,
                     }))}
                     activeCategory={activeCategory}
                     onCategoryClick={handleCategoryClick}
                     branding={branding}
+                    isKiosk={isKiosk}
+                    userLang={lang}
                 />
             </div>
 
@@ -334,10 +357,22 @@ export default function ProductList({
                             id: cat.id,
                             slug: cat.slug,
                             label: pickCategoryName(cat, userLang),
+                            name_nl: cat.name_nl,
+                            name_en: cat.name_en || cat.name_nl,
+                            name_fr: cat.name_fr || cat.name_nl,
+                            name_de: cat.name_de || cat.name_nl,
+                            image: cat.image
+                                ? {
+                                    url: cat.image.url,
+                                    // Fallback alt text could be cat.name_nl or label
+                                    alt: cat.image.alt ?? cat.name_nl,
+                                }
+                                : undefined,
                         }))}
                         activeCategory={activeCategory}
                         onCategoryClick={handleCategoryClick}
                         branding={branding}
+                        userLang={lang}
                     />
                 </div>
 
@@ -379,6 +414,7 @@ export default function ProductList({
                                             branding={branding}
                                             cartRef={cartRef}
                                             productRef={productRef}
+                                            isKiosk={isKiosk}
                                         />
                                     );
                                 })}
@@ -403,6 +439,7 @@ export default function ProductList({
                     branding={branding}
                     cartRef={cartRef}
                     lang={lang}
+                    isKiosk={isKiosk}
                 />
             )}
         </div>

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import React, { useRef, MouseEvent } from 'react';
-import { CSSTransition } from 'react-transition-group';
+import React, { useRef, MouseEvent } from "react";
+import { CSSTransition } from "react-transition-group";
 
 const LANGUAGES = [
-    { label: 'NL', value: 'nl', flagSrc: '/images/flags/nl-BE.svg' },
-    { label: 'EN', value: 'en', flagSrc: '/images/flags/en-UK.svg' },
-    { label: 'FR', value: 'fr', flagSrc: '/images/flags/fr-FR.svg' },
-    { label: 'DE', value: 'de', flagSrc: '/images/flags/de-DE.svg' },
+    { label: "NL", value: "nl", flagSrc: "/images/flags/nl-BE.svg" },
+    { label: "EN", value: "en", flagSrc: "/images/flags/en-UK.svg" },
+    { label: "FR", value: "fr", flagSrc: "/images/flags/fr-FR.svg" },
+    { label: "DE", value: "de", flagSrc: "/images/flags/de-DE.svg" },
 ];
 
 type Branding = {
@@ -47,18 +47,22 @@ export default function MenuDrawer({
         }
     }
 
+    /** 
+     * Called when a language is clicked.
+     * 1) Construct new query params with ?lang=langValue
+     * 2) Update the browser's URL
+     * 3) Call the parent's onLangChange
+     */
     function handleLangClick(langValue: string) {
+        // Just call parent
         onLangChange(langValue);
     }
 
-    const brandCTA = branding?.primaryColorCTA || '#3b82f6';
+    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
     return (
         <>
-            {/* 
-        1) The black overlay fade in/out, behind the drawer.
-        If isOpen => fadeOverlay-enter, etc. 
-      */}
+            {/** 1) The overlay fade transition */}
             <CSSTransition
                 in={isOpen}
                 timeout={300}
@@ -73,10 +77,7 @@ export default function MenuDrawer({
                 />
             </CSSTransition>
 
-            {/*
-        2) The white drawer slides left-to-right, *on top* of the overlay.
-        If isOpen => slideDrawer-enter, etc.
-      */}
+            {/** 2) The white drawer slide transition */}
             <CSSTransition
                 in={isOpen}
                 timeout={300}
@@ -126,9 +127,7 @@ export default function MenuDrawer({
                         </svg>
                     </div>
 
-                    <div className="mt-8 text-center text-lg font-semibold">
-                        Menu
-                    </div>
+                    <div className="mt-8 text-center text-lg font-semibold">Menu</div>
 
                     {/* Language chooser + other links */}
                     <nav className="m-4 grid p-4 text-gray-500 gap-6">
@@ -146,8 +145,8 @@ export default function MenuDrawer({
                         w-8 h-8 cursor-pointer
                         rounded
                         ${isActive
-                                                    ? 'border-2 border-green-600'
-                                                    : 'border border-transparent hover:border-gray-300'
+                                                    ? "border-2 border-green-600"
+                                                    : "border border-transparent hover:border-gray-300"
                                                 }
                       `}
                                         />
@@ -160,7 +159,7 @@ export default function MenuDrawer({
                         <a
                             href="/login"
                             style={{
-                                borderRadius: '0.5rem',
+                                borderRadius: "0.5rem",
                                 backgroundColor: brandCTA,
                             }}
                             className="

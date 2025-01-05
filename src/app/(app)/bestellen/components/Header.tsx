@@ -10,6 +10,7 @@ interface BrandingProps {
     logoUrl?: string;
     /** e.g. "Frituur Den Overkant" */
     siteTitle?: string;
+    siteHeaderImg?: string;
 }
 
 interface HeaderProps {
@@ -19,6 +20,7 @@ interface HeaderProps {
     onMenuClick: () => void;
     mobileSearchOpen: boolean;
     setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isKiosk?: boolean;
 
     /** Optional branding (logo + background color + siteTitle, etc.) */
     branding?: BrandingProps;
@@ -40,6 +42,7 @@ export default function Header({
     mobileSearchOpen,
     setMobileSearchOpen,
     branding,
+    isKiosk,
 }: HeaderProps) {
     // 1) Mobile search auto-focus
     const mobileInputRef = useRef<HTMLInputElement>(null);

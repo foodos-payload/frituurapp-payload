@@ -63,6 +63,7 @@ type Category = {
     name_en?: string;
     name_de?: string;
     name_fr?: string;
+    image?: { url: string; alt: string };
     products: Product[];
 };
 
@@ -89,7 +90,10 @@ interface Props {
 
         siteTitle?: string;
 
+
+
     };
+    isKiosk?: boolean;
 }
 
 /**
@@ -103,7 +107,7 @@ export default function BestellenLayout({
     categorizedProducts,
     userLang,
     branding,
-
+    isKiosk,
 }: Props) {
     const [showJsonModal, setShowJsonModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -111,7 +115,32 @@ export default function BestellenLayout({
     const [showMenuDrawer, setShowMenuDrawer] = useState(false);
 
     // The user’s chosen language, defaulting to 'nl'
-    const [lang, setLang] = useState(userLang || 'nl');
+    const [lang, setLang] = useState("nl"); // temporarily "nl"
+
+    useEffect(() => {
+        // On mount => load from localStorage OR fallback to userLang
+        const storedLang = localStorage.getItem("userLang");
+        if (storedLang) {
+            setLang(storedLang);
+        } else if (userLang) {
+            // if you have a server-provided default,
+            // you can store it in localStorage once:
+            localStorage.setItem("userLang", userLang);
+            setLang(userLang);
+        } else {
+            // no localStorage, no userLang => default 'nl'
+            localStorage.setItem("userLang", "nl");
+            setLang("nl");
+        }
+    }, [userLang]);
+
+    // The callback your MenuDrawer calls when a language is selected
+    function handleLangChange(newLang: string) {
+        // 1) Update local storage
+        localStorage.setItem("userLang", newLang);
+        // 2) Update local state => triggers a re-render
+        setLang(newLang);
+    }
 
     // For mobile search toggle
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -248,7 +277,7 @@ export default function BestellenLayout({
                 isOpen={showMenuDrawer}
                 onClose={() => setShowMenuDrawer(false)}
                 userLang={lang}
-                onLangChange={(newLang) => setLang(newLang)}
+                onLangChange={handleLangChange}
                 branding={branding}
             />
 
@@ -259,6 +288,7 @@ export default function BestellenLayout({
                 onEditItem={handleEditItem}
                 branding={branding}
                 userLang={lang}
+                isKiosk={isKiosk}
             />
 
             {/* MAIN LAYOUT CONTAINER */}
@@ -286,6 +316,7 @@ export default function BestellenLayout({
                         mobileSearchOpen={mobileSearchOpen}
                         setMobileSearchOpen={setMobileSearchOpen}
                         branding={branding}
+                        isKiosk={isKiosk}
                     />
                 </div>
 
@@ -302,11 +333,12 @@ export default function BestellenLayout({
                     branding={branding}
                     cartRef={cartRef}
                     onOpenPopupFlow={handleOpenPopupFlow}
+                    isKiosk={isKiosk}
                 />
 
                 {/* Floating Cart Button (bottom-right) */}
                 <div ref={cartRef} style={{ position: 'relative', zIndex: 49 }}>
-                    <CartButton onClick={() => setShowCartDrawer(true)} branding={branding} />
+                    <CartButton onClick={() => setShowCartDrawer(true)} branding={branding} isKiosk={isKiosk} />
                 </div>
             </div>
 
@@ -320,6 +352,7 @@ export default function BestellenLayout({
                     branding={branding}
                     cartRef={cartRef}
                     lang={lang}
+                    isKiosk={isKiosk}
                 />
             )}
 
@@ -331,6 +364,7 @@ export default function BestellenLayout({
                     branding={branding}
                     cartRef={cartRef}
                     lang={lang}
+                    isKiosk={isKiosk}
                 />
             )}
 

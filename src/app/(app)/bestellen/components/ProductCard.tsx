@@ -22,27 +22,30 @@ type Branding = {
 interface Props {
     product: ProductCardProps;
     /**
-     * If `shouldShowSpinner` is true, we run the local spinner animation
-     * after `handleAction` is called. If false, no spinner shown.
+     * If `shouldShowSpinner` is true, we run a local spinner animation
+     * after `handleAction` is called. If false, no spinner is shown.
      */
     shouldShowSpinner?: boolean;
     branding?: Branding;
 
     /**
-     * The single callback from the parent that decides:
+     * The callback from the parent that decides:
      * - if no popups => do an add-to-cart
      * - if has popups => open the popup
      */
     handleAction?: (prod: ProductCardProps) => void;
 
-    /** The element ref of your “Cart” (for measuring the final position). */
+    /** Ref to your “Cart” element, for measuring fly-to-cart position. */
     cartRef?: React.RefObject<HTMLDivElement | null>;
     productRef?: React.RefObject<HTMLDivElement | null>;
+
+    /** If true => use kiosk (vertical) layout instead of original horizontal. */
+    isKiosk?: boolean;
 }
 
 /**
- * ProductCard that has an optional spinner animation
- * if `shouldShowSpinner` is true.
+ * ProductCard that conditionally uses kiosk vs. classic layout,
+ * and optionally shows a spinner / “fly to cart” animation.
  */
 export default function ProductCard({
     product,
@@ -51,17 +54,12 @@ export default function ProductCard({
     branding,
     cartRef,
     productRef,
+    isKiosk = false,
 }: Props) {
-    // Local spinner state if we want to show it
     const [loadingState, setLoadingState] = useState<"idle" | "loading" | "check">("idle");
-
-    // We’ll track hover state for the plus button,
-    // so we can show a custom border color on hover.
     const [hoverPlus, setHoverPlus] = useState(false);
 
-    /**
-     * Trigger local spinner: set to "loading", then "check", then revert to "idle".
-     */
+    /** Spinner: set "loading" → "check" → revert "idle". */
     function runLocalSpinner() {
         setLoadingState("loading");
         setTimeout(() => {
@@ -76,7 +74,7 @@ export default function ProductCard({
     async function flyToCart(e: React.MouseEvent, imgEl: HTMLImageElement | null) {
         if (!cartRef?.current || !imgEl) return;
 
-        // 1) Clone the product image
+        // 1) Clone the image
         const flyingImg = imgEl.cloneNode(true) as HTMLImageElement;
         flyingImg.style.position = "absolute";
         flyingImg.style.zIndex = "9999";
@@ -87,99 +85,67 @@ export default function ProductCard({
         const scrollX = window.scrollX || 0;
         const scrollY = window.scrollY || 0;
 
-        // Position it at the image's current spot
+        // Position it at the image's current bounding box
         const rect = imgEl.getBoundingClientRect();
         flyingImg.style.left = `${rect.left + scrollX}px`;
         flyingImg.style.top = `${rect.top + scrollY}px`;
-
-        // Make it animate more slowly
         flyingImg.style.transition = "transform 1s ease-in-out, opacity 1s ease-in-out";
         document.body.appendChild(flyingImg);
 
-        // 2) Find the actual cart-icon or fallback to entire cartRef
+        // 2) Find the cart icon or fallback to entire cartRef
         const iconEl = cartRef.current.querySelector(".cart-icon") as HTMLElement | null;
         const cartRect = iconEl
             ? iconEl.getBoundingClientRect()
             : cartRef.current.getBoundingClientRect();
 
-        // 3) Calculate center → center offset
-        const flyingRect = flyingImg.getBoundingClientRect();
-        const deltaX =
-            (cartRect.left + cartRect.width / 2) -
-            (flyingRect.left + flyingRect.width / 2);
-        const deltaY =
-            (cartRect.top + cartRect.height / 2) -
-            (flyingRect.top + flyingRect.height / 2);
-
-        // 4) Trigger transform
+        // 3) Animate center → center
         requestAnimationFrame(() => {
+            const flyingRect = flyingImg.getBoundingClientRect();
+            const deltaX =
+                cartRect.left + cartRect.width / 2 - (flyingRect.left + flyingRect.width / 2);
+            const deltaY =
+                cartRect.top + cartRect.height / 2 - (flyingRect.top + flyingRect.height / 2);
+
             flyingImg.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.1)`;
             flyingImg.style.opacity = "0.3";
         });
 
-        // 5) Remove after animation
+        // 4) Cleanup after animation
         setTimeout(() => {
             flyingImg.remove();
 
-            // 6) Wiggle/pulse the .cart-icon
-            const iconEl = cartRef.current?.querySelector('.cart-icon') as HTMLElement | null;
+            // 5) Wiggle/pulse the .cart-icon
             if (iconEl) {
-                // Add the wiggle (or pulse) class
-                iconEl.classList.add('cart-wiggle');
-
-                // Remove it after 800ms (so it can re-trigger again next time)
-                setTimeout(() => {
-                    iconEl.classList.remove('cart-wiggle');
-                }, 800);
+                iconEl.classList.add("cart-wiggle");
+                setTimeout(() => iconEl.classList.remove("cart-wiggle"), 800);
             }
         }, 1000);
     }
 
-    /**
-     * Called when entire card is clicked.
-     */
+    /** Called when the entire card is clicked. */
     function handleCardClick(e: React.MouseEvent) {
         e.stopPropagation();
         if (!handleAction) return;
 
+        handleAction(product); // e.g. add to cart or open popup
 
-
-        // Parent does either "add to cart" or "open popup"
-        handleAction(product);
-
-        // If we want local spinner => run it
         if (shouldShowSpinner) {
-            // 1) We'll do the "fly" animation. We must find the product image DOM node:
-            //    Make sure your root div has class "product-card-outer"
-            //    and the <img> has class "product-img"
-            const cardEl = (e.currentTarget as HTMLElement).closest(
-                ".product-card-outer"
-            ) as HTMLElement;
+            const cardEl = (e.currentTarget as HTMLElement).closest(".product-card-outer") as HTMLElement;
             const imgEl = cardEl?.querySelector(".product-img") as HTMLImageElement | null;
-
-            // 2) Start the animation
             flyToCart(e, imgEl);
             runLocalSpinner();
         }
     }
 
-    // Called when plus button is clicked
+    /** Called when plus button is clicked. */
     function handlePlusClick(e: React.MouseEvent) {
         e.stopPropagation();
         if (!handleAction) return;
 
-        // 3) The rest of your logic
         handleAction(product);
         if (shouldShowSpinner) {
-            // 1) We'll do the "fly" animation. We must find the product image DOM node:
-            //    Make sure your root div has class "product-card-outer"
-            //    and the <img> has class "product-img"
-            const cardEl = (e.currentTarget as HTMLElement).closest(
-                ".product-card-outer"
-            ) as HTMLElement;
+            const cardEl = (e.currentTarget as HTMLElement).closest(".product-card-outer") as HTMLElement;
             const imgEl = cardEl?.querySelector(".product-img") as HTMLImageElement | null;
-
-            // 2) Start the animation
             flyToCart(e, imgEl);
             runLocalSpinner();
         }
@@ -187,33 +153,52 @@ export default function ProductCard({
 
     // 1) Gather brand color or fallback
     const brandCTA = branding?.primaryColorCTA || "#3b82f6";
-
-    // 2) Inline style for the plus button's border color on hover
+    // 2) Border color for the plus button on hover
     const plusButtonBorder = hoverPlus ? brandCTA : "transparent";
 
+    // ========== Original “non-kiosk” container classes ================
+    const originalContainerClasses = `
+    product-card-outer
+    relative
+    border border-gray-300
+    rounded-lg
+    overflow-hidden
+    shadow-lg
+    flex
+    bg-white
+    cursor-pointer
+    hover:shadow-xl
+    transition-shadow
+    w-full
+    max-h-[200px]
+  `;
 
+    // ========== Kiosk container classes ================
+    const kioskContainerClasses = `
+    product-card-outer
+    relative
+    border border-gray-300
+    rounded-lg
+    overflow-hidden
+    shadow-lg
+    bg-white
+    cursor-pointer
+    hover:shadow-xl
+    transition-shadow
+    w-full
+
+    /* vertical layout */
+    flex-col
+    max-w-md
+    min-h-[350px]
+  `;
 
     return (
-        // ---------------   ADD THE CLASS "product-card-outer" HERE  ---------------
         <div
             onClick={handleCardClick}
             style={{ borderRadius: "0.5rem" }}
             ref={productRef}
-            className={`
-        product-card-outer
-        relative
-        border border-gray-300
-        rounded-lg
-        overflow-hidden
-        shadow-lg
-        flex
-        bg-white
-        cursor-pointer
-        hover:shadow-xl
-        transition-shadow
-        w-full
-        max-h-[200px]
-      `}
+            className={isKiosk ? kioskContainerClasses : originalContainerClasses}
         >
             {/* Promotion badge */}
             {product.isPromotion && (
@@ -225,99 +210,195 @@ export default function ProductCard({
                 </div>
             )}
 
-            {/* Left: image area */}
-            <div className="w-2/5 h-full flex items-center justify-center bg-gray-50">
-                {product.image?.url ? (
-                    // ---------------  ADD THE CLASS "product-img" HERE  ---------------
-                    <img
-                        src={product.image.url}
-                        alt={product.image.alt || product.displayName}
-                        className="product-img w-full h-full object-cover mix-blend-multiply"
-                    />
-                ) : (
-                    <div className="text-gray-300 text-md p-4">No Image</div>
-                )}
-            </div>
-
-            {/* Right: Title, Desc, Price */}
-            <div className="w-3/5 p-4 flex flex-col justify-between relative">
-                {/* Title / Desc */}
-                <div>
-                    <h2 className="text-lg font-bold mb-1 line-clamp-2">{product.displayName}</h2>
-                    {product.displayDesc && (
-                        <p className="text-md text-gray-600 line-clamp-3 mb-2">
-                            {product.displayDesc}
-                        </p>
+            {/* ========== Image Area ========== */}
+            {!isKiosk ? (
+                // Non-kiosk => original horizontal layout
+                <div className="w-2/5 h-full flex items-center justify-center bg-gray-50">
+                    {product.image?.url ? (
+                        <img
+                            src={product.image.url}
+                            alt={product.image.alt || product.displayName}
+                            className="product-img w-full h-full object-cover mix-blend-multiply"
+                        />
+                    ) : (
+                        <div className="text-gray-300 text-md p-4">No Image</div>
                     )}
                 </div>
+            ) : (
+                // Kiosk => bigger, top-centered image
+                <div className="w-full flex items-center justify-center bg-gray-50 mb-2 h-[190px]">
+                    {product.image?.url ? (
+                        <img
+                            src={product.image.url}
+                            alt={product.image.alt || product.displayName}
+                            className="product-img w-auto h-full object-contain mix-blend-multiply"
+                        />
+                    ) : (
+                        <div className="text-gray-300 text-md p-4">No Image</div>
+                    )}
+                </div>
+            )}
 
-                {/* Price */}
-                <div className="mt-2">
-                    {typeof product.price === "number" ? (
-                        <>
-                            {product.isPromotion && product.old_price && (
-                                <span className="text-sm text-gray-500 line-through mr-2">
-                                    €{product.old_price.toFixed(2)}
+            {/* ========== Text + Price + Plus Button ========== */}
+            {!isKiosk ? (
+                // Non-kiosk => original styling
+                <div className="w-3/5 p-4 flex flex-col justify-between relative">
+                    <div>
+                        <h2 className="text-lg font-bold mb-1 line-clamp-2">{product.displayName}</h2>
+                        {product.displayDesc && (
+                            <p className="text-md text-gray-600 line-clamp-3 mb-2">{product.displayDesc}</p>
+                        )}
+                    </div>
+
+                    {/* Price row */}
+                    <div className="mt-2">
+                        {typeof product.price === "number" ? (
+                            <>
+                                {product.isPromotion && product.old_price && (
+                                    <span className="text-sm text-gray-500 line-through mr-2">
+                                        €{product.old_price.toFixed(2)}
+                                    </span>
+                                )}
+                                <span className="text-lg font-semibold text-gray-800">
+                                    €{product.price.toFixed(2)}
                                 </span>
-                            )}
-                            <span className="text-lg font-semibold text-gray-800">
-                                €{product.price.toFixed(2)}
-                            </span>
-                        </>
-                    ) : (
-                        <span className="text-md text-gray-500">Price on request</span>
-                    )}
-                </div>
+                            </>
+                        ) : (
+                            <span className="text-md text-gray-500">Price on request</span>
+                        )}
+                    </div>
 
-                {/* Plus button in bottom-right. */}
-                <div
-                    onClick={handlePlusClick}
-                    onMouseEnter={() => setHoverPlus(true)}
-                    onMouseLeave={() => setHoverPlus(false)}
-                    className={`
-            absolute bottom-0 right-[-1px]
-            bg-[#e6e6e7] text-gray-700
-            rounded-tl-lg
-            px-6 py-3
-            transition
-            border-t-[2px] border-l-[2px] 
-            border-transparent
-          `}
-                    style={{
-                        borderTopLeftRadius: "0.5rem",
-                        // use brandCTA for the "hover" border color
-                        borderTopColor: plusButtonBorder,
-                        borderLeftColor: plusButtonBorder,
-                    }}
-                >
-                    {loadingState === "loading" ? (
-                        /* Minimal spinner */
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            className="animate-spin"
-                            strokeWidth="3"
-                            fill="none"
-                            style={{ color: brandCTA }}
-                            stroke="currentColor"
-                        >
-                            <circle cx="12" cy="12" r="10" className="opacity-20" />
-                            <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
-                        </svg>
-                    ) : loadingState === "check" ? (
-                        /* Check icon => stroke brandCTA */
-                        <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="3">
-                            <path d="M2 8l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    ) : (
-                        /* The plus icon => stroke brandCTA */
-                        <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="2">
-                            <path d="M8 3v10M3 8h10" strokeLinecap="round" />
-                        </svg>
-                    )}
+                    {/* The plus button in bottom-right */}
+                    <div
+                        onClick={handlePlusClick}
+                        onMouseEnter={() => setHoverPlus(true)}
+                        onMouseLeave={() => setHoverPlus(false)}
+                        className="
+              absolute bottom-0 right-[-1px]
+              bg-[#e6e6e7] text-gray-700
+              rounded-tl-lg
+              px-6 py-3
+              transition
+              border-t-[2px] border-l-[2px]
+              border-transparent
+            "
+                        style={{
+                            borderTopLeftRadius: "0.5rem",
+                            borderTopColor: plusButtonBorder,
+                            borderLeftColor: plusButtonBorder,
+                        }}
+                    >
+                        {loadingState === "loading" ? (
+                            /* Minimal spinner */
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                className="animate-spin"
+                                strokeWidth="3"
+                                fill="none"
+                                style={{ color: brandCTA }}
+                                stroke="currentColor"
+                            >
+                                <circle cx="12" cy="12" r="10" className="opacity-20" />
+                                <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                            </svg>
+                        ) : loadingState === "check" ? (
+                            /* Check icon => stroke brandCTA */
+                            <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="3">
+                                <path d="M2 8l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        ) : (
+                            /* The plus icon => stroke brandCTA */
+                            <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="2">
+                                <path d="M8 3v10M3 8h10" strokeLinecap="round" />
+                            </svg>
+                        )}
+                    </div>
                 </div>
-            </div>
+            ) : (
+                // Kiosk => vertical layout
+                <div className="flex flex-col flex-1">
+                    {/* Extra wrapper for spacing */}
+                    <div className="flex-1 p-2 flex flex-col justify-between">
+                        <div>
+                            <h2 className="text-2xl pl-2 font-bold mb-1 line-clamp-2">
+                                {product.displayName}
+                            </h2>
+                            {product.displayDesc && (
+                                <p className="text-lg pl-2 text-gray-600 line-clamp-3 mb-2">
+                                    {product.displayDesc}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Price row */}
+                        <div className="mt-2">
+                            {typeof product.price === "number" ? (
+                                <>
+                                    {product.isPromotion && product.old_price && (
+                                        <span className="text-sm text-gray-500 line-through mr-2">
+                                            €{product.old_price.toFixed(2)}
+                                        </span>
+                                    )}
+                                    <span className="text-2xl pl-2 font-semibold text-gray-800">
+                                        €{product.price.toFixed(2)}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-md text-gray-500">Price on request</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* The plus button at bottom */}
+                    <div
+                        onClick={handlePlusClick}
+                        onMouseEnter={() => setHoverPlus(true)}
+                        onMouseLeave={() => setHoverPlus(false)}
+                        className="
+              mt-4 self-end
+              bg-[#e6e6e7]
+              text-gray-700
+              rounded-tl-lg
+              px-6 py-3
+              transition
+              border-t-[2px]
+              border-l-[2px]
+              border-transparent
+            "
+                        style={{
+                            borderTopLeftRadius: "0.5rem",
+                            borderTopColor: plusButtonBorder,
+                            borderLeftColor: plusButtonBorder,
+                        }}
+                    >
+                        {loadingState === "loading" ? (
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                className="animate-spin"
+                                strokeWidth="3"
+                                fill="none"
+                                style={{ color: brandCTA }}
+                                stroke="currentColor"
+                            >
+                                <circle cx="12" cy="12" r="10" className="opacity-20" />
+                                <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                            </svg>
+                        ) : loadingState === "check" ? (
+                            <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="3">
+                                <path d="M2 8l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        ) : (
+                            <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="2">
+                                <path d="M8 3v10M3 8h10" strokeLinecap="round" />
+                            </svg>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

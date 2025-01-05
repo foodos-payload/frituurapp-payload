@@ -18,9 +18,10 @@ type Props = {
     onEditItem?: (item: CartItem) => void;
     branding?: Branding;
     userLang?: string;
+    isKiosk?: boolean;
 };
 
-export default function CartDrawer({ isOpen, onClose, onEditItem, branding, userLang }: Props) {
+export default function CartDrawer({ isOpen, onClose, onEditItem, branding, userLang, isKiosk = false, }: Props) {
     const {
         items,
         updateItemQuantity,
