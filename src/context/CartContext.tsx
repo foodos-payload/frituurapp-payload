@@ -1,5 +1,5 @@
 // File: /app/(app)/order/components/cart/CartContext.tsx
-'use client';
+"use client";
 
 import React, {
     createContext,
@@ -7,7 +7,7 @@ import React, {
     useState,
     useEffect,
     ReactNode,
-} from 'react';
+} from "react";
 
 /**
  * If the subproduct is linked to a product,
@@ -30,58 +30,42 @@ export type LinkedProductData = {
  */
 export type SubproductSelection = {
     tax_dinein: any;
-    /** The subproduct’s actual UUID or any other ID */
-    subproductId: string
-
-    /** Possibly store multi-language names */
-    name_nl: string
-    name_en?: string
-    name_de?: string
-    name_fr?: string
-
-    /** The user-chosen price (or from your product doc) */
-    price: number
-
-    /** If you want to store subproduct-level tax separately. */
-    tax?: number
-
-    /** If the subproduct is "linked" to a bigger product doc. */
-    linkedProduct?: LinkedProductData
-
-    /** Optional image */
+    subproductId: string;
+    name_nl: string;
+    name_en?: string;
+    name_de?: string;
+    name_fr?: string;
+    price: number;
+    tax?: number;
+    linkedProduct?: LinkedProductData;
     image?: {
-        url: string
-        alt?: string
-    } | null
-
-    taxRate?: number;      // e.g. 6, 12, 21, etc.
+        url: string;
+        alt?: string;
+    } | null;
+    taxRate?: number;
     taxRateDineIn?: number;
-    // Feel free to add other fields if needed
 };
 
 /**
  * The main item in your cart.
  */
 export type CartItem = {
-    productId: string;     // The main product's ID
-    productName: string;   // e.g. product.name_nl
-    productNameNL?: string
-    productNameEN?: string
-    productNameDE?: string
-    productNameFR?: string
-    price: number;         // The main product's base price
-    quantity: number;      // How many
-    note?: string;         // Optional user note
+    productId: string;
+    productName: string;
+    productNameNL?: string;
+    productNameEN?: string;
+    productNameDE?: string;
+    productNameFR?: string;
+    price: number;
+    quantity: number;
+    note?: string;
     image?: {
         url: string;
         alt?: string;
     } | null;
-
-    // Subproduct choices:
     subproducts?: SubproductSelection[];
-
-    hasPopups?: boolean;   // e.g. to show "Bewerken" button
-    taxRate?: number;      // e.g. 6, 12, 21, etc.
+    hasPopups?: boolean;
+    taxRate?: number;
     taxRateDineIn?: number;
 };
 
@@ -90,165 +74,138 @@ export type CartItem = {
  */
 type CartContextValue = {
     items: CartItem[];
+    selectedShippingMethod: "dine-in" | "takeaway" | "delivery" | null;
 
-    /** Add a new line item or combine with existing if the "signature" matches. */
     addItem: (newItem: CartItem) => void;
-    /** Update partial fields on an existing item (subproducts, note, price, etc.). */
     updateItem: (lineSignature: string, updates: Partial<CartItem>) => void;
-    /** Change quantity of an item. If quantity goes to 0 => remove. */
     updateItemQuantity: (lineSignature: string, newQty: number) => void;
-    /** Remove an item entirely by its "signature." */
     removeItem: (lineSignature: string) => void;
-    /** Clear entire cart. */
     clearCart: () => void;
+
+    setShippingMethod: (method: "dine-in" | "takeaway" | "delivery") => void;
 
     getItemCount: () => number;
     getCartTotal: () => number;
 };
 
 /**
- * 1) React context
+ * React context for the cart.
  */
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 /**
- * 2) Hook to consume the cart
+ * Hook to consume the cart context.
  */
 export function useCart() {
     const context = useContext(CartContext);
     if (!context) {
-        throw new Error('useCart must be used within a CartProvider');
+        throw new Error("useCart must be used within a CartProvider");
     }
     return context;
 }
 
 /**
- * 3) Utility: Create a unique "signature" string that
- *    differentiates line items by productId, subproducts, note, etc.
+ * Utility: Create a unique "signature" for cart items.
  */
 export function getLineItemSignature(item: CartItem): string {
-    // Gather subproduct IDs in a stable order:
     const subIds = item.subproducts
-        ?.map(sp => sp.subproductId)  // <-- use `subproductId`
-        .sort() || []
-
-    const notePart = item.note || ''
-
-    return `${item.productId}|[${subIds.join(',')}]|note=${notePart}`
+        ?.map((sp) => sp.subproductId)
+        .sort()
+        .join(",");
+    const notePart = item.note || "";
+    return `${item.productId}|[${subIds || ""}]|note=${notePart}`;
 }
 
 /**
- * 4) CartProvider: manages items & logic
+ * CartProvider: Manages the cart state and logic.
  */
 export function CartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
+    const [selectedShippingMethod, setSelectedShippingMethod] = useState<
+        "dine-in" | "takeaway" | "delivery" | null
+    >(null);
 
     /**
-     * On mount, load from localStorage if available.
+     * On mount, load cart items and shipping method from localStorage if available.
      */
     useEffect(() => {
-        const stored = localStorage.getItem('cartItems');
-        if (stored) {
+        const storedItems = localStorage.getItem("cartItems");
+        const storedShippingMethod = localStorage.getItem("selectedShippingMethod");
+
+        if (storedItems) {
             try {
-                setItems(JSON.parse(stored));
+                setItems(JSON.parse(storedItems));
             } catch (err) {
-                console.warn('Failed to parse stored cart items', err);
+                console.warn("Failed to parse stored cart items", err);
             }
+        }
+
+        if (storedShippingMethod) {
+            setSelectedShippingMethod(storedShippingMethod as "dine-in" | "takeaway" | "delivery");
         }
     }, []);
 
     /**
-     * On every change, store in localStorage.
+     * Persist changes to localStorage.
      */
     useEffect(() => {
-        localStorage.setItem('cartItems', JSON.stringify(items));
-    }, [items]);
+        localStorage.setItem("cartItems", JSON.stringify(items));
+        localStorage.setItem("selectedShippingMethod", selectedShippingMethod || "");
+    }, [items, selectedShippingMethod]);
 
     /**
-     * 4A) addItem: If a line item with the *same signature* exists => increment quantity,
-     * otherwise push as a separate line.
+     * Add a new item to the cart or update quantity if it already exists.
      */
     function addItem(newItem: CartItem) {
         const newSig = getLineItemSignature(newItem);
 
         setItems((prev) => {
-            // Check if there's an existing line with same signature:
             const existingIndex = prev.findIndex(
                 (i) => getLineItemSignature(i) === newSig
             );
 
             if (existingIndex >= 0) {
-                // Found => combine quantity:
-                return prev.map((i, idx) => {
-                    if (idx === existingIndex) {
-                        return {
-                            ...i,
-                            quantity: i.quantity + newItem.quantity,
-                        };
-                    }
-                    return i;
-                });
-            } else {
-                // No match => add as new line
-                return [...prev, newItem];
+                return prev.map((item, idx) =>
+                    idx === existingIndex
+                        ? { ...item, quantity: item.quantity + newItem.quantity }
+                        : item
+                );
             }
+
+            return [...prev, newItem];
         });
     }
 
     /**
-     * 4B) updateItem: partial updates to an existing line item.
-     *     The user must pass the line "signature" from getLineItemSignature(...) 
-     *     so we know which line is being updated.
+     * Update an existing item in the cart.
      */
     function updateItem(lineSignature: string, updates: Partial<CartItem>) {
         setItems((prev) =>
-            prev.map((item) => {
-                const itemSig = getLineItemSignature(item);
-                if (itemSig === lineSignature) {
-                    // Merge partial updates. Possibly re-signature after subproduct changes:
-                    const updated = { ...item, ...updates };
-
-                    // If subproducts or note changed, we might need to re-check if a line with the new signature already exists:
-                    const newSig = getLineItemSignature(updated);
-
-                    if (newSig === itemSig) {
-                        // The signature didn't effectively change => just update in place.
-                        return updated;
-                    } else {
-                        // The signature changed => see if there's already a line with newSig, so we can combine them or keep separate.
-                        // Here we do a two-step approach:
-                        //  (1) We'll return updated (with the newSig) in place for now.
-                        //  (2) Then below we could do a second pass to combine if needed.
-                        return updated;
-                    }
-                }
-                return item;
-            })
+            prev.map((item) =>
+                getLineItemSignature(item) === lineSignature
+                    ? { ...item, ...updates }
+                    : item
+            )
         );
-
-        // If you want to handle the scenario where an updated signature
-        // now matches an existing item => you'd do a second pass or approach here.
     }
 
     /**
-     * 4C) updateItemQuantity: If quantity=0 => remove line item.
+     * Update the quantity of an item or remove it if quantity is 0.
      */
     function updateItemQuantity(lineSignature: string, newQty: number) {
         setItems((prev) =>
             prev
-                .map((item) => {
-                    const itemSig = getLineItemSignature(item);
-                    if (itemSig === lineSignature) {
-                        return { ...item, quantity: newQty };
-                    }
-                    return item;
-                })
+                .map((item) =>
+                    getLineItemSignature(item) === lineSignature
+                        ? { ...item, quantity: newQty }
+                        : item
+                )
                 .filter((item) => item.quantity > 0)
         );
     }
 
     /**
-     * 4D) removeItem: just filter out that signature line.
+     * Remove an item from the cart.
      */
     function removeItem(lineSignature: string) {
         setItems((prev) =>
@@ -257,64 +214,46 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     /**
-     * 4E) clearCart: remove all.
+     * Clear the cart and reset the selected shipping method.
      */
     function clearCart() {
         setItems([]);
+        setSelectedShippingMethod(null);
     }
 
     /**
-     * 4F) getItemCount: sum quantity across all lines.
+     * Set the shipping method.
+     */
+    function setShippingMethod(method: "dine-in" | "takeaway" | "delivery") {
+        setSelectedShippingMethod(method);
+    }
+
+    /**
+     * Get the total item count in the cart.
      */
     function getItemCount() {
         return items.reduce((sum, item) => sum + item.quantity, 0);
     }
 
     /**
-     * 4G) getCartTotal: sum up base price + subproduct extras for each line, times quantity.
+     * Get the total cost of the cart.
      */
     function getCartTotal() {
-        let total = 0;
-
-        for (const cartItem of items) {
-            // product's price times quantity
-            const baseCost = cartItem.price * cartItem.quantity;
-
-            // subproduct prices
-            let subCost = 0;
-            if (cartItem.subproducts && cartItem.subproducts.length > 0) {
-                const sumSubs = cartItem.subproducts.reduce((acc, sp) => {
-                    if (sp.linkedProduct) {
-                        return acc + (sp.linkedProduct.price ?? 0);
-                    }
-                    return acc + sp.price;
-                }, 0);
-
-                subCost = sumSubs * cartItem.quantity;
-            }
-
-            total += baseCost + subCost;
-        }
-        return total;
+        return items.reduce((total, item) => total + item.price * item.quantity, 0);
     }
 
-    /**
-     * Provide context value
-     */
     const value: CartContextValue = {
         items,
+        selectedShippingMethod,
         addItem,
         updateItem,
         updateItemQuantity,
         removeItem,
         clearCart,
+        setShippingMethod,
         getItemCount,
         getCartTotal,
     };
 
-    return (
-        <CartContext.Provider value={value}>
-            {children}
-        </CartContext.Provider>
-    );
+    return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
