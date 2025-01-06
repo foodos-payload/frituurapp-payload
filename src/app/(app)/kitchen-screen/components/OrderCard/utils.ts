@@ -1,7 +1,7 @@
 // File: /components/kitchen/OrderCard/utils.ts
 "use client"
 
-import { OrderStatus } from "./index"
+import type { OrderStatus } from "../../types/Order"
 
 // A small helper to parse "HH:MM" and subtract 10 minutes (for delivery).
 export function subtractTenMinutes(timeStr: string): string {

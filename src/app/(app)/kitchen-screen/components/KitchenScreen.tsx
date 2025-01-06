@@ -5,32 +5,7 @@ import { TopBar } from "./TopBar"
 import { OrderCard } from "../components/OrderCard"
 import { SkeletonOrderCard } from "./SkeletonOrderCard"
 
-type OrderStatus =
-    | "pending_payment"
-    | "awaiting_preparation"
-    | "in_preparation"
-    | "complete"
-    | "done"
-
-interface PaymentMethod { provider?: string }
-interface PaymentEntry { payment_method?: PaymentMethod; amount?: number }
-
-interface OrderDetail {
-    id: string
-    quantity: number
-    price?: number
-    product: { name_nl?: string }
-}
-interface Order {
-    fulfillment_method: string
-    order_type: string
-    id: number
-    status: OrderStatus
-    tempOrdNr?: number
-    order_details: OrderDetail[]
-    payments?: PaymentEntry[]
-    customer_note?: string
-}
+import type { Order } from "../types/Order"
 
 interface KitchenScreenProps {
     hostSlug: string
@@ -195,6 +170,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
                         <OrderCard
                             key={order.id}
                             order={order}
+                            hostSlug={hostSlug}
                             onRecoverOrder={view === "archived" ? recoverOrder : undefined}
                             printOrder={printOrder}
                             markOrderReady={view === "active" ? markOrderReady : undefined}

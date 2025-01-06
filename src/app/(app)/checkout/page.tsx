@@ -6,7 +6,7 @@ import CheckoutPage from './components/CheckoutPage'
 export const dynamic = 'force-dynamic'
 
 export default async function CheckoutRoute() {
-    const headersList = headers()
+    const headersList = await headers()
     const fullHost = headersList.get('host') || ''
     const hostSlug = fullHost.split('.')[0] || 'defaultShop'
 

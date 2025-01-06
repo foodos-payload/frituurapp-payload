@@ -9,7 +9,6 @@ import {
     FaArrowLeft,
     FaArrowRight,
 } from "react-icons/fa"
-
 import {
     subtractTenMinutes,
     getPrepDayTag,
@@ -19,16 +18,54 @@ import {
     callServerRoute,
     getWorkflow,
 } from "./utils"
-
-import type { OrderStatus } from "./index"
-import type { OrderCardProps } from "./index"
 import { OrderDetailsList } from "./OrderDetailsList"
 import { PrintPopover } from "./PrintPopover"
 import { useTranslation } from "@/context/TranslationsContext"
 
+import type { OrderStatus } from "../../types/Order"
+
+
+interface OrderDetail {
+    id: string
+    product: {
+        name_nl?: string
+    }
+    quantity: number
+}
+interface Order {
+    id: number
+    status: OrderStatus
+    fulfillment_method: string
+    fulfillment_date?: string
+    fulfillment_time?: string
+    tempOrdNr?: number
+    payments?: {
+        payment_method?: { provider?: string }
+        amount?: number
+    }[]
+    order_details: OrderDetail[]
+    customer_note?: string
+}
+
 /** 
+ * 3) The props for your OrderCard
+ */
+export interface OrderCardProps {
+    order: Order
+    hostSlug: string
+
+    /** If you allow recovering an archived order */
+    onRecoverOrder?: (orderId: number) => void
+
+    /** For printing logic */
+    printOrder: (orderId: number, type: "kitchen" | "customer") => Promise<void>
+
+    markOrderReady?: (orderId: number) => Promise<void>
+}
+
+/**
  * Returns true if `current` is exactly one step before "complete" 
- * (e.g. in_delivery for delivery, ready_for_pickup for takeaway, etc.).
+ * (e.g. `in_delivery` for method=delivery, or `ready_for_pickup` for takeaway, etc.).
  */
 function isOneStepBeforeComplete(
     current: OrderStatus,
@@ -36,13 +73,15 @@ function isOneStepBeforeComplete(
 ) {
     const wf = getWorkflow(method)
     // e.g. dine_in => [awaiting_preparation, in_preparation, complete]
-    // The second-last item is at index wf.length-2
     const idx = wf.indexOf(current)
-    const lastIdx = wf.indexOf("complete") // or wf.length -1
+    const lastIdx = wf.indexOf("complete")
     if (lastIdx < 0 || idx < 0) return false
     return idx === lastIdx - 1
 }
 
+/** 
+ * 4) The main component => no external ArrowsRow
+ */
 export function OrderCard({
     order,
     hostSlug,
@@ -50,26 +89,20 @@ export function OrderCard({
     printOrder,
 }: OrderCardProps) {
     const { t } = useTranslation()
+
     const [localStatus, setLocalStatus] = useState<OrderStatus>(order.status)
     const [statusLoading, setStatusLoading] = useState(false)
-
-    // If you still track checked items, that's fine, but not required for "complete."
     const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
-
-    // For nudging the “Mark Order Complete” button if arrow => next is complete
     const [nudgeCompleteButton, setNudgeCompleteButton] = useState(false)
-
-    // Print popover
     const [showPrintOptions, setShowPrintOptions] = useState(false)
 
     // Payment => "CASH" if provider=cash_on_delivery
     const firstPayment = order.payments?.[0]?.payment_method
     const isCashOnDelivery = firstPayment?.provider === "cash_on_delivery"
 
-    // Is the order considered archived?
     const isArchived = localStatus === "complete" || localStatus === "done"
 
-    // For a “red glow” if within 10 min of get-ready time
+    // Red glow if within 10 minutes?
     const [redGlow, setRedGlow] = useState(false)
     useEffect(() => {
         function updateGlow() {
@@ -86,14 +119,11 @@ export function OrderCard({
         return () => clearInterval(t)
     }, [order.fulfillment_method, order.fulfillment_date, order.fulfillment_time])
 
-    // If not today => show “PREP DAY: mm/dd/yyyy”
     const prepDayTag = getPrepDayTag(order.fulfillment_date)
-
-    // Show either tempOrdNr or fallback to real ID
     const orderNum = order.tempOrdNr != null ? String(order.tempOrdNr) : String(order.id)
 
-    // Build label(s) for the current status
-    let statusLabel = localStatus
+    // Build label(s)
+    let statusLabel = ""
     let statusColor = "bg-gray-100 text-gray-700"
     switch (localStatus) {
         case "awaiting_preparation":
@@ -119,7 +149,7 @@ export function OrderCard({
             break
     }
 
-    // Build the “GET READY BY: xx” text
+    // "GET READY BY: time"
     const method = order.fulfillment_method
     const fullTime = order.fulfillment_time || "??:??"
     let leftGetReadyText = `${t("kitchen.orderCard.get_ready_by")}: ${fullTime}`
@@ -147,7 +177,6 @@ export function OrderCard({
         )
     }
 
-    // Arrows => downgrade/upgrade, but do NOT allow upgrade => complete
     async function handleDowngradeStatus() {
         const prev = getPrevStatus(localStatus, method)
         if (!prev) return
@@ -165,15 +194,12 @@ export function OrderCard({
     async function handleUpgradeStatus() {
         const next = getNextStatus(localStatus, method)
         if (!next) return
-        // If the next step is "complete," do NOT automatically complete. 
-        // Instead, nudge the Mark Order Complete button.
+        // If the next step is "complete," do NOT automatically set it => nudge
         if (next === "complete") {
-            // Animate that button
             setNudgeCompleteButton(true)
-            setTimeout(() => setNudgeCompleteButton(false), 700) // 0.7s or so
+            setTimeout(() => setNudgeCompleteButton(false), 700)
             return
         }
-        // Otherwise, normal
         setStatusLoading(true)
         try {
             await callServerRoute(hostSlug, order.id, next)
@@ -185,7 +211,6 @@ export function OrderCard({
         }
     }
 
-    // Mark order complete => specifically callServerRoute(..., "complete")
     async function handleMarkComplete() {
         if (isArchived) return
         setStatusLoading(true)
@@ -208,7 +233,6 @@ export function OrderCard({
         })
     }
 
-    // Print popover
     function togglePrintPopover(e: React.MouseEvent) {
         e.stopPropagation()
         setShowPrintOptions((prev) => !prev)
@@ -222,18 +246,12 @@ export function OrderCard({
         await printOrder(order.id, "customer")
     }
 
-    // Possibly if the user wants to recover an archived order
     function triggerRecoverOrder() {
         onRecoverOrder?.(order.id)
     }
 
-    // The Mark Complete button is displayed if we are NOT archived and 
-    // we are at least the second-last step or beyond. 
-    // But if you always want it displayed, that’s fine. 
-    // We'll do the typical logic: "isOneStepBeforeComplete" => show it.
     const showCompleteButton = !isArchived && isOneStepBeforeComplete(localStatus, method)
 
-    // For a small scale or pulse effect, we combine with Tailwind's "transition-transform" classes
     const completeBtnClasses = `
     w-full bg-green-600 text-white font-bold py-2 text-sm rounded
     hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed
@@ -246,10 +264,10 @@ export function OrderCard({
             className={`border-[1.5px] border-gray-300 rounded-xl shadow-md bg-white w-[300px] flex flex-col overflow-hidden
         ${statusLoading ? "opacity-60 pointer-events-none" : ""}`}
         >
-            {/* TOP ROW => "GET READY BY" + #orderNum + optional redGlow */}
+            {/* TOP => GET READY BY... #OrderNum */}
             <div
-                className={`px-3 py-2 ${redGlow ? "bg-red-200 animate-pulse" : "bg-gray-50"
-                    } flex items-center justify-between text-xs text-gray-700`}
+                className={`px-3 py-2 ${redGlow ? "bg-red-200 animate-pulse" : "bg-gray-50"}
+           flex items-center justify-between text-xs text-gray-700`}
             >
                 <div>{leftGetReadyText}</div>
                 <div className="flex items-center gap-1 font-medium">
@@ -258,10 +276,10 @@ export function OrderCard({
                 </div>
             </div>
 
-            {/* secondRow => if method=takeaway or delivery */}
+            {/* secondRow => optional for delivery or takeaway */}
             {secondRow}
 
-            {/* Middle row => left arrow, status, right arrow */}
+            {/* Middle => left arrow, status, right arrow */}
             <div className={`flex items-center justify-between px-3 py-2 ${statusColor}`}>
                 <button
                     onClick={handleDowngradeStatus}
@@ -270,12 +288,10 @@ export function OrderCard({
                 >
                     <FaArrowLeft size={24} />
                 </button>
-
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-current" />
                     <span className="text-sm font-semibold">{statusLabel}</span>
                 </div>
-
                 <button
                     onClick={handleUpgradeStatus}
                     disabled={!getNextStatus(localStatus, method) || statusLoading}
@@ -293,7 +309,7 @@ export function OrderCard({
                 toggleItemCheck={toggleItemCheck}
             />
 
-            {/* BOTTOM ROW => note, cash, prep day, print */}
+            {/* BOTTOM => note, isCash, prepDay, print */}
             <div className="bg-gray-50 px-3 py-2 text-gray-700 text-xs flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     {order.customer_note && (
@@ -318,7 +334,7 @@ export function OrderCard({
                 />
             </div>
 
-            {/* FOOTER => recover OR Mark Order Complete button (if second-last step) */}
+            {/* FOOTER => recover or Mark Complete */}
             <div className="px-3 py-2 bg-gray-100">
                 {isArchived ? (
                     <button
@@ -333,15 +349,13 @@ export function OrderCard({
                         disabled={statusLoading}
                         className={completeBtnClasses}
                     >
-                        {statusLoading ? t("kitchen.orderCard.updating") : t("kitchen.orderCard.mark_complete")}
+                        {statusLoading
+                            ? t("kitchen.orderCard.updating")
+                            : t("kitchen.orderCard.mark_complete")}
                     </button>
-                ) : (
-
-                    null
-                )}
+                ) : null}
             </div>
 
-            {/* brand name */}
             <div className="bg-gray-100 text-center text-gray-600 py-1.5 text-xs italic">
                 TESTING
             </div>
