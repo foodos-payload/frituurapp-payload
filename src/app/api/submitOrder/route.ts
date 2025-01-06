@@ -18,18 +18,47 @@ export const dynamic = 'force-dynamic';
  *           schema:
  *             type: object
  *             properties:
+ *               tenant:
+ *                 type: string
+ *                 description: The shop's tenant (often same as the shop slug)
  *               shop:
  *                 type: string
  *                 description: The shop's slug
- *                 example: frituur-den-overkant
  *               orderType:
  *                 type: string
- *                 description: The type of the order
- *                 example: web
+ *                 description: The type of the order (e.g. "web")
  *               status:
  *                 type: string
- *                 description: The status of the order
- *                 example: pending_payment
+ *                 description: The status of the order (e.g. "pending_payment")
+ *               fulfillmentMethod:
+ *                 type: string
+ *                 description: Method of fulfilling the order (delivery, takeaway, dine_in)
+ *               fulfillmentDate:
+ *                 type: string
+ *                 format: date
+ *                 description: The date of fulfillment
+ *               fulfillmentTime:
+ *                 type: string
+ *                 pattern: '^([01]\\d|2[0-3]):?([0-5]\\d)$'
+ *                 description: The time of fulfillment (HH:MM)
+ *               customerDetails:
+ *                 type: object
+ *                 description: Information about the customer
+ *                 properties:
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   phone:
+ *                     type: string
+ *                   address:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   postalCode:
+ *                     type: string
  *               orderDetails:
  *                 type: array
  *                 description: Array of product and subproduct details
@@ -40,30 +69,90 @@ export const dynamic = 'force-dynamic';
  *                 description: Array of payment objects
  *                 items:
  *                   type: object
- *               fulfillmentMethod:
- *                 type: string
- *                 description: Method of fulfilling the order (delivery, takeaway, dine_in)
- *                 example: delivery
- *               fulfillmentDate:
- *                 type: string
- *                 format: date
- *                 description: The date of fulfillment
- *                 example: "2025-01-06"
- *               fulfillmentTime:
- *                 type: string
- *                 pattern: '^([01]\\d|2[0-3]):?([0-5]\\d)$'
- *                 description: The time of fulfillment (HH:MM)
- *                 example: "09:30"
- *               customerDetails:
- *                 type: object
- *                 description: Information about the customer
- *                 properties:
- *                   firstName:
- *                     type: string
- *                     example: John
- *                   lastName:
- *                     type: string
- *                     example: Doe
+ *           example:
+ *             tenant: "frituur-den-overkant"
+ *             shop: "frituur-den-overkant"
+ *             orderType: "web"
+ *             status: "awaiting_preparation"
+ *             fulfillmentMethod: "dine_in"
+ *             fulfillmentDate: "2025-01-09"
+ *             fulfillmentTime: "10:30"
+ *             customerDetails:
+ *               firstName: "Jonas"
+ *               lastName: ""
+ *               email: ""
+ *               phone: ""
+ *               address: ""
+ *               city: ""
+ *               postalCode: ""
+ *             orderDetails:
+ *               - product: "693ef168-98ab-4253-9540-ee8ffe7c5f01"
+ *                 name_nl: "Twister Fries"
+ *                 name_en: "Twister Fries"
+ *                 tax: 6
+ *                 quantity: 1
+ *                 price: 4.2
+ *                 subproducts:
+ *                   - subproductId: "c415bd71-90d3-4faf-8edf-a687f3f79afa"
+ *                     name_nl: "Ketchup"
+ *                     price: 0.5
+ *                     tax: 6
+ *                     tax_dinein: 12
+ *               - product: "3484d364-3207-4000-831a-2e5f45adf7a9"
+ *                 name_nl: "Kleine Friet"
+ *                 tax: 12
+ *                 quantity: 1
+ *                 price: 2.5
+ *                 subproducts:
+ *                   - subproductId: "c415bd71-90d3-4faf-8edf-a687f3f79afa"
+ *                     name_nl: "Ketchup"
+ *                     price: 0.5
+ *                     tax: 6
+ *                     tax_dinein: 12
+ *               - product: "e0e40d21-7e3b-4855-a931-6cac14958249"
+ *                 name_nl: "Pizza BBQ Chicken"
+ *                 tax: 6
+ *                 quantity: 1
+ *                 price: 10
+ *                 subproducts:
+ *                   - subproductId: "0eb9ecf7-dd76-44e3-aee8-1cacad09d979"
+ *                     name_nl: "Fanta"
+ *                     price: 1.5
+ *                     tax: 6
+ *                     tax_dinein: 12
+ *               - product: "862266ef-50ff-4706-a187-5ae81e170e78"
+ *                 name_nl: "Appeltaart"
+ *                 tax: 6
+ *                 tax_dinein: 12
+ *                 quantity: 1
+ *                 price: 3.5
+ *                 subproducts: []
+ *               - product: "3c322c1e-58ca-40da-adab-0217e060068e"
+ *                 name_nl: "Moelleux au Chocolat"
+ *                 tax: 6
+ *                 tax_dinein: 12
+ *                 quantity: 1
+ *                 price: 4.5
+ *                 subproducts: []
+ *               - product: "9e225b65-1dd0-425f-a55c-2ba6caed8b0d"
+ *                 name_nl: "Bicky Burger"
+ *                 tax: 6
+ *                 quantity: 1
+ *                 price: 3
+ *                 subproducts:
+ *                   - subproductId: "0ce7badf-eece-408b-bbd2-f0813e91e7f8"
+ *                     name_nl: "Mayonaise (potje)"
+ *                     price: 1
+ *                     tax: 6
+ *                     tax_dinein: 12
+ *                   - subproductId: "0eb9ecf7-dd76-44e3-aee8-1cacad09d979"
+ *                     name_nl: "Fanta"
+ *                     price: 1.5
+ *                     tax: 6
+ *                     tax_dinein: 12
+ *             payments:
+ *               - payment_method: "15e3683d-9848-4326-8a06-91bde0f0f4c1"
+ *                 amount: 32.7
  *     responses:
  *       '200':
  *         description: Successfully created an order
