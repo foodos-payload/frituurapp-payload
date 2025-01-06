@@ -1,6 +1,5 @@
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
-import { GenerateGeo } from '../../fields/ShopGeocodeButton';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateShop } from './access/byTenant';
 import { filterByShopRead } from './access/byShop';
@@ -128,7 +127,7 @@ export const Shops: CollectionConfig = {
       label: 'Generate Lat/Lng from Address',
       admin: {
         components: {
-          Field: GenerateGeo,
+          Field: '@/fields/ShopGeocodeButton',
         },
       },
     },

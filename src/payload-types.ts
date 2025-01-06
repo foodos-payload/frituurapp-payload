@@ -183,8 +183,8 @@ export interface Shop {
    */
   address?: string | null;
   location?: {
-    lat?: number | null;
-    lng?: number | null;
+    lat?: string | null;
+    lng?: string | null;
   };
   /**
    * The phone number of the shop.

@@ -2,7 +2,7 @@
 import React, { useCallback } from "react"
 import { useField } from "@payloadcms/ui"
 
-export const GenerateGeo: React.FC = () => {
+const GenerateGeo: React.FC = () => {
     // 1) Hook into the "address" field so we can read its current value
     const addressField = useField<string>({ path: "address" })
 
@@ -50,3 +50,6 @@ export const GenerateGeo: React.FC = () => {
         </div>
     )
 }
+
+
+export default GenerateGeo
