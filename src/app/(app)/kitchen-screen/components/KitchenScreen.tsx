@@ -188,7 +188,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
     // ─────────────────────────────────────────────────────────────────────────────
     async function recoverOrder(orderId: number) {
         try {
-            await fetch(`/api/orders/recover?host=${encodeURIComponent(hostSlug)}&orderId=${orderId}`, {
+            await fetch(`/api/orders/recoverOrder?host=${encodeURIComponent(hostSlug)}&orderId=${orderId}`, {
                 method: "POST",
             })
             // remove local

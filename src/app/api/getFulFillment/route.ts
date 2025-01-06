@@ -1,3 +1,4 @@
+// File: /src/app/api/getFulFillment/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -6,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 /**
  * @openapi
- * /api/fulfillment:
+ * /api/getFulFillment:
  *   get:
  *     summary: Retrieve fulfillment methods for a shop
  *     operationId: getFulfillmentMethods

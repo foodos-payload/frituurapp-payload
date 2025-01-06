@@ -1,4 +1,4 @@
-// Example route: /app/api/branding/route.ts
+// Example route: /app/api/getBranding/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 /**
  * @openapi
- * /api/branding:
+ * /api/getBranding:
  *   get:
  *     summary: Get shop branding
  *     operationId: getBranding

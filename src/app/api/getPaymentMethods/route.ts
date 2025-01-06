@@ -3,6 +3,29 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
+/**
+ * @openapi
+ * /api/getPaymentMethods:
+ *   get:
+ *     summary: Retrieve payment methods for a given shop
+ *     operationId: getPaymentMethods
+ *     parameters:
+ *       - name: host
+ *         in: query
+ *         required: true
+ *         description: The shop's slug (subdomain)
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: Returns an array of payment methods
+ *       '400':
+ *         description: Missing or invalid host
+ *       '404':
+ *         description: Shop not found
+ *       '500':
+ *         description: Server error
+ */
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = req.nextUrl
