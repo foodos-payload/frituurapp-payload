@@ -575,9 +575,9 @@ export function OrderSummaryPage({
                                             {/* Left side: product name + subproducts */}
                                             <div className="flex-1 mr-4">
                                                 <div className="font-semibold">{itemName}</div>
-                                                {detail.subproducts?.length > 0 && (
+                                                {(detail.subproducts ?? []).length > 0 && (
                                                     <ul className="ml-4 list-disc list-inside mt-1 text-gray-500">
-                                                        {detail.subproducts.map((sp) => {
+                                                        {detail.subproducts?.map((sp) => {
                                                             const spName = pickSubproductName(sp, userLocale);
                                                             return (
                                                                 <li key={sp.id}>

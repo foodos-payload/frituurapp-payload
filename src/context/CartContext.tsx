@@ -29,14 +29,14 @@ export type LinkedProductData = {
  * A subproduct selection might contain references to a 'linkedProduct'.
  */
 export type SubproductSelection = {
-    tax_dinein: any;
+    tax_dinein?: number | null;
     subproductId: string;
     name_nl: string;
     name_en?: string;
     name_de?: string;
     name_fr?: string;
     price: number;
-    tax?: number;
+    tax?: number | null;
     linkedProduct?: LinkedProductData;
     image?: {
         url: string;

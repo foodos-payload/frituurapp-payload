@@ -318,8 +318,8 @@ export default function ProductPopupFlow({
             name_de?: string;
             name_fr?: string;
             price: number;
-            tax?: number | null;
-            tax_dinein?: number | null;
+            tax?: number;
+            tax_dinein?: number;
             image?: {
                 url: string;
                 alt?: string;
@@ -339,23 +339,31 @@ export default function ProductPopupFlow({
                 if (sp.linkedProduct) {
                     // If subproduct is linked => use data from sp.linkedProduct
                     chosenSubs.push({
-                        subproductId: sp.linkedProduct.id,
+                        subproductId: sp.linkedProduct?.id ?? sp.id,
 
                         // Multi-lingual names
-                        name_nl: sp.linkedProduct.name_nl,
-                        name_en: sp.linkedProduct.name_en ?? sp.linkedProduct.name_nl,
-                        name_de: sp.linkedProduct.name_de ?? sp.linkedProduct.name_nl,
-                        name_fr: sp.linkedProduct.name_fr ?? sp.linkedProduct.name_nl,
+                        name_nl: sp.linkedProduct?.name_nl ?? sp.name_nl,
+                        name_en: sp.linkedProduct?.name_en ?? sp.name_en ?? sp.name_nl,
+                        name_de: sp.linkedProduct?.name_de ?? sp.name_de ?? sp.name_nl,
+                        name_fr: sp.linkedProduct?.name_fr ?? sp.name_fr ?? sp.name_nl,
 
                         // Price & tax
-                        price: sp.linkedProduct.price ?? 0,
-                        tax: sp.linkedProduct.tax ?? null,
-                        tax_dinein: sp.linkedProduct.tax_dinein ?? null,
+                        price: sp.linkedProduct?.price ?? sp.price,
+                        tax: typeof sp.linkedProduct?.tax === 'number'
+                            ? sp.linkedProduct!.tax
+                            : typeof sp.tax === 'number'
+                                ? sp.tax
+                                : undefined,
 
-                        image: sp.linkedProduct.image
+                        tax_dinein: typeof sp.linkedProduct?.tax_dinein === 'number'
+                            ? sp.linkedProduct!.tax_dinein
+                            : typeof sp.tax_dinein === 'number'
+                                ? sp.tax_dinein
+                                : undefined,
+                        image: sp.linkedProduct?.image ?? sp.image
                             ? {
-                                url: sp.linkedProduct.image.url,
-                                alt: sp.linkedProduct.image.alt ?? sp.linkedProduct.name_nl,
+                                url: (sp.linkedProduct?.image ?? sp.image)?.url ?? "",
+                                alt: (sp.linkedProduct?.image ?? sp.image)?.alt ?? sp.name_nl,
                             }
                             : undefined,
                     });
@@ -372,8 +380,9 @@ export default function ProductPopupFlow({
                         price: sp.price,
 
                         // If sp.tax or sp.tax_dinein exist, store them. Otherwise default to null or 0:
-                        tax: typeof sp.tax === "number" ? sp.tax : null,
-                        tax_dinein: typeof sp.tax_dinein === "number" ? sp.tax_dinein : null,
+                        tax: typeof sp.tax === "number" ? sp.tax : undefined,
+                        tax_dinein: typeof sp.tax_dinein === "number" ? sp.tax_dinein : undefined,
+
 
                         image: sp.image
                             ? {
@@ -396,7 +405,7 @@ export default function ProductPopupFlow({
             updateItem(editingItemSignature, {
                 price: basePrice,
                 taxRate: mainTax,        // for example: store top-level product tax
-                taxRateDinein: mainTaxDinein,
+                taxRateDineIn: mainTaxDinein,
                 subproducts: chosenSubs,
                 hasPopups: true,
             })
@@ -410,7 +419,7 @@ export default function ProductPopupFlow({
                 productNameFR: product.name_fr ?? product.name_nl,
                 price: basePrice,
                 taxRate: mainTax,         // for example: store top-level product tax
-                taxRateDinein: mainTaxDinein,
+                taxRateDineIn: mainTaxDinein,
                 quantity: 1,
                 image: product.image
                     ? {

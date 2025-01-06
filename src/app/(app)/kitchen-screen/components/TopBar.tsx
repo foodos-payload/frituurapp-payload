@@ -83,12 +83,10 @@ export function TopBar({
                     Lang
                 </button>
 
-                {/* Conditionally render the LanguageSwitcher popover */}
                 {showLangSwitcher && (
-                    <LanguageSwitcher
-                        onClose={() => setShowLangSwitcher(false)}
-                        className="absolute top-10 right-0"
-                    />
+                    <div className="absolute top-10 right-0">
+                        <LanguageSwitcher />
+                    </div>
                 )}
             </div>
         </div>

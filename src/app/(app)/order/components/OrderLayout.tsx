@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '@/context/TranslationsContext'
 import ProductList from './ProductList';
 import Header from './Header';
 import {
@@ -108,7 +109,6 @@ interface Props {
 export default function OrderLayout({
     shopSlug,
     categorizedProducts,
-    userLocale,
     branding,
     isKiosk,
 }: Props) {
@@ -116,34 +116,9 @@ export default function OrderLayout({
     const [searchTerm, setSearchTerm] = useState('');
     const [showCartDrawer, setShowCartDrawer] = useState(false);
     const [showMenuDrawer, setShowMenuDrawer] = useState(false);
+    const { locale } = useTranslation()
 
-    // The user’s chosen language, defaulting to 'nl'
-    const [lang, setLang] = useState("nl"); // temporarily "nl"
 
-    useEffect(() => {
-        // On mount => load from localStorage OR fallback to userLocale
-        const storedLang = localStorage.getItem("userLocale");
-        if (storedLang) {
-            setLang(storedLang);
-        } else if (userLocale) {
-            // if you have a server-provided default,
-            // you can store it in localStorage once:
-            localStorage.setItem("userLocale", userLocale);
-            setLang(userLocale);
-        } else {
-            // no localStorage, no userLocale => default 'nl'
-            localStorage.setItem("userLocale", "nl");
-            setLang("nl");
-        }
-    }, [userLocale]);
-
-    // The callback your MenuDrawer calls when a language is selected
-    function handleLangChange(newLang: string) {
-        // 1) Update local storage
-        localStorage.setItem("userLocale", newLang);
-        // 2) Update local state => triggers a re-render
-        setLang(newLang);
-    }
 
     // For mobile search toggle
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -218,7 +193,7 @@ export default function OrderLayout({
     // 1) Filter each category’s products by `searchTerm`
     const filteredCategories = categorizedProducts.map((cat) => {
         const filteredProds = cat.products.filter((prod) => {
-            const productName = pickProductName(prod, lang).toLowerCase();
+            const productName = pickProductName(prod, locale).toLowerCase();
             return productName.includes(searchTerm.toLowerCase());
         });
         return { ...cat, products: filteredProds };
@@ -279,8 +254,6 @@ export default function OrderLayout({
             <MenuDrawer
                 isOpen={showMenuDrawer}
                 onClose={() => setShowMenuDrawer(false)}
-                userLocale={lang}
-                onLangChange={handleLangChange}
                 branding={branding}
             />
 
@@ -290,7 +263,6 @@ export default function OrderLayout({
                 onClose={() => setShowCartDrawer(false)}
                 onEditItem={handleEditItem}
                 branding={branding}
-                userLocale={lang}
                 isKiosk={isKiosk}
             />
 
@@ -327,7 +299,7 @@ export default function OrderLayout({
                 <ProductList
                     unfilteredCategories={categorizedProducts}
                     filteredCategories={visibleCategories}
-                    userLocale={lang}
+                    userLocale={locale}
                     mobileSearchOpen={mobileSearchOpen}
                     onCategoryClick={() => {
                         // If user clicks a category in the UI, optionally reset the search
@@ -354,7 +326,7 @@ export default function OrderLayout({
                     onClose={handleCloseEditFlow}
                     branding={branding}
                     cartRef={cartRef}
-                    lang={lang}
+                    lang={locale}
                     isKiosk={isKiosk}
                 />
             )}
@@ -366,7 +338,7 @@ export default function OrderLayout({
                     onClose={() => setActiveProductFromList(null)}
                     branding={branding}
                     cartRef={cartRef}
-                    lang={lang}
+                    lang={locale}
                     isKiosk={isKiosk}
                 />
             )}
@@ -376,15 +348,11 @@ export default function OrderLayout({
 }
 
 /** Helper: pick product name in the chosen language. */
-function pickProductName(prod: Product, lang: string): string {
-    switch (lang) {
-        case 'en':
-            return prod.name_en || prod.name_nl;
-        case 'fr':
-            return prod.name_fr || prod.name_nl;
-        case 'de':
-            return prod.name_de || prod.name_nl;
-        default:
-            return prod.name_nl;
+function pickProductName(prod: Product, locale: string) {
+    switch (locale) {
+        case 'en': return prod.name_en || prod.name_nl
+        case 'fr': return prod.name_fr || prod.name_nl
+        case 'de': return prod.name_de || prod.name_nl
+        default: return prod.name_nl
     }
 }

@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
             collection: 'orders',
             data: {
                 tenant: tenantID,
-                shops: shopID,
+                shops: [shopID],
 
                 order_type: orderType || 'web',
                 status: status || 'pending_payment',
