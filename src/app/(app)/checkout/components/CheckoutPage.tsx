@@ -3,8 +3,6 @@
 
 import React, { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-
-// 1) Import your global cart hook:
 import { useCart } from "@/context/CartContext"
 
 import FulfillmentMethodSelector from "./FulfillmentMethodSelector"
@@ -13,7 +11,7 @@ import CustomerDetailsForm from "./CustomerDetailsForm"
 import PaymentMethodSelector from "./PaymentMethodSelector"
 import OrderSummary from "./OrderSummary"
 
-// Payment method & timeslot types from your original code
+// A) Types
 export type PaymentMethod = {
     id: string
     label: string
@@ -21,23 +19,44 @@ export type PaymentMethod = {
 
 export type Timeslot = {
     id: string
-    day: string    // "1" for Monday, "2" for Tuesday, etc.
-    time: string   // "HH:mm"
+    day: string
+    time: string
     fulfillmentMethod: string
     isFullyBooked?: boolean
 }
 
-// The possible values for fulfillmentMethod
 type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | ""
 
-// Props provided by your server page
+interface ShopInfo {
+    id: string
+    name: string
+    location?: {
+        lat?: number
+        lng?: number
+    }
+}
+interface FulfillmentMethodDoc {
+    id: string
+    method_type: string
+    delivery_fee: number
+    extra_cost_per_km: number
+    minimum_order: number
+    settings?: {
+        delivery_radius?: number
+    }
+    enabled: boolean
+}
+
+// Props from server page
 interface CheckoutPageProps {
     hostSlug: string
     initialPaymentMethods: PaymentMethod[]
     initialTimeslots: Timeslot[]
+    shopInfo?: ShopInfo
+    fulfillmentMethods?: FulfillmentMethodDoc[]
 }
 
-// A helper: get next 10 days
+// Next 10 days helper
 function getNextTenDates(): Date[] {
     const dates: Date[] = []
     const now = new Date()
@@ -49,73 +68,55 @@ function getNextTenDates(): Date[] {
     return dates
 }
 
-// Convert JS Sunday=0 => your timeslot day(1..7)
-function jsDayToTimeslotDay(jsDay: number): number {
-    return jsDay === 0 ? 7 : jsDay
-}
-
 export default function CheckoutPage({
     hostSlug,
     initialPaymentMethods,
     initialTimeslots,
+    shopInfo,
+    fulfillmentMethods,
 }: CheckoutPageProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const kioskMode = searchParams.get("kiosk") === "true"
 
-    // ─────────────────────────────────────────────────────────────────
-    // (A) Logged-in user
-    // ─────────────────────────────────────────────────────────────────
+    // Logged in user
     const [loggedInUser, setLoggedInUser] = useState<{ firstName?: string } | null>(null)
-
     useEffect(() => {
         const storedUser = localStorage.getItem("userData")
         if (storedUser) {
             try {
-                const parsed = JSON.parse(storedUser)
-                setLoggedInUser(parsed)
+                setLoggedInUser(JSON.parse(storedUser))
             } catch {
                 // ignore
             }
         }
     }, [])
 
-    // ─────────────────────────────────────────────────────────────────
-    // (B) Fulfillment method
-    // ─────────────────────────────────────────────────────────────────
+    // Fulfillment method
     const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>("")
-
     useEffect(() => {
         const storedMethod = localStorage.getItem("selectedShippingMethod") || ""
-        const correctedMethod = storedMethod === "dine-in" ? "dine_in" : storedMethod
-        if (["delivery", "takeaway", "dine_in"].includes(correctedMethod)) {
-            setFulfillmentMethod(correctedMethod as FulfillmentMethod)
+        const corrected = storedMethod === "dine-in" ? "dine_in" : storedMethod
+        if (["delivery", "takeaway", "dine_in"].includes(corrected)) {
+            setFulfillmentMethod(corrected as FulfillmentMethod)
         }
     }, [])
-
     useEffect(() => {
         if (fulfillmentMethod) {
-            const storageValue = (fulfillmentMethod === "dine_in") ? "dine-in" : fulfillmentMethod
+            const storageValue = fulfillmentMethod === "dine_in" ? "dine-in" : fulfillmentMethod
             localStorage.setItem("selectedShippingMethod", storageValue)
         }
     }, [fulfillmentMethod])
 
-    // ─────────────────────────────────────────────────────────────────
-    // (C) Timeslots + Payment
-    // ─────────────────────────────────────────────────────────────────
+    // Payment + Timeslots
     const [allTimeslots] = useState<Timeslot[]>(initialTimeslots)
-    const nextTenDates = getNextTenDates()
-
     const [paymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods)
     const [selectedPaymentId, setSelectedPaymentId] = useState("")
-
-    // (C1) Date/time
+    const nextTenDates = getNextTenDates()
     const [selectedDate, setSelectedDate] = useState("")
     const [selectedTime, setSelectedTime] = useState("")
 
-    // ─────────────────────────────────────────────────────────────────
-    // (D) Customer details
-    // ─────────────────────────────────────────────────────────────────
+    // Customer details
     const [surname, setSurname] = useState("")
     const [lastName, setLastName] = useState("")
     const [address, setAddress] = useState("")
@@ -124,61 +125,133 @@ export default function CheckoutPage({
     const [phone, setPhone] = useState("")
     const [email, setEmail] = useState("")
 
-    // ─────────────────────────────────────────────────────────────────
-    // (E) Coupon code
-    // ─────────────────────────────────────────────────────────────────
+    // Coupon code
     const [couponCode, setCouponCode] = useState("")
 
-    // ─────────────────────────────────────────────────────────────────
-    // (F) Using the global cart context
-    // ─────────────────────────────────────────────────────────────────
-    const {
-        items: cartItems,
-        getCartTotal,
-        clearCart,
-        // If you want to do plus/minus, you might define `updateItemQuantity` or removeItem
-        // removeItem, updateItemQuantity, etc.
-    } = useCart()
-
-    // We'll compute the total from `getCartTotal()`:
+    // Cart
+    const { items: cartItems, getCartTotal, clearCart } = useCart()
     const cartTotal = getCartTotal()
 
-    // Example stubs for plus/minus (if you haven't implemented them in your context):
-    function handleIncrease(productId: string) {
-        // You might do: find the cart line item, then call `updateItemQuantity(...)`
-        // Or if you have a simpler approach, do it here. But be sure it updates the global cart.
-        alert("handleIncrease not yet implemented in global cart.")
+    // Delivery logic
+    const deliveryMethodDoc = fulfillmentMethods?.find(
+        (fm) => fm.method_type === "delivery" && fm.enabled
+    )
+    const deliveryFee = deliveryMethodDoc?.delivery_fee ?? 0
+    const extraCostPerKm = deliveryMethodDoc?.extra_cost_per_km ?? 0
+    const deliveryRadius = deliveryMethodDoc?.settings?.delivery_radius ?? 0
+    const minimumOrder = deliveryMethodDoc?.minimum_order ?? 0
+
+    const [deliveryDistance, setDeliveryDistance] = useState<number | null>(null)
+    const [deliveryError, setDeliveryError] = useState<string | null>(null)
+    const [isWithinRadius, setIsWithinRadius] = useState(true)
+
+    // If fulfillmentMethod === 'delivery' => whenever address changes => do distance check
+    useEffect(() => {
+        async function checkDistance() {
+            if (!address || !city || !postalCode) {
+                setDeliveryDistance(null)
+                setDeliveryError(null)
+                setIsWithinRadius(true)
+                return
+            }
+            try {
+                const url = `/api/calculateDistance?host=${encodeURIComponent(hostSlug)}`
+                    + `&address_1=${encodeURIComponent(address)}`
+                    + `&city=${encodeURIComponent(city)}`
+                    + `&postcode=${encodeURIComponent(postalCode)}`
+
+                const res = await fetch(url)
+                const data = await res.json()
+                if (data.status === "OK") {
+                    // e.g. data.rows[0].elements[0].distance.value
+                    const distMeters = data.rows[0].elements[0].distance.value
+                    const distKm = distMeters / 1000
+                    setDeliveryDistance(distKm)
+
+                    if (deliveryRadius > 0 && distKm > deliveryRadius) {
+                        setIsWithinRadius(false)
+                        setDeliveryError(`You are too far for delivery. Max radius is ${deliveryRadius}km.`)
+                    } else {
+                        setIsWithinRadius(true)
+                        setDeliveryError(null)
+                    }
+                } else {
+                    setDeliveryDistance(null)
+                    setIsWithinRadius(false)
+                    setDeliveryError(data.error || "Failed to calculate distance.")
+                }
+            } catch (err) {
+                console.error("Error calculating distance:", err)
+                setDeliveryDistance(null)
+                setIsWithinRadius(false)
+                setDeliveryError("Error calculating distance.")
+            }
+        }
+
+        if (fulfillmentMethod === "delivery") {
+            checkDistance()
+        } else {
+            setDeliveryDistance(null)
+            setDeliveryError(null)
+            setIsWithinRadius(true)
+        }
+    }, [fulfillmentMethod, address, city, postalCode, hostSlug, deliveryRadius])
+
+    // shipping cost = base fee + ( distKM * extraCostPerKM ) for entire distance
+    function getShippingCost() {
+        if (fulfillmentMethod !== "delivery") return 0
+        if (!isWithinRadius) return 0
+        if (!deliveryDistance) return 0  // if no distance => 0 cost
+
+        // entire distance cost
+        const cost = deliveryFee + (deliveryDistance * extraCostPerKm)
+        return cost
+    }
+    const shippingCost = getShippingCost()
+    const finalTotal = cartTotal + shippingCost
+
+    // canProceed => only enable checkout if address passes google check or not needed
+    function canProceed(): boolean {
+        if (!fulfillmentMethod) return false
+        if (!selectedDate || !selectedTime) return false
+        if (!selectedPaymentId) return false
+
+        switch (fulfillmentMethod) {
+            case "takeaway":
+                // must fill these
+                if (!surname || !lastName || !phone) return false
+                break
+
+            case "delivery":
+                // must fill these
+                if (!surname || !lastName || !phone) return false
+                // must have an address => not out of range => distance computed
+                if (!address || !city || !postalCode) return false
+                if (!isWithinRadius) return false
+                if (finalTotal < minimumOrder) return false
+                break
+
+            case "dine_in":
+                if (!surname) return false
+                break
+            default:
+                return false
+        }
+        return true
     }
 
-    function handleDecrease(productId: string) {
-        alert("handleDecrease not yet implemented in global cart.")
-    }
-
-    function handleRemoveItem(productId: string) {
-        alert("handleRemoveItem not yet implemented in global cart.")
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // (G) Final checkout
-    // ─────────────────────────────────────────────────────────────────
     async function handleCheckout() {
-        // 1) Validation
         if (!canProceed()) {
-            alert("Please fill in all required fields and pick a payment method.")
+            alert("Please fill all required fields (and be within the radius).")
             return
         }
 
-        // 2) Figure out which status to set
-        let selectedStatus: string = "pending_payment"
-
-        // For example: if the user chose a PaymentMethod labeled 'Cash on Delivery',
-        // set status = 'awaiting_preparation' immediately:
+        let selectedStatus = "pending_payment"
         const pmDoc = paymentMethods.find(pm => pm.id === selectedPaymentId)
-        if (pmDoc && pmDoc.label.toLowerCase().includes("cash")) {
+        if (pmDoc?.label?.toLowerCase()?.includes("cash")) {
             selectedStatus = "awaiting_preparation"
         }
 
-        // 2) Build the payload
         const payloadData = {
             tenant: hostSlug,
             shop: hostSlug,
@@ -196,14 +269,12 @@ export default function CheckoutPage({
                 city,
                 postalCode,
             },
-            // Convert the cart lines into "order_details"
             orderDetails: cartItems.map(item => ({
                 product: item.productId,
-                name_nl: item.productNameNL, // or item.productName if you prefer
+                name_nl: item.productNameNL,
                 name_en: item.productNameEN,
                 name_de: item.productNameDE,
                 name_fr: item.productNameFR,
-
                 tax: item.taxRate,
                 tax_dinein: item.taxRateDineIn,
                 quantity: item.quantity,
@@ -222,9 +293,11 @@ export default function CheckoutPage({
             payments: [
                 {
                     payment_method: selectedPaymentId,
-                    amount: cartTotal,
+                    amount: finalTotal,
                 },
             ],
+            shippingCost,
+            distanceKm: deliveryDistance,
         }
 
         try {
@@ -239,62 +312,40 @@ export default function CheckoutPage({
                 return
             }
 
-            // 3) Clear cart from context:
             clearCart()
 
-            // 4) Go to order-summary page, optionally pass kiosk param
             const kioskParam = kioskMode ? "&kiosk=true" : ""
             router.push(`/order-summary?orderId=${json.order.id}${kioskParam}`)
         } catch (err) {
             console.error("Error submitting order:", err)
-            alert("Error submitting order. Check console for more details.")
+            alert("Error submitting order. Check console for details.")
         }
     }
 
-    // A back button
     function handleBackClick() {
         const kioskParam = kioskMode ? "?kiosk=true" : ""
         router.push(`/order${kioskParam}`)
     }
 
-    // A quick check to see if we can proceed
-    function canProceed(): boolean {
-        if (!fulfillmentMethod) return false
-        if (!selectedDate || !selectedTime) return false
-        if (!selectedPaymentId) return false
-
-        switch (fulfillmentMethod) {
-            case "takeaway":
-                if (!surname || !lastName || !phone) return false
-                break
-            case "delivery":
-                if (!surname || !lastName || !phone || !address || !city || !postalCode) return false
-                break
-            case "dine_in":
-                if (!surname) return false
-                break
-            default:
-                return false
-        }
-        return true
-    }
-
-    // If the user is not logged in => optional logic:
     function handleLoginClick() {
         console.log("Navigate to login page or show a login modal, etc.")
     }
-
-    // Just stubs
     function handleScanQR() {
         alert("ScanQR not implemented.")
     }
     function handleApplyCoupon() {
         alert(`Applying coupon code: ${couponCode} (not implemented).`)
     }
+    function handleIncrease(productId: string) {
+        alert("handleIncrease stub.")
+    }
+    function handleDecrease(productId: string) {
+        alert("handleDecrease stub.")
+    }
+    function handleRemoveItem(productId: string) {
+        alert("handleRemoveItem stub.")
+    }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Return the UI
-    // ─────────────────────────────────────────────────────────────────
     return (
         <div className="flex w-full min-h-screen">
             {/* Left column */}
@@ -322,7 +373,7 @@ export default function CheckoutPage({
                     )}
                 </div>
 
-                {/* (B) Fulfillment method */}
+                {/* (B) Fulfillment Method */}
                 <FulfillmentMethodSelector
                     allTimeslots={allTimeslots}
                     fulfillmentMethod={fulfillmentMethod}
@@ -332,9 +383,15 @@ export default function CheckoutPage({
                         setSelectedTime("")
                     }}
                 />
+                {/* Possibly show a note about radius */}
+                {fulfillmentMethod === "delivery" && deliveryRadius > 0 && (
+                    <div className="text-sm text-gray-700 bg-yellow-50 border-l-4 border-yellow-300 p-2 my-2">
+                        We only deliver within ~{deliveryRadius} km of our location.
+                    </div>
+                )}
 
-                {/* (C) Date/time */}
-                {fulfillmentMethod !== "" && (
+                {/* (C) Timeslots */}
+                {fulfillmentMethod && (
                     <TimeSlotSelector
                         fulfillmentMethod={fulfillmentMethod}
                         allTimeslots={allTimeslots}
@@ -346,8 +403,8 @@ export default function CheckoutPage({
                     />
                 )}
 
-                {/* (D) Customer details */}
-                {fulfillmentMethod !== "" && (
+                {/* (D) Customer details => pass deliveryError so it shows under address */}
+                {fulfillmentMethod && (
                     <CustomerDetailsForm
                         fulfillmentMethod={fulfillmentMethod}
                         surname={surname}
@@ -364,6 +421,7 @@ export default function CheckoutPage({
                         setPhone={setPhone}
                         email={email}
                         setEmail={setEmail}
+                        deliveryError={deliveryError} // show error under the address field
                     />
                 )}
 
@@ -380,18 +438,16 @@ export default function CheckoutPage({
             {/* Right column => order summary */}
             <div className="hidden md:block md:w-1/2 lg:w-1/3 p-4">
                 <OrderSummary
-                    // We'll pass the current cart items and total, or let OrderSummary also use cart context
-                    cartItems={cartItems}
-                    cartTotal={cartTotal}
                     couponCode={couponCode}
                     setCouponCode={setCouponCode}
-                    handleIncrease={handleIncrease}
-                    handleDecrease={handleDecrease}
-                    handleRemoveItem={handleRemoveItem}
                     handleScanQR={handleScanQR}
                     handleApplyCoupon={handleApplyCoupon}
                     canProceed={canProceed}
                     handleCheckout={handleCheckout}
+                    cartTotal={cartTotal}
+                    shippingCost={shippingCost}
+                    finalTotal={finalTotal}
+                    fulfillmentMethod={fulfillmentMethod}
                 />
             </div>
         </div>

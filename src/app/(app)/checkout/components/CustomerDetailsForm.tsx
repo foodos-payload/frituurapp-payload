@@ -1,38 +1,32 @@
 // File: src/app/(app)/checkout/components/CustomerDetailsForm.tsx
 "use client"
 
-import React, { Dispatch, SetStateAction } from "react"
-
-type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | ""
+import React from "react"
+import AddressAutocomplete from "./AddressAutocomplete"
 
 interface CustomerDetailsFormProps {
-    // Which method is selected: "delivery", "takeaway", or "dine_in"?
-    fulfillmentMethod: FulfillmentMethod
-
-    // Names, etc.
+    fulfillmentMethod: "delivery" | "takeaway" | "dine_in" | ""
     surname: string
-    setSurname: Dispatch<SetStateAction<string>>
+    setSurname: React.Dispatch<React.SetStateAction<string>>
     lastName: string
-    setLastName: Dispatch<SetStateAction<string>>
-
-    // For deliveries
+    setLastName: React.Dispatch<React.SetStateAction<string>>
     address: string
-    setAddress: Dispatch<SetStateAction<string>>
+    setAddress: React.Dispatch<React.SetStateAction<string>>
     city: string
-    setCity: Dispatch<SetStateAction<string>>
+    setCity: React.Dispatch<React.SetStateAction<string>>
     postalCode: string
-    setPostalCode: Dispatch<SetStateAction<string>>
-
-    // For phone / email
+    setPostalCode: React.Dispatch<React.SetStateAction<string>>
     phone: string
-    setPhone: Dispatch<SetStateAction<string>>
+    setPhone: React.Dispatch<React.SetStateAction<string>>
     email: string
-    setEmail: Dispatch<SetStateAction<string>>
+    setEmail: React.Dispatch<React.SetStateAction<string>>
+
+    // NEW: if there's a delivery error => show under address
+    deliveryError?: string | null
 }
 
 export default function CustomerDetailsForm({
     fulfillmentMethod,
-
     surname,
     setSurname,
     lastName,
@@ -47,18 +41,32 @@ export default function CustomerDetailsForm({
     setPhone,
     email,
     setEmail,
+    deliveryError,
 }: CustomerDetailsFormProps) {
+
+    function handleAddressSelected(info: {
+        fullAddress: string
+        lat?: number
+        lng?: number
+        city?: string
+        postalCode?: string
+    }) {
+        setAddress(info.fullAddress || "")
+        if (info.city) setCity(info.city)
+        if (info.postalCode) setPostalCode(info.postalCode)
+        // lat/lng if needed, but we mainly store them server side or in checkDistance
+    }
+
     return (
         <div className="space-y-3">
             <h2 className="text-xl font-bold">Your Details</h2>
 
-            {/* Always show Surname + Email */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                     <label className="block text-sm font-semibold">Surname</label>
                     <input
                         value={surname}
-                        onChange={e => setSurname(e.target.value)}
+                        onChange={(e) => setSurname(e.target.value)}
                         className="border p-2 rounded w-full"
                     />
                 </div>
@@ -67,43 +75,20 @@ export default function CustomerDetailsForm({
                     <input
                         type="email"
                         value={email}
-                        onChange={e => setEmail(e.target.value)}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="border p-2 rounded w-full"
                     />
                 </div>
             </div>
 
-            {/* If TAKEAWAY => Last Name + Phone */}
-            {fulfillmentMethod === "takeaway" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <label className="block text-sm font-semibold">Last Name</label>
-                        <input
-                            value={lastName}
-                            onChange={e => setLastName(e.target.value)}
-                            className="border p-2 rounded w-full"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold">Phone</label>
-                        <input
-                            value={phone}
-                            onChange={e => setPhone(e.target.value)}
-                            className="border p-2 rounded w-full"
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* If DELIVERY => show all fields */}
             {fulfillmentMethod === "delivery" && (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-semibold">Last Name</label>
                             <input
                                 value={lastName}
-                                onChange={e => setLastName(e.target.value)}
+                                onChange={(e) => setLastName(e.target.value)}
                                 className="border p-2 rounded w-full"
                             />
                         </div>
@@ -111,40 +96,64 @@ export default function CustomerDetailsForm({
                             <label className="block text-sm font-semibold">Phone</label>
                             <input
                                 value={phone}
-                                onChange={e => setPhone(e.target.value)}
+                                onChange={(e) => setPhone(e.target.value)}
                                 className="border p-2 rounded w-full"
                             />
                         </div>
                     </div>
-
                     <div>
                         <label className="block text-sm font-semibold">Address</label>
+                        <AddressAutocomplete onAddressSelected={handleAddressSelected} />
+                        {/* RIGHT HERE => if distance error => show in red */}
+                        {deliveryError && (
+                            <div className="text-red-700 bg-red-100 p-2 mt-2 rounded">
+                                {deliveryError}
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {fulfillmentMethod === "takeaway" && (
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="block text-sm font-semibold">Last Name</label>
                         <input
-                            value={address}
-                            onChange={e => setAddress(e.target.value)}
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
                             className="border p-2 rounded w-full"
                         />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-sm font-semibold">City</label>
-                            <input
-                                value={city}
-                                onChange={e => setCity(e.target.value)}
-                                className="border p-2 rounded w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold">Postal Code</label>
-                            <input
-                                value={postalCode}
-                                onChange={e => setPostalCode(e.target.value)}
-                                className="border p-2 rounded w-full"
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-semibold">Phone</label>
+                        <input
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="border p-2 rounded w-full"
+                        />
                     </div>
-                </>
+                </div>
+            )}
+
+            {fulfillmentMethod === "dine_in" && (
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="block text-sm font-semibold">Last Name</label>
+                        <input
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            className="border p-2 rounded w-full"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-semibold">Phone</label>
+                        <input
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="border p-2 rounded w-full"
+                        />
+                    </div>
+                </div>
             )}
         </div>
     )
