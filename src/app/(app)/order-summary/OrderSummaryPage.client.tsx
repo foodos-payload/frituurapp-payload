@@ -14,6 +14,8 @@ import { fetcher } from "@/utilities/fetcher";
 import { NON_BREAKING_SPACE } from "@payloadcms/richtext-lexical";
 import { FiChevronRight } from "react-icons/fi";
 import { CountdownTimer } from "./CountdownTimer";
+import './ordersummary.css';
+
 
 // 1) Types
 type OrderStatus =
@@ -79,6 +81,12 @@ interface OrderDetail {
     subproducts?: Subproduct[];
 }
 
+interface CustomerDetails {
+    firstName?: string;
+    lastName?: string;
+    // etc...
+}
+
 // Full order object
 interface Order {
     id: number;
@@ -92,7 +100,8 @@ interface Order {
     total?: number; // the total paid or total price, if available
     fulfillment_time?: string;
     fulfillment_date?: string;
-
+    fulfillment_method?: string;
+    customer_details?: CustomerDetails;
 }
 
 interface OrderSummaryPageProps {
@@ -100,6 +109,7 @@ interface OrderSummaryPageProps {
     kioskMode?: boolean;
     hostSlug: string;
     branding?: Branding;
+    fulfillments?: any[];
 }
 
 // 2) Helpers for localizing product/subproduct names
@@ -155,6 +165,7 @@ export function OrderSummaryPage({
     kioskMode,
     hostSlug,
     branding,
+    fulfillments,
 }: OrderSummaryPageProps) {
     const router = useRouter();
 
@@ -305,6 +316,7 @@ export function OrderSummaryPage({
             break;
     }
 
+
     // Decide which statuses to display, etc.
     function getStatusFlow(method: FulfillmentMethod): OrderStatus[] {
         switch (method) {
@@ -334,7 +346,7 @@ export function OrderSummaryPage({
                 break;
             case "ready_for_pickup":
                 label = "Ready for Pickup";
-                colorClasses = "bg-green-100 text-green-800";
+                colorClasses = "bg-purple-100 text-purple-800";
                 break;
             case "in_delivery":
                 label = "In Delivery";
@@ -378,14 +390,29 @@ export function OrderSummaryPage({
 
     const orderDetails = order.order_details || [];
     const displayedOrderNumber = order.tempOrdNr ?? order.id;
-    const flow = getStatusFlow(order.fulfillmentMethod ?? "unknown");
+    const method = order?.fulfillment_method;  // exact name
+    const flow = getStatusFlow(order.fulfillment_method ?? "unknown");
 
+    // Build instructions from fulfillments array
+    let fulfillmentInstructions = "";
+    if (fulfillments && Array.isArray(fulfillments)) {
+        const matched = fulfillments.find((f) => f.method_type === method);
+        fulfillmentInstructions = matched?.settings?.pickup_instructions || "";
+    }
+
+    // If the order has a name => prepend “Hi Jonas, ”
+    if (fulfillmentInstructions && order.customer_details?.firstName) {
+        fulfillmentInstructions = `Hi ${order.customer_details.firstName}, ${fulfillmentInstructions}`;
+    }
+
+    // Example: if we have “dine_in” => “A staff member will bring your order…”
+    // (some custom logic you had before)
     let instructionsText = "";
-    if (order.fulfillmentMethod === "delivery") {
+    if (method === "delivery") {
         instructionsText = "Delivery instructions here...";
-    } else if (order.fulfillmentMethod === "takeaway") {
+    } else if (method === "takeaway") {
         instructionsText = "Please proceed to the takeaway counter.";
-    } else if (order.fulfillmentMethod === "dine_in") {
+    } else if (method === "dine_in") {
         instructionsText = "A staff member will bring your order to your table.";
     }
 
@@ -416,6 +443,16 @@ export function OrderSummaryPage({
     }
 
     const targetDate = parseFulfillmentDateTime(order);
+
+    function formatFulfillmentDate(dateStr?: string): string {
+        if (!dateStr) return "No date";
+        const date = new Date(dateStr);
+        // For dd/mm, e.g. "05/01" => day = 05, month = 01
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        return `${day}/${month}`;
+    }
+
 
 
     //
@@ -458,7 +495,7 @@ export function OrderSummaryPage({
 
             {/* Non-kiosk => fancy ticket UI */}
             {!kioskMode && (
-                <div className="w-full max-w-xl bg-white shadow-lg rounded-xl overflow-hidden relative flex flex-col min-h-[600px] ">
+                <div className="w-full max-w-xl bg-white shadow-lg rounded-xl overflow-hidden relative flex flex-col min-h-[550px] ">
                     {/* Top color bar => dynamic or fallback red-600 */}
                     <div
                         className="p-4 text-white flex items-center justify-between"
@@ -473,12 +510,14 @@ export function OrderSummaryPage({
                             />
                         )}
 
-                        {/* siteTitle or fallback */}
+                        {/* order date time or fallback */}
                         <div className="font-bold text-lg uppercase tracking-wider">
                             <div className="text-2xl font-semibold mb-1">
                                 Order #{order.tempOrdNr ?? order.id}
                             </div>
-
+                            <div className="text-white-500 text-sm">
+                                {order.fulfillment_time || "No time"} {formatFulfillmentDate(order.fulfillment_date)}
+                            </div>
                         </div>
                     </div>
 
@@ -489,32 +528,49 @@ export function OrderSummaryPage({
                             const isCurrent = step === order.status;
                             const isLastStep = index === flow.length - 1;
 
-                            // "..." ellipsis if "in_preparation" or "in_delivery" is current
-                            const showEllipsis =
-                                isCurrent;
+                            // e.g. colorClasses might be "bg-blue-100 text-blue-800"
+                            // We parse out "text-blue-800"
+                            const textTailwindClass = extractTextColorClass(colorClasses);
+                            // => "text-blue-800"
+
+                            // Map to an actual RGBA
+                            const colorMap: Record<string, string> = {
+                                "text-blue-800": "rgba(59,130,246,0.7)",
+                                "text-orange-800": "rgba(217,119,6,0.7)",
+                                // add more as needed
+                            };
+                            const pulseColor = colorMap[textTailwindClass] ?? "rgba(59,130,246,0.7)";
+
+                            // If active => add border & our pulse class, plus set --pulse-color
+                            const activeStyles = isCurrent
+                                ? {
+                                    border: "2px solid currentColor", // or "2px solid transparent" + border-current 
+                                    // We pass the color to the custom property
+                                    // Notice the double quotes for inline style in TSX
+                                    "--pulse-color": pulseColor
+                                }
+                                : {};
 
                             // Lower opacity for non-active
                             const opacityClass = isCurrent ? "opacity-100" : "opacity-50";
-
-                            // We'll parse the text color to use for the border
-                            const textColorClass = extractTextColorClass(colorClasses);
 
                             return (
                                 <div key={step} className="flex items-center">
                                     <div
                                         className={`
-                      ${colorClasses}
-                      ${opacityClass}
-                      px-2 py-1 rounded-full text-md transition-colors
-                      ${isCurrent ? `border-2 ${textColorClass} border-current` : ""}
-                    `}
+                                            ${colorClasses}
+                                            ${opacityClass}
+                                            px-2 py-1 rounded-full text-md transition-colors
+                                            ${isCurrent ? "animate-pulse-border" : ""}
+                                            `}
+                                        style={activeStyles as React.CSSProperties}
                                     >
                                         {label}
-                                        {showEllipsis && <AnimatedEllipsis />}
                                     </div>
 
-                                    {/* Chevron unless it's last step */}
-                                    {!isLastStep && <FiChevronRight className="mx-1 text-gray-400" />}
+                                    {!isLastStep && (
+                                        <FiChevronRight className="mx-1 text-gray-400" />
+                                    )}
                                 </div>
                             );
                         })}
@@ -522,6 +578,14 @@ export function OrderSummaryPage({
 
                     </div>
                     {targetDate && <CountdownTimer targetDate={targetDate} />}
+
+                    {fulfillmentInstructions && (
+                        <div className="flex items-center justify-center">
+                            <div className="mt-4 p-3 w-[100%] sm:w-[75%] rounded text-sm font-bold text-gray-800 bg-gray-100 text-center">
+                                {fulfillmentInstructions}
+                            </div>
+                        </div>
+                    )}
                     {/* dashed line */}
                     <div className="relative">
                         <svg
@@ -544,12 +608,7 @@ export function OrderSummaryPage({
 
                     {/* main body => order info */}
                     <div className="p-5 flex flex-col sm:flex-row items-center justify-between">
-                        <div className="text-center sm:text-left">
 
-                            <div className="text-gray-500 text-sm">
-                                {order.fulfillment_time || "No date"}
-                            </div>
-                        </div>
                         <div className="mt-4 sm:mt-0 text-center sm:text-right">
                             {order.customer_note && (
                                 <div className="text-xs text-gray-400 italic mt-1">
@@ -564,9 +623,10 @@ export function OrderSummaryPage({
                         {orderDetails.length < 1 ? (
                             <p className="text-gray-500 text-sm">No products in order.</p>
                         ) : (
-                            <div className="space-y-3 p-3">
+                            <div className="space-y-0 p-3 pb-0">
                                 {orderDetails.map((detail) => {
                                     const itemName = pickDetailName(detail, userLocale);
+
                                     return (
                                         <div
                                             key={detail.id}
@@ -599,34 +659,35 @@ export function OrderSummaryPage({
                         )}
 
                         {/* Fulfillment instructions, if any */}
-                        {instructionsText && (
+                        {/* {instructionsText && (
                             <div className="mt-6 p-3 border border-dashed border-gray-300 rounded text-sm text-gray-600">
                                 {instructionsText}
                             </div>
-                        )}
-                    </div>
-
-                    <div className="border-t ">
-                        <div className="flex items-center justify-end p-3">
+                        )} */}
+                        <div className="flex items-center justify-end p-3 pt-3">
                             <span className="text-lg font-bold">
                                 €{totalPaid.toFixed(2)}
                             </span>
                         </div>
+                    </div>
+
+                    <div className="">
+
 
                         {!kioskMode && (
                             <button
                                 onClick={handleCreateNewOrderClick}
                                 style={{ backgroundColor: brandCTA }}
                                 className="
-                  block
-                  w-full
-                  mt-0
-                  text-white
-                  px-4 py-3
-                  rounded-b-xl
-                  text-center
-                  text-lg
-                "
+                                    block
+                                    w-full
+                                    mt-0
+                                    text-white
+                                    px-4 py-3
+                                    rounded-b-xl
+                                    text-center
+                                    text-lg
+                                    "
                             >
                                 Create New Order
                             </button>

@@ -1,0 +1,27 @@
+@keyframes pulseBorder {
+    0% {
+      /* We read from var(--pulse-color), e.g. "rgba(59,130,246,0.7)" */
+      transform: scale(0.95);
+
+      box-shadow: 0 0 0 0 var(--pulse-color);
+    }
+    70% {
+      /* Expand to 10px ring, fade to alpha=0 */
+      transform: scale(1);
+
+      box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+    }
+    100% {
+      /* Back to no ring. */
+      transform: scale(0.95);
+
+      box-shadow: 0 0 0 0 var(--pulse-color);
+    }
+  }
+  
+  .animate-pulse-border {
+    animation: pulseBorder 3s infinite;
+    /* Use var(--pulse-color) for shadow if you want an initial ring, optional */
+    box-shadow: 0 0 0 0 var(--pulse-color);
+  }
+  
