@@ -5,6 +5,73 @@ import config from '@payload-config';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * @openapi
+ * /api/submitOrder:
+ *   post:
+ *     summary: Submit a new order
+ *     operationId: submitOrder
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               shop:
+ *                 type: string
+ *                 description: The shop's slug
+ *                 example: frituur-den-overkant
+ *               orderType:
+ *                 type: string
+ *                 description: The type of the order
+ *                 example: web
+ *               status:
+ *                 type: string
+ *                 description: The status of the order
+ *                 example: pending_payment
+ *               orderDetails:
+ *                 type: array
+ *                 description: Array of product and subproduct details
+ *                 items:
+ *                   type: object
+ *               payments:
+ *                 type: array
+ *                 description: Array of payment objects
+ *                 items:
+ *                   type: object
+ *               fulfillmentMethod:
+ *                 type: string
+ *                 description: Method of fulfilling the order (delivery, takeaway, dine_in)
+ *                 example: delivery
+ *               fulfillmentDate:
+ *                 type: string
+ *                 format: date
+ *                 description: The date of fulfillment
+ *                 example: "2025-01-06"
+ *               fulfillmentTime:
+ *                 type: string
+ *                 pattern: '^([01]\\d|2[0-3]):?([0-5]\\d)$'
+ *                 description: The time of fulfillment (HH:MM)
+ *                 example: "09:30"
+ *               customerDetails:
+ *                 type: object
+ *                 description: Information about the customer
+ *                 properties:
+ *                   firstName:
+ *                     type: string
+ *                     example: John
+ *                   lastName:
+ *                     type: string
+ *                     example: Doe
+ *     responses:
+ *       '200':
+ *         description: Successfully created an order
+ *       '404':
+ *         description: Shop not found
+ *       '500':
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
     try {
         const payload = await getPayload({ config });
