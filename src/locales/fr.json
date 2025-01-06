@@ -26,5 +26,28 @@
       "checkout": "Passer à la caisse"
     },
     "popup": { "next": "Suivant", "back": "Retour", "confirm": "Confirmer" }
+  },
+  "kitchen": {
+    "topBar": {
+      "active_orders": "Commandes en cours",
+      "archived_orders": "Commandes archivées"
+    },
+    "orderCard": {
+      "get_ready_by": "PRÊT POUR",
+      "deliver_by": "LIVRER POUR",
+      "takeaway_by": "À EMPORTER POUR",
+      "cash": "ESPÈCES - NON PAYÉ",
+      "prep_day": "JOUR DE PRÉP",
+      "recover": "Récupérer",
+      "mark_complete": "Marquer comme terminé",
+      "updating": "Mise à jour..."
+    },
+    "statuses": {
+      "awaiting_prep": "En attente de préparation",
+      "in_preparation": "En préparation",
+      "ready_for_pickup": "Prêt pour le ramassage",
+      "in_delivery": "En livraison",
+      "complete": "Terminé"
+    }
   }
 }

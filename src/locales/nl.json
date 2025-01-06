@@ -26,5 +26,28 @@
       "checkout": "Afrekenen"
     },
     "popup": { "next": "Volgende", "back": "Terug", "confirm": "Bevestig" }
+  },
+  "kitchen": {
+    "topBar": {
+      "active_orders": "Actieve Bestellingen",
+      "archived_orders": "Gearchiveerde Bestellingen"
+    },
+    "orderCard": {
+      "get_ready_by": "KLAAR OM",
+      "deliver_by": "LEVEREN OM",
+      "takeaway_by": "AFHALEN OM",
+      "cash": "CASH - NIET BETAALD",
+      "prep_day": "PREP DAG",
+      "recover": "Herstellen",
+      "mark_complete": "Markeer Bestelling als Voltooid",
+      "updating": "Bijwerken..."
+    },
+    "statuses": {
+      "awaiting_prep": "Wachten op Voorbereiding",
+      "in_preparation": "In Voorbereiding",
+      "ready_for_pickup": "Klaar voor Afhalen",
+      "in_delivery": "In Bezorging",
+      "complete": "Voltooid"
+    }
   }
 }

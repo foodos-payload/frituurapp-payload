@@ -24,6 +24,7 @@ import type { OrderStatus } from "./index"
 import type { OrderCardProps } from "./index"
 import { OrderDetailsList } from "./OrderDetailsList"
 import { PrintPopover } from "./PrintPopover"
+import { useTranslation } from "@/context/TranslationsContext"
 
 /** 
  * Returns true if `current` is exactly one step before "complete" 
@@ -48,6 +49,7 @@ export function OrderCard({
     onRecoverOrder,
     printOrder,
 }: OrderCardProps) {
+    const { t } = useTranslation()
     const [localStatus, setLocalStatus] = useState<OrderStatus>(order.status)
     const [statusLoading, setStatusLoading] = useState(false)
 
@@ -95,11 +97,11 @@ export function OrderCard({
     let statusColor = "bg-gray-100 text-gray-700"
     switch (localStatus) {
         case "awaiting_preparation":
-            statusLabel = "Awaiting Prep"
+            statusLabel = t("kitchen.statuses.awaiting_prep")
             statusColor = "bg-orange-100 text-orange-800"
             break
         case "in_preparation":
-            statusLabel = "In Preparation"
+            statusLabel = t("kitchen.statuses.in_preparation")
             statusColor = "bg-blue-100 text-blue-800"
             break
         case "ready_for_pickup":
@@ -107,12 +109,12 @@ export function OrderCard({
             statusColor = "bg-green-100 text-green-800"
             break
         case "in_delivery":
-            statusLabel = "In Delivery"
+            statusLabel = t("kitchen.statuses.in_delivery")
             statusColor = "bg-purple-100 text-purple-800"
             break
         case "complete":
         case "done":
-            statusLabel = "Completed"
+            statusLabel = t("kitchen.statuses.complete")
             statusColor = "bg-gray-200 text-gray-500"
             break
     }
@@ -120,26 +122,26 @@ export function OrderCard({
     // Build the “GET READY BY: xx” text
     const method = order.fulfillment_method
     const fullTime = order.fulfillment_time || "??:??"
-    let leftGetReadyText = `GET READY BY: ${fullTime}`
+    let leftGetReadyText = `${t("kitchen.orderCard.get_ready_by")}: ${fullTime}`
     let secondRow: React.ReactNode = null
     if (method === "delivery") {
         const minus10 = subtractTenMinutes(fullTime)
-        leftGetReadyText = `GET READY BY: ${minus10}`
+        leftGetReadyText = `${t("kitchen.orderCard.get_ready_by")}: ${minus10}`
         secondRow = (
             <div className="px-3 py-1 bg-gray-50 text-xs text-gray-700 flex items-center justify-end">
                 <div className="flex items-center gap-1">
                     <FaMotorcycle className="text-sm" />
-                    <span>DELIVER BY: {fullTime}</span>
+                    <span>{t("kitchen.orderCard.deliver_by")}: {fullTime}</span>
                 </div>
             </div>
         )
     } else if (method === "takeaway") {
-        leftGetReadyText = `GET READY BY: ${fullTime}`
+        leftGetReadyText = `${t("kitchen.orderCard.get_ready_by")}: ${fullTime}`
         secondRow = (
             <div className="px-3 py-1 bg-gray-50 text-xs text-gray-700 flex items-center justify-end">
                 <div className="flex items-center gap-1">
                     <FaShoppingBag className="text-sm" />
-                    <span>TAKEAWAY BY: {fullTime}</span>
+                    <span>{t("kitchen.orderCard.takeaway_by")}: {fullTime}</span>
                 </div>
             </div>
         )
@@ -299,12 +301,12 @@ export function OrderCard({
                     )}
                     {isCashOnDelivery && (
                         <span className="bg-red-500 text-white px-2 py-0.5 rounded-md font-bold text-[10px]">
-                            CASH - NOT PAID
+                            {t("kitchen.orderCard.cash")}
                         </span>
                     )}
                     {prepDayTag && (
                         <span className="bg-gray-300 text-gray-800 px-2 py-0.5 rounded-md text-[10px] font-medium">
-                            PREP DAY: {prepDayTag}
+                            {t("kitchen.orderCard.prep_day")}: {prepDayTag}
                         </span>
                     )}
                 </div>
@@ -323,7 +325,7 @@ export function OrderCard({
                         onClick={triggerRecoverOrder}
                         className="w-full bg-gray-300 text-black font-bold py-2 text-sm rounded hover:bg-gray-200"
                     >
-                        Recover
+                        {t("kitchen.orderCard.recover")}
                     </button>
                 ) : showCompleteButton ? (
                     <button
@@ -331,7 +333,7 @@ export function OrderCard({
                         disabled={statusLoading}
                         className={completeBtnClasses}
                     >
-                        {statusLoading ? "Updating..." : "Mark Order Complete"}
+                        {statusLoading ? t("kitchen.orderCard.updating") : t("kitchen.orderCard.mark_complete")}
                     </button>
                 ) : (
 
