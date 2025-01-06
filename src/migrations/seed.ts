@@ -691,53 +691,6 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
     },
     limit: 1,
   });
-
-  // If the product was found, create an example order referencing it
-  const pizzaMargheritaDoc = pizzaMargheritaResult?.docs?.[0];
-  if (pizzaMargheritaDoc) {
-    await payload.create({
-      collection: 'orders',
-      data: {
-        // Example fields—adjust based on your Orders collection
-        // e.g. you might have a numeric ID, or let Payload auto-generate
-        id: 999,
-        tempOrdNr: 1001,
-        status: 'in_preparation', // or 'awaiting_preparation', 'completed', etc.
-        order_type: 'kiosk',
-
-        // Make sure to link to the correct tenant and shop
-        tenant: tenant1.id,
-        shops: [shop1.id],
-
-        // Example line item referencing one of the products we created
-        order_details: [
-          {
-            product: pizzaMargheritaDoc.id,
-            quantity: 2,
-            price: pizzaMargheritaDoc.price ?? 0, // or any custom price
-            tax: pizzaMargheritaDoc.tax ?? 6, // fallback
-            // Optionally subproducts if your schema allows
-            // subproducts: [
-            //   {
-            //     subproduct: someSubProdID,
-            //     price: 0.5,
-            //     tax: 6,
-            //   },
-            // ],
-          },
-        ],
-
-        // If your schema has 'payments' array, reference a payment_method if needed
-        // (This is optional, or you may not have a Payment Methods collection yet.)
-        // payments: [
-        //   {
-        //     payment_method: 'placeholder-payment-method-id',
-        //     amount: 16.0, // e.g. 2 pizzas × 8.00 each
-        //   },
-        // ],
-      },
-    });
-  }
 }
 
 export async function down({ payload }: MigrateDownArgs): Promise<void> {
