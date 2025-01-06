@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
+import { GenerateGeo } from '../../fields/ShopGeocodeButton';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateShop } from './access/byTenant';
 import { filterByShopRead } from './access/byShop';
@@ -38,53 +39,35 @@ export const Shops: CollectionConfig = {
       async ({ req, operation, doc }) => {
         if (operation === 'create') {
           const userID = req.user?.id;
-
-          if (!userID) {
-            console.error('No user found in request.');
-            return;
-          }
-
-          if (!doc?.id) {
-            console.error('Document ID is undefined.');
-            return;
-          }
-
-          // Delay the update process to ensure the shop exists in the database
+          if (!userID || !doc?.id) return;
           setTimeout(async () => {
             try {
-              // Fetch the current user to get their shops
               const existingUser = await req.payload.findByID({
                 collection: 'users',
                 id: userID,
                 depth: 0,
               });
-
               const userShopIDs = Array.isArray(existingUser?.shops)
-                ? existingUser.shops.map((shop) => (typeof shop === 'object' ? shop.id : shop))
+                ? existingUser.shops.map(shop => (typeof shop === 'object' ? shop.id : shop))
                 : [];
-
-              // Add the new shop's ID to the list, ensuring no duplicates
               const updatedShops = [...new Set([...userShopIDs, doc.id])];
-
               await req.payload.update({
                 collection: 'users',
                 id: userID,
-                data: {
-                  shops: updatedShops,
-                },
+                data: { shops: updatedShops },
               });
-
               console.log(`Shop ${doc.id} successfully assigned to user ${userID}`);
             } catch (err) {
               console.error('Error assigning shop to user:', err);
             }
-          }, 500); // Delay of 500ms to ensure the shop is committed to the database
+          }, 500);
         }
       },
     ],
   },
+
   fields: [
-    tenantField, // Ensures shops are scoped to a tenant
+    tenantField,
     {
       name: 'domain',
       type: 'text',
@@ -118,7 +101,7 @@ export const Shops: CollectionConfig = {
       unique: true,
       hooks: {
         beforeChange: [slugify],
-      }
+      },
     },
     {
       name: 'address',
@@ -137,7 +120,40 @@ export const Shops: CollectionConfig = {
           fr: 'L\'adresse du magasin.',
         },
       },
-
+    },
+    {
+      // This is the new UI field for the "Generate Lat/Lng" button
+      name: 'generateLocation',
+      type: 'ui',
+      label: 'Generate Lat/Lng from Address',
+      admin: {
+        components: {
+          Field: GenerateGeo,
+        },
+      },
+    },
+    {
+      name: 'location',
+      type: 'group',
+      label: 'Geolocation',
+      fields: [
+        {
+          name: 'lat',
+          type: 'text',
+          label: 'Latitude',
+          admin: {
+            readOnly: true,
+          },
+        },
+        {
+          name: 'lng',
+          type: 'text',
+          label: 'Longitude',
+          admin: {
+            readOnly: true,
+          },
+        },
+      ],
     },
     {
       name: 'phone',
@@ -156,7 +172,6 @@ export const Shops: CollectionConfig = {
           fr: 'Le numéro de téléphone du magasin.',
         },
       },
-
     },
     {
       name: 'company_details',

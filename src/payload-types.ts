@@ -182,6 +182,10 @@ export interface Shop {
    * The address of the shop.
    */
   address?: string | null;
+  location?: {
+    lat?: number | null;
+    lng?: number | null;
+  };
   /**
    * The phone number of the shop.
    */
@@ -1544,6 +1548,12 @@ export interface ShopsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   address?: T;
+  location?:
+    | T
+    | {
+        lat?: T;
+        lng?: T;
+      };
   phone?: T;
   company_details?:
     | T
