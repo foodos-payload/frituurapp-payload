@@ -452,6 +452,14 @@ export interface ShopBranding {
    * Used for “Add to Cart” / “Checkout” buttons, etc.
    */
   primaryColorCTA?: string | null;
+  /**
+   * Optional direct link for customers to leave a Google review.
+   */
+  googleReviewUrl?: string | null;
+  /**
+   * Optional direct link for customers to leave a TripAdvisor review.
+   */
+  tripAdvisorUrl?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1716,6 +1724,8 @@ export interface ShopBrandingSelect<T extends boolean = true> {
   headerBackgroundColor?: T;
   categoryCardBgColor?: T;
   primaryColorCTA?: T;
+  googleReviewUrl?: T;
+  tripAdvisorUrl?: T;
   updatedAt?: T;
   createdAt?: T;
 }

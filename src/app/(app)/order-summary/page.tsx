@@ -49,6 +49,8 @@ export default async function OrderSummaryPageRoute({
         primaryColorCTA: brandingData?.primaryColorCTA ?? "",
         siteTitle: brandingData?.siteTitle ?? "",
         siteHeaderImg: brandingData?.siteHeaderImg?.s3_url ?? "",
+        tripAdvisorUrl: brandingData?.tripAdvisorUrl ?? "",
+        googleReviewUrl: brandingData?.googleReviewUrl ?? "",
     };
 
     // 8) Parse fulfillment array

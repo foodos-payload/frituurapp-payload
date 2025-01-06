@@ -205,5 +205,43 @@ export const ShopBranding: CollectionConfig = {
                 return pattern.test(val.trim()) || 'Must be a valid hex color (e.g. "#FFF" or "#FFEE11")';
             },
         },
+        {
+            name: 'googleReviewUrl',
+            type: 'text',
+            required: false,
+            label: {
+                en: 'Google Review URL',
+                nl: 'Google Review URL',
+                de: 'Google-Bewertungs-URL',
+                fr: 'URL d’Examen Google',
+            },
+            admin: {
+                description: {
+                    en: 'Optional direct link for customers to leave a Google review.',
+                    nl: 'Optionele link voor klanten om een Google-recensie achter te laten.',
+                    de: 'Optionaler Direktlink für Kunden, eine Google-Bewertung abzugeben.',
+                    fr: 'Lien facultatif pour que les clients laissent un avis Google.',
+                },
+            },
+        },
+        {
+            name: 'tripAdvisorUrl',
+            type: 'text',
+            required: false,
+            label: {
+                en: 'TripAdvisor URL',
+                nl: 'TripAdvisor-URL',
+                de: 'TripAdvisor-URL',
+                fr: 'URL TripAdvisor',
+            },
+            admin: {
+                description: {
+                    en: 'Optional direct link for customers to leave a TripAdvisor review.',
+                    nl: 'Optionele link voor klanten om een TripAdvisor-recensie achter te laten.',
+                    de: 'Optionaler Direktlink für Kunden, eine TripAdvisor-Bewertung abzugeben.',
+                    fr: 'Lien facultatif pour que les clients laissent un avis sur TripAdvisor.',
+                },
+            },
+        },
     ],
 };

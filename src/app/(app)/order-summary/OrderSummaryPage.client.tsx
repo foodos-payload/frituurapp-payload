@@ -623,35 +623,55 @@ export function OrderSummaryPage({
                         {orderDetails.length < 1 ? (
                             <p className="text-gray-500 text-sm">No products in order.</p>
                         ) : (
-                            <div className="space-y-0 p-3 pb-0">
+                            <div className="space-y-3 p-3">
                                 {orderDetails.map((detail) => {
                                     const itemName = pickDetailName(detail, userLocale);
 
                                     return (
                                         <div
                                             key={detail.id}
-                                            className="flex items-start justify-between text-sm bg-white shadow-sm p-3 rounded"
+                                            className="bg-white shadow-sm p-3 rounded text-sm"
                                         >
-                                            {/* Left side: product name + subproducts */}
-                                            <div className="flex-1 mr-4">
-                                                <div className="font-semibold">{itemName}</div>
-                                                {(detail.subproducts ?? []).length > 0 && (
-                                                    <ul className="ml-4 list-disc list-inside mt-1 text-gray-500">
-                                                        {detail.subproducts?.map((sp) => {
-                                                            const spName = pickSubproductName(sp, userLocale);
-                                                            return (
-                                                                <li key={sp.id}>
-                                                                    {spName} (+€{sp.price?.toFixed(2) ?? "?"})
-                                                                </li>
-                                                            );
-                                                        })}
-                                                    </ul>
-                                                )}
-                                                <div className="mt-1 text-gray-400">
-                                                    €{detail.price?.toFixed(2)}
+                                            {/* Top row => Quantity and “Name + price” on the same row */}
+                                            <div className="flex items-center justify-between mb-1">
+                                                {/* Quantity on the left */}
+                                                <div className="text-left text-gray-600">
+                                                    x {detail.quantity}
+                                                </div>
+
+                                                {/* Name + price on the right */}
+                                                <div className="flex-1 ml-3 flex justify-between">
+                                                    {/* Product name */}
+                                                    <div className="font-semibold">
+                                                        {itemName}
+                                                    </div>
+
+                                                    {/* Price */}
+                                                    <div className="ml-4 text-gray-500">
+                                                        €{detail.price?.toFixed(2)}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="text-right">x {detail.quantity}</div>
+
+                                            {/* Subproducts list */}
+                                            {(detail.subproducts ?? []).length > 0 && (
+                                                <ul className="ml-4 list-disc list-inside mt-1 text-gray-500">
+                                                    {detail.subproducts?.map((sp) => {
+                                                        const spName = pickSubproductName(sp, userLocale);
+
+                                                        return (
+                                                            <li key={sp.id} className="flex justify-between">
+                                                                {/* Subproduct name */}
+                                                                <span>{spName}</span>
+                                                                {/* Subproduct price */}
+                                                                <span className="ml-2 text-gray-400">
+                                                                    +€{sp.price?.toFixed(2) ?? "?"}
+                                                                </span>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -669,11 +689,88 @@ export function OrderSummaryPage({
                                 €{totalPaid.toFixed(2)}
                             </span>
                         </div>
+                        {/* IF either googleReviewUrl or tripAdvisorUrl is present => show dashed line + badges */}
+                        {(branding?.googleReviewUrl || branding?.tripAdvisorUrl) && (
+                            <>
+                                {/* small dashed line */}
+                                <div className="relative">
+                                    <svg
+                                        className="text-gray-300 mx-auto"
+                                        width="100%"
+                                        height="20"
+                                        preserveAspectRatio="none"
+                                    >
+                                        <line
+                                            x1="0"
+                                            y1="10"
+                                            x2="100%"
+                                            y2="10"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeDasharray="6,6"
+                                        />
+                                    </svg>
+                                </div>
+
+                                {/* Badge row */}
+                                <div className="p-3 flex flex-col sm:flex-row items-center justify-center gap-4">
+                                    {/* Google Review badge, if present */}
+                                    {branding.googleReviewUrl && (
+                                        <a
+                                            href={branding.googleReviewUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="
+                                                    inline-flex items-center
+                                                    bg-white border border-gray-300
+                                                    px-3 py-4
+                                                    text-sm text-gray-700
+                                                    rounded shadow-sm
+                                                    hover:shadow hover:bg-gray-50
+                                                    transition
+                                                "
+                                        >
+                                            {/* Google logo image */}
+                                            <img
+                                                src="https://lh3.googleusercontent.com/COxitqgJr1sJnIDe8-jiKhxDx1FrYbtRHKJ9z_hELisAlapwE9LUPh6fcXIfb5vwpbMl4xl9H9TRFPc5NOO8Sb3VSgIBrfRYvW6cUA"
+                                                alt="Google"
+                                                className="h-5 w-auto object-contain mr-2"
+                                            />
+                                            <span className="font-medium">Leave a Google Review</span>
+                                        </a>
+                                    )}
+
+                                    {/* TripAdvisor badge, if present */}
+                                    {branding.tripAdvisorUrl && (
+                                        <a
+                                            href={branding.tripAdvisorUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="
+                                                    inline-flex items-center
+                                                    bg-white border border-gray-300
+                                                    px-3 py-4
+                                                    text-sm text-gray-700
+                                                    rounded shadow-sm
+                                                    hover:shadow hover:bg-gray-50
+                                                    transition
+                                                "
+                                        >
+                                            {/* TripAdvisor logo image */}
+                                            <img
+                                                src="https://static.tacdn.com/img2/brand_refresh/Tripadvisor_lockup_horizontal_secondary_registered.svg"
+                                                alt="TripAdvisor"
+                                                className="h-5 w-auto object-contain mr-2"
+                                            />
+                                            <span className="font-medium">Review on TripAdvisor</span>
+                                        </a>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
 
-                    <div className="">
-
-
+                    <div>
                         {!kioskMode && (
                             <button
                                 onClick={handleCreateNewOrderClick}
