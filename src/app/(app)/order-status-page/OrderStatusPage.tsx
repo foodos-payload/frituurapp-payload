@@ -105,7 +105,7 @@ export function OrderStatusPage({ hostSlug }: OrderStatusPageProps) {
     // 3) Fetch Branding
     // ─────────────────────────────────────────────────────────────────────────────
     useEffect(() => {
-        const brandingUrl = `/api/branding?host=${encodeURIComponent(hostSlug)}`
+        const brandingUrl = `/api/getBranding?host=${encodeURIComponent(hostSlug)}`
         fetch(brandingUrl, { cache: "no-store" })
             .then((r) => r.json())
             .then((data) => {

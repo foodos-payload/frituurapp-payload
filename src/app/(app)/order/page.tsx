@@ -16,7 +16,7 @@ export default async function OrderPage(context: any) {
 
     // 2) Build API endpoints
     const apiProductsUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${hostSlug}`;
-    const apiBrandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/branding?host=${hostSlug}`;
+    const apiBrandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getBranding?host=${hostSlug}`;
 
     // 3) Fetch both in parallel
     const [productsRes, brandingRes] = await Promise.all([

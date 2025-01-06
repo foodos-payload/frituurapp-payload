@@ -74,7 +74,7 @@ interface Props {
     shopSlug: string;
     categorizedProducts: Category[];
     userLang?: string;
-    /** Branding fetched from your /api/branding endpoint. */
+    /** Branding fetched from your /api/getBranding endpoint. */
     branding?: {
         /** URL-encoded absolute path to the site logo (optional). */
         logoUrl?: string;

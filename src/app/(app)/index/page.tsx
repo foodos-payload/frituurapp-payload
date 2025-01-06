@@ -26,7 +26,7 @@ export default async function IndexPage(context: any) {
     const hostSlug = fullHost.split(".")[0] || "defaultShop"
 
 
-    const fulfillmentUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/fulfillment?host=${hostSlug}`
+    const fulfillmentUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getFulFillment?host=${hostSlug}`
     const fulfillmentRes = await fetch(fulfillmentUrl, { cache: "no-store" })
     let fulfillmentOptions: FulfillmentMethod[] = []
     if (fulfillmentRes.ok) {
@@ -52,7 +52,7 @@ export default async function IndexPage(context: any) {
 
     let brandingData: BrandingData = {}
     if (isKiosk) {
-        const brandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/branding?host=${hostSlug}`
+        const brandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getBranding?host=${hostSlug}`
         const brandingRes = await fetch(brandingUrl, { cache: "no-store" })
         if (brandingRes.ok) {
             const brandingJSON = await brandingRes.json()
