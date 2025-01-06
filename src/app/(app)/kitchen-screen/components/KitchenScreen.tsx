@@ -1,9 +1,8 @@
-// File: src/app/(app)/kitchen-screen/components/KitchenScreen.tsx
 "use client"
 
 import React, { useEffect, useState, useRef, useCallback } from "react"
 import { TopBar } from "./TopBar"
-import { OrderCard } from "../components/OrderCard/index"
+import { OrderCard } from "../components/OrderCard"
 import { SkeletonOrderCard } from "./SkeletonOrderCard"
 
 type OrderStatus =
@@ -13,21 +12,14 @@ type OrderStatus =
     | "complete"
     | "done"
 
-interface PaymentMethod {
-    provider?: string
-}
-interface PaymentEntry {
-    payment_method?: PaymentMethod
-    amount?: number
-}
+interface PaymentMethod { provider?: string }
+interface PaymentEntry { payment_method?: PaymentMethod; amount?: number }
 
 interface OrderDetail {
     id: string
     quantity: number
     price?: number
-    product: {
-        name_nl?: string
-    }
+    product: { name_nl?: string }
 }
 interface Order {
     fulfillment_method: string
@@ -49,8 +41,6 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
     const [view, setView] = useState<"active" | "archived">("active")
     const [isLoading, setIsLoading] = useState(true)
     const [isInitialLoad, setIsInitialLoad] = useState(true)
-    const [page, setPage] = useState(1)
-    const [hasMore, setHasMore] = useState(true)
 
     // For the top bar counters
     const [activeCount, setActiveCount] = useState(0)
@@ -58,13 +48,11 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
 
     const pollRef = useRef<NodeJS.Timeout | null>(null)
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // A) fetchCounts => separate calls for active + archived for the top bar
-    // ─────────────────────────────────────────────────────────────────────────────
+    // A) fetchCounts => separate calls for active + archived
     const fetchCounts = useCallback(async () => {
         try {
             // Active
-            const activeUrl = `/api/orders?host=${encodeURIComponent(hostSlug)}&view=active&page=1`
+            const activeUrl = `/api/orders?host=${encodeURIComponent(hostSlug)}&view=active`
             const rA = await fetch(activeUrl, { cache: "no-store" })
             if (rA.ok) {
                 const dataA = await rA.json()
@@ -72,7 +60,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
             }
 
             // Archived
-            const archUrl = `/api/orders?host=${encodeURIComponent(hostSlug)}&view=archived&page=1`
+            const archUrl = `/api/orders?host=${encodeURIComponent(hostSlug)}&view=archived`
             const rB = await fetch(archUrl, { cache: "no-store" })
             if (rB.ok) {
                 const dataB = await rB.json()
@@ -83,23 +71,16 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
         }
     }, [hostSlug])
 
-    // ─────────────────────────────────────────────────────────────────────────────
     // B) fetchOrders => main list
-    // ─────────────────────────────────────────────────────────────────────────────
     const fetchOrders = useCallback(
-        async (resetPage: boolean) => {
+        async () => {
             try {
                 setIsLoading(true)
-                let targetPage = page
-                if (resetPage) {
-                    targetPage = 1
-                    setPage(1)
-                }
-
-                const url = `/api/orders?host=${encodeURIComponent(hostSlug)}&view=${view}&page=${targetPage}`
+                const url = `/api/orders?host=${encodeURIComponent(hostSlug)}&view=${view}`
                 const res = await fetch(url, { cache: "no-store" })
                 if (!res.ok) throw new Error(`Fetch error ${res.status}`)
                 const data = await res.json()
+
                 const fetched: Order[] = data.orders || []
 
                 // 1) Immediately bump kiosk/dine_in/awaiting_preparation => in_preparation
@@ -122,14 +103,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
                     }
                 }
 
-                // 2) Now proceed to set our local state
-                if (resetPage) {
-                    setOrders(fetched)
-                    setHasMore(fetched.length >= 50)
-                } else {
-                    setOrders(prev => [...prev, ...fetched])
-                    if (fetched.length < 50) setHasMore(false)
-                }
+                setOrders(fetched)
             } catch (err) {
                 console.error("Error fetching orders:", err)
             } finally {
@@ -137,19 +111,16 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
                 setIsLoading(false)
             }
         },
-        [hostSlug, view, page]
+        [hostSlug, view]
     )
 
-
-    // ─────────────────────────────────────────────────────────────────────────────
     // C) On mount => fetch orders, fetch counts, start polling
-    // ─────────────────────────────────────────────────────────────────────────────
     useEffect(() => {
-        fetchOrders(true) // initial (reset)
+        fetchOrders()
         fetchCounts()
         pollRef.current = setInterval(() => {
             fetchCounts()
-            fetchOrders(true)
+            fetchOrders()
         }, 5000)
 
         return () => {
@@ -157,17 +128,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
         }
     }, [fetchCounts, fetchOrders])
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // D) loadMore => increment page => fetch more
-    // ─────────────────────────────────────────────────────────────────────────────
-    async function loadMore() {
-        setPage(prev => prev + 1)
-        await fetchOrders(false)
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────────
     // E) Mark order ready => set status=complete => remove local
-    // ─────────────────────────────────────────────────────────────────────────────
     async function markOrderReady(orderId: number) {
         try {
             await fetch(`/api/orders/markComplete?host=${encodeURIComponent(hostSlug)}&orderId=${orderId}`, {
@@ -183,40 +144,32 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // F) Recover => set status=in_preparation => remove local => switch view to active
-    // ─────────────────────────────────────────────────────────────────────────────
+    // F) Recover => set status=in_preparation => remove local => switch to active
     async function recoverOrder(orderId: number) {
         try {
             await fetch(`/api/orders/recoverOrder?host=${encodeURIComponent(hostSlug)}&orderId=${orderId}`, {
                 method: "POST",
             })
-            // remove local
+            // remove from local
             setOrders(prev => prev.filter(o => o.id !== orderId))
             // increment active, decrement archived
             setActiveCount(c => c + 1)
             setArchivedCount(c => (c > 0 ? c - 1 : 0))
-            // auto-switch to active
             setView("active")
         } catch (err) {
             console.error("Error recovering order:", err)
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
     // G) Switch between active/archived => refetch
-    // ─────────────────────────────────────────────────────────────────────────────
     function handleSetView(nextView: "active" | "archived") {
         setView(nextView)
         setOrders([])
-        setHasMore(true)
         setIsInitialLoad(true)
-        fetchOrders(true)
+        fetchOrders()
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
     // H) printOrder => console or real print call
-    // ─────────────────────────────────────────────────────────────────────────────
     async function printOrder(orderId: number, type: "kitchen" | "customer" | "both") {
         try {
             console.log(`Printing order #${orderId} as ${type}...`)
@@ -248,15 +201,6 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
                         />
                     ))}
             </div>
-
-            {hasMore && !isInitialLoad && !isLoading && (
-                <button
-                    onClick={loadMore}
-                    className="mt-5 px-6 py-3 bg-green-600 text-white rounded self-center hover:bg-green-700"
-                >
-                    Load More
-                </button>
-            )}
         </div>
     )
 }

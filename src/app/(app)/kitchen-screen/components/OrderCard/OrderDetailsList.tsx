@@ -12,9 +12,14 @@ interface MetaData {
 
 interface SubproductEntry {
     id: string
-    subproduct: {
-        name_nl?: string
-    }
+    subproductId: string
+    name_nl?: string
+    name_en?: string
+    name_de?: string
+    name_fr?: string
+    price?: number
+    tax?: number
+    tax_dinein?: number
 }
 
 interface OrderDetail {
@@ -88,7 +93,7 @@ export function OrderDetailsList({
                                 {detail.subproducts && detail.subproducts.length > 0 && (
                                     <div className="mt-1 text-xs text-gray-500">
                                         {detail.subproducts.map(sub => {
-                                            const spName = sub.subproduct?.name_nl || "Extra"
+                                            const spName = sub.name_nl || "Extra"
                                             return <div key={sub.id}>- {spName}</div>
                                         })}
                                     </div>

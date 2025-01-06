@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(singleOrder)
         }
 
-        let statuses: string[] = ['in_preparation', 'complete'] // original
+        let statuses: string[] = ['awaiting_preparation', 'ready_for_pickup', 'in_delivery', 'in_preparation', 'complete']
         if (viewParam === 'active') {
             statuses = [
                 'awaiting_preparation',
@@ -110,7 +110,6 @@ export async function GET(request: NextRequest) {
                 status: { in: statuses },
             },
             sort: '-tempOrdNr',
-            limit: 50,
         })
 
         return NextResponse.json({
