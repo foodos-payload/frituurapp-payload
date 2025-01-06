@@ -48,6 +48,7 @@
     "react-transition-group": "^4.4.5",
     "sharp": "0.32.6",
     "swagger-ui-react": "^5.18.2",
+    "swr": "^2.3.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7"
   },
