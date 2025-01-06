@@ -315,7 +315,7 @@ export interface FulfillmentMethod {
      */
     delivery_radius?: number | null;
     /**
-     * Add specific instructions for takeaway orders.
+     * Add specific instructions for this method.
      */
     pickup_instructions?: string | null;
   };
