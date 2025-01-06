@@ -329,7 +329,7 @@ export default function Header({
             {/* MOBILE SEARCH BAR (collapsible), only if open & not kiosk */}
             {
                 !isKiosk && mobileSearchOpen && (
-                    <div className="sm:hidden bg-white px-2 shadow-sm pb-3">
+                    <div className="sm:hidden bg-white px-2 shadow-sm pb-3 pt-3">
                         <div className="relative flex w-full rounded-md shadow-sm">
                             <FiSearch
                                 className="absolute left-2 top-2 z-10 opacity-50 pointer-events-none"
@@ -345,10 +345,10 @@ export default function Header({
                 items-center
                 p-2
                 pl-10
-                text-xl
+                text-md
                 text-gray-500
                 border border-gray-300
-                rounded-md
+                rounded-xl
                 shadow-inner
                 bg-gray-50
                 focus:outline-none
@@ -360,9 +360,10 @@ export default function Header({
                             {searchValue && (
                                 <span
                                     className="
-                  absolute right-2 top-2 text-xs
+                  absolute right-2 top-1 text-md
                   cursor-pointer
                   p-1
+                  px-3
                   bg-red-500
                   text-white
                   rounded
@@ -370,7 +371,7 @@ export default function Header({
                 "
                                     onClick={onClearFilter}
                                 >
-                                    Clear
+                                    X
                                 </span>
                             )}
                         </div>

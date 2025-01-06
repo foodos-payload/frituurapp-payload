@@ -1,31 +1,68 @@
-"use client"
+"use client";
 
-import React from "react"
+import React from "react";
 
 interface KioskAppHeaderHomeProps {
-    siteTitle: string
-    siteHeaderImg: string
+    siteTitle: string;
+    siteHeaderImg: string;
+    primaryColorCTA?: string;
+    logoUrl?: string;
+    headerBackgroundColor?: string;
 }
 
 export const KioskAppHeaderHome: React.FC<KioskAppHeaderHomeProps> = ({
     siteTitle,
-    siteHeaderImg
+    siteHeaderImg,
+    primaryColorCTA = "#3b82f6", // Default CTA color
+    logoUrl,
+    headerBackgroundColor = "#ffffff", // Default to white background
 }) => {
+    const isCustomBG =
+        headerBackgroundColor.toLowerCase() !== "#ffffff" &&
+        headerBackgroundColor.toLowerCase() !== "#fff";
+
     return (
-        <header className="sticky top-0 bg-white shadow-sm z-40">
-            <div
-                className="relative bg-gray-200 h-60 bg-cover bg-center"
-                style={{ backgroundImage: `url('${siteHeaderImg}')` }}
-            >
-                <h1 className="absolute top-[20%] left-2 text-white text-4xl font-bold p-3 rounded-lg bg-color-brand-primary">
+        <header className="sticky top-0 z-40">
+            {/* Top banner with site header image */}
+            <div className="relative w-full h-72 bg-gray-200 bg-cover bg-center" style={{ backgroundImage: `url('${siteHeaderImg}')` }}>
+                <h1
+                    className="absolute top-[20%] left-2 text-white text-4xl font-bold p-3 rounded-lg"
+                    style={{
+                        backgroundColor: primaryColorCTA,
+                        borderRadius: "0.5em",
+                    }}
+                >
                     {siteTitle}
                 </h1>
-            </div>
-            <div className="containercustommaxwidth container bg-color-header rounded-t-3xl shadow-lg -mt-8 flex flex-row items-center justify-center py-2 md:py-4 w-full">
-                {/* <div className="flex items-center justify-center space-x-5">
-                    <img src="/images/KioskLogo.png" alt="Kiosk Logo" className="w-[120px]" />
-                </div> */}
+
+                {/* Logo bar at the bottom of the background image */}
+                <div
+                    className={`
+                        absolute bottom-0 left-0 w-full
+                        flex items-center justify-between
+                        px-4 py-2 md:py-3 h-[80px]
+                        rounded-t-3xl shadow-lg
+                        ${isCustomBG ? "text-white" : "text-gray-700"}
+                    `}
+                    style={{
+                        backgroundColor: headerBackgroundColor,
+                    }}
+                >
+                    {/* Logo */}
+                    {logoUrl ? (
+                        <img
+                            src={logoUrl}
+                            alt="Site Logo"
+                            className="object-contain h-14"
+                        />
+                    ) : (
+                        <div className="font-bold text-lg">[Your Logo]</div>
+                    )}
+
+                    {/* Placeholder for additional content */}
+                    <div className="font-semibold">{/* Add buttons or links here if necessary */}</div>
+                </div>
             </div>
         </header>
-    )
-}
+    );
+};
