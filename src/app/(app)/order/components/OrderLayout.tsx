@@ -73,7 +73,7 @@ type Category = {
 interface Props {
     shopSlug: string;
     categorizedProducts: Category[];
-    userLang?: string;
+    userLocale?: string;
     /** Branding fetched from your /api/getBranding endpoint. */
     branding?: {
         /** URL-encoded absolute path to the site logo (optional). */
@@ -108,7 +108,7 @@ interface Props {
 export default function OrderLayout({
     shopSlug,
     categorizedProducts,
-    userLang,
+    userLocale,
     branding,
     isKiosk,
 }: Props) {
@@ -121,26 +121,26 @@ export default function OrderLayout({
     const [lang, setLang] = useState("nl"); // temporarily "nl"
 
     useEffect(() => {
-        // On mount => load from localStorage OR fallback to userLang
-        const storedLang = localStorage.getItem("userLang");
+        // On mount => load from localStorage OR fallback to userLocale
+        const storedLang = localStorage.getItem("userLocale");
         if (storedLang) {
             setLang(storedLang);
-        } else if (userLang) {
+        } else if (userLocale) {
             // if you have a server-provided default,
             // you can store it in localStorage once:
-            localStorage.setItem("userLang", userLang);
-            setLang(userLang);
+            localStorage.setItem("userLocale", userLocale);
+            setLang(userLocale);
         } else {
-            // no localStorage, no userLang => default 'nl'
-            localStorage.setItem("userLang", "nl");
+            // no localStorage, no userLocale => default 'nl'
+            localStorage.setItem("userLocale", "nl");
             setLang("nl");
         }
-    }, [userLang]);
+    }, [userLocale]);
 
     // The callback your MenuDrawer calls when a language is selected
     function handleLangChange(newLang: string) {
         // 1) Update local storage
-        localStorage.setItem("userLang", newLang);
+        localStorage.setItem("userLocale", newLang);
         // 2) Update local state => triggers a re-render
         setLang(newLang);
     }
@@ -279,7 +279,7 @@ export default function OrderLayout({
             <MenuDrawer
                 isOpen={showMenuDrawer}
                 onClose={() => setShowMenuDrawer(false)}
-                userLang={lang}
+                userLocale={lang}
                 onLangChange={handleLangChange}
                 branding={branding}
             />
@@ -290,7 +290,7 @@ export default function OrderLayout({
                 onClose={() => setShowCartDrawer(false)}
                 onEditItem={handleEditItem}
                 branding={branding}
-                userLang={lang}
+                userLocale={lang}
                 isKiosk={isKiosk}
             />
 
@@ -327,7 +327,7 @@ export default function OrderLayout({
                 <ProductList
                     unfilteredCategories={categorizedProducts}
                     filteredCategories={visibleCategories}
-                    userLang={lang}
+                    userLocale={lang}
                     mobileSearchOpen={mobileSearchOpen}
                     onCategoryClick={() => {
                         // If user clicks a category in the UI, optionally reset the search

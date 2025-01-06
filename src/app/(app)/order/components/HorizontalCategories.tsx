@@ -25,7 +25,7 @@ type Props = {
   activeCategory: string;
   onCategoryClick: (slug: string) => void;
   branding?: Branding;
-  userLang?: string;
+  userLocale?: string;
 };
 
 /**
@@ -37,7 +37,7 @@ export default function HorizontalCategories({
   activeCategory,
   onCategoryClick,
   branding,
-  userLang,
+  userLocale,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 

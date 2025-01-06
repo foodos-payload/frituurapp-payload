@@ -19,7 +19,7 @@ type Props = {
     /** Called when user wants to "edit" a popup-based item. */
     onEditItem?: (item: CartItem) => void;
     branding?: Branding;
-    userLang?: string;
+    userLocale?: string;
     isKiosk?: boolean;
 };
 
@@ -28,7 +28,7 @@ export default function CartDrawer({
     onClose,
     onEditItem,
     branding,
-    userLang,
+    userLocale,
     isKiosk = false,
 }: Props) {
     const { t } = useTranslation()
@@ -172,7 +172,7 @@ export default function CartDrawer({
                                     const lineSig = getLineItemSignature(item);
                                     const displayName = pickCartItemName(
                                         item,
-                                        userLang ?? "nl"
+                                        userLocale ?? "nl"
                                     );
 
                                     return (
@@ -212,7 +212,7 @@ export default function CartDrawer({
                                                             {item.subproducts.map((sp) => {
                                                                 const subName = pickCartSubName(
                                                                     sp,
-                                                                    userLang ?? "nl"
+                                                                    userLocale ?? "nl"
                                                                 );
                                                                 return (
                                                                     <li key={sp.id}>
@@ -356,8 +356,8 @@ export default function CartDrawer({
 }
 
 /** Helper to pick the correct product name from a CartItem */
-function pickCartItemName(item: CartItem, userLang: string): string {
-    switch (userLang) {
+function pickCartItemName(item: CartItem, userLocale: string): string {
+    switch (userLocale) {
         case "en":
             return item.productNameEN ?? item.productName;
         case "fr":
@@ -372,9 +372,9 @@ function pickCartItemName(item: CartItem, userLang: string): string {
 /** Helper to pick the correct subproduct name */
 function pickCartSubName(
     sp: { name_nl: string; name_en?: string; name_de?: string; name_fr?: string },
-    userLang: string
+    userLocale: string
 ) {
-    switch (userLang) {
+    switch (userLocale) {
         case "en":
             return sp.name_en ?? sp.name_nl;
         case "fr":

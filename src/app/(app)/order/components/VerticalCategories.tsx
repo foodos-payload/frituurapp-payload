@@ -24,7 +24,7 @@ type Props = {
   activeCategory: string;
   onCategoryClick: (slug: string) => void;
   branding?: Branding;
-  userLang?: string;
+  userLocale?: string;
   isKiosk?: boolean;
 };
 

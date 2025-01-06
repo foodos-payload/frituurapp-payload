@@ -75,7 +75,7 @@ interface Props {
     /** The search-filtered categories for the main listing. */
     filteredCategories: Category[];
     /** Current user language. */
-    userLang?: string;
+    userLocale?: string;
     /** Called when a category is clicked (e.g., to clear the search). */
     onCategoryClick?: (slug: string) => void;
     /** If the mobile search is open, might adjust layout offset, etc. */
@@ -100,7 +100,7 @@ interface Props {
 export default function ProductList({
     unfilteredCategories,
     filteredCategories,
-    userLang,
+    userLocale,
     onCategoryClick,
     mobileSearchOpen = false,
     branding,
@@ -121,7 +121,7 @@ export default function ProductList({
     const productRefs = useRef<Record<string, React.RefObject<HTMLDivElement | null>>>({});
 
     // The user’s chosen language, defaulting to 'nl'
-    const [lang, setLang] = useState(userLang || 'nl');
+    const [lang, setLang] = useState(userLocale || 'nl');
 
     // create or retrieve a ref for each product
     function getOrCreateProductRef(productId: string) {
@@ -323,7 +323,7 @@ export default function ProductList({
                         id: cat.id,
                         slug: cat.slug,
                         // We'll default to the correct language label
-                        label: pickCategoryName(cat, userLang),
+                        label: pickCategoryName(cat, userLocale),
 
                         // We can also pass the raw translations if needed for kiosk UI, etc.
                         name_nl: cat.name_nl,
@@ -345,7 +345,7 @@ export default function ProductList({
                     onCategoryClick={handleCategoryClick}
                     branding={branding}
                     isKiosk={isKiosk}
-                    userLang={lang}
+                    userLocale={lang}
                 />
             </div>
 
@@ -366,7 +366,7 @@ export default function ProductList({
                         categories={unfilteredCategories.map((cat) => ({
                             id: cat.id,
                             slug: cat.slug,
-                            label: pickCategoryName(cat, userLang),
+                            label: pickCategoryName(cat, userLocale),
                             name_nl: cat.name_nl,
                             name_en: cat.name_en || cat.name_nl,
                             name_fr: cat.name_fr || cat.name_nl,
@@ -382,13 +382,13 @@ export default function ProductList({
                         activeCategory={activeCategory}
                         onCategoryClick={handleCategoryClick}
                         branding={branding}
-                        userLang={lang}
+                        userLocale={lang}
                     />
                 </div>
 
                 {/* CATEGORY SECTIONS */}
                 {visibleSections.map((cat) => {
-                    const catLabel = pickCategoryName(cat, userLang);
+                    const catLabel = pickCategoryName(cat, userLocale);
 
                     return (
                         <section key={cat.id} id={`cat-${cat.slug}`} className={`
@@ -409,8 +409,8 @@ export default function ProductList({
                             <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-4">
                                 {cat.products.map((prod) => {
                                     // build local display fields
-                                    const displayName = pickProductName(prod, userLang);
-                                    const displayDesc = pickDescription(prod, userLang);
+                                    const displayName = pickProductName(prod, userLocale);
+                                    const displayDesc = pickDescription(prod, userLocale);
 
                                     // create or retrieve the ref for this product
                                     const productRef = getOrCreateProductRef(prod.id);

@@ -39,7 +39,7 @@ export default async function OrderPage(context: any) {
 
     // 5) Extract what we need
     const categorizedProducts = productsData?.categorizedProducts || [];
-    const userLang = productsData?.userLang || 'nl';
+    const userLocale = productsData?.userLocale || 'nl';
     const rawBranding = brandingData?.branding || {};
 
     // 5a) Sort by menuOrder ascending, then by name_nl alphabetically if same order

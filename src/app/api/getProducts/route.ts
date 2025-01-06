@@ -160,9 +160,9 @@ export async function GET(request: NextRequest) {
         }
 
         // 2) If you want to detect the user’s language via query param:
-        let userLang = searchParams.get('lang') || DEFAULT_LANG
-        if (!SUPPORTED_LANGUAGES.includes(userLang)) {
-            userLang = DEFAULT_LANG
+        let userLocale = searchParams.get('lang') || DEFAULT_LANG
+        if (!SUPPORTED_LANGUAGES.includes(userLocale)) {
+            userLocale = DEFAULT_LANG
         }
 
         // 3) Fetch the shop by its slug
@@ -420,7 +420,7 @@ export async function GET(request: NextRequest) {
                 slug: shop.slug,
                 // ...
             },
-            userLang,
+            userLocale,
             categorizedProducts,
         })
     } catch (err: any) {

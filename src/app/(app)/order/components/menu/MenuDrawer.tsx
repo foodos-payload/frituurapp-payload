@@ -16,7 +16,7 @@ type Branding = {
 type MenuDrawerProps = {
     isOpen: boolean;
     onClose: () => void;
-    userLang: string;
+    userLocale: string;
     onLangChange: (langValue: string) => void;
     branding?: Branding;
 };
@@ -29,7 +29,7 @@ type MenuDrawerProps = {
 export default function MenuDrawer({
     isOpen,
     onClose,
-    userLang,
+    userLocale,
     onLangChange,
     branding,
 }: MenuDrawerProps) {
@@ -133,7 +133,7 @@ export default function MenuDrawer({
                         {/* 2) Our LanguageSwitcher replaces the old map of flags */}
                         <div className="flex items-center justify-center">
                             <LanguageSwitcher
-                                userLang={userLang}
+                                userLocale={userLocale}
                                 onLangChange={handleLangChange}
                             />
                         </div>
