@@ -166,6 +166,145 @@ export const Products: CollectionConfig = {
             ],
         },
 
+        {
+            name: 'allergens',
+            type: 'select',
+            label: {
+                en: 'Allergens',
+                nl: 'Allergenen',
+                de: 'Allergene',
+                fr: 'Allergènes',
+            },
+            hasMany: true,
+            required: false,
+            admin: {
+                description: {
+                    en: 'Select all allergens that apply to this product.',
+                    nl: 'Selecteer alle allergenen die van toepassing zijn op dit product.',
+                    de: 'Wählen Sie alle Allergene aus, die auf dieses Produkt zutreffen.',
+                    fr: 'Sélectionnez tous les allergènes qui s’appliquent à ce produit.',
+                },
+            },
+            options: [
+                {
+                    label: {
+                        en: 'Gluten',
+                        nl: 'Gluten',
+                        de: 'Gluten',
+                        fr: 'Gluten',
+                    },
+                    value: 'gluten',
+                },
+                {
+                    label: {
+                        en: 'Eggs',
+                        nl: 'Eieren',
+                        de: 'Eier',
+                        fr: 'Oeufs',
+                    },
+                    value: 'eggs',
+                },
+                {
+                    label: {
+                        en: 'Fish',
+                        nl: 'Vis',
+                        de: 'Fisch',
+                        fr: 'Poisson',
+                    },
+                    value: 'fish',
+                },
+                {
+                    label: {
+                        en: 'Peanuts',
+                        nl: 'Pinda’s',
+                        de: 'Erdnüsse',
+                        fr: 'Arachides',
+                    },
+                    value: 'peanuts',
+                },
+                {
+                    label: {
+                        en: 'Soybeans',
+                        nl: 'Sojabonen',
+                        de: 'Sojabohnen',
+                        fr: 'Soja',
+                    },
+                    value: 'soybeans',
+                },
+                {
+                    label: {
+                        en: 'Milk',
+                        nl: 'Melk',
+                        de: 'Milch',
+                        fr: 'Lait',
+                    },
+                    value: 'milk',
+                },
+                {
+                    label: {
+                        en: 'Nuts',
+                        nl: 'Noten',
+                        de: 'Nüsse',
+                        fr: 'Noix',
+                    },
+                    value: 'nuts',
+                },
+                {
+                    label: {
+                        en: 'Celery',
+                        nl: 'Selderij',
+                        de: 'Sellerie',
+                        fr: 'Céleri',
+                    },
+                    value: 'celery',
+                },
+                {
+                    label: {
+                        en: 'Mustard',
+                        nl: 'Mosterd',
+                        de: 'Senf',
+                        fr: 'Moutarde',
+                    },
+                    value: 'mustard',
+                },
+                {
+                    label: {
+                        en: 'Sesame',
+                        nl: 'Sesam',
+                        de: 'Sesam',
+                        fr: 'Sésame',
+                    },
+                    value: 'sesame',
+                },
+                {
+                    label: {
+                        en: 'Sulphites',
+                        nl: 'Sulfieten',
+                        de: 'Sulfite',
+                        fr: 'Sulfites',
+                    },
+                    value: 'sulphites',
+                },
+                {
+                    label: {
+                        en: 'Lupin',
+                        nl: 'Lupine',
+                        de: 'Lupine',
+                        fr: 'Lupin',
+                    },
+                    value: 'lupin',
+                },
+                {
+                    label: {
+                        en: 'Molluscs',
+                        nl: 'Weekdieren',
+                        de: 'Weichtiere',
+                        fr: 'Mollusques',
+                    },
+                    value: 'molluscs',
+                },
+            ],
+        },
 
         {
             name: 'price_unified',

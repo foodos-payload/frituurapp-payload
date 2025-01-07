@@ -860,6 +860,26 @@ export interface Product {
    */
   name_fr?: string | null;
   /**
+   * Select all allergens that apply to this product.
+   */
+  allergens?:
+    | (
+        | 'gluten'
+        | 'eggs'
+        | 'fish'
+        | 'peanuts'
+        | 'soybeans'
+        | 'milk'
+        | 'nuts'
+        | 'celery'
+        | 'mustard'
+        | 'sesame'
+        | 'sulphites'
+        | 'lupin'
+        | 'molluscs'
+      )[]
+    | null;
+  /**
    * Use a unified sale price for all fulfillment methods.
    */
   price_unified?: boolean | null;
@@ -2102,6 +2122,7 @@ export interface ProductsSelect<T extends boolean = true> {
   name_en?: T;
   name_de?: T;
   name_fr?: T;
+  allergens?: T;
   price_unified?: T;
   price?: T;
   price_dinein?: T;
