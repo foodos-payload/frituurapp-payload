@@ -24,7 +24,7 @@ interface OrderSummaryProps {
     finalTotal: number;
     fulfillmentMethod: "delivery" | "takeaway" | "dine_in" | "";
 
-    branding: Branding; // <-- NEW
+    branding: Branding; // <-- We read brand color from here
 }
 
 export default function OrderSummary({
@@ -38,8 +38,12 @@ export default function OrderSummary({
     shippingCost,
     finalTotal,
     fulfillmentMethod,
+    branding,
 }: OrderSummaryProps) {
     const { items: cartItems, updateItemQuantity, removeItem } = useCart();
+
+    // 1) Fallback to green if no brand color is defined
+    const brandColor = branding.primaryColorCTA || "#22c55e";
 
     function handleIncrease(productId: string) {
         const item = cartItems.find((ci) => ci.productId === productId);
@@ -64,7 +68,7 @@ export default function OrderSummary({
         removeItem(sig);
     }
 
-    // Example: For subproduct lines
+    // For subproduct lines
     function getSubLine(subName: string, subPrice: number) {
         return `${subName} (+€${subPrice.toFixed(2)})`;
     }
@@ -102,10 +106,7 @@ export default function OrderSummary({
                     "
                                         style={{ minHeight: "80px" }}
                                     >
-                                        {/* Thumbnail 
-                        - hidden on mobile (default)
-                        - show on small+ screens: 'sm:block' 
-                    */}
+                                        {/* Thumbnail (hidden on mobile by default) */}
                                         {item.image?.url ? (
                                             <img
                                                 src={item.image.url}
@@ -139,7 +140,7 @@ export default function OrderSummary({
                                             </div>
                                         </div>
 
-                                        {/* Quantity + Trash Icon */}
+                                        {/* Quantity + Remove */}
                                         <div className="inline-flex flex-col items-center justify-center ml-3 gap-2">
                                             {/* Quantity Controls */}
                                             <div className="flex rounded bg-white text-sm leading-none shadow-sm">
@@ -182,7 +183,7 @@ export default function OrderSummary({
                                                 </button>
                                             </div>
 
-                                            {/* Trash Icon Underneath */}
+                                            {/* Trash Icon */}
                                             <button
                                                 onClick={() => handleRemoveItem(item.productId)}
                                                 title="Remove"
@@ -253,25 +254,25 @@ export default function OrderSummary({
                         </span>
                     </div>
 
+                    {/* If disabled => show a short warning above the button */}
+                    {!canProceed() && (
+                        <div className="p-2 text-red-600 text-sm bg-red-50 border-l-4 border-red-300 rounded-md">
+                            Please check if all info is filled
+                        </div>
+                    )}
+
                     {/* Checkout button */}
                     <button
                         onClick={handleCheckout}
                         disabled={!canProceed()}
                         className={`
-              w-full mt-2
-              bg-blue-600 
-              hover:bg-blue-700 
-              text-white 
-              font-medium 
-              py-2 
-              rounded-xl 
-              focus:outline-none 
-              transition-colors
-              ${!canProceed()
-                                ? "opacity-50 cursor-not-allowed hover:bg-blue-600"
-                                : ""
-                            }
+              w-full mt-2 text-white font-medium py-2 rounded-xl focus:outline-none 
+              transition-colors 
+              ${!canProceed() ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}
             `}
+                        style={{
+                            backgroundColor: canProceed() ? brandColor : "#9ca3af", // fallback if disabled
+                        }}
                     >
                         Proceed to Checkout
                     </button>

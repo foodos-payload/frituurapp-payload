@@ -1,6 +1,6 @@
 // File: src/app/(app)/checkout/components/CustomerDetailsForm.tsx
 "use client";
-
+import { useState } from "react";
 import React from "react";
 import AddressAutocomplete from "./AddressAutocomplete";
 
@@ -62,6 +62,7 @@ export default function CustomerDetailsForm({
     phoneRequired = false,
     lastNameRequired = false,
     distanceLoading = false,
+    branding,
 
 }: CustomerDetailsFormProps) {
     function handleAddressSelected(info: {
@@ -75,6 +76,9 @@ export default function CustomerDetailsForm({
         if (info.city) setCity(info.city);
         if (info.postalCode) setPostalCode(info.postalCode);
     }
+
+    const [focusedField, setFocusedField] = useState<string | null>(null);
+    const brandColor = branding.primaryColorCTA || "#22c55e";
 
     return (
         <div className="space-y-4">
@@ -94,6 +98,13 @@ export default function CustomerDetailsForm({
                         placeholder="e.g. John"
                         // Always required or not? Up to your logic
                         required
+                        onFocus={() => setFocusedField("surname")}
+                        onBlur={() => setFocusedField(null)}
+                        style={{
+                            border: "1px solid",
+                            borderColor: focusedField === "surname" ? brandColor : "#d1d5db",
+                            boxShadow: focusedField === "surname" ? `0 0 0 1px ${brandColor}` : "none",
+                        }}
                     />
                 </div>
 
@@ -111,6 +122,13 @@ export default function CustomerDetailsForm({
                         className="checkout-input"
                         placeholder="you@example.com"
                         required={emailRequired}
+                        onFocus={() => setFocusedField("email")}
+                        onBlur={() => setFocusedField(null)}
+                        style={{
+                            border: "1px solid",
+                            borderColor: focusedField === "email" ? brandColor : "#d1d5db",
+                            boxShadow: focusedField === "email" ? `0 0 0 1px ${brandColor}` : "none",
+                        }}
                     />
                 </div>
             </div>
@@ -131,6 +149,13 @@ export default function CustomerDetailsForm({
                                 className="checkout-input"
                                 placeholder="e.g. Doe"
                                 required={lastNameRequired}
+                                onFocus={() => setFocusedField("lastName")}
+                                onBlur={() => setFocusedField(null)}
+                                style={{
+                                    border: "1px solid",
+                                    borderColor: focusedField === "lastName" ? brandColor : "#d1d5db",
+                                    boxShadow: focusedField === "lastName" ? `0 0 0 1px ${brandColor}` : "none",
+                                }}
                             />
                         </div>
                         <div>
@@ -144,6 +169,13 @@ export default function CustomerDetailsForm({
                                 className="checkout-input"
                                 placeholder="+1 234 567 8901"
                                 required={phoneRequired}
+                                onFocus={() => setFocusedField("phone")}
+                                onBlur={() => setFocusedField(null)}
+                                style={{
+                                    border: "1px solid",
+                                    borderColor: focusedField === "phone" ? brandColor : "#d1d5db",
+                                    boxShadow: focusedField === "phone" ? `0 0 0 1px ${brandColor}` : "none",
+                                }}
                             />
                         </div>
                     </div>
@@ -212,6 +244,13 @@ export default function CustomerDetailsForm({
                             className="checkout-input"
                             placeholder="e.g. Doe"
                             required={lastNameRequired}
+                            onFocus={() => setFocusedField("lastName")}
+                            onBlur={() => setFocusedField(null)}
+                            style={{
+                                border: "1px solid",
+                                borderColor: focusedField === "lastName" ? brandColor : "#d1d5db",
+                                boxShadow: focusedField === "lastName" ? `0 0 0 1px ${brandColor}` : "none",
+                            }}
                         />
                     </div>
                     <div>
@@ -225,6 +264,13 @@ export default function CustomerDetailsForm({
                             className="checkout-input"
                             placeholder="+1 234 567 8901"
                             required={phoneRequired}
+                            onFocus={() => setFocusedField("phone")}
+                            onBlur={() => setFocusedField(null)}
+                            style={{
+                                border: "1px solid",
+                                borderColor: focusedField === "phone" ? brandColor : "#d1d5db",
+                                boxShadow: focusedField === "phone" ? `0 0 0 1px ${brandColor}` : "none",
+                            }}
                         />
                     </div>
                 </div>
@@ -244,6 +290,13 @@ export default function CustomerDetailsForm({
                             className="checkout-input"
                             placeholder="e.g. Doe"
                             required={lastNameRequired}
+                            onFocus={() => setFocusedField("lastName")}
+                            onBlur={() => setFocusedField(null)}
+                            style={{
+                                border: "1px solid",
+                                borderColor: focusedField === "lastName" ? brandColor : "#d1d5db",
+                                boxShadow: focusedField === "lastName" ? `0 0 0 1px ${brandColor}` : "none",
+                            }}
                         />
                     </div>
                     <div>
@@ -257,6 +310,13 @@ export default function CustomerDetailsForm({
                             className="checkout-input"
                             placeholder="+1 234 567 8901"
                             required={phoneRequired}
+                            onFocus={() => setFocusedField("phone")}
+                            onBlur={() => setFocusedField(null)}
+                            style={{
+                                border: "1px solid",
+                                borderColor: focusedField === "phone" ? brandColor : "#d1d5db",
+                                boxShadow: focusedField === "phone" ? `0 0 0 1px ${brandColor}` : "none",
+                            }}
                         />
                     </div>
                 </div>
@@ -264,3 +324,5 @@ export default function CustomerDetailsForm({
         </div>
     );
 }
+
+
