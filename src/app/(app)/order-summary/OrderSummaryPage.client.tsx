@@ -390,7 +390,7 @@ export function OrderSummaryPage({
     const orderDetails = order.order_details || [];
     const displayedOrderNumber = order.tempOrdNr ?? order.id;
     const method = order?.fulfillment_method;  // exact name
-    const flow = getStatusFlow(order.fulfillment_method ?? "unknown");
+    const flow = getStatusFlow((order.fulfillment_method as FulfillmentMethod) ?? "unknown");
 
     // Example snippet:
     let fulfillmentInstructions = "";
