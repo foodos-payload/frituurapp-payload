@@ -76,6 +76,25 @@ export const ReservationEntries: CollectionConfig = {
       },
     },
     {
+      name: 'customer_email',
+      type: 'email',
+      label: {
+        en: 'Customer Email',
+        nl: 'E-mailadres van de Klant',
+        de: 'E-Mail-Adresse des Kunden',
+        fr: 'Adresse Électronique du Client',
+      },
+      required: true,
+      admin: {
+        description: {
+          en: 'Email address of the customer making the reservation.',
+          nl: 'E-mailadres van de klant die de reservering maakt.',
+          de: 'E-Mail-Adresse des Kunden, der die Reservierung vornimmt.',
+          fr: 'Adresse électronique du client effectuant la réservation.',
+        },
+      },
+    },
+    {
       name: 'date',
       type: 'date',
       label: {
@@ -87,7 +106,12 @@ export const ReservationEntries: CollectionConfig = {
 
       required: true,
       admin: {
-        description: 'Date of the reservation.',
+        description: {
+          en: 'Date of the reservation.',
+          nl: 'Datum van de reservering.',
+          de: 'Datum der Reservierung.',
+          fr: 'Date de la réservation.',
+        },
       },
     },
     {

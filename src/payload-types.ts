@@ -542,6 +542,10 @@ export interface ReservationEntry {
    */
   customer_phone: string;
   /**
+   * Email address of the customer making the reservation.
+   */
+  customer_email: string;
+  /**
    * Date of the reservation.
    */
   date: string;
@@ -1743,6 +1747,7 @@ export interface ReservationEntriesSelect<T extends boolean = true> {
   shops?: T;
   customer_name?: T;
   customer_phone?: T;
+  customer_email?: T;
   date?: T;
   time?: T;
   persons?: T;
