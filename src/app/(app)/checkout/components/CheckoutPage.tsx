@@ -56,8 +56,13 @@ interface FulfillmentMethodDoc {
     minimum_order: number;
     settings?: {
         delivery_radius?: number;
+
+        checkout_email_required?: boolean;
+        checkout_phone_required?: boolean;
+        checkout_lastname_required?: boolean;
     };
     enabled: boolean;
+
 }
 
 // Props from server page
@@ -79,6 +84,9 @@ export default function CheckoutPage({
     const router = useRouter();
     const searchParams = useSearchParams();
     const kioskMode = searchParams.get("kiosk") === "true";
+
+    // ADD: track if distance is being fetched
+    const [distanceLoading, setDistanceLoading] = useState(false);
 
     // Logged in user
     const [loggedInUser, setLoggedInUser] = useState<{ firstName?: string } | null>(null);
@@ -164,6 +172,13 @@ export default function CheckoutPage({
     const deliveryMethodDoc = fulfillmentMethods?.find(
         (fm) => fm.method_type === "delivery" && fm.enabled
     );
+    const selectedMethodDoc = useMemo(() => {
+        return fulfillmentMethods?.find((fm) => fm.method_type === fulfillmentMethod);
+    }, [fulfillmentMethods, fulfillmentMethod]);
+    const emailRequired = selectedMethodDoc?.settings?.checkout_email_required === true;
+    const phoneRequired = selectedMethodDoc?.settings?.checkout_phone_required === true;
+    const lastNameRequired = selectedMethodDoc?.settings?.checkout_lastname_required === true;
+
     const deliveryFee = deliveryMethodDoc?.delivery_fee ?? 0;
     const extraCostPerKm = deliveryMethodDoc?.extra_cost_per_km ?? 0;
     const deliveryRadius = deliveryMethodDoc?.settings?.delivery_radius ?? 0;
@@ -200,6 +215,7 @@ export default function CheckoutPage({
 
         // If there's no address yet => show the "Please enter address" notice (yellow)
         if (!address || !city || !postalCode) {
+            setDistanceLoading(false);
             setDeliveryDistance(null);
             setDeliveryError(null); // no actual error
             setAddressNotice("Please enter your complete address.");
@@ -213,6 +229,7 @@ export default function CheckoutPage({
         // Now do the distance check
         async function checkDistance() {
             try {
+                setDistanceLoading(true);  // 1) start loading
                 const url =
                     `/api/calculateDistance?host=${encodeURIComponent(hostSlug)}` +
                     `&address_1=${encodeURIComponent(address)}` +
@@ -221,6 +238,9 @@ export default function CheckoutPage({
 
                 const res = await fetch(url);
                 const data = await res.json();
+
+                setDistanceLoading(false);  // 2) stop loading
+
                 if (data.status === "OK") {
                     const distMeters = data.rows[0].elements[0].distance.value;
                     const distKm = distMeters / 1000;
@@ -307,27 +327,55 @@ export default function CheckoutPage({
         if (!selectedDate || !selectedTime) return false;
         if (!selectedPaymentId) return false;
 
+        // Grab those booleans:
+        const selectedMethodDoc = fulfillmentMethods?.find(
+            (fm) => fm.method_type === fulfillmentMethod
+        );
+        const emailRequired = selectedMethodDoc?.settings?.checkout_email_required === true;
+        const phoneRequired = selectedMethodDoc?.settings?.checkout_phone_required === true;
+        const lastNameRequired = selectedMethodDoc?.settings?.checkout_lastname_required === true;
+
         switch (fulfillmentMethod) {
             case "takeaway":
-                if (!surname || !lastName || !phone) return false;
+                // Surname always needed or not? (Your example requires it, so we keep it)
+                if (!surname) return false;
+                // Now conditionally require lastName:
+                if (lastNameRequired && !lastName) return false;
+                // Conditionally require phone:
+                if (phoneRequired && !phone) return false;
+                // If email is required:
+                if (emailRequired && !email) return false;
                 break;
 
             case "delivery":
-                if (!surname || !lastName || !phone) return false;
+                // You always require surname
+                if (!surname) return false;
+                // Maybe lastName is optional unless lastNameRequired = true:
+                if (lastNameRequired && !lastName) return false;
+                if (phoneRequired && !phone) return false;
+                // address/city/postalCode are always required for delivery
                 if (!address || !city || !postalCode) return false;
                 if (!isWithinRadius) return false;
                 // also confirm finalTotal >= minimumOrder
                 if (finalTotal < minimumOrder) return false;
+                if (emailRequired && !email) return false;
                 break;
 
             case "dine_in":
+                // If you require surname for dine_in:
                 if (!surname) return false;
+                if (lastNameRequired && !lastName) return false;
+                if (phoneRequired && !phone) return false;
+                if (emailRequired && !email) return false;
                 break;
+
             default:
                 return false;
         }
+
         return true;
     }
+
 
     async function handleCheckout() {
         if (!canProceed()) {
@@ -534,6 +582,10 @@ export default function CheckoutPage({
                         setEmail={setEmail}
                         deliveryError={deliveryError}
                         addressNotice={addressNotice}
+                        emailRequired={emailRequired}
+                        phoneRequired={phoneRequired}
+                        lastNameRequired={lastNameRequired}
+                        distanceLoading={distanceLoading}
                     />
                 )}
 

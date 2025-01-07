@@ -330,6 +330,18 @@ export interface FulfillmentMethod {
      * If true, this method’s orders will block timeslots for other methods that also share slots.
      */
     shared_booked_slots?: boolean | null;
+    /**
+     * If true, email is mandatory at checkout for this method.
+     */
+    checkout_email_required?: boolean | null;
+    /**
+     * If true, phone is mandatory at checkout for this method.
+     */
+    checkout_phone_required?: boolean | null;
+    /**
+     * If true, last name is mandatory at checkout for this method.
+     */
+    checkout_lastname_required?: boolean | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -1637,6 +1649,9 @@ export interface FulfillmentMethodsSelect<T extends boolean = true> {
         pickup_instructions?: T;
         kiosk_pickup_instructions?: T;
         shared_booked_slots?: T;
+        checkout_email_required?: T;
+        checkout_phone_required?: T;
+        checkout_lastname_required?: T;
       };
   updatedAt?: T;
   createdAt?: T;

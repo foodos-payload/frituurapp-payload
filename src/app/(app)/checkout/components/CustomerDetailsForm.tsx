@@ -25,6 +25,12 @@ interface CustomerDetailsFormProps {
     deliveryError?: string | null;
     // If user hasn't entered address => show a notice (yellow bg)
     addressNotice?: string | null;
+
+    emailRequired?: boolean;
+    phoneRequired?: boolean;
+    lastNameRequired?: boolean;
+
+    distanceLoading?: boolean;
 }
 
 export default function CustomerDetailsForm({
@@ -45,6 +51,11 @@ export default function CustomerDetailsForm({
     setEmail,
     deliveryError,
     addressNotice,
+    emailRequired = false,
+    phoneRequired = false,
+    lastNameRequired = false,
+    distanceLoading = false,
+
 }: CustomerDetailsFormProps) {
     function handleAddressSelected(info: {
         fullAddress: string;
@@ -67,18 +78,24 @@ export default function CustomerDetailsForm({
                 <div>
                     <label className="block mb-1 text-sm font-semibold text-gray-700">
                         Surname
+                        <span className="text-red-600 ml-1">*</span>
                     </label>
                     <input
                         value={surname}
                         onChange={(e) => setSurname(e.target.value)}
                         className="checkout-input"
                         placeholder="e.g. John"
+                        // Always required or not? Up to your logic
+                        required
                     />
                 </div>
 
                 <div>
                     <label className="block mb-1 text-sm font-semibold text-gray-700">
-                        Email (optional)
+                        Email
+                        {emailRequired
+                            ? <span className="text-red-600 ml-1">*</span>
+                            : " (optional)"}
                     </label>
                     <input
                         type="email"
@@ -86,9 +103,11 @@ export default function CustomerDetailsForm({
                         onChange={(e) => setEmail(e.target.value)}
                         className="checkout-input"
                         placeholder="you@example.com"
+                        required={emailRequired}
                     />
                 </div>
             </div>
+
 
             {/* Delivery fields */}
             {fulfillmentMethod === "delivery" && (
@@ -97,23 +116,27 @@ export default function CustomerDetailsForm({
                         <div>
                             <label className="block mb-1 text-sm font-semibold text-gray-700">
                                 Last Name
+                                {lastNameRequired && <span className="text-red-600 ml-1">*</span>}
                             </label>
                             <input
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 className="checkout-input"
                                 placeholder="e.g. Doe"
+                                required={lastNameRequired}
                             />
                         </div>
                         <div>
                             <label className="block mb-1 text-sm font-semibold text-gray-700">
                                 Phone
+                                {phoneRequired && <span className="text-red-600 ml-1">*</span>}
                             </label>
                             <input
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
                                 className="checkout-input"
                                 placeholder="+1 234 567 8901"
+                                required={phoneRequired}
                             />
                         </div>
                     </div>
@@ -124,6 +147,32 @@ export default function CustomerDetailsForm({
                         </label>
                         {/* AddressAutocomplete is a custom component that sets the address, city, postalCode */}
                         <AddressAutocomplete onAddressSelected={handleAddressSelected} />
+                        {/* If distance is calculating => show a small text or spinner */}
+                        {distanceLoading && (
+                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
+                                <svg
+                                    className="animate-spin h-5 w-5 text-gray-500"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 0114.93-2H12v2H4z"
+                                    ></path>
+                                </svg>
+                                <span>Calculating distance...</span>
+                            </div>
+                        )}
 
                         {/* If there's a "please enter address" notice => yellow background */}
                         {addressNotice && (
@@ -148,23 +197,27 @@ export default function CustomerDetailsForm({
                     <div>
                         <label className="block mb-1 text-sm font-semibold text-gray-700">
                             Last Name
+                            {lastNameRequired && <span className="text-red-600 ml-1">*</span>}
                         </label>
                         <input
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
                             className="checkout-input"
                             placeholder="e.g. Doe"
+                            required={lastNameRequired}
                         />
                     </div>
                     <div>
                         <label className="block mb-1 text-sm font-semibold text-gray-700">
                             Phone
+                            {phoneRequired && <span className="text-red-600 ml-1">*</span>}
                         </label>
                         <input
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             className="checkout-input"
                             placeholder="+1 234 567 8901"
+                            required={phoneRequired}
                         />
                     </div>
                 </div>
@@ -176,23 +229,27 @@ export default function CustomerDetailsForm({
                     <div>
                         <label className="block mb-1 text-sm font-semibold text-gray-700">
                             Last Name
+                            {lastNameRequired && <span className="text-red-600 ml-1">*</span>}
                         </label>
                         <input
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
                             className="checkout-input"
                             placeholder="e.g. Doe"
+                            required={lastNameRequired}
                         />
                     </div>
                     <div>
                         <label className="block mb-1 text-sm font-semibold text-gray-700">
                             Phone
+                            {phoneRequired && <span className="text-red-600 ml-1">*</span>}
                         </label>
                         <input
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             className="checkout-input"
                             placeholder="+1 234 567 8901"
+                            required={phoneRequired}
                         />
                     </div>
                 </div>

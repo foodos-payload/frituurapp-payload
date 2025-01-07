@@ -221,6 +221,33 @@ export const FulfillmentMethods: CollectionConfig = {
                         description: 'If true, this method’s orders will block timeslots for other methods that also share slots.',
                     },
                 },
+                {
+                    name: 'checkout_email_required',
+                    type: 'checkbox',
+                    label: 'Require Email?',
+                    defaultValue: false,
+                    admin: {
+                        description: 'If true, email is mandatory at checkout for this method.',
+                    },
+                },
+                {
+                    name: 'checkout_phone_required',
+                    type: 'checkbox',
+                    label: 'Require Phone?',
+                    defaultValue: false,
+                    admin: {
+                        description: 'If true, phone is mandatory at checkout for this method.',
+                    },
+                },
+                {
+                    name: 'checkout_lastname_required',
+                    type: 'checkbox',
+                    label: 'Require LastName?',
+                    defaultValue: false,
+                    admin: {
+                        description: 'If true, last name is mandatory at checkout for this method.',
+                    },
+                },
             ],
         },
     ],

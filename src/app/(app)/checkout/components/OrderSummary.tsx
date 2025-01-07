@@ -5,11 +5,6 @@ import React from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { useCart, getLineItemSignature } from "@/context/CartContext";
 
-/**
- * If you want to match EXACTLY the CartDrawer style, remove or adjust
- * the coupon/QR portion or place it below. Currently, it remains integrated.
- */
-
 interface OrderSummaryProps {
     couponCode: string;
     setCouponCode: (value: string) => void;
@@ -61,22 +56,23 @@ export default function OrderSummary({
         removeItem(sig);
     }
 
-    // If you want to localize subproduct names (like in the CartDrawer),
-    // define a helper like `pickCartSubName(...)`. For brevity, we show raw name_nl here.
+    // Example: For subproduct lines
     function getSubLine(subName: string, subPrice: number) {
         return `${subName} (+€${subPrice.toFixed(2)})`;
     }
 
     return (
-        <div className="sticky top-4 space-y-6">
-            {/* Header */}
-            <div>
-                <h2 className="text-2xl font-bold mb-1">Order Summary</h2>
-                <p className="text-gray-500 text-sm">Review your items and confirm below.</p>
-            </div>
-
+        <div className="sticky top-4 space-y-6 rounded-xl shadow-md">
             {/* Main Card */}
-            <div className="bg-white rounded-xl p-4 shadow-md space-y-4">
+            <div className="bg-white p-4 space-y-1">
+                {/* Header */}
+                <div>
+                    <h2 className="text-2xl font-bold mb-1">Order Summary</h2>
+                    <p className="text-gray-500 text-sm">
+                        Review your items and confirm below.
+                    </p>
+                </div>
+
                 {/* Cart Items */}
                 {cartItems.length === 0 ? (
                     <p className="text-gray-500">No items in cart.</p>
@@ -84,7 +80,6 @@ export default function OrderSummary({
                     <ul className="flex flex-col gap-4">
                         {cartItems.map((item, idx) => {
                             const displayName = item.productName || "Untitled Product";
-                            // Sum subproduct prices
                             const subTotal =
                                 item.subproducts?.reduce((acc, sp) => acc + sp.price, 0) || 0;
                             const linePrice = (item.price + subTotal) * item.quantity;
@@ -99,32 +94,25 @@ export default function OrderSummary({
                     "
                                         style={{ minHeight: "80px" }}
                                     >
-                                        {/* Thumbnail */}
+                                        {/* Thumbnail 
+                        - hidden on mobile (default)
+                        - show on small+ screens: 'sm:block' 
+                    */}
                                         {item.image?.url ? (
                                             <img
                                                 src={item.image.url}
                                                 alt={item.image.alt || displayName}
-                                                className="w-16 h-16 rounded-xl object-cover"
+                                                className="hidden sm:block w-16 h-16 rounded-xl object-cover"
                                             />
                                         ) : (
-                                            <div className="w-16 h-16 bg-gray-100 rounded-xl" />
+                                            <div className="hidden sm:block w-16 h-16 bg-gray-100 rounded-xl" />
                                         )}
 
                                         {/* Middle: product name + subproducts + line total */}
                                         <div className="flex-1 min-h-[60px] ml-3">
-                                            {/* Title row (with remove button on top-right if you prefer) */}
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="font-semibold text-sm sm:text-base text-gray-800 line-clamp-2 mr-2">
-                                                    {displayName}
-                                                </h3>
-                                                <button
-                                                    onClick={() => handleRemoveItem(item.productId)}
-                                                    title="Remove"
-                                                    className="text-gray-400 hover:text-red-500 transition-colors"
-                                                >
-                                                    <FiTrash2 className="w-5 h-5" />
-                                                </button>
-                                            </div>
+                                            <h3 className="font-semibold text-sm sm:text-base text-gray-800 line-clamp-2 mr-2">
+                                                {displayName}
+                                            </h3>
 
                                             {/* Subproducts */}
                                             {item.subproducts && item.subproducts.length > 0 && (
@@ -143,8 +131,9 @@ export default function OrderSummary({
                                             </div>
                                         </div>
 
-                                        {/* Quantity Controls (aligned on the right) */}
-                                        <div className="inline-flex gap-1 flex-col items-end ml-3">
+                                        {/* Quantity + Trash Icon */}
+                                        <div className="inline-flex flex-col items-center justify-center ml-3 gap-2">
+                                            {/* Quantity Controls */}
                                             <div className="flex rounded bg-white text-sm leading-none shadow-sm">
                                                 <button
                                                     title="Decrease Quantity"
@@ -176,7 +165,7 @@ export default function OrderSummary({
                                                     type="button"
                                                     className="
                             focus:outline-none border-l border 
-                            rounded-r hover:bg-gray-50 border-gray-300 p-2
+                            rounded-r hover:bg-gray-50 border-gray-300
                             w-8 h-8 flex items-center justify-center
                           "
                                                     onClick={() => handleIncrease(item.productId)}
@@ -184,6 +173,15 @@ export default function OrderSummary({
                                                     +
                                                 </button>
                                             </div>
+
+                                            {/* Trash Icon Underneath */}
+                                            <button
+                                                onClick={() => handleRemoveItem(item.productId)}
+                                                title="Remove"
+                                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                            >
+                                                <FiTrash2 className="w-5 h-5" />
+                                            </button>
                                         </div>
                                     </div>
                                 </li>
