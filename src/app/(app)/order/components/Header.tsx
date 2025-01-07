@@ -365,7 +365,10 @@ export default function Header({
 
             {/* Allergens modal */}
             {allergensOpen && (
-                <AllergensModal onClose={() => setAllergensOpen(false)} />
+                <AllergensModal
+                    onClose={() => setAllergensOpen(false)}
+                    brandCTA={brandCTA}
+                />
             )}
 
             {/* MOBILE SEARCH BAR */}

@@ -38,12 +38,12 @@ const ALL_ALLERGENS = [
 
 interface AllergensModalProps {
     onClose: () => void
-    brandCTA?: string   // <-- allow passing brand color
+    brandCTA?: string
 }
 
 export default function AllergensModal({
     onClose,
-    brandCTA = "#3b82f6", // fallback if none provided
+    brandCTA = "#3b82f6",
 }: AllergensModalProps) {
     const [selected, setSelected] = useState<string[]>([])
 
@@ -137,12 +137,11 @@ export default function AllergensModal({
                     >
                         Clear
                     </button>
-                    <button className="px-4 py-2" onClick={handleCancel}>
+                    {/* <button className="px-4 py-2" onClick={handleCancel}>
                         Cancel
-                    </button>
+                    </button> */}
                     <button
                         onClick={handleApply}
-                        // Also set brandCTA for the "Apply" button
                         style={{ backgroundColor: brandCTA }}
                         className="px-4 py-2 text-white rounded hover:opacity-90"
                     >
