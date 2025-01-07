@@ -16,12 +16,11 @@ export default async function OrderPage(context: any) {
 
     // 2) Build API endpoints
     const apiProductsUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${hostSlug}`;
-    const apiBrandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getBranding?host=${hostSlug}`;
 
     // 3) Fetch both in parallel
-    const [productsRes, brandingRes] = await Promise.all([
+    const [productsRes] = await Promise.all([
         fetch(apiProductsUrl, { cache: 'no-store' }),
-        fetch(apiBrandingUrl, { cache: 'no-store' }),
+
     ]);
 
     if (!productsRes.ok) {
@@ -34,13 +33,10 @@ export default async function OrderPage(context: any) {
 
     // 4) Parse the JSON from each response
     const productsData = await productsRes.json();
-    // If brandingRes is not ok => fallback to empty object
-    const brandingData = brandingRes.ok ? await brandingRes.json() : {};
 
     // 5) Extract what we need
     const categorizedProducts = productsData?.categorizedProducts || [];
     const userLocale = productsData?.userLocale || 'nl';
-    const rawBranding = brandingData?.branding || {};
 
     // 5a) Sort by menuOrder ascending, then by name_nl alphabetically if same order
     categorizedProducts.sort((a: any, b: any) => {
@@ -52,20 +48,6 @@ export default async function OrderPage(context: any) {
         return a.name_nl.localeCompare(b.name_nl);
     });
 
-    // 6) Convert payload branding to the shape your OrderLayout wants
-    // For example, if rawBranding.siteLogo?.s3_url is your main logo:
-    const branding = {
-        logoUrl: rawBranding.siteLogo?.s3_url ?? '',
-        adImage: rawBranding.adImage?.s3_url ?? '',
-        headerBackgroundColor: rawBranding.headerBackgroundColor ?? '',
-        categoryCardBgColor: rawBranding.categoryCardBgColor ?? '',
-        primaryColorCTA: rawBranding.primaryColorCTA ?? '',
-        siteTitle: rawBranding.siteTitle ?? '',
-        siteHeaderImg: rawBranding.siteHeaderImg?.s3_url ?? '', // ← ADD this line
-
-        // Add more fields if needed
-    };
-
     // 7) Detect kiosk mode: if `?kiosk=true` => isKiosk = true
     const isKiosk = kioskParam === 'true';
 
@@ -74,7 +56,6 @@ export default async function OrderPage(context: any) {
         <OrderLayout
             shopSlug={hostSlug}
             categorizedProducts={categorizedProducts}
-            branding={branding}
             isKiosk={isKiosk}
         />
     );

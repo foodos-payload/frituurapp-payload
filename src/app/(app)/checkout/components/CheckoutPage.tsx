@@ -492,9 +492,9 @@ export default function CheckoutPage({
                 <div className="flex justify-between mb-2">
                     <button
                         onClick={handleBackClick}
-                        className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 flex items-center gap-2"
+                        className="bg-gray-100 text-red-700 px-3 py-2 rounded-xl hover:bg-gray-200 flex items-center gap-2"
                     >
-                        <span className="font-semibold text-sm">←</span>
+                        <span className="font-bold text-lg">←</span>
                         <span>Forgot something?</span>
                     </button>
                 </div>

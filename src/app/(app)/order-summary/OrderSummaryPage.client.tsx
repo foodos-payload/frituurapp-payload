@@ -15,6 +15,7 @@ import { NON_BREAKING_SPACE } from "@payloadcms/richtext-lexical";
 import { FiChevronRight } from "react-icons/fi";
 import { CountdownTimer } from "./CountdownTimer";
 import './ordersummary.css';
+import { useShopBranding } from "@/context/ShopBrandingContext";
 
 
 // 1) Types
@@ -26,16 +27,6 @@ type OrderStatus =
     | "cancelled"
     | "in_delivery"
     | "ready_for_pickup";
-
-type Branding = {
-    logoUrl?: string;
-    adImage?: string;
-    headerBackgroundColor?: string;
-    categoryCardBgColor?: string;
-    primaryColorCTA?: string;
-    siteTitle?: string;
-    siteHeaderImg?: string;
-};
 
 type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "unknown";
 
@@ -109,7 +100,6 @@ interface OrderSummaryPageProps {
     orderId: string;
     kioskMode?: boolean;
     hostSlug: string;
-    branding?: Branding;
     fulfillments?: any[];
 }
 
@@ -165,10 +155,12 @@ export function OrderSummaryPage({
     orderId,
     kioskMode,
     hostSlug,
-    branding,
     fulfillments,
 }: OrderSummaryPageProps) {
     const router = useRouter();
+
+    // ***** NEW: Grab branding from the global provider  *****
+    const branding = useShopBranding();
 
     // 3.1) We read locale from localStorage (default "nl" if not found)
     const [userLocale, setUserLocale] = useState("nl");

@@ -14,6 +14,7 @@ import CartDrawer from './cart/CartDrawer';
 import MenuDrawer from './menu/MenuDrawer';
 import ProductPopupFlow from './ProductPopupFlow';
 import '../order.css';
+import { useShopBranding } from '@/context/ShopBrandingContext';
 
 /**
  * Minimal shape for a product in your categories.
@@ -76,27 +77,7 @@ interface Props {
     categorizedProducts: Category[];
     userLocale?: string;
     /** Branding fetched from your /api/getBranding endpoint. */
-    branding?: {
-        /** URL-encoded absolute path to the site logo (optional). */
-        logoUrl?: string;
 
-        /** URL-encoded absolute path to an advertisement image for order status, etc. */
-        adImage?: string;
-
-        /** A site header background color in hex (e.g. "#0f1820"). */
-        headerBackgroundColor?: string;
-
-        /** A category-card background color in hex (e.g. "#ECAA02"). */
-        categoryCardBgColor?: string;
-
-        /** A primary CTA color in hex (used for "Add to Cart" or "Checkout" buttons). */
-        primaryColorCTA?: string;
-
-        siteTitle?: string;
-
-        siteHeaderImg?: string;
-
-    };
     isKiosk?: boolean;
 }
 
@@ -109,7 +90,6 @@ interface Props {
 export default function OrderLayout({
     shopSlug,
     categorizedProducts,
-    branding,
     isKiosk,
 }: Props) {
     const [showJsonModal, setShowJsonModal] = useState(false);
@@ -118,7 +98,8 @@ export default function OrderLayout({
     const [showMenuDrawer, setShowMenuDrawer] = useState(false);
     const { locale } = useTranslation()
 
-
+    // ***** NEW: Grab branding from the global provider  *****
+    const branding = useShopBranding();
 
     // For mobile search toggle
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
