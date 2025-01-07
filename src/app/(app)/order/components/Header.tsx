@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { FiMenu, FiSearch, FiX } from "react-icons/fi";
-
+import { MdOutlineNoFood } from "react-icons/md";
+import { useSearchParams } from "next/navigation";  // We'll read ?allergens=...
 import { useTranslation } from "@/context/TranslationsContext";
-
+import AllergensModal from "./AllergensModal";
 
 interface BrandingProps {
     headerBackgroundColor?: string;
@@ -25,10 +26,6 @@ interface HeaderProps {
     branding?: BrandingProps;
 }
 
-/**
- * If `isKiosk` => show a top banner + bigger search bar + no menu trigger.
- * Else => normal search bar (the old style) + menu trigger + mobile search toggle.
- */
 export default function Header({
     searchValue,
     onSearchChange,
@@ -42,9 +39,13 @@ export default function Header({
     const { t } = useTranslation();
     const mobileInputRef = useRef<HTMLInputElement>(null);
 
+    // 1) Check if allergens are active => read from ?allergens
+    const searchParams = useSearchParams();
+    const allergensParam = searchParams.get("allergens") || "";
+    const hasAllergens = allergensParam.trim().length > 0;
+
     useEffect(() => {
         if (mobileSearchOpen) {
-            // auto-focus the mobile search input
             setTimeout(() => {
                 mobileInputRef.current?.focus();
             }, 50);
@@ -67,28 +68,25 @@ export default function Header({
     const bgColor = branding?.headerBackgroundColor?.trim() || "#ffffff";
     const isCustomBG =
         bgColor.toLowerCase() !== "#ffffff" && bgColor.toLowerCase() !== "#fff";
-
     const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
-    // Encode the brand’s logo
+    // brand logo if any
     let encodedLogoUrl: string | undefined;
     if (branding?.logoUrl) {
         encodedLogoUrl = encodeURI(branding.logoUrl);
     }
 
-    // Encode the brand’s siteHeaderImg for kiosk
+    // kiosk banner image if any
     let encodedsiteHeaderImg: string | undefined;
     if (branding?.siteHeaderImg) {
         encodedsiteHeaderImg = encodeURI(branding.siteHeaderImg);
     }
     const kioskBannerImg =
         encodedsiteHeaderImg ||
-        "https://static.vecteezy.com/system/resources/previews/030/033/276/large_2x/burger-fry-souse-banner-free-space-text-mockup-fast-food-top-view-empty-professional-phonography-free-photo.jpg";
+        "https://static.vecteezy.com/system/resources/previews/030/033/276/large_2x/...jpg";
 
     // If kiosk => we hide the menu icon
     const showMenuTrigger = !isKiosk;
-
-    // If kiosk => banner + bigger text
     const displayedSiteTitle = branding?.siteTitle || "YourSiteTitle";
 
     // Classes to toggle text color if background is custom
@@ -101,9 +99,30 @@ export default function Header({
     ${isCustomBG ? "text-white hover:text-white/80" : "text-gray-700 hover:text-black"}
   `;
 
+    // 2) Allergens modal
+    const [allergensOpen, setAllergensOpen] = useState(false);
+
     return (
         <>
-            {/* If kiosk => top banner with siteHeaderImg + big site title */}
+            {/* 3) Insert a <style> block with our custom pulse animation + class */}
+            <style>{`
+        @keyframes pulseBrandColor {
+          0% {
+            box-shadow: 0 0 0 0 var(--pulse-color);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+          }
+        }
+        .pulseBrand {
+          animation: pulseBrandColor 2s infinite;
+          border-radius: 9999px; 
+        }
+      `}</style>
+
             {isKiosk && kioskBannerImg && (
                 <div
                     className="
@@ -181,45 +200,46 @@ export default function Header({
 
                     {/* MIDDLE => search bar (kiosk vs. non-kiosk) */}
                     {isKiosk ? (
-                        <div className="hidden sm:inline-flex max-w-[320px] w-[80%] ml-auto">
-                            {/* The container with border, shadow, and rounded corners */}
-                            <div className="
-      relative 
-      flex 
-      w-full 
-      shadow-sm 
-      border 
-      border-gray-300 
-      bg-gray-50 
-      rounded-xl
-    ">
+                        <div className="hidden sm:inline-flex max-w-[320px] w-[80%] ml-auto mr-6">
+                            <div
+                                className="
+                  relative 
+                  flex 
+                  w-full 
+                  shadow-sm 
+                  border 
+                  border-gray-300 
+                  bg-gray-50 
+                  rounded-xl
+                "
+                            >
                                 <FiSearch
                                     className="
-          absolute 
-          left-3 
-          top-3 
-          z-10 
-          text-gray-400 
-          pointer-events-none
-        "
+                    absolute 
+                    left-3 
+                    top-3 
+                    z-10 
+                    text-gray-400 
+                    pointer-events-none
+                  "
                                     size={24}
                                 />
                                 <input
                                     type="text"
                                     className="
-          w-full
-          z-0
-          inline-flex
-          items-center
-          text-gray-700
-          py-3
-          pl-12
-          pr-16
-          text-lg
-          bg-transparent
-          rounded-lg
-          focus:outline-none
-        "
+                    w-full
+                    z-0
+                    inline-flex
+                    items-center
+                    text-gray-700
+                    py-3
+                    pl-12
+                    pr-16
+                    text-lg
+                    bg-transparent
+                    rounded-lg
+                    focus:outline-none
+                  "
                                     placeholder="Search"
                                     value={searchValue}
                                     onChange={handleSearchChange}
@@ -227,18 +247,18 @@ export default function Header({
                                 {searchValue && (
                                     <span
                                         className="
-            absolute 
-            right-2 
-            top-2
-            text-2xl 
-            cursor-pointer 
-            px-3 
-            py-1 
-            bg-red-500 
-            text-white 
-            rounded-xl
-            hover:bg-red-600
-          "
+                      absolute 
+                      right-2 
+                      top-2
+                      text-2xl 
+                      cursor-pointer 
+                      px-3 
+                      py-1 
+                      bg-red-500 
+                      text-white 
+                      rounded-xl
+                      hover:bg-red-600
+                    "
                                         onClick={onClearFilter}
                                     >
                                         X
@@ -247,7 +267,7 @@ export default function Header({
                             </div>
                         </div>
                     ) : (
-                        // NON-KIOSK => restore your original snippet exactly
+                        // NON-KIOSK => original snippet
                         <div className="hidden md:flex items-center ml-auto mr-4 rounded-lg">
                             <div
                                 style={{ borderRadius: "4px" }}
@@ -263,7 +283,6 @@ export default function Header({
                 "
                             >
                                 <FiSearch className="absolute left-2 text-gray-400" size={18} />
-                                {/* original placeholder text etc. */}
                                 <input
                                     type="text"
                                     placeholder={t("order.header.search")}
@@ -304,9 +323,9 @@ export default function Header({
                         </div>
                     )}
 
-                    {/* RIGHT => mobile icons if !kiosk */}
+                    {/* RIGHT => icons */}
                     <div className="flex items-center gap-2">
-                        {/* If kiosk => skip the mobile search icon. Otherwise show it */}
+                        {/* If kiosk => skip mobile search icon */}
                         {!isKiosk && (
                             <button
                                 className={`sm:hidden ${iconBtnClasses}`}
@@ -316,29 +335,51 @@ export default function Header({
                             </button>
                         )}
 
-                        {/* Show menu icon if not kiosk */}
+                        {/* The Allergen Icon => pulses if allergens exist */}
+                        <button
+                            className={`
+                p-2 text-white rounded
+                ${hasAllergens ? "pulseBrand" : ""}
+              `}
+                            style={
+                                hasAllergens
+                                    ? ({ "--pulse-color": brandCTA } as React.CSSProperties)
+                                    : {}
+                            }
+                            onClick={() => setAllergensOpen(true)}
+                        >
+                            <MdOutlineNoFood size={22} color={hasAllergens ? "black" : "black"} />
+                            {/* You can also fill color with brandCTA if you like:
+                  color={hasAllergens ? brandCTA : "black"}
+               */}
+                        </button>
+
                         {showMenuTrigger && (
                             <button className={iconBtnClasses} onClick={onMenuClick}>
                                 <FiMenu size={24} />
                             </button>
                         )}
                     </div>
-                </div >
-            </header >
+                </div>
+            </header>
 
-            {/* MOBILE SEARCH BAR (collapsible), only if open & not kiosk */}
-            {
-                !isKiosk && mobileSearchOpen && (
-                    <div className="sm:hidden bg-white px-2 shadow-sm pb-3 pt-3">
-                        <div className="relative flex w-full rounded-md shadow-sm">
-                            <FiSearch
-                                className="absolute left-2 top-2 z-10 opacity-50 pointer-events-none"
-                                size={20}
-                            />
-                            <input
-                                ref={mobileInputRef}
-                                type="text"
-                                className="
+            {/* Allergens modal */}
+            {allergensOpen && (
+                <AllergensModal onClose={() => setAllergensOpen(false)} />
+            )}
+
+            {/* MOBILE SEARCH BAR */}
+            {!isKiosk && mobileSearchOpen && (
+                <div className="sm:hidden bg-white px-2 shadow-sm pb-3 pt-3">
+                    <div className="relative flex w-full rounded-md shadow-sm">
+                        <FiSearch
+                            className="absolute left-2 top-2 z-10 opacity-50 pointer-events-none"
+                            size={20}
+                        />
+                        <input
+                            ref={mobileInputRef}
+                            type="text"
+                            className="
                 w-full
                 z-0
                 inline-flex
@@ -353,13 +394,13 @@ export default function Header({
                 bg-gray-50
                 focus:outline-none
               "
-                                placeholder="Search"
-                                value={searchValue}
-                                onChange={handleSearchChange}
-                            />
-                            {searchValue && (
-                                <span
-                                    className="
+                            placeholder="Search"
+                            value={searchValue}
+                            onChange={handleSearchChange}
+                        />
+                        {searchValue && (
+                            <span
+                                className="
                   absolute right-2 top-1 text-md
                   cursor-pointer
                   p-1
@@ -369,15 +410,14 @@ export default function Header({
                   rounded
                   hover:bg-red-600
                 "
-                                    onClick={onClearFilter}
-                                >
-                                    X
-                                </span>
-                            )}
-                        </div>
+                                onClick={onClearFilter}
+                            >
+                                X
+                            </span>
+                        )}
                     </div>
-                )
-            }
+                </div>
+            )}
         </>
     );
 }

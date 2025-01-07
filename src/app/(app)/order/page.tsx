@@ -6,19 +6,32 @@ import OrderLayout from './components/OrderLayout';
 export const dynamic = 'force-dynamic';
 
 export default async function OrderPage(context: any) {
-    // 1) Get querystring data (e.g. ?lang=en or ?kiosk=true)
+    // 1) Read querystring data from `context.searchParams`
     const searchParams = context?.searchParams || {};
+
+    // For kiosk
     const kioskParam = searchParams.kiosk; // e.g. "true" or undefined
+    // For allergens
+    const allergensParam = searchParams.allergens || ""; // e.g. "milk,nuts" or ""
+
     // Next 15.1 => must await headers():
     const requestHeaders = await headers();
     const fullHost = requestHeaders.get('host') || '';
     const hostSlug = fullHost.split('.')[0] || 'defaultShop';
 
-    // 2) Build API endpoints
-    const apiProductsUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${hostSlug}`;
+    // 2) Build the base URL for getProducts
+    //    Always pass `host=...`
+    let apiProductsUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${hostSlug}`;
+
+    // If the user has selected allergens => add them
+    if (allergensParam) {
+        apiProductsUrl += `&allergens=${encodeURIComponent(allergensParam)}`;
+    }
+
+    // 3) Build branding endpoint
     const apiBrandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getBranding?host=${hostSlug}`;
 
-    // 3) Fetch both in parallel
+    // 4) Fetch both in parallel
     const [productsRes, brandingRes] = await Promise.all([
         fetch(apiProductsUrl, { cache: 'no-store' }),
         fetch(apiBrandingUrl, { cache: 'no-store' }),
@@ -32,28 +45,25 @@ export default async function OrderPage(context: any) {
         );
     }
 
-    // 4) Parse the JSON from each response
+    // 5) Parse the JSON from each response
     const productsData = await productsRes.json();
     // If brandingRes is not ok => fallback to empty object
     const brandingData = brandingRes.ok ? await brandingRes.json() : {};
 
-    // 5) Extract what we need
+    // 6) Extract what we need
     const categorizedProducts = productsData?.categorizedProducts || [];
     const userLocale = productsData?.userLocale || 'nl';
     const rawBranding = brandingData?.branding || {};
 
-    // 5a) Sort by menuOrder ascending, then by name_nl alphabetically if same order
+    // Sort categories by menuOrder ascending, then name_nl
     categorizedProducts.sort((a: any, b: any) => {
-        // Compare menuOrder first
         if (a.menuOrder !== b.menuOrder) {
             return a.menuOrder - b.menuOrder;
         }
-        // If same menuOrder => compare by name_nl
         return a.name_nl.localeCompare(b.name_nl);
     });
 
-    // 6) Convert payload branding to the shape your OrderLayout wants
-    // For example, if rawBranding.siteLogo?.s3_url is your main logo:
+    // 7) Convert raw branding to your layout’s shape
     const branding = {
         logoUrl: rawBranding.siteLogo?.s3_url ?? '',
         adImage: rawBranding.adImage?.s3_url ?? '',
@@ -61,12 +71,11 @@ export default async function OrderPage(context: any) {
         categoryCardBgColor: rawBranding.categoryCardBgColor ?? '',
         primaryColorCTA: rawBranding.primaryColorCTA ?? '',
         siteTitle: rawBranding.siteTitle ?? '',
-        siteHeaderImg: rawBranding.siteHeaderImg?.s3_url ?? '', // ← ADD this line
-
-        // Add more fields if needed
+        siteHeaderImg: rawBranding.siteHeaderImg?.s3_url ?? '',
+        // etc...
     };
 
-    // 7) Detect kiosk mode: if `?kiosk=true` => isKiosk = true
+    // Check kiosk
     const isKiosk = kioskParam === 'true';
 
     // 8) Render the layout
