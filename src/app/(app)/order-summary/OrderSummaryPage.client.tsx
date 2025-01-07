@@ -35,6 +35,8 @@ type Branding = {
     primaryColorCTA?: string;
     siteTitle?: string;
     siteHeaderImg?: string;
+    googleReviewUrl?: string;
+    tripAdvisorUrl?: string;
 };
 
 type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "unknown";
@@ -391,7 +393,7 @@ export function OrderSummaryPage({
     const orderDetails = order.order_details || [];
     const displayedOrderNumber = order.tempOrdNr ?? order.id;
     const method = order?.fulfillment_method;  // exact name
-    const flow = getStatusFlow(order.fulfillment_method ?? "unknown");
+    const flow = getStatusFlow((order.fulfillment_method ?? "unknown") as FulfillmentMethod);
 
     // Example snippet:
     let fulfillmentInstructions = "";
