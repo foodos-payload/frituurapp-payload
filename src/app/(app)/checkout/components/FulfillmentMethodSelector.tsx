@@ -1,24 +1,16 @@
-// File: src/app/(app)/checkout/components/FulfillmentMethodSelector.tsx
-"use client"
+"use client";
 
-import React, { Dispatch, SetStateAction, useMemo } from "react"
-import { Timeslot } from "./CheckoutPage"
+import React, { Dispatch, SetStateAction, useMemo } from "react";
+import { Timeslot } from "./CheckoutPage";
+// 1) Import the icon
+import { FiCheckCircle } from "react-icons/fi";
 
-// Use the same FulfillmentMethod type as in CheckoutPage
-type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | ""
+type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "";
 
 interface FulfillmentMethodSelectorProps {
-    /** Array of all timeslots from your initialTimeslots */
-    allTimeslots: Timeslot[]
-
-    /** Currently selected fulfillmentMethod */
-    fulfillmentMethod: FulfillmentMethod
-
-    /**
-     * Callback to set the fulfillmentMethod state
-     * in the parent CheckoutPage.
-     */
-    setFulfillmentMethod: Dispatch<SetStateAction<FulfillmentMethod>>
+    allTimeslots: Timeslot[];
+    fulfillmentMethod: FulfillmentMethod;
+    setFulfillmentMethod: Dispatch<SetStateAction<FulfillmentMethod>>;
 }
 
 export default function FulfillmentMethodSelector({
@@ -26,65 +18,69 @@ export default function FulfillmentMethodSelector({
     fulfillmentMethod,
     setFulfillmentMethod,
 }: FulfillmentMethodSelectorProps) {
-    // In your original code, you had "finalTimeslots" which might filter out dine_in if kioskMode is on.
-    // For now, let's keep it simple and use allTimeslots directly:
-    const finalTimeslots = allTimeslots
+    // If needed, rename "finalTimeslots" to something else or keep as-is
+    const finalTimeslots = allTimeslots;
 
-    /**
-     * Identify which fulfillment methods are actually available
-     * by looking at the timeslots returned from the backend.
-     */
+    // Filter which methods actually have timeslots
     const methodsWithTimeslots = useMemo(() => {
-        // e.g. Set { "delivery", "takeaway", "dine_in" }
-        return new Set(finalTimeslots.map(ts => ts.fulfillmentMethod))
-    }, [finalTimeslots])
+        return new Set(finalTimeslots.map(ts => ts.fulfillmentMethod));
+    }, [finalTimeslots]);
 
-    /**
-     * Filter to the subset of possible methods that exist
-     * (i.e., only show "delivery" if there's at least one timeslot with fulfillmentMethod = "delivery")
-     */
+    // Limit possible methods to those that exist in timeslots
     const possibleMethods = useMemo(() => {
-        const allMethods: FulfillmentMethod[] = ["delivery", "takeaway", "dine_in"]
-        return allMethods.filter(m => methodsWithTimeslots.has(m))
-    }, [methodsWithTimeslots])
+        const allMethods: FulfillmentMethod[] = ["delivery", "takeaway", "dine_in"];
+        return allMethods.filter(m => methodsWithTimeslots.has(m));
+    }, [methodsWithTimeslots]);
 
-    // If no timeslots exist, show a warning
     if (possibleMethods.length === 0) {
         return (
             <div>
-                <h2 className="text-xl font-bold">Fulfillment Method</h2>
+                <h2 className="text-xl font-bold mb-2">Fulfillment Method</h2>
                 <p className="text-red-600">
                     No timeslots defined, so no fulfillment methods to choose from.
                 </p>
             </div>
-        )
+        );
     }
 
-    // Otherwise, render the buttons
     return (
-        <div className="space-y-3">
-            <h2 className="text-xl font-bold">Fulfillment Method</h2>
-            <div className="flex gap-3">
-                {possibleMethods.map(method => (
-                    <button
-                        key={method}
-                        onClick={() => setFulfillmentMethod(method)}
-                        className={`
-              p-3 rounded border w-[130px] text-center font-semibold
-              ${fulfillmentMethod === method
-                                ? "bg-blue-100 border-blue-400"
-                                : "bg-white border-gray-300"
-                            }
-            `}
-                    >
-                        {method === "delivery"
-                            ? "Delivery"
-                            : method === "takeaway"
-                                ? "Takeaway"
-                                : "Dine In"}
-                    </button>
-                ))}
+        <div className="mb-4">
+            <h2 className="text-xl font-bold mb-2">Fulfillment Method</h2>
+
+            {/* You can keep a grid or flex layout. Below: 3 columns on small screens, etc. */}
+            <div className="grid gap-3 sm:grid-flow-col">
+                {possibleMethods.map(method => {
+                    const isActive = fulfillmentMethod === method;
+
+                    // Decide button label
+                    let label = "Dine In";
+                    if (method === "delivery") label = "Delivery";
+                    else if (method === "takeaway") label = "Takeaway";
+
+                    return (
+                        <button
+                            key={method}
+                            onClick={() => setFulfillmentMethod(method)}
+                            // 2) Make container position:relative, so we can place an absolute icon
+                            className={`relative flex items-center justify-center gap-2 p-3 
+                rounded-xl border text-sm font-semibold hover:border-green-500 transition-colors
+                ${isActive
+                                    ? "bg-green-50 border-green-500 text-green-700 border-2"
+                                    : "bg-white border-gray-300 text-gray-700"
+                                }
+              `}
+                        >
+                            {label}
+                            {/* 3) If active => show the check icon in bottom-right */}
+                            {isActive && (
+                                <div className="absolute bottom-2 right-2 text-green-600">
+                                    <FiCheckCircle size={20} />
+                                </div>
+                            )}
+                        </button>
+                    );
+                })}
             </div>
         </div>
-    )
+    );
 }

@@ -1,64 +1,65 @@
 // File: src/app/(app)/checkout/components/CheckoutPage.tsx
-"use client"
+"use client";
 
-import React, { useEffect, useState, useMemo } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useCart } from "@/context/CartContext"
+import React, { useEffect, useState, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCart } from "@/context/CartContext";
 
-import FulfillmentMethodSelector from "./FulfillmentMethodSelector"
-import TimeSlotSelector from "./TimeSlotSelector.client"
-import CustomerDetailsForm from "./CustomerDetailsForm"
-import PaymentMethodSelector from "./PaymentMethodSelector"
-import OrderSummary from "./OrderSummary"
+import FulfillmentMethodSelector from "./FulfillmentMethodSelector";
+import TimeSlotSelector from "./TimeSlotSelector";
+import CustomerDetailsForm from "./CustomerDetailsForm";
+import PaymentMethodSelector from "./PaymentMethodSelector";
+import OrderSummary from "./OrderSummary";
+import '../checkout.css';
 
 // A) Types
 export type PaymentMethod = {
-    id: string
-    label: string
-}
+    id: string;
+    label: string;
+};
 
 export type Timeslot = {
-    id: string
-    day: string
-    time: string
-    fulfillmentMethod: string
-    isFullyBooked?: boolean
-}
+    id: string;
+    day: string;
+    time: string;
+    fulfillmentMethod: string;
+    isFullyBooked?: boolean;
+};
 
-type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | ""
+type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "";
 
 interface ShopInfo {
-    id: string
-    name: string
+    id: string;
+    name: string;
     location?: {
-        lat?: number
-        lng?: number
-    }
+        lat?: number;
+        lng?: number;
+    };
     exceptionally_closed_days?: {
-        id?: string
-        date: string      // e.g. "2025-12-24T23:00:00.000Z"
-        reason?: string
-    }[]
+        id?: string;
+        date: string; // e.g. "2025-12-24T23:00:00.000Z"
+        reason?: string;
+    }[];
 }
 interface FulfillmentMethodDoc {
-    id: string
-    method_type: string
-    delivery_fee: number
-    extra_cost_per_km: number
-    minimum_order: number
+    id: string;
+    method_type: string;
+    delivery_fee: number;
+    extra_cost_per_km: number;
+    minimum_order: number;
     settings?: {
-        delivery_radius?: number
-    }
-    enabled: boolean
+        delivery_radius?: number;
+    };
+    enabled: boolean;
 }
 
 // Props from server page
 interface CheckoutPageProps {
-    hostSlug: string
-    initialPaymentMethods: PaymentMethod[]
-    initialTimeslots: Timeslot[]
-    shopInfo?: ShopInfo
-    fulfillmentMethods?: FulfillmentMethodDoc[]
+    hostSlug: string;
+    initialPaymentMethods: PaymentMethod[];
+    initialTimeslots: Timeslot[];
+    shopInfo?: ShopInfo;
+    fulfillmentMethods?: FulfillmentMethodDoc[];
 }
 
 export default function CheckoutPage({
@@ -68,195 +69,196 @@ export default function CheckoutPage({
     shopInfo,
     fulfillmentMethods,
 }: CheckoutPageProps) {
-    const router = useRouter()
-    const searchParams = useSearchParams()
-    const kioskMode = searchParams.get("kiosk") === "true"
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const kioskMode = searchParams.get("kiosk") === "true";
 
     // Logged in user
-    const [loggedInUser, setLoggedInUser] = useState<{ firstName?: string } | null>(null)
+    const [loggedInUser, setLoggedInUser] = useState<{ firstName?: string } | null>(
+        null
+    );
     useEffect(() => {
-        const storedUser = localStorage.getItem("userData")
+        const storedUser = localStorage.getItem("userData");
         if (storedUser) {
             try {
-                setLoggedInUser(JSON.parse(storedUser))
+                setLoggedInUser(JSON.parse(storedUser));
             } catch {
                 // ignore
             }
         }
-    }, [])
+    }, []);
 
     // Fulfillment method
-    const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>("")
+    const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>(
+        ""
+    );
     useEffect(() => {
-        const storedMethod = localStorage.getItem("selectedShippingMethod") || ""
-        const corrected = storedMethod === "dine-in" ? "dine_in" : storedMethod
+        const storedMethod = localStorage.getItem("selectedShippingMethod") || "";
+        const corrected = storedMethod === "dine-in" ? "dine_in" : storedMethod;
         if (["delivery", "takeaway", "dine_in"].includes(corrected)) {
-            setFulfillmentMethod(corrected as FulfillmentMethod)
+            setFulfillmentMethod(corrected as FulfillmentMethod);
         }
-    }, [])
+    }, []);
     useEffect(() => {
         if (fulfillmentMethod) {
-            const storageValue = fulfillmentMethod === "dine_in" ? "dine-in" : fulfillmentMethod
-            localStorage.setItem("selectedShippingMethod", storageValue)
+            const storageValue =
+                fulfillmentMethod === "dine_in" ? "dine-in" : fulfillmentMethod;
+            localStorage.setItem("selectedShippingMethod", storageValue);
         }
-    }, [fulfillmentMethod])
+    }, [fulfillmentMethod]);
 
     // Payment + Timeslots
-    const [allTimeslots] = useState<Timeslot[]>(initialTimeslots)
-    const [paymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods)
-    const [selectedPaymentId, setSelectedPaymentId] = useState("")
-    const [selectedDate, setSelectedDate] = useState("")
-    const [selectedTime, setSelectedTime] = useState("")
+    const [allTimeslots] = useState<Timeslot[]>(initialTimeslots);
+    const [paymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods);
+    const [selectedPaymentId, setSelectedPaymentId] = useState("");
+    const [selectedDate, setSelectedDate] = useState("");
+    const [selectedTime, setSelectedTime] = useState("");
 
     // (D) Build a Map of "YYYY-MM-DD" => reason
-    // If date is closed, we'll store the reason in the map
     const closedDateReasons = useMemo(() => {
-        const map = new Map<string, string>()
+        const map = new Map<string, string>();
         if (shopInfo?.exceptionally_closed_days) {
             shopInfo.exceptionally_closed_days.forEach((dayObj) => {
-                // e.g. "2025-12-24T23:00:00.000Z" => "2025-12-24"
-                const dateStr = dayObj.date.slice(0, 10)
-                const reason = dayObj.reason || "Closed"
-                map.set(dateStr, reason)
-            })
+                const dateStr = dayObj.date.slice(0, 10);
+                const reason = dayObj.reason || "Closed";
+                map.set(dateStr, reason);
+            });
         }
-        return map
-    }, [shopInfo])
+        return map;
+    }, [shopInfo]);
 
     // Customer details
-    const [surname, setSurname] = useState("")
-    const [lastName, setLastName] = useState("")
-    const [address, setAddress] = useState("")
-    const [city, setCity] = useState("")
-    const [postalCode, setPostalCode] = useState("")
-    const [phone, setPhone] = useState("")
-    const [email, setEmail] = useState("")
+    const [surname, setSurname] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [address, setAddress] = useState("");
+    const [city, setCity] = useState("");
+    const [postalCode, setPostalCode] = useState("");
+    const [phone, setPhone] = useState("");
+    const [email, setEmail] = useState("");
 
     // Coupon code
-    const [couponCode, setCouponCode] = useState("")
+    const [couponCode, setCouponCode] = useState("");
 
     // Cart
-    const { items: cartItems, getCartTotal, clearCart } = useCart()
-    const cartTotal = getCartTotal()
+    const { items: cartItems, getCartTotal, clearCart } = useCart();
+    const cartTotal = getCartTotal();
 
     // Delivery logic
     const deliveryMethodDoc = fulfillmentMethods?.find(
         (fm) => fm.method_type === "delivery" && fm.enabled
-    )
-    const deliveryFee = deliveryMethodDoc?.delivery_fee ?? 0
-    const extraCostPerKm = deliveryMethodDoc?.extra_cost_per_km ?? 0
-    const deliveryRadius = deliveryMethodDoc?.settings?.delivery_radius ?? 0
-    const minimumOrder = deliveryMethodDoc?.minimum_order ?? 0
+    );
+    const deliveryFee = deliveryMethodDoc?.delivery_fee ?? 0;
+    const extraCostPerKm = deliveryMethodDoc?.extra_cost_per_km ?? 0;
+    const deliveryRadius = deliveryMethodDoc?.settings?.delivery_radius ?? 0;
+    const minimumOrder = deliveryMethodDoc?.minimum_order ?? 0;
 
-    const [deliveryDistance, setDeliveryDistance] = useState<number | null>(null)
-    const [deliveryError, setDeliveryError] = useState<string | null>(null)
-    const [isWithinRadius, setIsWithinRadius] = useState(true)
+    const [deliveryDistance, setDeliveryDistance] = useState<number | null>(null);
+    const [deliveryError, setDeliveryError] = useState<string | null>(null);
+    const [isWithinRadius, setIsWithinRadius] = useState(true);
 
     // If fulfillmentMethod === 'delivery' => whenever address changes => do distance check
     useEffect(() => {
         async function checkDistance() {
             if (!address || !city || !postalCode) {
-                setDeliveryDistance(null)
-                setDeliveryError(null)
-                setIsWithinRadius(true)
-                return
+                setDeliveryDistance(null);
+                setDeliveryError(null);
+                setIsWithinRadius(true);
+                return;
             }
             try {
-                const url = `/api/calculateDistance?host=${encodeURIComponent(hostSlug)}`
-                    + `&address_1=${encodeURIComponent(address)}`
-                    + `&city=${encodeURIComponent(city)}`
-                    + `&postcode=${encodeURIComponent(postalCode)}`
+                const url =
+                    `/api/calculateDistance?host=${encodeURIComponent(hostSlug)}` +
+                    `&address_1=${encodeURIComponent(address)}` +
+                    `&city=${encodeURIComponent(city)}` +
+                    `&postcode=${encodeURIComponent(postalCode)}`;
 
-                const res = await fetch(url)
-                const data = await res.json()
+                const res = await fetch(url);
+                const data = await res.json();
                 if (data.status === "OK") {
-                    // e.g. data.rows[0].elements[0].distance.value
-                    const distMeters = data.rows[0].elements[0].distance.value
-                    const distKm = distMeters / 1000
-                    setDeliveryDistance(distKm)
+                    const distMeters = data.rows[0].elements[0].distance.value;
+                    const distKm = distMeters / 1000;
+                    setDeliveryDistance(distKm);
 
                     if (deliveryRadius > 0 && distKm > deliveryRadius) {
-                        setIsWithinRadius(false)
-                        setDeliveryError(`You are too far for delivery. Max radius is ${deliveryRadius}km.`)
+                        setIsWithinRadius(false);
+                        setDeliveryError(
+                            `You are too far for delivery. Max radius is ${deliveryRadius}km.`
+                        );
                     } else {
-                        setIsWithinRadius(true)
-                        setDeliveryError(null)
+                        setIsWithinRadius(true);
+                        setDeliveryError(null);
                     }
                 } else {
-                    setDeliveryDistance(null)
-                    setIsWithinRadius(false)
-                    setDeliveryError(data.error || "Failed to calculate distance.")
+                    setDeliveryDistance(null);
+                    setIsWithinRadius(false);
+                    setDeliveryError(data.error || "Failed to calculate distance.");
                 }
             } catch (err) {
-                console.error("Error calculating distance:", err)
-                setDeliveryDistance(null)
-                setIsWithinRadius(false)
-                setDeliveryError("Error calculating distance.")
+                console.error("Error calculating distance:", err);
+                setDeliveryDistance(null);
+                setIsWithinRadius(false);
+                setDeliveryError("Error calculating distance.");
             }
         }
 
         if (fulfillmentMethod === "delivery") {
-            checkDistance()
+            checkDistance();
         } else {
-            setDeliveryDistance(null)
-            setDeliveryError(null)
-            setIsWithinRadius(true)
+            setDeliveryDistance(null);
+            setDeliveryError(null);
+            setIsWithinRadius(true);
         }
-    }, [fulfillmentMethod, address, city, postalCode, hostSlug, deliveryRadius])
+    }, [fulfillmentMethod, address, city, postalCode, hostSlug, deliveryRadius]);
 
     // shipping cost = base fee + ( distKM * extraCostPerKM ) for entire distance
     function getShippingCost() {
-        if (fulfillmentMethod !== "delivery") return 0
-        if (!isWithinRadius) return 0
-        if (!deliveryDistance) return 0  // if no distance => 0 cost
+        if (fulfillmentMethod !== "delivery") return 0;
+        if (!isWithinRadius) return 0;
+        if (!deliveryDistance) return 0; // if no distance => 0 cost
 
-        // entire distance cost
-        const cost = deliveryFee + (deliveryDistance * extraCostPerKm)
-        return cost
+        const cost = deliveryFee + deliveryDistance * extraCostPerKm;
+        return cost;
     }
-    const shippingCost = getShippingCost()
-    const finalTotal = cartTotal + shippingCost
+    const shippingCost = getShippingCost();
+    const finalTotal = cartTotal + shippingCost;
 
     // canProceed => only enable checkout if address passes google check or not needed
     function canProceed(): boolean {
-        if (!fulfillmentMethod) return false
-        if (!selectedDate || !selectedTime) return false
-        if (!selectedPaymentId) return false
+        if (!fulfillmentMethod) return false;
+        if (!selectedDate || !selectedTime) return false;
+        if (!selectedPaymentId) return false;
 
         switch (fulfillmentMethod) {
             case "takeaway":
-                // must fill these
-                if (!surname || !lastName || !phone) return false
-                break
+                if (!surname || !lastName || !phone) return false;
+                break;
 
             case "delivery":
-                // must fill these
-                if (!surname || !lastName || !phone) return false
-                // must have an address => not out of range => distance computed
-                if (!address || !city || !postalCode) return false
-                if (!isWithinRadius) return false
-                if (finalTotal < minimumOrder) return false
-                break
+                if (!surname || !lastName || !phone) return false;
+                if (!address || !city || !postalCode) return false;
+                if (!isWithinRadius) return false;
+                if (finalTotal < minimumOrder) return false;
+                break;
 
             case "dine_in":
-                if (!surname) return false
-                break
+                if (!surname) return false;
+                break;
             default:
-                return false
+                return false;
         }
-        return true
+        return true;
     }
 
     async function handleCheckout() {
         if (!canProceed()) {
-            alert("Please fill all required fields (and be within the radius).")
-            return
+            alert("Please fill all required fields (and be within the radius).");
+            return;
         }
 
-        let selectedStatus = "pending_payment"
-        const pmDoc = paymentMethods.find(pm => pm.id === selectedPaymentId)
+        let selectedStatus = "pending_payment";
+        const pmDoc = paymentMethods.find((pm) => pm.id === selectedPaymentId);
         if (pmDoc?.label?.toLowerCase()?.includes("cash")) {
-            selectedStatus = "awaiting_preparation"
+            selectedStatus = "awaiting_preparation";
         }
 
         const payloadData = {
@@ -276,7 +278,7 @@ export default function CheckoutPage({
                 city,
                 postalCode,
             },
-            orderDetails: cartItems.map(item => ({
+            orderDetails: cartItems.map((item) => ({
                 product: item.productId,
                 name_nl: item.productNameNL,
                 name_en: item.productNameEN,
@@ -286,16 +288,17 @@ export default function CheckoutPage({
                 tax_dinein: item.taxRateDineIn,
                 quantity: item.quantity,
                 price: item.price,
-                subproducts: item.subproducts?.map(sp => ({
-                    subproductId: sp.subproductId,
-                    name_nl: sp.name_nl,
-                    name_en: sp.name_en,
-                    name_de: sp.name_de,
-                    name_fr: sp.name_fr,
-                    price: sp.price,
-                    tax: sp.tax,
-                    tax_dinein: sp.tax_dinein,
-                })) || [],
+                subproducts:
+                    item.subproducts?.map((sp) => ({
+                        subproductId: sp.subproductId,
+                        name_nl: sp.name_nl,
+                        name_en: sp.name_en,
+                        name_de: sp.name_de,
+                        name_fr: sp.name_fr,
+                        price: sp.price,
+                        tax: sp.tax,
+                        tax_dinein: sp.tax_dinein,
+                    })) || [],
             })),
             payments: [
                 {
@@ -305,78 +308,96 @@ export default function CheckoutPage({
             ],
             shippingCost,
             distanceKm: deliveryDistance,
-        }
+        };
 
         try {
             const res = await fetch("/api/submitOrder", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payloadData),
-            })
-            const json = await res.json()
+            });
+            const json = await res.json();
             if (!json.success) {
-                alert("Order creation failed: " + json.message)
-                return
+                alert("Order creation failed: " + json.message);
+                return;
             }
 
-            clearCart()
+            clearCart();
 
-            const kioskParam = kioskMode ? "&kiosk=true" : ""
-            router.push(`/order-summary?orderId=${json.order.id}${kioskParam}`)
+            const kioskParam = kioskMode ? "&kiosk=true" : "";
+            router.push(`/order-summary?orderId=${json.order.id}${kioskParam}`);
         } catch (err) {
-            console.error("Error submitting order:", err)
-            alert("Error submitting order. Check console for details.")
+            console.error("Error submitting order:", err);
+            alert("Error submitting order. Check console for details.");
         }
     }
 
     function handleBackClick() {
-        const kioskParam = kioskMode ? "?kiosk=true" : ""
-        router.push(`/order${kioskParam}`)
+        const kioskParam = kioskMode ? "?kiosk=true" : "";
+        router.push(`/order${kioskParam}`);
     }
 
     function handleLoginClick() {
-        console.log("Navigate to login page or show a login modal, etc.")
+        console.log("Navigate to login page or show a login modal, etc.");
     }
     function handleScanQR() {
-        alert("ScanQR not implemented.")
+        alert("ScanQR not implemented.");
     }
     function handleApplyCoupon() {
-        alert(`Applying coupon code: ${couponCode} (not implemented).`)
+        alert(`Applying coupon code: ${couponCode} (not implemented).`);
     }
     function handleIncrease(productId: string) {
-        alert("handleIncrease stub.")
+        alert("handleIncrease stub.");
     }
     function handleDecrease(productId: string) {
-        alert("handleDecrease stub.")
+        alert("handleDecrease stub.");
     }
     function handleRemoveItem(productId: string) {
-        alert("handleRemoveItem stub.")
+        alert("handleRemoveItem stub.");
     }
 
     return (
-        <div className="flex w-full min-h-screen">
-            {/* Left column */}
-            <div className="w-full md:w-1/2 lg:w-2/3 overflow-y-auto p-4 space-y-6">
-                <button
-                    onClick={handleBackClick}
-                    className="bg-gray-200 text-gray-700 px-3 py-2 rounded"
-                >
-                    ← Back
-                </button>
+        <div className="checkout-form container mx-auto my-16 flex flex-wrap items-start gap-8 justify-evenly lg:gap-20">
+            {/* Left column - main form content */}
+            <div className="w-full max-w-2xl grid gap-8 md:flex-1">
+                {/* Back button */}
+                <div className="flex justify-between mb-2">
+                    <button
+                        onClick={handleBackClick}
+                        className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 flex items-center gap-2"
+                    >
+                        <span className="font-semibold text-sm">←</span>
+                        <span>Forgot something?</span>
+                    </button>
+                </div>
 
                 {/* (A) Hello user / login */}
-                <div className="mb-2">
+                <div className="user-greeting">
                     {loggedInUser ? (
-                        <div className="text-lg font-semibold">
-                            Hello, {loggedInUser.firstName || "User"}!
+                        <div className="mb-3">
+                            <h2 className="text-xl font-semibold">
+                                Hello, {loggedInUser.firstName || "User"}!
+                            </h2>
+                            <div className="mt-1 text-sm">
+                                {/* Example: link to account or logout if you want */}
+                                <button
+                                    onClick={() => alert("Logout stub")}
+                                    className="text-red-600 hover:underline mr-4"
+                                >
+                                    Logout
+                                </button>
+                            </div>
                         </div>
                     ) : (
-                        <button
-                            onClick={handleLoginClick}
-                            className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700"
-                        >
-                            Login
-                        </button>
+                        <div className="flex items-center gap-2 mb-3">
+                            <span>No account?</span>
+                            <button
+                                onClick={handleLoginClick}
+                                className="text-blue-600 font-medium hover:underline"
+                            >
+                                Login / Register
+                            </button>
+                        </div>
                     )}
                 </div>
 
@@ -385,11 +406,12 @@ export default function CheckoutPage({
                     allTimeslots={allTimeslots}
                     fulfillmentMethod={fulfillmentMethod}
                     setFulfillmentMethod={(m) => {
-                        setFulfillmentMethod(m)
-                        setSelectedDate("")
-                        setSelectedTime("")
+                        setFulfillmentMethod(m);
+                        setSelectedDate("");
+                        setSelectedTime("");
                     }}
                 />
+
                 {/* Possibly show a note about radius */}
                 {fulfillmentMethod === "delivery" && deliveryRadius > 0 && (
                     <div className="text-sm text-gray-700 bg-yellow-50 border-l-4 border-yellow-300 p-2 my-2">
@@ -429,7 +451,7 @@ export default function CheckoutPage({
                         setPhone={setPhone}
                         email={email}
                         setEmail={setEmail}
-                        deliveryError={deliveryError} // show error under the address field
+                        deliveryError={deliveryError}
                     />
                 )}
 
@@ -439,12 +461,10 @@ export default function CheckoutPage({
                     selectedPaymentId={selectedPaymentId}
                     setSelectedPaymentId={setSelectedPaymentId}
                 />
-
-                <div className="mb-16"></div>
             </div>
 
             {/* Right column => order summary */}
-            <div className="hidden md:block md:w-1/2 lg:w-1/3 p-4">
+            <div className="w-full max-w-md">
                 <OrderSummary
                     couponCode={couponCode}
                     setCouponCode={setCouponCode}
@@ -459,5 +479,5 @@ export default function CheckoutPage({
                 />
             </div>
         </div>
-    )
+    );
 }
