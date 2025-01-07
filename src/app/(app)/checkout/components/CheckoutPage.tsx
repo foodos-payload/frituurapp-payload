@@ -11,6 +11,7 @@ import CustomerDetailsForm from "./CustomerDetailsForm";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import OrderSummary from "./OrderSummary";
 import "../checkout.css";
+import { useShopBranding } from "@/context/ShopBrandingContext";
 
 // A) Types
 interface MultiSafePaySettings {
@@ -84,6 +85,8 @@ export default function CheckoutPage({
     const router = useRouter();
     const searchParams = useSearchParams();
     const kioskMode = searchParams.get("kiosk") === "true";
+
+    const branding = useShopBranding();
 
     // ADD: track if distance is being fetched
     const [distanceLoading, setDistanceLoading] = useState(false);
@@ -546,6 +549,7 @@ export default function CheckoutPage({
                         setSelectedTime("");
                     }}
                     deliveryRadius={deliveryRadius}
+                    branding={branding}
                 />
 
                 {/* (C) Timeslots */}
@@ -559,6 +563,7 @@ export default function CheckoutPage({
                         setSelectedTime={setSelectedTime}
                         closedDateReasons={closedDateReasons}
                         hostSlug={hostSlug}
+                        branding={branding}
                     />
                 )}
 
@@ -586,6 +591,7 @@ export default function CheckoutPage({
                         phoneRequired={phoneRequired}
                         lastNameRequired={lastNameRequired}
                         distanceLoading={distanceLoading}
+                        branding={branding}
                     />
                 )}
 
@@ -594,6 +600,7 @@ export default function CheckoutPage({
                     paymentMethods={paymentMethods}
                     selectedPaymentId={selectedPaymentId}
                     setSelectedPaymentId={setSelectedPaymentId}
+                    branding={branding}
                 />
             </div>
 
@@ -610,6 +617,7 @@ export default function CheckoutPage({
                     shippingCost={shippingCost}
                     finalTotal={finalTotal}
                     fulfillmentMethod={fulfillmentMethod}
+                    branding={branding}
                 />
             </div>
         </div>

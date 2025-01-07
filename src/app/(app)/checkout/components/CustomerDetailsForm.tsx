@@ -4,6 +4,12 @@
 import React from "react";
 import AddressAutocomplete from "./AddressAutocomplete";
 
+type Branding = {
+    /** e.g. "#ECAA02" or some other brand color */
+    primaryColorCTA?: string;
+    // ...
+};
+
 interface CustomerDetailsFormProps {
     fulfillmentMethod: "delivery" | "takeaway" | "dine_in" | "";
     surname: string;
@@ -31,6 +37,7 @@ interface CustomerDetailsFormProps {
     lastNameRequired?: boolean;
 
     distanceLoading?: boolean;
+    branding: Branding; // <-- NEW
 }
 
 export default function CustomerDetailsForm({

@@ -6,6 +6,12 @@ import { FiCheckCircle } from "react-icons/fi";
 import { IoCashOutline } from "react-icons/io5";
 import { PaymentMethod } from "./CheckoutPage";
 
+type Branding = {
+    /** e.g. "#ECAA02" or some other brand color */
+    primaryColorCTA?: string;
+    // ...
+};
+
 /** 
  * Example shape:
  *   paymentMethods = [
@@ -26,6 +32,7 @@ interface PaymentMethodSelectorProps {
     paymentMethods: PaymentMethod[];
     selectedPaymentId: string;
     setSelectedPaymentId: Dispatch<SetStateAction<string>>;
+    branding: Branding; // <-- NEW
 }
 
 export default function PaymentMethodSelector({

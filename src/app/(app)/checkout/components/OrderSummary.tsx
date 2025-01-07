@@ -5,6 +5,12 @@ import React from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { useCart, getLineItemSignature } from "@/context/CartContext";
 
+type Branding = {
+    /** e.g. "#ECAA02" or some other brand color */
+    primaryColorCTA?: string;
+    // ...
+};
+
 interface OrderSummaryProps {
     couponCode: string;
     setCouponCode: (value: string) => void;
@@ -17,6 +23,8 @@ interface OrderSummaryProps {
     shippingCost: number;
     finalTotal: number;
     fulfillmentMethod: "delivery" | "takeaway" | "dine_in" | "";
+
+    branding: Branding; // <-- NEW
 }
 
 export default function OrderSummary({

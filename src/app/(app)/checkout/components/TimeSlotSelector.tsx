@@ -5,6 +5,12 @@ import { Timeslot } from "./CheckoutPage";
 
 type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "";
 
+type Branding = {
+    /** e.g. "#ECAA02" or some other brand color */
+    primaryColorCTA?: string;
+    // ...
+};
+
 interface EnhancedTimeslot extends Timeslot {
     date?: string;
     maxOrders?: number;
@@ -20,6 +26,7 @@ interface TimeSlotSelectorProps {
     selectedTime: string;
     setSelectedTime: React.Dispatch<React.SetStateAction<string>>;
     closedDateReasons?: Map<string, string>;
+    branding: Branding; // <-- NEW
 }
 
 export default function TimeSlotSelector({
