@@ -16,6 +16,7 @@ import { FiChevronRight } from "react-icons/fi";
 import { CountdownTimer } from "./CountdownTimer";
 import './ordersummary.css';
 
+import { useTranslation } from "@/context/TranslationsContext";
 
 // 1) Types
 type OrderStatus =
@@ -169,14 +170,8 @@ export function OrderSummaryPage({
     branding,
     fulfillments,
 }: OrderSummaryPageProps) {
+    const { locale } = useTranslation();
     const router = useRouter();
-
-    // 3.1) We read locale from localStorage (default "nl" if not found)
-    const [userLocale, setUserLocale] = useState("nl");
-    useEffect(() => {
-        const storedLocale = localStorage.getItem("userLocale") || "nl";
-        setUserLocale(storedLocale);
-    }, []);
 
     // 3.2) Kiosk countdown
     const [countdown, setCountdown] = useState(30);
@@ -589,7 +584,7 @@ export function OrderSummaryPage({
                             ) : (
                                 <div className="space-y-3 p-3">
                                     {orderDetails.map((detail) => {
-                                        const itemName = pickDetailName(detail, userLocale);
+                                        const itemName = pickDetailName(detail, locale);
                                         return (
                                             <div
                                                 key={detail.id}
@@ -609,7 +604,7 @@ export function OrderSummaryPage({
                                                 {(detail.subproducts ?? []).length > 0 && (
                                                     <ul className="ml-4 list-disc list-inside mt-1 text-gray-500">
                                                         {detail.subproducts?.map((sp) => {
-                                                            const spName = pickSubproductName(sp, userLocale);
+                                                            const spName = pickSubproductName(sp, locale);
                                                             return (
                                                                 <li
                                                                     key={sp.id}
@@ -782,7 +777,7 @@ export function OrderSummaryPage({
                         ) : (
                             <div className="space-y-3 p-3">
                                 {orderDetails.map((detail) => {
-                                    const itemName = pickDetailName(detail, userLocale);
+                                    const itemName = pickDetailName(detail, locale);
                                     return (
                                         <div
                                             key={detail.id}
@@ -802,7 +797,7 @@ export function OrderSummaryPage({
                                             {(detail.subproducts ?? []).length > 0 && (
                                                 <ul className="ml-4 list-disc list-inside mt-1 text-gray-500">
                                                     {detail.subproducts?.map((sp) => {
-                                                        const spName = pickSubproductName(sp, userLocale);
+                                                        const spName = pickSubproductName(sp, locale);
                                                         return (
                                                             <li
                                                                 key={sp.id}
