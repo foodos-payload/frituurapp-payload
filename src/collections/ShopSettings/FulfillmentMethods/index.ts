@@ -212,6 +212,15 @@ export const FulfillmentMethods: CollectionConfig = {
                         },
                     },
                 },
+                {
+                    name: 'shared_booked_slots',
+                    type: 'checkbox',
+                    label: 'Share Booked Slots',
+                    defaultValue: false,
+                    admin: {
+                        description: 'If true, this method’s orders will block timeslots for other methods that also share slots.',
+                    },
+                },
             ],
         },
     ],

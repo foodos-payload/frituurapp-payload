@@ -1,12 +1,12 @@
 // File: src/app/(app)/checkout/components/CheckoutPage.tsx
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCart } from "@/context/CartContext"
 
 import FulfillmentMethodSelector from "./FulfillmentMethodSelector"
-import TimeSlotSelector from "./TimeSlotSelector"
+import TimeSlotSelector from "./TimeSlotSelector.client"
 import CustomerDetailsForm from "./CustomerDetailsForm"
 import PaymentMethodSelector from "./PaymentMethodSelector"
 import OrderSummary from "./OrderSummary"
@@ -34,6 +34,11 @@ interface ShopInfo {
         lat?: number
         lng?: number
     }
+    exceptionally_closed_days?: {
+        id?: string
+        date: string      // e.g. "2025-12-24T23:00:00.000Z"
+        reason?: string
+    }[]
 }
 interface FulfillmentMethodDoc {
     id: string
@@ -54,18 +59,6 @@ interface CheckoutPageProps {
     initialTimeslots: Timeslot[]
     shopInfo?: ShopInfo
     fulfillmentMethods?: FulfillmentMethodDoc[]
-}
-
-// Next 10 days helper
-function getNextTenDates(): Date[] {
-    const dates: Date[] = []
-    const now = new Date()
-    for (let i = 0; i < 10; i++) {
-        const d = new Date(now)
-        d.setDate(now.getDate() + i)
-        dates.push(d)
-    }
-    return dates
 }
 
 export default function CheckoutPage({
@@ -112,9 +105,23 @@ export default function CheckoutPage({
     const [allTimeslots] = useState<Timeslot[]>(initialTimeslots)
     const [paymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods)
     const [selectedPaymentId, setSelectedPaymentId] = useState("")
-    const nextTenDates = getNextTenDates()
     const [selectedDate, setSelectedDate] = useState("")
     const [selectedTime, setSelectedTime] = useState("")
+
+    // (D) Build a Map of "YYYY-MM-DD" => reason
+    // If date is closed, we'll store the reason in the map
+    const closedDateReasons = useMemo(() => {
+        const map = new Map<string, string>()
+        if (shopInfo?.exceptionally_closed_days) {
+            shopInfo.exceptionally_closed_days.forEach((dayObj) => {
+                // e.g. "2025-12-24T23:00:00.000Z" => "2025-12-24"
+                const dateStr = dayObj.date.slice(0, 10)
+                const reason = dayObj.reason || "Closed"
+                map.set(dateStr, reason)
+            })
+        }
+        return map
+    }, [shopInfo])
 
     // Customer details
     const [surname, setSurname] = useState("")
@@ -395,11 +402,12 @@ export default function CheckoutPage({
                     <TimeSlotSelector
                         fulfillmentMethod={fulfillmentMethod}
                         allTimeslots={allTimeslots}
-                        nextTenDates={nextTenDates}
                         selectedDate={selectedDate}
                         setSelectedDate={setSelectedDate}
                         selectedTime={selectedTime}
                         setSelectedTime={setSelectedTime}
+                        closedDateReasons={closedDateReasons}
+                        hostSlug={hostSlug}
                     />
                 )}
 

@@ -197,6 +197,7 @@ export const Orders: CollectionConfig = {
         { label: { en: 'Ready for Pickup' }, value: 'ready_for_pickup' },
         { label: { en: 'In Delivery' }, value: 'in_delivery' },
         { label: { en: 'Complete' }, value: 'complete' },
+        { label: { en: 'Cancelled' }, value: 'cancelled' },
       ],
       label: { en: 'Status' },
       admin: {

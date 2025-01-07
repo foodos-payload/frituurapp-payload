@@ -326,6 +326,10 @@ export interface FulfillmentMethod {
      * Add specific instructions for this method for kiosk.
      */
     kiosk_pickup_instructions?: string | null;
+    /**
+     * If true, this method’s orders will block timeslots for other methods that also share slots.
+     */
+    shared_booked_slots?: boolean | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -1301,7 +1305,8 @@ export interface Order {
     | 'in_preparation'
     | 'ready_for_pickup'
     | 'in_delivery'
-    | 'complete';
+    | 'complete'
+    | 'cancelled';
   /**
    * Type of order (POS, Web, or Kiosk).
    */
@@ -1626,6 +1631,7 @@ export interface FulfillmentMethodsSelect<T extends boolean = true> {
         delivery_radius?: T;
         pickup_instructions?: T;
         kiosk_pickup_instructions?: T;
+        shared_booked_slots?: T;
       };
   updatedAt?: T;
   createdAt?: T;
