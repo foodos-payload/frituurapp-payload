@@ -322,6 +322,10 @@ export interface FulfillmentMethod {
      * Add specific instructions for this method.
      */
     pickup_instructions?: string | null;
+    /**
+     * Add specific instructions for this method for kiosk.
+     */
+    kiosk_pickup_instructions?: string | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -1621,6 +1625,7 @@ export interface FulfillmentMethodsSelect<T extends boolean = true> {
     | {
         delivery_radius?: T;
         pickup_instructions?: T;
+        kiosk_pickup_instructions?: T;
       };
   updatedAt?: T;
   createdAt?: T;

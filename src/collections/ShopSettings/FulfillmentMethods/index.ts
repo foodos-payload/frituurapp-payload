@@ -194,6 +194,24 @@ export const FulfillmentMethods: CollectionConfig = {
                         },
                     },
                 },
+                {
+                    name: 'kiosk_pickup_instructions',
+                    type: 'textarea',
+                    label: {
+                        en: 'Instructions kiosk',
+                        nl: 'Instructies kiosk',
+                        de: 'Anweisungen kiosk',
+                        fr: 'Instructions kiosk',
+                    },
+                    admin: {
+                        description: {
+                            en: 'Add specific instructions for this method for kiosk.',
+                            nl: 'Voeg specifieke instructies toe voor klanten kiosk.',
+                            de: 'Fügen Sie spezifische Anweisungen für bestellungen kiosk.',
+                            fr: 'Ajoutez des instructions spécifiques pour les commandes kiosk.',
+                        },
+                    },
+                },
             ],
         },
     ],

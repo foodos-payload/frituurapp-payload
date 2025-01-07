@@ -393,20 +393,30 @@ export function OrderSummaryPage({
     const method = order?.fulfillment_method;  // exact name
     const flow = getStatusFlow(order.fulfillment_method ?? "unknown");
 
-    // Build instructions from fulfillments array
+    // Example snippet:
     let fulfillmentInstructions = "";
+
     if (fulfillments && Array.isArray(fulfillments)) {
+        // 1) Find the matching doc for the current order’s method
         const matched = fulfillments.find((f) => f.method_type === method);
-        fulfillmentInstructions = matched?.settings?.pickup_instructions || "";
+
+        if (matched && matched.settings) {
+            // 2) Kiosk mode => read kiosk_pickup_instructions
+            //    Non-kiosk => read pickup_instructions
+            if (kioskMode) {
+                fulfillmentInstructions = matched.settings.kiosk_pickup_instructions || "";
+            } else {
+                fulfillmentInstructions = matched.settings.pickup_instructions || "";
+            }
+        }
     }
 
-    // If the order has a name => prepend “Hi Jonas, ”
+    // If the order has a name => prepend "Hi Jonas, "
     if (fulfillmentInstructions && order.customer_details?.firstName) {
         fulfillmentInstructions = `Hi ${order.customer_details.firstName}, ${fulfillmentInstructions}`;
     }
 
-    // Example: if we have “dine_in” => “A staff member will bring your order…”
-    // (some custom logic you had before)
+    // Example of additional instructions logic (unchanged):
     let instructionsText = "";
     if (method === "delivery") {
         instructionsText = "Delivery instructions here...";
@@ -462,40 +472,188 @@ export function OrderSummaryPage({
         <div
             className={
                 kioskMode
-                    ? "relative text-4xl w-full min-h-[600px] flex flex-col items-center"
-                    : "relative text-base w-full min-h-[600px] flex flex-col items-center justify-center p-0 sm:8 text-gray-800"
+                    ? "relative w-full min-h-[600px] flex flex-col items-center justify-center text-4xl p-6"
+                    : "relative w-full min-h-[600px] flex flex-col items-center justify-center text-base p-0 sm:p-8 text-gray-800"
             }
         >
-            {/* Show "Refreshing..." if SWR is revalidating */}
-            {/* {showRefreshingBadge && (
-                <div className="absolute top-2 right-2 bg-white/70 px-4 py-2 rounded shadow flex items-center gap-2 text-sm text-gray-600 z-50">
-                    <svg
-                        className="animate-spin -ml-1 mr-1 h-4 w-4 text-gray-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                        />
-                        <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.374 0 0 5.374 0 12h4z"
-                        />
-                    </svg>
-                    Refreshing...
-                </div>
-            )} */}
+            {/* Kiosk Mode => simplified UI */}
+            {kioskMode ? (
+                <>
+                    <div className="w-full max-w-3xl shadow-md rounded-xl overflow-hidden relative flex flex-col justify-center">
+                        {/* Top color bar => dynamic or fallback red-600 */}
+                        <div
+                            className="p-4 text-white flex items-center justify-between"
+                            style={{ backgroundColor: branding?.headerBackgroundColor || "#dc2626" }}
+                        >
+                            {/* Logo on the left, if branding.logoUrl exists */}
+                            {branding?.logoUrl && (
+                                <img
+                                    src={branding.logoUrl}
+                                    alt="Site Logo"
+                                    className="mr-2 max-h-40 w-auto object-contain"
+                                />
+                            )}
 
-            {/* Non-kiosk => fancy ticket UI */}
-            {!kioskMode && (
-                <div className="w-full max-w-xl bg-white shadow-lg rounded-xl overflow-hidden relative flex flex-col min-h-[550px] ">
+                            {/* order date time or fallback */}
+                            <div className="font-bold text-lg uppercase tracking-wider">
+                                <div className="text-4xl font-semibold mb-1">
+                                    Order #{displayedOrderNumber}
+                                </div>
+                                <div className="text-white-500 text-xl">
+                                    {order.fulfillment_time || "No time"}{" "}
+                                    {order.fulfillment_date
+                                        ? new Date(order.fulfillment_date).toLocaleDateString()
+                                        : ""}
+                                </div>
+                            </div>
+                        </div>
+                        {/* Single large badge for the current status */}
+                        <div className="flex items-center justify-center">
+                            <div className="mb-16 mt-16  text-center flex">
+                                {(() => {
+                                    // We'll just show one big badge
+                                    const { label, colorClasses } = getStatusColorAndLabel(order.status);
+                                    // Optionally, add a pulse effect if "in_preparation" or so
+                                    const textTailwindClass = extractTextColorClass(colorClasses);
+                                    const colorMap: Record<string, string> = {
+                                        "text-blue-800": "rgba(59,130,246,0.7)",
+                                        "text-orange-800": "rgba(217,119,6,0.7)",
+                                    };
+                                    const pulseColor = colorMap[textTailwindClass] ?? "rgba(59,130,246,0.7)";
+                                    const activeStyles = {
+                                        border: "2px solid currentColor",
+                                        "--pulse-color": pulseColor,
+                                    };
+
+                                    return (
+                                        <div
+                                            className={`
+                                            ${colorClasses}
+                                            px-6 py-3
+                                            rounded-full
+                                            text-4xl
+                                            animate-pulse-border 
+                                        `}
+                                            style={activeStyles as React.CSSProperties}
+                                        >
+                                            {label}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+
+                        {/* Show the instructions bigger */}
+                        {fulfillmentInstructions && (
+                            <div className="text-center text-2xl max-w-3xl bg-gray-100 text-gray-800 p-6 rounded-lg shadow-lg font-semibold">
+                                {fulfillmentInstructions}
+                            </div>
+                        )}
+
+                        {/* dashed line */}
+                        <div className="relative">
+                            <svg
+                                className="text-gray-400 mx-auto"
+                                width="100%"
+                                height="20"
+                                preserveAspectRatio="none"
+                            >
+                                <line
+                                    x1="0"
+                                    y1="10"
+                                    x2="100%"
+                                    y2="10"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeDasharray="6,6"
+                                />
+                            </svg>
+                        </div>
+
+                        {/* main body => details, notes, total */}
+                        <div className="p-5 flex flex-col sm:flex-row items-center justify-between">
+                            {order.customer_note && (
+                                <div className="text-xs text-gray-400 italic mt-1 text-center sm:text-right">
+                                    Note: {order.customer_note}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto pt-1 pb-0">
+                            {orderDetails.length < 1 ? (
+                                <p className="text-gray-500 text-sm p-3">
+                                    No products in order.
+                                </p>
+                            ) : (
+                                <div className="space-y-3 p-3">
+                                    {orderDetails.map((detail) => {
+                                        const itemName = pickDetailName(detail, userLocale);
+                                        return (
+                                            <div
+                                                key={detail.id}
+                                                className="bg-white shadow-sm p-3 rounded text-xl"
+                                            >
+                                                {/* row => quantity left, name+price right */}
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <div className="text-gray-600">x {detail.quantity}</div>
+                                                    <div className="flex-1 ml-3 flex justify-between">
+                                                        <div className="font-semibold">{itemName}</div>
+                                                        <div className="ml-4 text-gray-500">
+                                                            €{detail.price?.toFixed(2)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* subproducts */}
+                                                {(detail.subproducts ?? []).length > 0 && (
+                                                    <ul className="ml-4 list-disc list-inside mt-1 text-gray-500">
+                                                        {detail.subproducts?.map((sp) => {
+                                                            const spName = pickSubproductName(sp, userLocale);
+                                                            return (
+                                                                <li
+                                                                    key={sp.id}
+                                                                    className="flex justify-between"
+                                                                >
+                                                                    <span>{spName}</span>
+                                                                    <span className="ml-2 text-gray-400">
+                                                                        +€{sp.price?.toFixed(2) ?? "?"}
+                                                                    </span>
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* total */}
+                            <div className="flex items-center justify-end p-3 pt-3">
+                                <span className="text-3xl font-bold">
+                                    €{totalPaid.toFixed(2)}
+                                </span>
+                            </div>
+
+
+                        </div>
+
+
+                        {/* Big "Create New Order" button with countdown */}
+                        <button
+                            id="newOrderButton"
+                            onClick={handleCreateNewOrderClick}
+                            className="bg-green-600 text-white px-8 py-4 mt-12 rounded text-4xl"
+                            style={{ backgroundColor: brandCTA }}
+                        >
+                            Create New Order ({countdown}s)
+                        </button>
+                    </div>
+
+                </>
+            ) : (
+                // Non-Kiosk => the fancy "ticket" UI card
+                <div className="w-full max-w-xl bg-white shadow-lg rounded-xl overflow-hidden relative flex flex-col min-h-[550px]">
                     {/* Top color bar => dynamic or fallback red-600 */}
                     <div
                         className="p-4 text-white flex items-center justify-between"
@@ -513,10 +671,13 @@ export function OrderSummaryPage({
                         {/* order date time or fallback */}
                         <div className="font-bold text-lg uppercase tracking-wider">
                             <div className="text-2xl font-semibold mb-1">
-                                Order #{order.tempOrdNr ?? order.id}
+                                Order #{displayedOrderNumber}
                             </div>
                             <div className="text-white-500 text-sm">
-                                {order.fulfillment_time || "No time"} {formatFulfillmentDate(order.fulfillment_date)}
+                                {order.fulfillment_time || "No time"}{" "}
+                                {order.fulfillment_date
+                                    ? new Date(order.fulfillment_date).toLocaleDateString()
+                                    : ""}
                             </div>
                         </div>
                     </div>
@@ -528,57 +689,52 @@ export function OrderSummaryPage({
                             const isCurrent = step === order.status;
                             const isLastStep = index === flow.length - 1;
 
-                            // e.g. colorClasses might be "bg-blue-100 text-blue-800"
-                            // We parse out "text-blue-800"
                             const textTailwindClass = extractTextColorClass(colorClasses);
-                            // => "text-blue-800"
-
-                            // Map to an actual RGBA
                             const colorMap: Record<string, string> = {
                                 "text-blue-800": "rgba(59,130,246,0.7)",
                                 "text-orange-800": "rgba(217,119,6,0.7)",
-                                // add more as needed
                             };
                             const pulseColor = colorMap[textTailwindClass] ?? "rgba(59,130,246,0.7)";
-
-                            // If active => add border & our pulse class, plus set --pulse-color
                             const activeStyles = isCurrent
                                 ? {
-                                    border: "2px solid currentColor", // or "2px solid transparent" + border-current 
-                                    // We pass the color to the custom property
-                                    // Notice the double quotes for inline style in TSX
-                                    "--pulse-color": pulseColor
+                                    border: "2px solid currentColor",
+                                    "--pulse-color": pulseColor,
                                 }
                                 : {};
 
-                            // Lower opacity for non-active
                             const opacityClass = isCurrent ? "opacity-100" : "opacity-50";
 
                             return (
                                 <div key={step} className="flex items-center">
                                     <div
                                         className={`
-                                            ${colorClasses}
-                                            ${opacityClass}
-                                            px-2 py-1 rounded-full text-md transition-colors
-                                            ${isCurrent ? "animate-pulse-border" : ""}
-                                            `}
+                          ${colorClasses}
+                          ${opacityClass}
+                          px-2 py-1 rounded-full text-md transition-colors
+                          ${isCurrent ? "animate-pulse-border" : ""}
+                        `}
                                         style={activeStyles as React.CSSProperties}
                                     >
                                         {label}
                                     </div>
-
                                     {!isLastStep && (
                                         <FiChevronRight className="mx-1 text-gray-400" />
                                     )}
                                 </div>
                             );
                         })}
-
-
                     </div>
-                    {targetDate && <CountdownTimer targetDate={targetDate} />}
 
+                    {/* Optional countdown timer for non-kiosk (or remove if not wanted) */}
+                    {order.fulfillment_date && order.fulfillment_time && (
+                        <CountdownTimer
+                            targetDate={new Date(
+                                `${order.fulfillment_date}T${order.fulfillment_time}:00`
+                            )}
+                        />
+                    )}
+
+                    {/* fulfillment instructions */}
                     {fulfillmentInstructions && (
                         <div className="flex items-center justify-center">
                             <div className="mt-4 p-3 w-[100%] sm:w-[75%] rounded text-sm font-bold text-gray-800 bg-gray-100 text-center">
@@ -586,6 +742,7 @@ export function OrderSummaryPage({
                             </div>
                         </div>
                     )}
+
                     {/* dashed line */}
                     <div className="relative">
                         <svg
@@ -606,64 +763,50 @@ export function OrderSummaryPage({
                         </svg>
                     </div>
 
-                    {/* main body => order info */}
+                    {/* main body => details, notes, total */}
                     <div className="p-5 flex flex-col sm:flex-row items-center justify-between">
-
-                        <div className="mt-4 sm:mt-0 text-center sm:text-right">
-                            {order.customer_note && (
-                                <div className="text-xs text-gray-400 italic mt-1">
-                                    Note: {order.customer_note}
-                                </div>
-                            )}
-                        </div>
+                        {order.customer_note && (
+                            <div className="text-xs text-gray-400 italic mt-1 text-center sm:text-right">
+                                Note: {order.customer_note}
+                            </div>
+                        )}
                     </div>
 
-                    {/* bottom area => details + instructions + total */}
                     <div className="flex-1 overflow-y-auto pt-1 pb-0">
                         {orderDetails.length < 1 ? (
-                            <p className="text-gray-500 text-sm">No products in order.</p>
+                            <p className="text-gray-500 text-sm p-3">
+                                No products in order.
+                            </p>
                         ) : (
                             <div className="space-y-3 p-3">
                                 {orderDetails.map((detail) => {
                                     const itemName = pickDetailName(detail, userLocale);
-
                                     return (
                                         <div
                                             key={detail.id}
                                             className="bg-white shadow-sm p-3 rounded text-sm"
                                         >
-                                            {/* Top row => Quantity and “Name + price” on the same row */}
+                                            {/* row => quantity left, name+price right */}
                                             <div className="flex items-center justify-between mb-1">
-                                                {/* Quantity on the left */}
-                                                <div className="text-left text-gray-600">
-                                                    x {detail.quantity}
-                                                </div>
-
-                                                {/* Name + price on the right */}
+                                                <div className="text-gray-600">x {detail.quantity}</div>
                                                 <div className="flex-1 ml-3 flex justify-between">
-                                                    {/* Product name */}
-                                                    <div className="font-semibold">
-                                                        {itemName}
-                                                    </div>
-
-                                                    {/* Price */}
+                                                    <div className="font-semibold">{itemName}</div>
                                                     <div className="ml-4 text-gray-500">
                                                         €{detail.price?.toFixed(2)}
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* Subproducts list */}
+                                            {/* subproducts */}
                                             {(detail.subproducts ?? []).length > 0 && (
                                                 <ul className="ml-4 list-disc list-inside mt-1 text-gray-500">
                                                     {detail.subproducts?.map((sp) => {
                                                         const spName = pickSubproductName(sp, userLocale);
-
                                                         return (
-                                                            <li key={sp.id} className="flex justify-between">
-                                                                {/* Subproduct name */}
+                                                            <li
+                                                                key={sp.id}
+                                                                className="flex justify-between"
+                                                            >
                                                                 <span>{spName}</span>
-                                                                {/* Subproduct price */}
                                                                 <span className="ml-2 text-gray-400">
                                                                     +€{sp.price?.toFixed(2) ?? "?"}
                                                                 </span>
@@ -678,21 +821,16 @@ export function OrderSummaryPage({
                             </div>
                         )}
 
-                        {/* Fulfillment instructions, if any */}
-                        {/* {instructionsText && (
-                            <div className="mt-6 p-3 border border-dashed border-gray-300 rounded text-sm text-gray-600">
-                                {instructionsText}
-                            </div>
-                        )} */}
+                        {/* total */}
                         <div className="flex items-center justify-end p-3 pt-3">
                             <span className="text-lg font-bold">
                                 €{totalPaid.toFixed(2)}
                             </span>
                         </div>
-                        {/* IF either googleReviewUrl or tripAdvisorUrl is present => show dashed line + badges */}
+
+                        {/* If either googleReviewUrl or tripAdvisorUrl => dashed line + badges */}
                         {(branding?.googleReviewUrl || branding?.tripAdvisorUrl) && (
                             <>
-                                {/* small dashed line */}
                                 <div className="relative">
                                     <svg
                                         className="text-gray-300 mx-auto"
@@ -714,55 +852,57 @@ export function OrderSummaryPage({
 
                                 {/* Badge row */}
                                 <div className="p-3 flex flex-col sm:flex-row items-center justify-center gap-4">
-                                    {/* Google Review badge, if present */}
+                                    {/* Google Review */}
                                     {branding.googleReviewUrl && (
                                         <a
                                             href={branding.googleReviewUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="
-                                                    inline-flex items-center
-                                                    bg-white border border-gray-300
-                                                    px-3 py-4
-                                                    text-sm text-gray-700
-                                                    rounded shadow-sm
-                                                    hover:shadow hover:bg-gray-50
-                                                    transition
-                                                "
+                            inline-flex items-center
+                            bg-white border border-gray-300
+                            px-3 py-4
+                            text-sm text-gray-700
+                            rounded shadow-sm
+                            hover:shadow hover:bg-gray-50
+                            transition
+                          "
                                         >
-                                            {/* Google logo image */}
                                             <img
                                                 src="https://lh3.googleusercontent.com/COxitqgJr1sJnIDe8-jiKhxDx1FrYbtRHKJ9z_hELisAlapwE9LUPh6fcXIfb5vwpbMl4xl9H9TRFPc5NOO8Sb3VSgIBrfRYvW6cUA"
                                                 alt="Google"
                                                 className="h-5 w-auto object-contain mr-2"
                                             />
-                                            <span className="font-medium">Leave a Google Review</span>
+                                            <span className="font-medium">
+                                                Leave a Google Review
+                                            </span>
                                         </a>
                                     )}
 
-                                    {/* TripAdvisor badge, if present */}
+                                    {/* TripAdvisor */}
                                     {branding.tripAdvisorUrl && (
                                         <a
                                             href={branding.tripAdvisorUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="
-                                                    inline-flex items-center
-                                                    bg-white border border-gray-300
-                                                    px-3 py-4
-                                                    text-sm text-gray-700
-                                                    rounded shadow-sm
-                                                    hover:shadow hover:bg-gray-50
-                                                    transition
-                                                "
+                            inline-flex items-center
+                            bg-white border border-gray-300
+                            px-3 py-4
+                            text-sm text-gray-700
+                            rounded shadow-sm
+                            hover:shadow hover:bg-gray-50
+                            transition
+                          "
                                         >
-                                            {/* TripAdvisor logo image */}
                                             <img
                                                 src="https://static.tacdn.com/img2/brand_refresh/Tripadvisor_lockup_horizontal_secondary_registered.svg"
                                                 alt="TripAdvisor"
                                                 className="h-5 w-auto object-contain mr-2"
                                             />
-                                            <span className="font-medium">Review on TripAdvisor</span>
+                                            <span className="font-medium">
+                                                Review on TripAdvisor
+                                            </span>
                                         </a>
                                     )}
                                 </div>
@@ -770,41 +910,30 @@ export function OrderSummaryPage({
                         )}
                     </div>
 
+                    {/* "Create New Order" at bottom */}
                     <div>
-                        {!kioskMode && (
-                            <button
-                                onClick={handleCreateNewOrderClick}
-                                style={{ backgroundColor: brandCTA }}
-                                className="
-                                    block
-                                    w-full
-                                    mt-0
-                                    text-white
-                                    px-4 py-3
-                                    rounded-b-xl
-                                    text-center
-                                    text-lg
-                                    "
-                            >
-                                Create New Order
-                            </button>
-                        )}
+                        <button
+                            onClick={handleCreateNewOrderClick}
+                            style={{ backgroundColor: brandCTA }}
+                            className="
+                    block
+                    w-full
+                    mt-0
+                    text-white
+                    px-4 py-3
+                    rounded-b-xl
+                    text-center
+                    text-lg
+                  "
+                        >
+                            Create New Order
+                        </button>
                     </div>
                 </div>
-            )}
+            )
+            }
 
-            {/* kiosk mode => big button with countdown */}
-            {kioskMode ? (
-                <button
-                    id="newOrderButton"
-                    onClick={handleCreateNewOrderClick}
-                    className="bg-green-600 text-white px-8 py-4 mt-8 rounded"
-                >
-                    Create New Order ({countdown}s)
-                </button>
-            ) : (
-                <p></p>
-            )}
-        </div>
+            {/* kiosk => big "Create New Order" button with countdown (already rendered above in kiosk branch) */}
+        </div >
     );
 }
