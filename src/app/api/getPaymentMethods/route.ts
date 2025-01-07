@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
 
         const payload = await getPayload({ config })
 
+        // 1) Find the shop
         const shopResult = await payload.find({
             collection: 'shops',
             where: { slug: { equals: host } },
@@ -46,16 +47,48 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: `No shop found for host: ${host}` }, { status: 404 })
         }
 
+        // 2) Fetch PaymentMethod docs for this shop
         const pmResult = await payload.find({
             collection: 'payment-methods',
             where: { shops: { equals: shop.id } },
             limit: 50,
+            depth: 3, // If you need to fetch nested relationships
         })
 
-        const methods = pmResult.docs.map((pm: any) => ({
-            id: pm.id,
-            label: pm.provider ?? 'Unnamed Payment Method',
-        }))
+        /**
+         * For each PaymentMethod doc:
+         *  - `pm.provider` might be 'multisafepay', 'cash_on_delivery', etc.
+         *  - `pm.enabled` is the main checkbox
+         *  - `pm.multisafepay_settings` is your group { enable_test_mode, live_api_key, test_api_key, methods }
+         * 
+         * We'll exclude `live_api_key`, but return the others if `pm.provider === 'multisafepay'`.
+         */
+        const methods = pmResult.docs.map((pm: any) => {
+            // Common fields
+            const base = {
+                id: pm.id,
+                label: pm.provider ?? 'Unnamed Payment Method',
+                enabled: pm.enabled ?? true,
+            }
+
+            // If MultiSafePay, return some subset of the group fields:
+            if (pm.provider === 'multisafepay' && pm.multisafepay_settings) {
+                // We intentionally exclude pm.multisafepay_settings.live_api_key
+                return {
+                    ...base,
+                    // For clarity, rename to "providerSettings" or keep separate
+                    multisafepay_settings: {
+                        enable_test_mode: pm.multisafepay_settings.enable_test_mode || false,
+                        test_api_key: pm.multisafepay_settings.test_api_key || '',
+                        methods: pm.multisafepay_settings.methods || [],
+                        // DO NOT expose live_api_key
+                    },
+                }
+            }
+
+            // Otherwise (e.g. 'cash_on_delivery'), just return base or any relevant fields
+            return base
+        })
 
         return NextResponse.json({ methods })
     } catch (err: any) {

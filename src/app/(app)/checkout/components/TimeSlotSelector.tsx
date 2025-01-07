@@ -1,117 +1,137 @@
-// File: src/app/(app)/checkout/components/TimeSlotSelector.tsx
-"use client"
+"use client";
 
-import React, { Dispatch, SetStateAction, useMemo } from "react"
-import { Timeslot } from "./CheckoutPage"
+import React, { useEffect, useMemo } from "react";
+import { Timeslot } from "./CheckoutPage";
 
-type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | ""
+type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "";
 
-interface TimeSlotSelectorProps {
-    fulfillmentMethod: FulfillmentMethod
-    allTimeslots: Timeslot[]
-    nextTenDates: Date[]
-    selectedDate: string
-    setSelectedDate: Dispatch<SetStateAction<string>>
-    selectedTime: string
-    setSelectedTime: Dispatch<SetStateAction<string>>
+type Branding = {
+    /** e.g. "#ECAA02" or some other brand color */
+    primaryColorCTA?: string;
+    // ...
+};
+
+interface EnhancedTimeslot extends Timeslot {
+    date?: string;
+    maxOrders?: number;
+    isFullyBooked?: boolean;
 }
 
-/** Convert JS getDay() => your timeslot day (1=Mon..7=Sun). */
-function jsDayToTimeslotDay(jsDay: number): number {
-    return jsDay === 0 ? 7 : jsDay // Sunday=0 => 7
+interface TimeSlotSelectorProps {
+    hostSlug: string;
+    fulfillmentMethod: FulfillmentMethod;
+    allTimeslots: EnhancedTimeslot[];
+    selectedDate: string;
+    setSelectedDate: React.Dispatch<React.SetStateAction<string>>;
+    selectedTime: string;
+    setSelectedTime: React.Dispatch<React.SetStateAction<string>>;
+    closedDateReasons?: Map<string, string>;
+    branding: Branding; // <-- NEW
 }
 
 export default function TimeSlotSelector({
+    hostSlug,
     fulfillmentMethod,
     allTimeslots,
-    nextTenDates,
     selectedDate,
     setSelectedDate,
     selectedTime,
     setSelectedTime,
+    closedDateReasons,
 }: TimeSlotSelectorProps) {
-    // Filter timeslots relevant to the chosen fulfillment method
-    const relevantTimeslots = useMemo(() => {
-        return allTimeslots.filter(ts => ts.fulfillmentMethod === fulfillmentMethod)
-    }, [allTimeslots, fulfillmentMethod])
+    const closedMap = closedDateReasons || new Map<string, string>();
 
-    // Unique days from relevant timeslots (e.g., {1,2,3,...} corresponding to Mon, Tue, Wed, etc.)
-    const availableDays = useMemo(() => {
-        return new Set(relevantTimeslots.map(ts => Number(ts.day)))
-    }, [relevantTimeslots])
+    // 1) Filter timeslots that match the chosen fulfillment method
+    const relevantSlots = useMemo(() => {
+        return allTimeslots.filter((ts) => ts.fulfillmentMethod === fulfillmentMethod);
+    }, [allTimeslots, fulfillmentMethod]);
 
-    // Filter nextTenDates to only those that match our timeslot days
-    const validDates = useMemo(() => {
-        return nextTenDates.filter(d => {
-            const jsDay = d.getDay() // 0=Sunday .. 6=Saturday
-            const tsDay = jsDayToTimeslotDay(jsDay) // Convert Sunday=0 => 7
-            return availableDays.has(tsDay)
-        })
-    }, [nextTenDates, availableDays])
+    // 2) Gather unique date strings
+    const uniqueDates = useMemo(() => {
+        const dateSet = new Set<string>();
+        relevantSlots.forEach((ts) => {
+            if (ts.date) dateSet.add(ts.date);
+        });
+        return Array.from(dateSet).sort();
+    }, [relevantSlots]);
 
-    // For the chosen date, figure out which timeslots we have
-    const matchingTimesForSelectedDay = useMemo(() => {
-        if (!selectedDate || !fulfillmentMethod) return []
-        const [year, month, day] = selectedDate.split("-").map(Number)
-        const realDate = new Date(year, (month || 1) - 1, day || 1)
-        const jsDay = realDate.getDay()
-        const tsDay = jsDayToTimeslotDay(jsDay).toString()
+    // 3) If no date is selected, auto-select the first
+    useEffect(() => {
+        if (!selectedDate && uniqueDates.length > 0) {
+            setSelectedDate(uniqueDates[0]);
+        }
+    }, [selectedDate, uniqueDates, setSelectedDate]);
 
-        return relevantTimeslots.filter(ts => ts.day === tsDay)
-    }, [selectedDate, fulfillmentMethod, relevantTimeslots])
+    // 4) Times for chosen date
+    const timesForSelectedDate = useMemo(() => {
+        return relevantSlots.filter((ts) => ts.date === selectedDate);
+    }, [relevantSlots, selectedDate]);
+
+    // 5) If no time selected, pick first non-fully-booked
+    useEffect(() => {
+        if (selectedDate && !selectedTime && timesForSelectedDate.length > 0) {
+            const firstAvailable = timesForSelectedDate.find((slot) => !slot.isFullyBooked);
+            if (firstAvailable) {
+                setSelectedTime(firstAvailable.time);
+            }
+        }
+    }, [selectedDate, selectedTime, timesForSelectedDate, setSelectedTime]);
 
     return (
-        <div className="space-y-3">
-            <h2 className="text-xl font-bold">When</h2>
+        <div className="mb-4">
+            <h2 className="text-xl font-bold mb-3">When</h2>
 
-            {/* Select Date */}
-            <label className="block text-sm font-semibold">Select Date</label>
-            <select
-                className="border p-2 rounded w-full"
-                value={selectedDate}
-                onChange={(e) => {
-                    setSelectedDate(e.target.value)
-                    setSelectedTime("") // reset the time when date changes
-                }}
-            >
-                <option value="">Select a date</option>
-                {validDates.map(dateObj => {
-                    const year = dateObj.getFullYear()
-                    const month = String(dateObj.getMonth() + 1).padStart(2, "0")
-                    const day = String(dateObj.getDate()).padStart(2, "0")
-                    const dateStr = `${year}-${month}-${day}`
-                    const displayStr = dateObj.toLocaleDateString("en-GB", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                    })
-                    return (
-                        <option key={dateStr} value={dateStr}>
-                            {displayStr}
-                        </option>
-                    )
-                })}
-            </select>
-
-            {/* Select Time */}
-            <label className="block text-sm font-semibold">Select Time</label>
-            <select
-                className="border p-2 rounded w-full"
-                value={selectedTime}
-                onChange={(e) => setSelectedTime(e.target.value)}
-            >
-                <option value="">Select a time</option>
-                {matchingTimesForSelectedDay.map(ts => (
-                    <option
-                        key={`${ts.id}-${ts.day}-${ts.time}`}
-                        value={ts.time}
-                        disabled={ts.isFullyBooked}
+            {/* Put the two selectors in a responsive grid (1 col on small screens, 2 cols on md+) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Date Select */}
+                <div>
+                    <label className="block text-sm font-semibold mb-1">Select Date</label>
+                    <select
+                        className="border rounded-xl w-full py-2 px-4"
+                        value={selectedDate}
+                        onChange={(e) => {
+                            setSelectedDate(e.target.value);
+                            setSelectedTime("");
+                        }}
                     >
-                        {ts.time}
-                        {ts.isFullyBooked ? " (Fully Booked)" : ""}
-                    </option>
-                ))}
-            </select>
+                        <option value="">Select a date</option>
+                        {uniqueDates.map((dateStr) => {
+                            const closedReason = closedMap.get(dateStr);
+                            const isDisabled = Boolean(closedReason);
+                            const label = isDisabled
+                                ? `${dateStr} (Closed: ${closedReason})`
+                                : dateStr;
+                            return (
+                                <option key={dateStr} value={dateStr} disabled={isDisabled}>
+                                    {label}
+                                </option>
+                            );
+                        })}
+                    </select>
+                </div>
+
+                {/* Time Select */}
+                <div>
+                    <label className="block text-sm font-semibold mb-1">Select Time</label>
+                    <select
+                        className="border rounded-xl w-full py-2 px-4"
+                        value={selectedTime}
+                        onChange={(e) => setSelectedTime(e.target.value)}
+                    >
+                        <option value="">Select a time</option>
+                        {timesForSelectedDate.map((ts) => (
+                            <option
+                                key={`${ts.id}-${ts.date}-${ts.time}`}
+                                value={ts.time}
+                                disabled={ts.isFullyBooked}
+                            >
+                                {ts.time}
+                                {ts.isFullyBooked ? " (Fully Booked)" : ""}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
         </div>
-    )
+    );
 }

@@ -326,6 +326,22 @@ export interface FulfillmentMethod {
      * Add specific instructions for this method for kiosk.
      */
     kiosk_pickup_instructions?: string | null;
+    /**
+     * If true, this method’s orders will block timeslots for other methods that also share slots.
+     */
+    shared_booked_slots?: boolean | null;
+    /**
+     * If true, email is mandatory at checkout for this method.
+     */
+    checkout_email_required?: boolean | null;
+    /**
+     * If true, phone is mandatory at checkout for this method.
+     */
+    checkout_phone_required?: boolean | null;
+    /**
+     * If true, last name is mandatory at checkout for this method.
+     */
+    checkout_lastname_required?: boolean | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -1325,7 +1341,8 @@ export interface Order {
     | 'in_preparation'
     | 'ready_for_pickup'
     | 'in_delivery'
-    | 'complete';
+    | 'complete'
+    | 'cancelled';
   /**
    * Type of order (POS, Web, or Kiosk).
    */
@@ -1369,7 +1386,8 @@ export interface Order {
   payments?:
     | {
         payment_method: string | PaymentMethod;
-        amount: number;
+        sub_method_label?: string | null;
+        amount?: number | null;
         id?: string | null;
       }[]
     | null;
@@ -1385,6 +1403,10 @@ export interface Order {
     city?: string | null;
     postalCode?: string | null;
   };
+  /**
+   * Delivery/shipping fee (if any).
+   */
+  shipping_cost?: number | null;
   subtotal?: number | null;
   total_tax?: number | null;
   total?: number | null;
@@ -1650,6 +1672,10 @@ export interface FulfillmentMethodsSelect<T extends boolean = true> {
         delivery_radius?: T;
         pickup_instructions?: T;
         kiosk_pickup_instructions?: T;
+        shared_booked_slots?: T;
+        checkout_email_required?: T;
+        checkout_phone_required?: T;
+        checkout_lastname_required?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -2062,6 +2088,7 @@ export interface OrdersSelect<T extends boolean = true> {
     | T
     | {
         payment_method?: T;
+        sub_method_label?: T;
         amount?: T;
         id?: T;
       };
@@ -2079,6 +2106,7 @@ export interface OrdersSelect<T extends boolean = true> {
         city?: T;
         postalCode?: T;
       };
+  shipping_cost?: T;
   subtotal?: T;
   total_tax?: T;
   total?: T;

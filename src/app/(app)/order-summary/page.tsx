@@ -22,36 +22,14 @@ export default async function OrderSummaryPageRoute({
     const fullHost = requestHeaders.get("host") || "";
     const hostSlug = fullHost.split(".")[0] || "defaultShop";
 
-    // 3) Build the branding endpoint
-    const brandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getBranding?host=${hostSlug}`;
     // 4) Also build the fulfillment endpoint
     const fulfillmentUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getFulFillment?host=${hostSlug}`;
 
     // 5) Fetch both in parallel
-    const [brandingRes, fulfillmentRes] = await Promise.all([
-        fetch(brandingUrl, { cache: "no-store" }),
+    const [fulfillmentRes] = await Promise.all([
         fetch(fulfillmentUrl, { cache: "no-store" }),
     ]);
 
-    // 6) Parse branding
-    let brandingData: any = {};
-    if (brandingRes.ok) {
-        const brandingJSON = await brandingRes.json();
-        brandingData = brandingJSON?.branding ?? {};
-    }
-
-    // 7) Shape the branding object
-    const branding = {
-        logoUrl: brandingData?.siteLogo?.s3_url ?? "",
-        adImage: brandingData?.adImage?.s3_url ?? "",
-        headerBackgroundColor: brandingData?.headerBackgroundColor ?? "",
-        categoryCardBgColor: brandingData?.categoryCardBgColor ?? "",
-        primaryColorCTA: brandingData?.primaryColorCTA ?? "",
-        siteTitle: brandingData?.siteTitle ?? "",
-        siteHeaderImg: brandingData?.siteHeaderImg?.s3_url ?? "",
-        tripAdvisorUrl: brandingData?.tripAdvisorUrl ?? "",
-        googleReviewUrl: brandingData?.googleReviewUrl ?? "",
-    };
 
     // 8) Parse fulfillment array
     let fulfillments: any[] = [];
@@ -70,7 +48,6 @@ export default async function OrderSummaryPageRoute({
                 orderId={orderId}
                 kioskMode={kioskMode}
                 hostSlug={hostSlug}
-                branding={branding}
                 fulfillments={fulfillments}
             />
         </main>

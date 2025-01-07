@@ -1,90 +1,110 @@
-// File: src/app/(app)/checkout/components/FulfillmentMethodSelector.tsx
-"use client"
+// File: /src/app/(app)/checkout/components/FulfillmentMethodSelector.tsx
+"use client";
 
-import React, { Dispatch, SetStateAction, useMemo } from "react"
-import { Timeslot } from "./CheckoutPage"
+import React, { Dispatch, SetStateAction, useMemo } from "react";
+import { Timeslot } from "./CheckoutPage";
+import { FiCheckCircle } from "react-icons/fi";
 
-// Use the same FulfillmentMethod type as in CheckoutPage
-type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | ""
+type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "";
+
+/** The partial shape of your branding object. */
+type Branding = {
+    primaryColorCTA?: string; // e.g. "#ECAA02" or "#16a34a"
+    // ...
+};
 
 interface FulfillmentMethodSelectorProps {
-    /** Array of all timeslots from your initialTimeslots */
-    allTimeslots: Timeslot[]
-
-    /** Currently selected fulfillmentMethod */
-    fulfillmentMethod: FulfillmentMethod
-
-    /**
-     * Callback to set the fulfillmentMethod state
-     * in the parent CheckoutPage.
-     */
-    setFulfillmentMethod: Dispatch<SetStateAction<FulfillmentMethod>>
+    allTimeslots: Timeslot[];
+    fulfillmentMethod: FulfillmentMethod;
+    setFulfillmentMethod: Dispatch<SetStateAction<FulfillmentMethod>>;
+    deliveryRadius?: number;
+    branding: Branding; // Now we can read branding.primaryColorCTA
 }
 
 export default function FulfillmentMethodSelector({
     allTimeslots,
     fulfillmentMethod,
     setFulfillmentMethod,
+    deliveryRadius = 0,
+    branding,
 }: FulfillmentMethodSelectorProps) {
-    // In your original code, you had "finalTimeslots" which might filter out dine_in if kioskMode is on.
-    // For now, let's keep it simple and use allTimeslots directly:
-    const finalTimeslots = allTimeslots
+    // 1) Determine which timeslots are valid
+    const finalTimeslots = allTimeslots;
 
-    /**
-     * Identify which fulfillment methods are actually available
-     * by looking at the timeslots returned from the backend.
-     */
     const methodsWithTimeslots = useMemo(() => {
-        // e.g. Set { "delivery", "takeaway", "dine_in" }
-        return new Set(finalTimeslots.map(ts => ts.fulfillmentMethod))
-    }, [finalTimeslots])
+        return new Set(finalTimeslots.map((ts) => ts.fulfillmentMethod));
+    }, [finalTimeslots]);
 
-    /**
-     * Filter to the subset of possible methods that exist
-     * (i.e., only show "delivery" if there's at least one timeslot with fulfillmentMethod = "delivery")
-     */
+    // 2) Filter out only the methods that have timeslots
     const possibleMethods = useMemo(() => {
-        const allMethods: FulfillmentMethod[] = ["delivery", "takeaway", "dine_in"]
-        return allMethods.filter(m => methodsWithTimeslots.has(m))
-    }, [methodsWithTimeslots])
+        const allMethods: FulfillmentMethod[] = ["delivery", "takeaway", "dine_in"];
+        return allMethods.filter((m) => methodsWithTimeslots.has(m));
+    }, [methodsWithTimeslots]);
 
-    // If no timeslots exist, show a warning
     if (possibleMethods.length === 0) {
         return (
             <div>
-                <h2 className="text-xl font-bold">Fulfillment Method</h2>
+                <h2 className="text-xl font-bold mb-2">Fulfillment Method</h2>
                 <p className="text-red-600">
                     No timeslots defined, so no fulfillment methods to choose from.
                 </p>
             </div>
-        )
+        );
     }
 
-    // Otherwise, render the buttons
+    // 3) Fallback to green (#22c55e ~ Tailwind "green-500") if primaryColorCTA is empty
+    const brandColor = branding.primaryColorCTA || "#22c55e";
+
     return (
-        <div className="space-y-3">
-            <h2 className="text-xl font-bold">Fulfillment Method</h2>
-            <div className="flex gap-3">
-                {possibleMethods.map(method => (
-                    <button
-                        key={method}
-                        onClick={() => setFulfillmentMethod(method)}
-                        className={`
-              p-3 rounded border w-[130px] text-center font-semibold
-              ${fulfillmentMethod === method
-                                ? "bg-blue-100 border-blue-400"
-                                : "bg-white border-gray-300"
-                            }
-            `}
-                    >
-                        {method === "delivery"
-                            ? "Delivery"
-                            : method === "takeaway"
-                                ? "Takeaway"
-                                : "Dine In"}
-                    </button>
-                ))}
+        <div className="mb-4">
+            <h2 className="text-xl font-bold mb-2">Fulfillment Method</h2>
+
+            <div className="grid gap-3 sm:grid-flow-col">
+                {possibleMethods.map((method) => {
+                    const isActive = fulfillmentMethod === method;
+
+                    // Decide button label
+                    let label = "";
+                    if (method === "delivery") {
+                        label = deliveryRadius ? `Delivery (${deliveryRadius}km)` : "Delivery";
+                    } else if (method === "takeaway") {
+                        label = "Takeaway";
+                    } else if (method === "dine_in") {
+                        label = "Dine In";
+                    }
+
+                    return (
+                        <button
+                            key={method}
+                            onClick={() => setFulfillmentMethod(method)}
+                            // Keep typical tailwind classes for layout, spacing, transitions
+                            className={`
+                relative flex items-center justify-center gap-2 p-3 
+                rounded-xl border text-sm font-semibold transition-colors
+                hover:opacity-80
+              `}
+                            // Use inline style for color logic
+                            style={{
+                                // If active => brand color highlight
+                                backgroundColor: isActive ? `${brandColor}1A` : "#ffffff",
+                                // e.g. #22c55e + "1A" is a 10% alpha overlay
+                                borderColor: isActive ? brandColor : "#d1d5db", // gray-300
+                                color: isActive ? brandColor : "#374151",        // gray-700
+                            }}
+                        >
+                            {label}
+                            {isActive && (
+                                <div
+                                    className="absolute bottom-2 right-2"
+                                    style={{ color: brandColor }}
+                                >
+                                    <FiCheckCircle size={20} />
+                                </div>
+                            )}
+                        </button>
+                    );
+                })}
             </div>
         </div>
-    )
+    );
 }

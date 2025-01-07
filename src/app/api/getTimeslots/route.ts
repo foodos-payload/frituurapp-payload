@@ -1,5 +1,4 @@
-// File: /src/app/api/getTimeslots/route.ts
-
+// File: src/app/api/getTimeslots/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -15,71 +14,95 @@ const dayIndexMap: Record<string, string> = {
     friday: '5',
     saturday: '6',
     sunday: '7',
+};
+
+// Simple helper to generate HH:MM intervals
+function generateIntervals(start: string, end: string, interval: number): string[] {
+    const results: string[] = [];
+    const [startH, startM] = start.split(':').map(Number);
+    const [endH, endM] = end.split(':').map(Number);
+
+    const startTotal = (startH || 0) * 60 + (startM || 0);
+    const endTotal = (endH || 0) * 60 + (endM || 0);
+
+    let current = startTotal;
+    while (current < endTotal) {
+        const hh = String(Math.floor(current / 60)).padStart(2, '0');
+        const mm = String(current % 60).padStart(2, '0');
+        results.push(`${hh}:${mm}`);
+        current += interval;
+    }
+    return results;
 }
 
-function generateIntervals(start: string, end: string, interval: number): string[] {
-    const results: string[] = []
-    const [startH, startM] = start.split(':').map(Number)
-    const [endH, endM] = end.split(':').map(Number)
-
-    const startTotal = (startH || 0) * 60 + (startM || 0)
-    const endTotal = (endH || 0) * 60 + (endM || 0)
-
-    let current = startTotal
-    while (current < endTotal) {
-        const hh = String(Math.floor(current / 60)).padStart(2, '0')
-        const mm = String(current % 60).padStart(2, '0')
-        results.push(`${hh}:${mm}`)
-        current += interval
+// Utility: get next 10 calendar dates (YYYY-MM-DD)
+function getNextTenDates(): string[] {
+    const dates: string[] = [];
+    const now = new Date();
+    for (let i = 0; i < 10; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() + i);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        dates.push(`${yyyy}-${mm}-${dd}`);
     }
-    return results
+    return dates;
 }
 
 /**
- * @openapi
- * /api/getTimeslots:
- *   get:
- *     summary: Fetch timeslots for a given shop
- *     operationId: getFlattenedTimeslots
- *     parameters:
- *       - name: host
- *         in: query
- *         required: true
- *         description: The shop's slug
- *         schema:
- *           type: string
- *     responses:
- *       '200':
- *         description: Returns a flat array of timeslots
- *       '400':
- *         description: Missing host
- *       '404':
- *         description: Shop not found
- *       '500':
- *         description: Server error
+ * GET /api/getTimeslots?host=SHOP_SLUG
  */
 export async function GET(request: NextRequest) {
     try {
-        const { searchParams } = request.nextUrl
-        const host = searchParams.get('host')
+        const { searchParams } = request.nextUrl;
+        const host = searchParams.get('host');
         if (!host) {
-            return NextResponse.json({ error: 'Host (shop slug) is required' }, { status: 400 })
+            return NextResponse.json({ error: 'Host (shop slug) is required' }, { status: 400 });
         }
 
-        const payload = await getPayload({ config })
+        const payload = await getPayload({ config });
 
-        // 1) Find the shop by slug
+        // 1) Find the shop
         const shopResult = await payload.find({
             collection: 'shops',
             where: { slug: { equals: host } },
             limit: 1,
-        })
-        const shop = shopResult.docs?.[0]
+        });
+        const shop = shopResult.docs?.[0];
         if (!shop) {
-            return NextResponse.json({ error: `No shop found for slug: ${host}` }, { status: 404 })
+            return NextResponse.json({ error: `No shop found for slug: ${host}` }, { status: 404 });
         }
 
-        // 2) Fetch timeslot docs for that shop
+        // 2) Fetch FulfillmentMethods for this shop
+        const fmResult = await payload.find({
+            collection: 'fulfillment-methods',
+            where: {
+                shops: { in: [shop.id] },
+            },
+            limit: 50,
+        });
+        const methodDocs = fmResult.docs || [];
+
+        // [LOG] Show which fulfillment methods we found
+        console.log(`[getTimeslots] Fulfillment methods for shop=${shop.slug}`, methodDocs.map(m => ({
+            id: m.id,
+            method_type: m.method_type,
+            shared_booked_slots: m.settings?.shared_booked_slots,
+        })));
+
+        // Build a map methodType -> { shared_booked_slots: boolean }
+        const methodInfo: Record<string, any> = {};
+        for (const fm of methodDocs) {
+            methodInfo[fm.method_type] = {
+                shared_booked_slots: fm.settings?.shared_booked_slots || false,
+            };
+        }
+
+        // [LOG] Show the methodInfo map
+        console.log('[getTimeslots] methodInfo =>', methodInfo);
+
+        // 3) Fetch the timeslots collection
         const timeslotResult = await payload.find({
             collection: 'timeslots',
             where: {
@@ -87,68 +110,160 @@ export async function GET(request: NextRequest) {
             },
             limit: 100,
             depth: 3,
-        })
+        });
 
-        const flattened: any[] = []
+        interface TimeRange {
+            start_time?: string;
+            end_time?: string;
+            interval_minutes?: number;
+            max_orders?: number;
+            status?: boolean;
+        }
 
-        // 3) Flatten the data here:
+        const dayBasedSlots: any[] = [];
         for (const doc of timeslotResult.docs) {
-            const methodType = typeof doc.method_id === 'object' && doc.method_id !== null ? doc.method_id.method_type : 'unknown'
+            if (!doc.method_id || !doc.week) continue;
 
-            // doc.week => { monday, tuesday, wednesday, ... }
-            if (!doc.week) continue
-
-            type TimeRange = {
-                start_time?: string;
-                end_time?: string;
-                interval_minutes?: number;
-                max_orders?: number;
-                status?: boolean;
-            };
-
+            const methodType = doc.method_id.method_type || 'unknown';
             const week = doc.week as Record<string, TimeRange[]>;
 
-            // For each weekday key in `week`
             for (const weekday of Object.keys(week)) {
                 const ranges = week[weekday];
                 if (!Array.isArray(ranges)) continue;
+                const dayIndex = dayIndexMap[weekday] || '0';
 
-                // Convert to day index
-                const dayIndex = dayIndexMap[weekday] ?? '0'
-
-                // For each time range
                 for (const tr of ranges) {
-                    const { start_time = '00:00', end_time = '23:59', interval_minutes = 15, status = true } = tr
-                    if (!status) continue // skip disabled ranges
+                    const {
+                        start_time = '00:00',
+                        end_time = '23:59',
+                        interval_minutes = 15,
+                        status = true,
+                        max_orders = 5,
+                    } = tr;
+                    if (!status) continue;
 
-                    // Generate intervals
-                    const intervals = generateIntervals(start_time, end_time, interval_minutes)
-
-                    // For each interval => push a timeslot
-                    for (const timeStr of intervals) {
-                        flattened.push({
-                            id: doc.id,                   // timeslot doc ID if you want
-                            day: dayIndex,                // "6" for Saturday
-                            time: timeStr,                // "12:00", "12:15", ...
+                    const intervals = generateIntervals(start_time, end_time, interval_minutes);
+                    for (const t of intervals) {
+                        dayBasedSlots.push({
+                            id: doc.id,
+                            day: dayIndex,
+                            time: t,
                             fulfillmentMethod: methodType,
-                            isFullyBooked: false,         // or some logic with max_orders, etc.
-                        })
+                            maxOrders: max_orders,
+                        });
                     }
                 }
             }
         }
 
-        // Return a simple array
+        // [LOG] Show how many day-based slots we created
+        console.log(`[getTimeslots] Created ${dayBasedSlots.length} dayBasedSlots (ignoring the date).`);
+
+        // 4) Expand day-based slots to date-based for next 10 days
+        const nextTen = getNextTenDates();
+        const finalTimeslots: any[] = [];
+
+        function getDayOfWeek(dateStr: string): string {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const dt = new Date(Date.UTC(y, m - 1, d, 12));
+            const dayNumber = dt.getUTCDay() === 0 ? 7 : dt.getUTCDay();
+            return String(dayNumber); // "1".."7"
+        }
+
+        for (const dateStr of nextTen) {
+            const thisDay = getDayOfWeek(dateStr);
+            const daySlots = dayBasedSlots.filter(s => s.day === thisDay);
+            for (const s of daySlots) {
+                finalTimeslots.push({
+                    ...s,
+                    date: dateStr,
+                    isFullyBooked: false,
+                });
+            }
+        }
+
+        // [LOG] We now have a date-based array of timeslots
+        console.log(`[getTimeslots] total date-based timeslots => ${finalTimeslots.length}`);
+
+        // 5) Fetch recent orders to see usage
+        const today = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + 10);
+
+        const ordersResult = await payload.find({
+            collection: 'orders',
+            where: {
+                shops: { in: [shop.id] },
+                fulfillment_date: {
+                    greater_than: today.toISOString(),
+                    less_than_equal: endDate.toISOString(),
+                },
+            },
+            limit: 1000,
+        });
+        const orders = ordersResult.docs || [];
+
+        // usageMap[method][date][time] = count
+        const usageMap: Record<string, Record<string, Record<string, number>>> = {};
+
+        for (const ord of orders) {
+            const dateOnly = ord.fulfillment_date?.slice(0, 10);
+            const timeStr = ord.fulfillment_time;
+            const method = ord.fulfillment_method || 'unknown';
+            if (!dateOnly || !timeStr) continue;
+
+            usageMap[method] = usageMap[method] || {};
+            usageMap[method][dateOnly] = usageMap[method][dateOnly] || {};
+            usageMap[method][dateOnly][timeStr] =
+                (usageMap[method][dateOnly][timeStr] || 0) + 1;
+        }
+
+        // [LOG] Show the usage map: how many orders each method has at each date/time
+        console.log('[getTimeslots] usageMap =>', JSON.stringify(usageMap, null, 2));
+
+        // Helper to get the combined usage if "shared_booked_slots" is true
+        function getCombinedUsage(method: string, dateStr: string, timeStr: string) {
+            let total = usageMap[method]?.[dateStr]?.[timeStr] || 0;
+
+            // If this method is set to share booked slots
+            if (methodInfo[method]?.shared_booked_slots) {
+                // Then add usage from other methods that also share
+                for (const otherMethod of Object.keys(usageMap)) {
+                    if (otherMethod !== method) {
+                        if (methodInfo[otherMethod]?.shared_booked_slots) {
+                            const otherCount = usageMap[otherMethod]?.[dateStr]?.[timeStr] || 0;
+                            total += otherCount;
+                        }
+                    }
+                }
+            }
+            return total;
+        }
+
+        // 6) Merge usage into finalTimeslots => set isFullyBooked
+        for (const slot of finalTimeslots) {
+            const { fulfillmentMethod, date, time, maxOrders } = slot;
+            const usage = getCombinedUsage(fulfillmentMethod, date, time);
+            if (usage >= maxOrders) {
+                slot.isFullyBooked = true;
+            }
+        }
+
+        // [LOG] Show a summary of final timeslots with usage
+        // This can be verbose, so maybe just log the ones that are fully booked:
+        const fullyBooked = finalTimeslots.filter(ts => ts.isFullyBooked);
+        console.log('[getTimeslots] fullyBooked slots =>', fullyBooked);
+
         return NextResponse.json({
             shop: {
                 id: shop.id,
                 slug: shop.slug,
                 name: shop.name,
             },
-            timeslots: flattened,
-        })
+            timeslots: finalTimeslots,
+        });
     } catch (err: any) {
-        console.error('Error in getTimeslots route:', err)
-        return NextResponse.json({ error: err?.message || 'Unknown error' }, { status: 500 })
+        console.error('Error in getTimeslots route:', err);
+        return NextResponse.json({ error: err?.message || 'Unknown error' }, { status: 500 });
     }
 }

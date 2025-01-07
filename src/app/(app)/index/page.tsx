@@ -49,36 +49,13 @@ export default async function IndexPage(context: any) {
         );
     }
 
-    // 6) If kiosk => fetch branding
-    let brandingData: any = {};
-    if (isKiosk) {
-        const brandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getBranding?host=${hostSlug}`;
-        const brandingRes = await fetch(brandingUrl, { cache: "no-store" });
-        if (brandingRes.ok) {
-            const brandingJSON = await brandingRes.json();
-            if (brandingJSON?.branding) {
-                brandingData = {
-                    siteTitle: brandingJSON.branding.siteTitle ?? "My Kiosk Site",
-                    siteHeaderImg:
-                        brandingJSON.branding.siteHeaderImg?.s3_url || "/images/defaultHeader.jpg",
-                    logoUrl:
-                        brandingJSON.branding.siteLogo?.s3_url ||
-                        "https://cdn.prod.website-files.com/66d08c0e87acbd0c4e0d69ec/66d08cd5a1d7c9b3d199da28_Frituurapp-Logo-p-500.png",
-                    primaryColorCTA: brandingJSON.branding.primaryColorCTA ?? null,
-                    headerBackgroundColor:
-                        brandingJSON.branding.headerBackgroundColor ?? "#ffffff",
-                };
-            }
-        }
-    }
-
     // 7) Render kiosk or normal
     if (isKiosk) {
         return (
             <KioskContainer
                 shopSlug={hostSlug}
                 fulfillmentOptions={fulfillmentOptions}
-                branding={brandingData}
+
             />
         );
     }

@@ -6,34 +6,28 @@ import { LanguageSwitcher } from "../../../../components/LanguageSwitcher/Langua
 import { useTranslation } from "@/context/TranslationsContext";
 import { KioskAppHeaderHome } from "./KioskAppHeaderHome";
 import { useCart } from "@/context/CartContext";
+import { useShopBranding } from "@/context/ShopBrandingContext";
 
 interface FulfillmentMethod {
     key: "dine-in" | "takeaway" | "delivery";
     label: string;
     methodId: string;
 }
-interface BrandingData {
-    siteTitle?: string;
-    siteHeaderImg?: string;
-    primaryColorCTA?: string;
-    logoUrl?: string;
-    headerBackgroundColor?: string;
-}
 
 interface KioskContainerProps {
     shopSlug: string;
     fulfillmentOptions: FulfillmentMethod[];
-    branding: BrandingData;
 }
 
 export const KioskContainer: React.FC<KioskContainerProps> = ({
     shopSlug,
     fulfillmentOptions,
-    branding,
 }) => {
     const { t } = useTranslation();
     const router = useRouter();
     const { setShippingMethod } = useCart(); // Use CartContext
+    // ***** NEW: Grab branding from the global provider  *****
+    const branding = useShopBranding();
 
     useEffect(() => {
         localStorage.setItem("kioskMode", "true"); // Optional if still used elsewhere
