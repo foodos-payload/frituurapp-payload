@@ -605,7 +605,7 @@ export default function CheckoutPage({
             </div>
 
             {/* Right column => order summary */}
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md sticky top-16">
                 <OrderSummary
                     couponCode={couponCode}
                     setCouponCode={setCouponCode}

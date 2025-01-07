@@ -6,42 +6,30 @@ import { FiCheckCircle } from "react-icons/fi";
 import { IoCashOutline } from "react-icons/io5";
 import { PaymentMethod } from "./CheckoutPage";
 
+/** 
+ * The partial shape of your branding object.
+ * If primaryColorCTA is not provided, we fallback to "#22c55e" (green).
+ */
 type Branding = {
-    /** e.g. "#ECAA02" or some other brand color */
     primaryColorCTA?: string;
     // ...
 };
-
-/** 
- * Example shape:
- *   paymentMethods = [
- *     { 
- *       id: "...", 
- *       label: "multisafepay", 
- *       enabled: true, 
- *       multisafepay_settings: {
- *         enable_test_mode: true,
- *         methods: ["MSP_Bancontact", "MSP_Visa"]
- *       } 
- *     },
- *     { id: "...", label: "cash_on_delivery", enabled: true },
- *   ]
- */
 
 interface PaymentMethodSelectorProps {
     paymentMethods: PaymentMethod[];
     selectedPaymentId: string;
     setSelectedPaymentId: Dispatch<SetStateAction<string>>;
-    branding: Branding; // <-- NEW
+    branding: Branding;
 }
 
 export default function PaymentMethodSelector({
     paymentMethods,
     selectedPaymentId,
     setSelectedPaymentId,
+    branding,
 }: PaymentMethodSelectorProps) {
     /**
-     * Flatten or expand sub-methods for MultiSafePay. 
+     * Flatten or expand sub-methods for MultiSafePay.
      */
     const displayItems = paymentMethods.flatMap((pm) => {
         // Expand each sub-method if "multisafepay"
@@ -72,12 +60,12 @@ export default function PaymentMethodSelector({
     });
 
     /**
-   * (A) On mount / whenever paymentMethods change,
-   * automatically select the first *enabled* item if none is selected.
-   */
+     * (A) On mount / whenever paymentMethods change,
+     * automatically select the first *enabled* item if none is selected.
+     */
     useEffect(() => {
         if (!selectedPaymentId && displayItems.length > 0) {
-            // Optionally, if you want the *first enabled* item, filter out disabled:
+            // Optionally, pick the *first enabled* item
             const firstEnabled = displayItems.find((item) => item.enabled);
             if (firstEnabled) {
                 setSelectedPaymentId(firstEnabled.id);
@@ -85,20 +73,26 @@ export default function PaymentMethodSelector({
         }
     }, [displayItems, selectedPaymentId, setSelectedPaymentId]);
 
+    // BRAND COLOR (fallback to #22c55e if missing)
+    const brandColor = branding.primaryColorCTA || "#22c55e";
+
     return (
         <div className="mb-4">
             <h2 className="text-xl font-bold mb-2">Payment Method</h2>
 
             <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
                 {displayItems.map((item) => {
-                    // If disabled => render a greyed-out, non-clickable element
+                    // If disabled => show a greyed-out, non-clickable element
                     if (item.enabled === false) {
                         return (
                             <div
                                 key={item.id}
-                                className="relative flex flex-col items-center justify-center gap-2 p-3
-                  rounded-xl border text-sm font-semibold bg-gray-100 text-gray-400
-                  cursor-not-allowed"
+                                className="
+                  relative flex flex-col items-center justify-center gap-2 p-3
+                  rounded-xl border text-sm font-semibold
+                  bg-gray-100 text-gray-400
+                  cursor-not-allowed
+                "
                             >
                                 {renderIcon(item)}
                                 <span className="text-center">{item.label} (Disabled)</span>
@@ -108,24 +102,32 @@ export default function PaymentMethodSelector({
 
                     // Otherwise, clickable button
                     const isActive = selectedPaymentId === item.id;
+
                     return (
                         <button
                             key={item.id}
                             onClick={() => setSelectedPaymentId(item.id)}
-                            className={`
+                            className="
                 min-w-24 relative flex flex-col items-center justify-center gap-2 p-3
-                rounded-xl border text-sm font-semibold hover:border-green-500 transition-colors
-                ${isActive
-                                    ? "bg-green-50 border-green-500 text-green-700 border-2"
-                                    : "bg-white border-gray-300 text-gray-700"
-                                }
-              `}
+                rounded-xl border text-sm font-semibold transition-colors
+                hover:opacity-80
+              "
+                            style={{
+                                // If active, highlight with brand color
+                                borderWidth: isActive ? 2 : 1,
+                                borderColor: isActive ? brandColor : "#d1d5db", // gray-300
+                                backgroundColor: isActive ? `${brandColor}1A` : "#ffffff",
+                                color: isActive ? brandColor : "#374151", // gray-700
+                            }}
                         >
                             {renderIcon(item)}
                             <span className="text-center">{item.label}</span>
 
                             {isActive && (
-                                <div className="absolute bottom-2 right-2 text-green-600">
+                                <div
+                                    className="absolute bottom-2 right-2"
+                                    style={{ color: brandColor }}
+                                >
                                     <FiCheckCircle size={20} />
                                 </div>
                             )}
@@ -139,14 +141,13 @@ export default function PaymentMethodSelector({
 
 /** Renders an icon (cash or MSP) */
 function renderIcon(item: { isCash: boolean; iconUrl?: string; label: string }) {
-    // If it's "cash_on_delivery"/"Cash", show the IoCashOutline
+    // If it's "cash_on_delivery"/"Cash", show IoCashOutline
     if (item.isCash) {
         return <IoCashOutline className="w-10 h-10" />;
     }
     // Otherwise, show an <img> if we have iconUrl
     if (item.iconUrl) {
         return <Image src={item.iconUrl || ""} alt={item.label} width={60} height={40} className="object-contain" />;
-
     }
     return null;
 }
