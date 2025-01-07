@@ -50,7 +50,7 @@ export const Orders: CollectionConfig = {
             collection: 'orders',
             where: {
               tenant: { equals: data.tenant },
-              shops: { equals: data.shops },
+              shops: { in: data.shops },
               createdAt: { greater_than: `${today}T00:00:00` },
             },
             sort: '-tempOrdNr',
@@ -64,7 +64,7 @@ export const Orders: CollectionConfig = {
             collection: 'orders',
             where: {
               tenant: { equals: data.tenant },
-              shops: { equals: data.shops },
+              shops: { in: data.shops },
             },
             sort: '-id',
             limit: 1,
@@ -153,6 +153,15 @@ export const Orders: CollectionConfig = {
           console.log(
             `Final recalculated => subtotal=${data.subtotal}, totalTax=${data.total_tax}, total=${data.total}`
           );
+        }
+
+        // 4) Force the payment's amount to match `data.total`
+        if (data.payments && data.payments.length > 0) {
+          // If you only allow 1 payment row, you can do:
+          data.payments[0].amount = data.total;
+
+          // Or if you allow multiple payment lines and want 
+          // the sum to match total, do your own sum or distribution logic.
         }
       },
     ],
@@ -353,9 +362,14 @@ export const Orders: CollectionConfig = {
           label: { en: 'Payment Method' },
         },
         {
+          name: 'sub_method_label', // New optional text field
+          type: 'text',
+          required: false,
+        },
+        {
           name: 'amount',
           type: 'number',
-          required: true,
+          required: false,
           label: { en: 'Amount' },
         },
       ],

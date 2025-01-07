@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Dispatch, SetStateAction } from "react";
+import Image from "next/image";
 import { FiCheckCircle } from "react-icons/fi";
 import { IoCashOutline } from "react-icons/io5";
 import { PaymentMethod } from "./CheckoutPage";
@@ -67,7 +68,7 @@ export default function PaymentMethodSelector({
         <div className="mb-4">
             <h2 className="text-xl font-bold mb-2">Payment Method</h2>
 
-            <div className="grid gap-3 sm:grid-flow-col">
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
                 {displayItems.map((item) => {
                     // If disabled => render a greyed-out, non-clickable element
                     if (item.enabled === false) {
@@ -91,7 +92,7 @@ export default function PaymentMethodSelector({
                             key={item.id}
                             onClick={() => setSelectedPaymentId(item.id)}
                             className={`
-                relative flex flex-col items-center justify-center gap-2 p-3
+                min-w-24 relative flex flex-col items-center justify-center gap-2 p-3
                 rounded-xl border text-sm font-semibold hover:border-green-500 transition-colors
                 ${isActive
                                     ? "bg-green-50 border-green-500 text-green-700 border-2"
@@ -123,7 +124,8 @@ function renderIcon(item: { isCash: boolean; iconUrl?: string; label: string }) 
     }
     // Otherwise, show an <img> if we have iconUrl
     if (item.iconUrl) {
-        return <img src={item.iconUrl} alt={item.label} className="w-15 h-10 object-contain" />;
+        return <Image src={item.iconUrl || ""} alt={item.label} width={60} height={40} className="object-contain" />;
+
     }
     return null;
 }

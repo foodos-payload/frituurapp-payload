@@ -1350,7 +1350,8 @@ export interface Order {
   payments?:
     | {
         payment_method: string | PaymentMethod;
-        amount: number;
+        sub_method_label?: string | null;
+        amount?: number | null;
         id?: string | null;
       }[]
     | null;
@@ -2043,6 +2044,7 @@ export interface OrdersSelect<T extends boolean = true> {
     | T
     | {
         payment_method?: T;
+        sub_method_label?: T;
         amount?: T;
         id?: T;
       };

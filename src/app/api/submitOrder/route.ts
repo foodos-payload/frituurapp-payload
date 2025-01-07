@@ -206,6 +206,35 @@ export async function POST(request: NextRequest) {
             throw new Error(`Could not find tenant ID in shop ${shopID}`);
         }
 
+        // Pseudocode if you still need to handle old front-end:
+        interface Payment {
+            payment_method: string;
+            amount: number;
+        }
+
+        interface ProcessedPayment extends Payment {
+            sub_method_label: string | null;
+        }
+
+        const paymentsToStore: ProcessedPayment[] = (payments || []).map((pay: Payment): ProcessedPayment => {
+            let { payment_method } = pay;
+            const { amount } = pay;
+            let sub_method_label: string | null = null;
+
+            // If it contains a colon => parse out the second half
+            if (payment_method.includes(':')) {
+                const [pmId, subMethod] = payment_method.split(':');
+                payment_method = pmId;
+                sub_method_label = subMethod; // e.g. "MSP_Bancontact"
+            }
+
+            return {
+                payment_method,      // your valid UUID
+                sub_method_label,    // store the sub-method
+                amount,
+            };
+        });
+
         // 5) Create the new order in the 'orders' collection
         //    (No extra doc lookups for subproducts—just store them as passed.)
         const createdOrder = await payload.create({
@@ -223,7 +252,7 @@ export async function POST(request: NextRequest) {
                 customer_details: customerDetails,
 
                 order_details: orderDetails || [],  // Pass exactly as front-end gave us
-                payments: payments || [],
+                payments: paymentsToStore || [],
             },
         });
 

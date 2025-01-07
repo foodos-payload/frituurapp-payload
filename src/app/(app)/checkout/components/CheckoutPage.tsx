@@ -13,9 +13,16 @@ import OrderSummary from "./OrderSummary";
 import '../checkout.css';
 
 // A) Types
+interface MultiSafePaySettings {
+    enable_test_mode: boolean;
+    methods: string[];
+}
+
 export type PaymentMethod = {
     id: string;
     label: string;
+    enabled: boolean;
+    multisafepay_settings?: MultiSafePaySettings;
 };
 
 export type Timeslot = {
@@ -111,6 +118,21 @@ export default function CheckoutPage({
     const [allTimeslots] = useState<Timeslot[]>(initialTimeslots);
     const [paymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods);
     const [selectedPaymentId, setSelectedPaymentId] = useState("");
+
+    useEffect(() => {
+        // On mount, retrieve from storage
+        const storedPaymentId = localStorage.getItem("selectedPaymentId") || "";
+        if (storedPaymentId) {
+            // If you want, you can check if it still exists among the paymentMethods
+            setSelectedPaymentId(storedPaymentId);
+        }
+    }, []);
+    useEffect(() => {
+        // Whenever selectedPaymentId changes, persist
+        if (selectedPaymentId) {
+            localStorage.setItem("selectedPaymentId", selectedPaymentId);
+        }
+    }, [selectedPaymentId]);
     const [selectedDate, setSelectedDate] = useState("");
     const [selectedTime, setSelectedTime] = useState("");
 
