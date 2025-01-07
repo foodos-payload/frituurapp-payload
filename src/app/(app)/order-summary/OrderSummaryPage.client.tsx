@@ -98,6 +98,7 @@ interface Order {
     order_details?: OrderDetail[];
     payments?: Payment[];
     total?: number; // the total paid or total price, if available
+    shipping_cost?: number;
     fulfillment_time?: string;
     fulfillment_date?: string;
     fulfillment_method?: string;
@@ -256,6 +257,11 @@ export function OrderSummaryPage({
 
     // 3.7) Navigation
     const handleCreateNewOrderClick = useCallback(() => {
+        // (B) Clear localStorage items
+        localStorage.removeItem("selectedShippingMethod");
+        localStorage.removeItem("selectedPaymentId");
+        localStorage.removeItem("shippingCost");
+
         if (kioskMode) {
             router.push(`/index?kiosk=true`);
         } else {
@@ -298,6 +304,7 @@ export function OrderSummaryPage({
     //
     const showRefreshingBadge = isValidating;
     const totalPaid = order.total ?? 0; // If your API includes a .total field
+    const shippingCost = order.shipping_cost ?? 0;
 
     // For a small "status GIF"
     let statusGif: string | null = null;
@@ -628,6 +635,15 @@ export function OrderSummaryPage({
                                 </div>
                             )}
 
+                            {/* (A) Shipping cost if > 0 */}
+                            {shippingCost > 0 && (
+                                <div className="flex items-center justify-end p-3 pt-3">
+                                    <span className="text-2xl font-semibold">
+                                        Shipping: €{shippingCost.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+
                             {/* total */}
                             <div className="flex items-center justify-end p-3 pt-3">
                                 <span className="text-3xl font-bold">
@@ -821,10 +837,26 @@ export function OrderSummaryPage({
                             </div>
                         )}
 
-                        {/* total */}
+                        {/* (A) Shipping cost if > 0 */}
+                        {shippingCost > 0 && (
+                            <div className="flex items-center justify-end p-3 pt-3">
+                                <span className="text-lg font-semibold">
+                                    Shipping: €{shippingCost.toFixed(2)}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* subtotal */}
                         <div className="flex items-center justify-end p-3 pt-3">
                             <span className="text-lg font-bold">
-                                €{totalPaid.toFixed(2)}
+                                Products: €{totalPaid.toFixed(2)}
+                            </span>
+                        </div>
+
+                        {/* final total */}
+                        <div className="flex items-center justify-end p-3 pt-3">
+                            <span className="text-lg font-bold">
+                                Total: €{(totalPaid + shippingCost).toFixed(2)}
                             </span>
                         </div>
 

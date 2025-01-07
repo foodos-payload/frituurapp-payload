@@ -421,6 +421,16 @@ export const Orders: CollectionConfig = {
     // (E) Totals (read-only)
     // ─────────────────────────────────────────────
     {
+      name: 'shipping_cost',
+      type: 'number',
+      label: { en: 'Shipping Cost' },
+      required: false,
+      admin: {
+        description: { en: 'Delivery/shipping fee (if any).' },
+        readOnly: false, // Optional: if you never want to edit manually in the admin UI
+      },
+    },
+    {
       name: 'subtotal',
       type: 'number',
       label: { en: 'Subtotal Amount' },

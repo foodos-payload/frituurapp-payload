@@ -177,6 +177,7 @@ export async function POST(request: NextRequest) {
             fulfillmentDate,      // e.g. '2025-01-06'
             fulfillmentTime,      // e.g. '09:30'
             customerDetails,      // { firstName, lastName, ... }
+            shippingCost,
         } = body;
 
         // 2) Find the shop doc by slug
@@ -253,6 +254,7 @@ export async function POST(request: NextRequest) {
 
                 order_details: orderDetails || [],  // Pass exactly as front-end gave us
                 payments: paymentsToStore || [],
+                shipping_cost: typeof shippingCost === 'number' ? shippingCost : 0,
             },
         });
 

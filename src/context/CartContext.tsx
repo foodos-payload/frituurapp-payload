@@ -239,8 +239,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
      * Get the total cost of the cart.
      */
     function getCartTotal() {
-        return items.reduce((total, item) => total + item.price * item.quantity, 0);
+        let total = 0;
+        for (const item of items) {
+            // 1) Base item price
+            let linePrice = item.price * item.quantity;
+
+            // 2) Add subproduct prices
+            if (item.subproducts && item.subproducts.length > 0) {
+                for (const sp of item.subproducts) {
+                    linePrice += sp.price * item.quantity;
+                }
+            }
+
+            total += linePrice;
+        }
+        return total;
     }
+
 
     const value: CartContextValue = {
         items,

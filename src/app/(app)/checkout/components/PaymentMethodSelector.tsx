@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction, useEffect } from "react";
 import Image from "next/image";
 import { FiCheckCircle } from "react-icons/fi";
 import { IoCashOutline } from "react-icons/io5";
@@ -63,6 +63,20 @@ export default function PaymentMethodSelector({
             },
         ];
     });
+
+    /**
+   * (A) On mount / whenever paymentMethods change,
+   * automatically select the first *enabled* item if none is selected.
+   */
+    useEffect(() => {
+        if (!selectedPaymentId && displayItems.length > 0) {
+            // Optionally, if you want the *first enabled* item, filter out disabled:
+            const firstEnabled = displayItems.find((item) => item.enabled);
+            if (firstEnabled) {
+                setSelectedPaymentId(firstEnabled.id);
+            }
+        }
+    }, [displayItems, selectedPaymentId, setSelectedPaymentId]);
 
     return (
         <div className="mb-4">

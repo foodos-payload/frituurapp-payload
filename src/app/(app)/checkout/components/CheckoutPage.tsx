@@ -10,7 +10,7 @@ import TimeSlotSelector from "./TimeSlotSelector";
 import CustomerDetailsForm from "./CustomerDetailsForm";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import OrderSummary from "./OrderSummary";
-import '../checkout.css';
+import "../checkout.css";
 
 // A) Types
 interface MultiSafePaySettings {
@@ -81,9 +81,7 @@ export default function CheckoutPage({
     const kioskMode = searchParams.get("kiosk") === "true";
 
     // Logged in user
-    const [loggedInUser, setLoggedInUser] = useState<{ firstName?: string } | null>(
-        null
-    );
+    const [loggedInUser, setLoggedInUser] = useState<{ firstName?: string } | null>(null);
     useEffect(() => {
         const storedUser = localStorage.getItem("userData");
         if (storedUser) {
@@ -96,9 +94,7 @@ export default function CheckoutPage({
     }, []);
 
     // Fulfillment method
-    const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>(
-        ""
-    );
+    const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>("");
     useEffect(() => {
         const storedMethod = localStorage.getItem("selectedShippingMethod") || "";
         const corrected = storedMethod === "dine-in" ? "dine_in" : storedMethod;
@@ -108,8 +104,7 @@ export default function CheckoutPage({
     }, []);
     useEffect(() => {
         if (fulfillmentMethod) {
-            const storageValue =
-                fulfillmentMethod === "dine_in" ? "dine-in" : fulfillmentMethod;
+            const storageValue = fulfillmentMethod === "dine_in" ? "dine-in" : fulfillmentMethod;
             localStorage.setItem("selectedShippingMethod", storageValue);
         }
     }, [fulfillmentMethod]);
@@ -123,7 +118,6 @@ export default function CheckoutPage({
         // On mount, retrieve from storage
         const storedPaymentId = localStorage.getItem("selectedPaymentId") || "";
         if (storedPaymentId) {
-            // If you want, you can check if it still exists among the paymentMethods
             setSelectedPaymentId(storedPaymentId);
         }
     }, []);
@@ -133,6 +127,7 @@ export default function CheckoutPage({
             localStorage.setItem("selectedPaymentId", selectedPaymentId);
         }
     }, [selectedPaymentId]);
+
     const [selectedDate, setSelectedDate] = useState("");
     const [selectedTime, setSelectedTime] = useState("");
 
@@ -176,17 +171,47 @@ export default function CheckoutPage({
 
     const [deliveryDistance, setDeliveryDistance] = useState<number | null>(null);
     const [deliveryError, setDeliveryError] = useState<string | null>(null);
+    // For a “please enter address” notice, we have a separate state
+    const [addressNotice, setAddressNotice] = useState<string | null>(null);
     const [isWithinRadius, setIsWithinRadius] = useState(true);
 
-    // If fulfillmentMethod === 'delivery' => whenever address changes => do distance check
+    // (1) shippingCost stored as a state
+    const [shippingCost, setShippingCost] = useState(0); // NEW: default 0
+
+    // (2) On mount, restore shipping cost from localStorage if present
     useEffect(() => {
+        const storedShippingCost = localStorage.getItem("shippingCost");
+        if (storedShippingCost) {
+            setShippingCost(parseFloat(storedShippingCost));
+        }
+    }, []);
+
+    // 1) If fulfillmentMethod === 'delivery' => whenever address changes => do distance check
+    // Whenever the user picks “delivery”, check address distance
+    useEffect(() => {
+        if (fulfillmentMethod !== "delivery") {
+            // Not delivery => clear distance + errors
+            setDeliveryDistance(null);
+            setDeliveryError(null);
+            setAddressNotice(null);
+            setIsWithinRadius(true);
+            return;
+        }
+
+        // If there's no address yet => show the "Please enter address" notice (yellow)
+        if (!address || !city || !postalCode) {
+            setDeliveryDistance(null);
+            setDeliveryError(null); // no actual error
+            setAddressNotice("Please enter your complete address.");
+            setIsWithinRadius(true);
+            return;
+        } else {
+            // We do have address => clear the addressNotice
+            setAddressNotice(null);
+        }
+
+        // Now do the distance check
         async function checkDistance() {
-            if (!address || !city || !postalCode) {
-                setDeliveryDistance(null);
-                setDeliveryError(null);
-                setIsWithinRadius(true);
-                return;
-            }
             try {
                 const url =
                     `/api/calculateDistance?host=${encodeURIComponent(hostSlug)}` +
@@ -201,16 +226,16 @@ export default function CheckoutPage({
                     const distKm = distMeters / 1000;
                     setDeliveryDistance(distKm);
 
+                    // Check radius
                     if (deliveryRadius > 0 && distKm > deliveryRadius) {
                         setIsWithinRadius(false);
-                        setDeliveryError(
-                            `You are too far for delivery. Max radius is ${deliveryRadius}km.`
-                        );
+                        setDeliveryError(`You are too far for delivery. Max radius is ${deliveryRadius}km.`);
                     } else {
                         setIsWithinRadius(true);
                         setDeliveryError(null);
                     }
                 } else {
+                    // Some other error from Google
                     setDeliveryDistance(null);
                     setIsWithinRadius(false);
                     setDeliveryError(data.error || "Failed to calculate distance.");
@@ -223,26 +248,58 @@ export default function CheckoutPage({
             }
         }
 
-        if (fulfillmentMethod === "delivery") {
-            checkDistance();
-        } else {
-            setDeliveryDistance(null);
-            setDeliveryError(null);
-            setIsWithinRadius(true);
-        }
-    }, [fulfillmentMethod, address, city, postalCode, hostSlug, deliveryRadius]);
+        checkDistance();
+    }, [
+        fulfillmentMethod,
+        address,
+        city,
+        postalCode,
+        hostSlug,
+        deliveryRadius,
+    ]);
 
-    // shipping cost = base fee + ( distKM * extraCostPerKM ) for entire distance
-    function getShippingCost() {
+    // 2) shipping cost = base fee + ( distKM * extraCostPerKM ) for entire distance
+    const computedShippingCost = useMemo(() => {
         if (fulfillmentMethod !== "delivery") return 0;
-        if (!isWithinRadius) return 0;
-        if (!deliveryDistance) return 0; // if no distance => 0 cost
+        if (!isWithinRadius || !deliveryDistance) return 0;
+        const rawCost = deliveryFee + deliveryDistance * extraCostPerKm;
+        // Round to 2 decimals:
+        return parseFloat(rawCost.toFixed(2));
+    }, [fulfillmentMethod, isWithinRadius, deliveryDistance, deliveryFee, extraCostPerKm]);
 
-        const cost = deliveryFee + deliveryDistance * extraCostPerKm;
-        return cost;
-    }
-    const shippingCost = getShippingCost();
-    const finalTotal = cartTotal + shippingCost;
+    // (3) Whenever computedShippingCost changes, update shippingCost state
+    useEffect(() => {
+        setShippingCost(computedShippingCost);
+    }, [computedShippingCost]);
+
+    // (4) Whenever shippingCost changes, persist to localStorage
+    useEffect(() => {
+        localStorage.setItem("shippingCost", shippingCost.toString());
+    }, [shippingCost]);
+
+    const finalTotal = useMemo(() => {
+        const rawTotal = cartTotal + shippingCost;
+        return parseFloat(rawTotal.toFixed(2));
+    }, [cartTotal, shippingCost]);
+
+    // 3) If within radius => check if finalTotal >= minimumOrder
+    useEffect(() => {
+        if (fulfillmentMethod === "delivery" && isWithinRadius) {
+            // Min order check
+            if (finalTotal < minimumOrder) {
+                setDeliveryError(
+                    `Minimum order is €${minimumOrder}, but your total is only €${finalTotal.toFixed(2)}.`
+                );
+            } else {
+                // no problem
+                // if not already an error from the distance check, we can clear it
+                // (avoid overwriting "too far" error in case radius changed)
+                if (deliveryError?.includes("far for delivery") === false) {
+                    setDeliveryError(null);
+                }
+            }
+        }
+    }, [fulfillmentMethod, isWithinRadius, finalTotal, minimumOrder, deliveryError]);
 
     // canProceed => only enable checkout if address passes google check or not needed
     function canProceed(): boolean {
@@ -259,6 +316,7 @@ export default function CheckoutPage({
                 if (!surname || !lastName || !phone) return false;
                 if (!address || !city || !postalCode) return false;
                 if (!isWithinRadius) return false;
+                // also confirm finalTotal >= minimumOrder
                 if (finalTotal < minimumOrder) return false;
                 break;
 
@@ -273,7 +331,7 @@ export default function CheckoutPage({
 
     async function handleCheckout() {
         if (!canProceed()) {
-            alert("Please fill all required fields (and be within the radius).");
+            alert("Please fill all required fields (and be within the radius / min order).");
             return;
         }
 
@@ -328,7 +386,7 @@ export default function CheckoutPage({
                     amount: finalTotal,
                 },
             ],
-            shippingCost,
+            shippingCost: shippingCost,
             distanceKm: deliveryDistance,
         };
 
@@ -423,6 +481,13 @@ export default function CheckoutPage({
                     )}
                 </div>
 
+                {/* --- NEW: Move the deliveryError (or min-order warnings) above the fulfillment methods --- */}
+                {deliveryError && fulfillmentMethod === "delivery" && (
+                    <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
+                        {deliveryError}
+                    </div>
+                )}
+
                 {/* (B) Fulfillment Method */}
                 <FulfillmentMethodSelector
                     allTimeslots={allTimeslots}
@@ -432,14 +497,8 @@ export default function CheckoutPage({
                         setSelectedDate("");
                         setSelectedTime("");
                     }}
+                    deliveryRadius={deliveryRadius}
                 />
-
-                {/* Possibly show a note about radius */}
-                {fulfillmentMethod === "delivery" && deliveryRadius > 0 && (
-                    <div className="text-sm text-gray-700 bg-yellow-50 border-l-4 border-yellow-300 p-2 my-2">
-                        We only deliver within ~{deliveryRadius} km of our location.
-                    </div>
-                )}
 
                 {/* (C) Timeslots */}
                 {fulfillmentMethod && (
@@ -474,6 +533,7 @@ export default function CheckoutPage({
                         email={email}
                         setEmail={setEmail}
                         deliveryError={deliveryError}
+                        addressNotice={addressNotice}
                     />
                 )}
 

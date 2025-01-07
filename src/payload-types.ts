@@ -1367,6 +1367,10 @@ export interface Order {
     city?: string | null;
     postalCode?: string | null;
   };
+  /**
+   * Delivery/shipping fee (if any).
+   */
+  shipping_cost?: number | null;
   subtotal?: number | null;
   total_tax?: number | null;
   total?: number | null;
@@ -2062,6 +2066,7 @@ export interface OrdersSelect<T extends boolean = true> {
         city?: T;
         postalCode?: T;
       };
+  shipping_cost?: T;
   subtotal?: T;
   total_tax?: T;
   total?: T;

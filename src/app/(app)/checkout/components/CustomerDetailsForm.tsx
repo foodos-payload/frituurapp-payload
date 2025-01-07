@@ -21,8 +21,10 @@ interface CustomerDetailsFormProps {
     email: string;
     setEmail: React.Dispatch<React.SetStateAction<string>>;
 
-    // If there's a delivery error => show under address
+    // If there's a delivery error => show under address (red bg)
     deliveryError?: string | null;
+    // If user hasn't entered address => show a notice (yellow bg)
+    addressNotice?: string | null;
 }
 
 export default function CustomerDetailsForm({
@@ -42,6 +44,7 @@ export default function CustomerDetailsForm({
     email,
     setEmail,
     deliveryError,
+    addressNotice,
 }: CustomerDetailsFormProps) {
     function handleAddressSelected(info: {
         fullAddress: string;
@@ -53,7 +56,6 @@ export default function CustomerDetailsForm({
         setAddress(info.fullAddress || "");
         if (info.city) setCity(info.city);
         if (info.postalCode) setPostalCode(info.postalCode);
-        // lat/lng if needed, but mostly handled server-side
     }
 
     return (
@@ -62,8 +64,10 @@ export default function CustomerDetailsForm({
 
             {/* Common fields (Surname + Email) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                <div className="">
-                    <label className="block mb-1 text-sm font-semibold text-gray-700">Surname</label>
+                <div>
+                    <label className="block mb-1 text-sm font-semibold text-gray-700">
+                        Surname
+                    </label>
                     <input
                         value={surname}
                         onChange={(e) => setSurname(e.target.value)}
@@ -72,7 +76,7 @@ export default function CustomerDetailsForm({
                     />
                 </div>
 
-                <div className="">
+                <div>
                     <label className="block mb-1 text-sm font-semibold text-gray-700">
                         Email (optional)
                     </label>
@@ -121,8 +125,16 @@ export default function CustomerDetailsForm({
                         {/* AddressAutocomplete is a custom component that sets the address, city, postalCode */}
                         <AddressAutocomplete onAddressSelected={handleAddressSelected} />
 
-                        {deliveryError && (
-                            <div className="text-red-700 bg-red-100 p-2 mt-2 rounded">
+                        {/* If there's a "please enter address" notice => yellow background */}
+                        {addressNotice && (
+                            <div className="text-yellow-700 bg-yellow-100 p-2 mt-2 rounded text-md bg-yellow-50 border-l-4 border-yellow-300 p-2 my-2">
+                                {addressNotice}
+                            </div>
+                        )}
+
+                        {/* If there's an error (too far, min order, etc.) => red background */}
+                        {deliveryError && !deliveryError.includes("€") && (
+                            <div className="text-red-700 p-2 mt-2 rounded text-md bg-red-50 border-l-4 border-red-300 p-2 my-2">
                                 {deliveryError}
                             </div>
                         )}
