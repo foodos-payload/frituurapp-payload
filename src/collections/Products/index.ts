@@ -40,6 +40,16 @@ export const Products: CollectionConfig = {
         shopsField, // Link products to one or multiple shops
         categoriesField, // Link products to categories
         {
+            name: 'cloudPOSId',
+            type: 'number',
+            label: 'CloudPOS ID',
+            required: false,
+            admin: {
+                position: 'sidebar',
+                description: 'The CloudPOS ID for syncing. Leave empty if not synced yet.',
+            },
+        },
+        {
             name: 'name_nl',
             type: 'text',
             label: {
