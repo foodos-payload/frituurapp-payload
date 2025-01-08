@@ -258,7 +258,24 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        // 6) Respond with success
+        // 6) (Option B) SERVER-SIDE push to CloudPOS route, if you want
+        try {
+            // Build the full URL if you need the domain
+            const baseUrl = process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000';
+            const pushUrl = `${baseUrl}/api/syncPOS/pushOrder?host=${encodeURIComponent(shop)}&orderId=${createdOrder.id}`;
+
+            const pushRes = await fetch(pushUrl, {
+                method: 'GET',
+            });
+            const pushJson = await pushRes.json();
+            if (pushJson?.error) {
+                console.error('pushOrder error:', pushJson.error);
+            }
+        } catch (pushErr) {
+            console.error('Error calling pushOrder route:', pushErr);
+        }
+
+        // 7) Return success
         return NextResponse.json({
             success: true,
             order: createdOrder,
