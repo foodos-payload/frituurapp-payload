@@ -184,5 +184,55 @@ export const PaymentMethods: CollectionConfig = {
                 },
             },
         },
+        {
+            name: 'terminal_ids',
+            type: 'array',
+            label: {
+                en: 'Terminal IDs',
+                nl: 'Terminal-ID\'s',
+                de: 'Terminal-IDs',
+                fr: 'IDs de Terminal',
+            },
+            fields: [
+                {
+                    name: 'kiosk',
+                    type: 'number',
+                    label: {
+                        en: 'Kiosk',
+                        nl: 'Kiosk',
+                        de: 'Kiosk',
+                        fr: 'Kiosque',
+                    },
+                    required: true,
+                    admin: {
+                        description: {
+                            en: 'Name of the kiosk.',
+                            nl: 'Naam van de kiosk.',
+                            de: 'Name des Kiosks.',
+                            fr: 'Nom du kiosque.',
+                        },
+                    },
+                },
+                {
+                    name: 'terminal_id',
+                    type: 'text',
+                    label: {
+                        en: 'Terminal ID',
+                        nl: 'Terminal-ID',
+                        de: 'Terminal-ID',
+                        fr: 'ID de Terminal',
+                    },
+                    required: true,
+                    admin: {
+                        description: {
+                            en: 'Terminal ID for the kiosk.',
+                            nl: 'Terminal-ID voor de kiosk.',
+                            de: 'Terminal-ID für den Kiosk.',
+                            fr: 'ID de terminal pour le kiosque.',
+                        },
+                    },
+                },
+            ],
+        },
     ],
 };
