@@ -27,6 +27,7 @@ interface TimeSlotSelectorProps {
     setSelectedTime: React.Dispatch<React.SetStateAction<string>>;
     closedDateReasons?: Map<string, string>;
     branding: Branding; // <-- NEW
+
 }
 
 export default function TimeSlotSelector({

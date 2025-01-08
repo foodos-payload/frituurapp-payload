@@ -35,15 +35,22 @@ export const Orders: CollectionConfig = {
   hooks: {
     beforeChange: [
       async ({ data, originalDoc, req, operation }) => {
-        console.log('\n=== Orders beforeChange Hook ===');
-        console.log('operation:', operation);
-        console.log('originalDoc:', originalDoc || 'No originalDoc => new order');
-        console.log('incoming data:', JSON.stringify(data, null, 2));
 
         // 1) If new doc => auto-increment 'tempOrdNr' + 'id'
         if (operation === 'create') {
-          console.log('Creating a new order => auto-incrementing tempOrdNr + id');
           const today = new Date().toISOString().split('T')[0];
+
+          // -- Kiosk-specific overrides --
+          if (data.order_type === 'kiosk') {
+            const now = new Date();
+            // Set fulfillment time to moment of order creation
+            data.fulfillment_time = now.toTimeString().slice(0, 5);
+
+            // Also set sub_method_label to "terminal" for the first payment line
+            if (data.payments && data.payments.length > 0) {
+              data.payments[0].sub_method_label = 'terminal';
+            }
+          }
 
           // (A) Find lastOrder for tempOrdNr
           const lastOrder = await req.payload.find({

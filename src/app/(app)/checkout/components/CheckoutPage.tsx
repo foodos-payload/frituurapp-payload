@@ -12,6 +12,7 @@ import PaymentMethodSelector from "./PaymentMethodSelector";
 import OrderSummary from "./OrderSummary";
 import "../checkout.css";
 import { useShopBranding } from "@/context/ShopBrandingContext";
+import KioskPaymentOptions from "./KioskPaymentOptions";
 
 // A) Types
 interface MultiSafePaySettings {
@@ -73,6 +74,8 @@ interface CheckoutPageProps {
     initialTimeslots: Timeslot[];
     shopInfo?: ShopInfo;
     fulfillmentMethods?: FulfillmentMethodDoc[];
+    isKiosk?: boolean;
+
 }
 
 export default function CheckoutPage({
@@ -81,6 +84,7 @@ export default function CheckoutPage({
     initialTimeslots,
     shopInfo,
     fulfillmentMethods,
+    isKiosk = false,
 }: CheckoutPageProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -326,6 +330,14 @@ export default function CheckoutPage({
 
     // canProceed => only enable checkout if address passes google check or not needed
     function canProceed(): boolean {
+        // If kiosk => only check minimal things
+        if (isKiosk) {
+            // e.g. require cart not empty, have a selectedPaymentId
+            if (!selectedPaymentId) return false;
+            if (!cartItems || cartItems.length === 0) return false;
+            return true;
+        }
+
         if (!fulfillmentMethod) return false;
         if (!selectedDate || !selectedTime) return false;
         if (!selectedPaymentId) return false;
@@ -381,6 +393,20 @@ export default function CheckoutPage({
 
 
     async function handleCheckout() {
+        // If kiosk => override the fulfillment date/time with "now"
+        if (isKiosk) {
+            // e.g., “now” in your timezone, or store in a state first
+            const now = new Date();
+            // Example: "YYYY-MM-DD" for the date
+            const isoDate = now.toISOString().slice(0, 10);
+            // Example: store HH:MM 24h format for the time
+            const isoTime = now.toISOString().slice(11, 16);
+
+            // Force these to override any user selection
+            setSelectedDate(isoDate);
+            setSelectedTime(isoTime);
+        }
+
         if (!canProceed()) {
             alert("Please fill all required fields (and be within the radius / min order).");
             return;
@@ -395,7 +421,7 @@ export default function CheckoutPage({
         const payloadData = {
             tenant: hostSlug,
             shop: hostSlug,
-            orderType: "web",
+            orderType: isKiosk ? "kiosk" : "web",
             status: selectedStatus,
             fulfillmentMethod,
             fulfillmentDate: selectedDate,
@@ -487,139 +513,181 @@ export default function CheckoutPage({
         alert("handleRemoveItem stub.");
     }
 
+    //KIOSK LOGIC 
+    useEffect(() => {
+        if (isKiosk) {
+            // For kiosk mode, auto-select current date/time
+            const now = new Date();
+            setSelectedDate(now.toISOString().slice(0, 10)); // "YYYY-MM-DD"
+            setSelectedTime("ASAP");
+            // Or some placeholder.
+
+            // Pre-fill kiosk user details
+            setSurname("Kiosk");
+            setLastName("");
+            setEmail("guest@frituurapp.be");
+            setPhone("");
+            setCity("");
+            setAddress("");
+            setPostalCode("");
+        }
+    }, [isKiosk]);
+
+
     return (
-        <div className="checkout-form container mx-auto my-16 flex flex-wrap items-start gap-8 justify-evenly lg:gap-20">
-            {/* Left column - main form content */}
-            <div className="w-full max-w-2xl grid gap-8 md:flex-1">
-                {/* Back button */}
-                <div className="flex justify-between mb-2">
-                    <button
-                        onClick={handleBackClick}
-                        className="bg-gray-100 text-red-700 px-3 py-2 rounded-xl hover:bg-gray-200 flex items-center gap-2"
-                    >
-                        <span className="font-bold text-lg">←</span>
-                        <span>Forgot something?</span>
-                    </button>
-                </div>
-
-                {/* (A) Hello user / login */}
-                <div className="user-greeting">
-                    {loggedInUser ? (
-                        <div className="mb-3">
-                            <h2 className="text-xl font-semibold">
-                                Hello, {loggedInUser.firstName || "User"}!
-                            </h2>
-                            <div className="mt-1 text-sm">
-                                {/* Example: link to account or logout if you want */}
-                                <button
-                                    onClick={() => alert("Logout stub")}
-                                    className="text-red-600 hover:underline mr-4"
-                                >
-                                    Logout
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2 mb-3">
-                            <span>No account?</span>
-                            <button
-                                onClick={handleLoginClick}
-                                className="text-blue-600 font-medium hover:underline"
-                            >
-                                Login / Register
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* --- NEW: Move the deliveryError (or min-order warnings) above the fulfillment methods --- */}
-                {deliveryError && fulfillmentMethod === "delivery" && (
-                    <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
-                        {deliveryError}
-                    </div>
-                )}
-
-                {/* (B) Fulfillment Method */}
-                <FulfillmentMethodSelector
-                    allTimeslots={allTimeslots}
-                    fulfillmentMethod={fulfillmentMethod}
-                    setFulfillmentMethod={(m) => {
-                        setFulfillmentMethod(m);
-                        setSelectedDate("");
-                        setSelectedTime("");
-                    }}
-                    deliveryRadius={deliveryRadius}
-                    branding={branding}
-                />
-
-                {/* (C) Timeslots */}
-                {fulfillmentMethod && (
-                    <TimeSlotSelector
-                        fulfillmentMethod={fulfillmentMethod}
-                        allTimeslots={allTimeslots}
-                        selectedDate={selectedDate}
-                        setSelectedDate={setSelectedDate}
-                        selectedTime={selectedTime}
-                        setSelectedTime={setSelectedTime}
-                        closedDateReasons={closedDateReasons}
-                        hostSlug={hostSlug}
-                        branding={branding}
-                    />
-                )}
-
-                {/* (D) Customer details => pass deliveryError so it shows under address */}
-                {fulfillmentMethod && (
-                    <CustomerDetailsForm
-                        fulfillmentMethod={fulfillmentMethod}
-                        surname={surname}
-                        setSurname={setSurname}
-                        lastName={lastName}
-                        setLastName={setLastName}
-                        address={address}
-                        setAddress={setAddress}
-                        city={city}
-                        setCity={setCity}
-                        postalCode={postalCode}
-                        setPostalCode={setPostalCode}
-                        phone={phone}
-                        setPhone={setPhone}
-                        email={email}
-                        setEmail={setEmail}
-                        deliveryError={deliveryError}
-                        addressNotice={addressNotice}
-                        emailRequired={emailRequired}
-                        phoneRequired={phoneRequired}
-                        lastNameRequired={lastNameRequired}
-                        distanceLoading={distanceLoading}
-                        branding={branding}
-                    />
-                )}
-
-                {/* (E) Payment methods */}
-                <PaymentMethodSelector
+        <div className="checkout-page">
+            {isKiosk ? (
+                <KioskPaymentOptions
+                    handleBackClick={handleBackClick}
+                    handleCheckout={handleCheckout}
                     paymentMethods={paymentMethods}
-                    selectedPaymentId={selectedPaymentId}
                     setSelectedPaymentId={setSelectedPaymentId}
                     branding={branding}
                 />
-            </div>
+            ) : (
+                // Normal checkout flow
+                <>
+                    <div className="checkout-form container mx-auto my-16 flex flex-wrap items-start gap-8 justify-evenly lg:gap-20">
+                        {/* Left column - main form content */}
+                        <div className="w-full max-w-2xl grid gap-8 md:flex-1">
+                            {/* Back button */}
+                            <div className="flex justify-between mb-2">
+                                <button
+                                    onClick={handleBackClick}
+                                    className="bg-gray-100 text-red-700 px-3 py-2 rounded-xl hover:bg-gray-200 flex items-center gap-2"
+                                >
+                                    <span className="font-bold text-lg">←</span>
+                                    <span>Forgot something?</span>
+                                </button>
+                            </div>
 
-            {/* Right column => order summary */}
-            <div className="w-full max-w-md sticky top-16">
-                <OrderSummary
-                    couponCode={couponCode}
-                    setCouponCode={setCouponCode}
-                    handleScanQR={handleScanQR}
-                    handleApplyCoupon={handleApplyCoupon}
-                    canProceed={canProceed}
-                    handleCheckout={handleCheckout}
-                    cartTotal={cartTotal}
-                    shippingCost={shippingCost}
-                    finalTotal={finalTotal}
-                    fulfillmentMethod={fulfillmentMethod}
-                    branding={branding}
-                />
-            </div>
+                            {/* (A) Hello user / login */}
+                            <div className="user-greeting">
+                                {loggedInUser ? (
+                                    <div className="mb-3">
+                                        <h2 className="text-xl font-semibold">
+                                            Hello, {loggedInUser.firstName || "User"}!
+                                        </h2>
+                                        <div className="mt-1 text-sm">
+                                            {/* Example: link to account or logout if you want */}
+                                            <button
+                                                onClick={() => alert("Logout stub")}
+                                                className="text-red-600 hover:underline mr-4"
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <span>No account?</span>
+                                        <button
+                                            onClick={handleLoginClick}
+                                            className="text-blue-600 font-medium hover:underline"
+                                        >
+                                            Login / Register
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* --- NEW: Move the deliveryError (or min-order warnings) above the fulfillment methods --- */}
+                            {deliveryError && fulfillmentMethod === "delivery" && (
+                                <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
+                                    {deliveryError}
+                                </div>
+                            )}
+
+                            {/* (B) Fulfillment Method */}
+                            <FulfillmentMethodSelector
+                                allTimeslots={allTimeslots}
+                                fulfillmentMethod={fulfillmentMethod}
+                                setFulfillmentMethod={(m) => {
+                                    setFulfillmentMethod(m);
+                                    setSelectedDate("");
+                                    setSelectedTime("");
+                                }}
+                                deliveryRadius={deliveryRadius}
+                                branding={branding}
+
+                            />
+
+                            {/* (C) Timeslots */}
+                            {fulfillmentMethod && (
+                                <TimeSlotSelector
+                                    fulfillmentMethod={fulfillmentMethod}
+                                    allTimeslots={allTimeslots}
+                                    selectedDate={selectedDate}
+                                    setSelectedDate={setSelectedDate}
+                                    selectedTime={selectedTime}
+                                    setSelectedTime={setSelectedTime}
+                                    closedDateReasons={closedDateReasons}
+                                    hostSlug={hostSlug}
+                                    branding={branding}
+
+                                />
+                            )}
+
+                            {/* (D) Customer details => pass deliveryError so it shows under address */}
+                            {fulfillmentMethod && (
+                                <CustomerDetailsForm
+                                    fulfillmentMethod={fulfillmentMethod}
+                                    surname={surname}
+                                    setSurname={setSurname}
+                                    lastName={lastName}
+                                    setLastName={setLastName}
+                                    address={address}
+                                    setAddress={setAddress}
+                                    city={city}
+                                    setCity={setCity}
+                                    postalCode={postalCode}
+                                    setPostalCode={setPostalCode}
+                                    phone={phone}
+                                    setPhone={setPhone}
+                                    email={email}
+                                    setEmail={setEmail}
+                                    deliveryError={deliveryError}
+                                    addressNotice={addressNotice}
+                                    emailRequired={emailRequired}
+                                    phoneRequired={phoneRequired}
+                                    lastNameRequired={lastNameRequired}
+                                    distanceLoading={distanceLoading}
+                                    branding={branding}
+
+                                />
+                            )}
+
+                            {/* (E) Payment methods */}
+                            <PaymentMethodSelector
+                                paymentMethods={paymentMethods}
+                                selectedPaymentId={selectedPaymentId}
+                                setSelectedPaymentId={setSelectedPaymentId}
+                                branding={branding}
+
+                            />
+                        </div>
+
+                        {/* Right column => order summary */}
+                        <div className="w-full max-w-md sticky top-16">
+                            <OrderSummary
+                                couponCode={couponCode}
+                                setCouponCode={setCouponCode}
+                                handleScanQR={handleScanQR}
+                                handleApplyCoupon={handleApplyCoupon}
+                                canProceed={canProceed}
+                                handleCheckout={handleCheckout}
+                                cartTotal={cartTotal}
+                                shippingCost={shippingCost}
+                                finalTotal={finalTotal}
+                                fulfillmentMethod={fulfillmentMethod}
+                                branding={branding}
+
+                            />
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
+
