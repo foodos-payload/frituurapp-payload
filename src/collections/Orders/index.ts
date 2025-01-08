@@ -406,7 +406,7 @@ export const Orders: CollectionConfig = {
     },
     {
       name: 'fulfillment_date',
-      type: 'date',
+      type: 'text',
       label: { en: 'Fulfillment Date' },
     },
     {
