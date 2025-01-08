@@ -267,7 +267,8 @@ export default function CartDrawer({
                         <div className="px-8 mb-4 pt-3">
                             <button
                                 onClick={() => {
-                                    router.push("/checkout");
+                                    const kioskParam = isKiosk ? "?kiosk=true" : "";
+                                    router.push(`/checkout${kioskParam}`);
                                 }}
                                 style={{
                                     borderRadius: "0.5rem",

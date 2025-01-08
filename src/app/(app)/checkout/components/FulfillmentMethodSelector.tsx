@@ -19,6 +19,7 @@ interface FulfillmentMethodSelectorProps {
     setFulfillmentMethod: Dispatch<SetStateAction<FulfillmentMethod>>;
     deliveryRadius?: number;
     branding: Branding; // Now we can read branding.primaryColorCTA
+
 }
 
 export default function FulfillmentMethodSelector({

@@ -38,6 +38,7 @@ interface CustomerDetailsFormProps {
 
     distanceLoading?: boolean;
     branding: Branding; // <-- NEW
+
 }
 
 export default function CustomerDetailsForm({

@@ -20,6 +20,7 @@ interface PaymentMethodSelectorProps {
     selectedPaymentId: string;
     setSelectedPaymentId: Dispatch<SetStateAction<string>>;
     branding: Branding;
+
 }
 
 export default function PaymentMethodSelector({

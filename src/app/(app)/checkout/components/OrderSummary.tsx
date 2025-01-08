@@ -25,6 +25,7 @@ interface OrderSummaryProps {
     fulfillmentMethod: "delivery" | "takeaway" | "dine_in" | "";
 
     branding: Branding; // <-- We read brand color from here
+
 }
 
 export default function OrderSummary({
