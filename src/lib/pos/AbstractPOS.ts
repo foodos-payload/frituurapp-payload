@@ -1,25 +1,65 @@
 // src/lib/pos/AbstractPOS.ts
+export interface LocalProductBase {
+    id: string
+    name_nl: string
+    price_dinein?: number
+    tax_dinein?: number
+    modtime?: number
+}
+
+export interface LocalCategoryBase {
+    id: string
+    name_nl: string
+    modtime?: number
+}
+
+export interface LocalSubproductBase {
+    id: string
+    name_nl: string
+    price?: number
+    tax_dinein?: number
+    modtime?: number
+}
+
+export interface LocalPopupBase {
+    id: string
+    popup_title_nl: string
+    subproducts?: string[]
+    modtime?: number
+}
+
+export interface LocalCustomerBase {
+    id: string
+    firstname: string
+    lastname: string
+    email: string
+    phone?: string
+    modtime?: number
+}
+
+export interface LocalOrderBase {
+    id: string
+    status: string
+    total: number
+    customer_details?: {
+        firstName?: string
+        lastName?: string
+        email?: string
+        phone?: string
+    }
+}
 
 /**
  * Abstract class for all POS systems.
- *
- * @param apiKey - Generic 'API key' usage if needed by certain POS
- * @param apiSecret - Generic 'API secret' usage if needed by certain POS
  */
 export abstract class AbstractPOS {
     constructor(protected apiKey: string, protected apiSecret: string) { }
 
-    // Method placeholders each POS child class must implement:
+    // Child classes must implement these:
     abstract syncProducts(): Promise<void>
     abstract syncSubproducts(): Promise<void>
     abstract syncCategories(): Promise<void>
-    abstract syncOrders(): Promise<void>
-    abstract getProducts(): Promise<any[]>
 
-    abstract pushLocalOrderToCloudPOS(localOrderId: string | number): Promise<number>
-
-    // Optionally define a shared helper method for calling POS endpoints
-    // but each child might override or implement their own logic.
     protected callPOSAPI(_endpoint: string, _requestBody: any): Promise<any> {
         throw new Error('Not implemented')
     }

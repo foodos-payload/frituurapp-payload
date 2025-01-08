@@ -1,21 +1,41 @@
 // src/lib/pos/CloudPOS.ts
-import { AbstractPOS } from './AbstractPOS'
+import {
+    AbstractPOS,
+    LocalProductBase,
+    LocalCategoryBase,
+    LocalSubproductBase,
+    LocalPopupBase,
+    LocalCustomerBase,
+    LocalOrderBase
+} from './AbstractPOS'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Types: local + CloudPOS
+// Types: Local + CloudPOS
 // ─────────────────────────────────────────────────────────────────────────────
-/** PRODUCTS **/
-interface LocalProduct {
-    id: string
+
+interface LocalProduct extends LocalProductBase {
     cloudPOSId?: number
-    name_nl: string
-    price_dinein?: number    // for dine-in
-    tax_dinein?: number      // dine-in tax
-    modtime?: number         // your local last modified timestamp
-    // Possibly other fields like categories[0]?.cloudPOSId
+    // possibly other CloudPOS-specific fields
 }
+interface LocalCategory extends LocalCategoryBase {
+    cloudPOSId?: number
+}
+interface LocalSubproduct extends LocalSubproductBase {
+    cloudPOSId?: number
+}
+interface LocalPopup extends LocalPopupBase {
+    cloudPOSId?: number
+}
+interface LocalCustomer extends LocalCustomerBase {
+    cloudPOSId?: number
+}
+interface LocalOrder extends LocalOrderBase {
+    cloudPOSId?: number
+}
+
+/** PRODUCTS **/
 interface CloudPOSProduct {
     id: number
     name: string
@@ -25,12 +45,6 @@ interface CloudPOSProduct {
 }
 
 /** CATEGORIES **/
-interface LocalCategory {
-    id: string
-    cloudPOSId?: number
-    name_nl: string
-    modtime?: number
-}
 interface CloudPOSCategory {
     id: number
     name: string
@@ -38,34 +52,16 @@ interface CloudPOSCategory {
 }
 
 /** SUBPRODUCTS **/
-interface LocalSubproduct {
-    id: string
-    cloudPOSId?: number
-    name_nl: string
-    price?: number
-    tax_dinein?: number
-    modtime?: number
-    // Possibly store product(s)? e.g. local.parentProductId or local.productIDs
-}
-
 interface CloudPOSSubproduct {
     id: number
     name: string
     price: string
     tax: number
     modtime?: number
-    product_ids?: number[]   // If subproduct has references to products in CloudPOS
+    product_ids?: number[]
 }
 
 /** PRODUCT POPUPS **/
-interface LocalPopup {
-    id: string
-    cloudPOSId?: number
-    popup_title_nl: string
-    subproducts?: string[]   // array of subproduct doc IDs
-    modtime?: number
-}
-
 interface CloudPOSPopup {
     popupid: number
     popup_titel: string
@@ -74,16 +70,6 @@ interface CloudPOSPopup {
 }
 
 /** CUSTOMERS **/
-interface LocalCustomer {
-    id: string
-    cloudPOSId?: number
-    firstname: string
-    lastname: string
-    email: string
-    phone?: string
-    modtime?: number
-}
-
 interface CloudPOSCustomer {
     id: number
     firstname: string
@@ -91,21 +77,6 @@ interface CloudPOSCustomer {
     email?: string
     phone?: string
     modtime?: number
-}
-
-/** ORDERS (pushing only) **/
-interface LocalOrder {
-    id: string
-    cloudPOSId?: number
-    status: string
-    total: number
-    customer_details?: {
-        firstName?: string
-        lastName?: string
-        email?: string
-        phone?: string
-    }
-    // etc.
 }
 
 /** OPTIONS **/
