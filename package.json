@@ -42,6 +42,7 @@
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "payload": "^3.14.0",
+    "qrcode.react": "^4.2.0",
     "qs-esm": "7.0.2",
     "react": "19.0.0",
     "react-color": "^2.19.3",

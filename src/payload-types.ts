@@ -29,6 +29,7 @@ export interface Config {
     'customer-loyalty': CustomerLoyalty;
     coupons: Coupon;
     'gift-vouchers': GiftVoucher;
+    'membership-roles': MembershipRole;
     orders: Order;
     categories: Category;
     products: Product;
@@ -59,6 +60,7 @@ export interface Config {
     'customer-loyalty': CustomerLoyaltySelect<false> | CustomerLoyaltySelect<true>;
     coupons: CouponsSelect<false> | CouponsSelect<true>;
     'gift-vouchers': GiftVouchersSelect<false> | GiftVouchersSelect<true>;
+    'membership-roles': MembershipRolesSelect<false> | MembershipRolesSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
@@ -827,6 +829,81 @@ export interface Customer {
         id?: string | null;
       }[]
     | null;
+  memberships?:
+    | {
+        role: string | MembershipRole;
+        points?: number | null;
+        status?: ('active' | 'disabled') | null;
+        dateJoined?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Auto-generated code for scanning / linking this customer.
+   */
+  barcode?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "membership-roles".
+ */
+export interface MembershipRole {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Display name (e.g. "VIP", "Gold").
+   */
+  label: string;
+  /**
+   * Internal value (e.g. "vip", "gold").
+   */
+  value: string;
+  /**
+   * Which loyalty programs can use this role?
+   */
+  loyaltyPrograms?: (string | CustomerLoyalty)[] | null;
+  /**
+   * If checked, this role can be auto-assigned to new customers who have no roles yet.
+   */
+  defaultRole?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-loyalty".
+ */
+export interface CustomerLoyalty {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name of the loyalty program, e.g., "VIP Rewards".
+   */
+  program_name: string;
+  /**
+   * Number of points awarded per purchase.
+   */
+  points_per_purchase: number;
+  /**
+   * Conversion ratio for points to currency, e.g., 100 points = $1.
+   */
+  redeem_ratio: number;
+  /**
+   * Status of the loyalty program.
+   */
+  status: 'active' | 'inactive';
+  /**
+   * Additional details about the loyalty program.
+   */
+  description?: string | null;
+  /**
+   * Which membership roles are allowed for this loyalty program?
+   */
+  rolesAllowed?: (string | MembershipRole)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1241,37 +1318,6 @@ export interface Subproduct {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customer-loyalty".
- */
-export interface CustomerLoyalty {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Name of the loyalty program, e.g., "VIP Rewards".
-   */
-  program_name: string;
-  /**
-   * Number of points awarded per purchase.
-   */
-  points_per_purchase: number;
-  /**
-   * Conversion ratio for points to currency, e.g., 100 points = $1.
-   */
-  redeem_ratio: number;
-  /**
-   * Status of the loyalty program.
-   */
-  status: 'active' | 'inactive';
-  /**
-   * Additional details about the loyalty program.
-   */
-  description?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "coupons".
  */
 export interface Coupon {
@@ -1429,6 +1475,10 @@ export interface Order {
   fulfillment_method?: ('delivery' | 'takeaway' | 'dine_in') | null;
   fulfillment_date?: string | null;
   fulfillment_time?: string | null;
+  /**
+   * Link to the customer who placed this order (if known).
+   */
+  customer?: (string | null) | Customer;
   customer_details?: {
     firstName?: string | null;
     lastName?: string | null;
@@ -1563,6 +1613,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'gift-vouchers';
         value: string | GiftVoucher;
+      } | null)
+    | ({
+        relationTo: 'membership-roles';
+        value: string | MembershipRole;
       } | null)
     | ({
         relationTo: 'orders';
@@ -2061,6 +2115,16 @@ export interface CustomersSelect<T extends boolean = true> {
         tag_type?: T;
         id?: T;
       };
+  memberships?:
+    | T
+    | {
+        role?: T;
+        points?: T;
+        status?: T;
+        dateJoined?: T;
+        id?: T;
+      };
+  barcode?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2093,6 +2157,7 @@ export interface CustomerLoyaltySelect<T extends boolean = true> {
   redeem_ratio?: T;
   status?: T;
   description?: T;
+  rolesAllowed?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2127,6 +2192,20 @@ export interface GiftVouchersSelect<T extends boolean = true> {
   valid_until?: T;
   used?: T;
   payment_type?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "membership-roles_select".
+ */
+export interface MembershipRolesSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  label?: T;
+  value?: T;
+  loyaltyPrograms?: T;
+  defaultRole?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2180,6 +2259,7 @@ export interface OrdersSelect<T extends boolean = true> {
   fulfillment_method?: T;
   fulfillment_date?: T;
   fulfillment_time?: T;
+  customer?: T;
   customer_details?:
     | T
     | {

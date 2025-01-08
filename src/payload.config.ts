@@ -24,6 +24,7 @@ import { ShopBranding } from './collections/ShopSettings/ShopBranding'
 import { Customers } from './collections/Customers';
 import { CustomerCredits } from './collections/CustomerCredits';
 import { CustomerLoyalty } from './collections/CustomerLoyalty';
+import { MembershipRoles } from './collections/MembershipRoles';
 import { Coupons } from './collections/Coupons';
 import { GiftVouchers } from './collections/GiftVouchers';
 import { ReservationSettings } from './collections/ReservationSettings';
@@ -178,6 +179,13 @@ export default buildConfig({
       ...GiftVouchers,
       admin: {
         ...GiftVouchers.admin,
+        group: '🎁',
+      },
+    },
+    {
+      ...MembershipRoles,
+      admin: {
+        ...MembershipRoles.admin,
         group: '🎁',
       },
     },

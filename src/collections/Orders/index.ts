@@ -419,6 +419,16 @@ export const Orders: CollectionConfig = {
     // (D) customer_details
     // ─────────────────────────────────────────────
     {
+      name: 'customer',            // or "customerId"
+      type: 'relationship',
+      relationTo: 'customers',
+      required: false,             // or true if you always want an associated Customer
+      label: { en: 'Customer' },
+      admin: {
+        description: { en: 'Link to the customer who placed this order (if known).' },
+      },
+    },
+    {
       name: 'customer_details',
       type: 'group',
       label: { en: 'Customer Details' },

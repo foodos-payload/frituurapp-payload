@@ -1,3 +1,4 @@
+
 // File: src/app/api/getTimeslots/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
@@ -51,7 +52,81 @@ function getNextTenDates(): string[] {
 }
 
 /**
- * GET /api/getTimeslots?host=SHOP_SLUG
+ * @openapi
+ * /api/getTimeslots:
+ *   get:
+ *     summary: Retrieve available timeslots for a specific shop
+ *     description: Fetches available timeslots for the next 10 days for a given shop based on its slug.
+ *     parameters:
+ *       - in: query
+ *         name: host
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The slug of the shop to retrieve timeslots for.
+ *     responses:
+ *       200:
+ *         description: A list of available timeslots for the shop.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 shop:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     slug:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                 timeslots:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       day:
+ *                         type: string
+ *                       time:
+ *                         type: string
+ *                       fulfillmentMethod:
+ *                         type: string
+ *                       maxOrders:
+ *                         type: number
+ *                       date:
+ *                         type: string
+ *                       isFullyBooked:
+ *                         type: boolean
+ *       400:
+ *         description: Bad request, missing or invalid parameters.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       404:
+ *         description: Shop not found for the given slug.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 export async function GET(request: NextRequest) {
     try {
