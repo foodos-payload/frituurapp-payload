@@ -66,6 +66,4 @@ export function setupCrons() {
 
     //     console.log('[CRON] Finished hourly POS sync!')
     // })
-
-
 }

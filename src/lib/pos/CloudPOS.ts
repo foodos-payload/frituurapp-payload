@@ -17,7 +17,6 @@ import config from '@payload-config'
 
 interface LocalProduct extends LocalProductBase {
     cloudPOSId?: number
-    // possibly other CloudPOS-specific fields
 }
 interface LocalCategory extends LocalCategoryBase {
     cloudPOSId?: number
@@ -148,8 +147,7 @@ export class CloudPOS extends AbstractPOS {
         }
 
         // 1) Fetch all remote products from CloudPOS (since 'product.select' has no name filter)
-        const allRemote = await this.getProducts(); // doCloudPOSRequest('product.select', {})
-        // 2) Try to find one named "Shipping Cost"
+        const allRemote = await this.getProducts(); // doCloudPOSRequest('product.select', {})        // 2) Try to find one named "Shipping Cost"
         const shippingRemote = allRemote.find((p) => p.name === "Shipping Cost");
         if (shippingRemote) {
             this.remoteShippingProductId = shippingRemote.id;
@@ -161,9 +159,10 @@ export class CloudPOS extends AbstractPOS {
             name: "Shipping Cost",
             price: "0.00", // We'll override line price in weborderdetail
             tax: 21,
-            // category_id: undefined, // omit so it won't appear in any category
+            category_id: 31,
         };
         const res = await this.doCloudPOSRequest("product.insert", requestBody);
+        console.log(res)
         const newId = res.id;
         if (!newId) {
             throw new Error("Failed to create remote shipping product in CloudPOS");
@@ -202,7 +201,7 @@ export class CloudPOS extends AbstractPOS {
     public async createProductInCloudPOS(local: LocalProduct, categoryId: number): Promise<number> {
         const requestBody = {
             name: local.name_nl,
-            price: (local.price_dinein || 0).toFixed(2),
+            price: (local.price || 0).toFixed(2),
             tax: local.tax_dinein || 21,
             category_id: categoryId,
         }
@@ -218,7 +217,7 @@ export class CloudPOS extends AbstractPOS {
         const requestBody = {
             id: remoteId,
             name: local.name_nl,
-            price: (local.price_dinein || 0).toFixed(2),
+            price: (local.price || 0).toFixed(2),
             tax: local.tax_dinein || 21,
             category_id: categoryId,
         }
@@ -319,7 +318,7 @@ export class CloudPOS extends AbstractPOS {
                             id: local.id,
                             data: {
                                 name_nl: remote.name,
-                                price_dinein: parseFloat(remote.price),
+                                price: parseFloat(remote.price),
                                 tax_dinein: remote.tax,
                                 modtime: remote.modtime,
                             },
@@ -382,7 +381,7 @@ export class CloudPOS extends AbstractPOS {
                     data: {
                         cloudPOSId: remote.id,
                         name_nl: remote.name,
-                        price_dinein: parseFloat(remote.price),
+                        price: parseFloat(remote.price),
                         tax_dinein: remote.tax,
                         modtime: remote.modtime,
 
