@@ -171,7 +171,16 @@ export const Orders: CollectionConfig = {
     // Tenant + Shop scoping
     tenantField,
     shopsField,
-
+    {
+      name: 'cloudPOSId',
+      type: 'number', // or text
+      label: 'CloudPOS Order ID',
+      required: false,
+      admin: {
+        position: 'sidebar',
+        description: 'The order ID used by CloudPOS if synced.',
+      },
+    },
     // Auto-increment ID fields
     {
       name: 'id',
