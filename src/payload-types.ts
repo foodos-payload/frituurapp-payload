@@ -281,6 +281,19 @@ export interface PaymentMethod {
    * Enable or disable this payment method.
    */
   enabled?: boolean | null;
+  terminal_ids?:
+    | {
+        /**
+         * Name of the kiosk.
+         */
+        kiosk: number;
+        /**
+         * Terminal ID for the kiosk.
+         */
+        terminal_id: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1714,6 +1727,13 @@ export interface PaymentMethodsSelect<T extends boolean = true> {
         methods?: T;
       };
   enabled?: T;
+  terminal_ids?:
+    | T
+    | {
+        kiosk?: T;
+        terminal_id?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
