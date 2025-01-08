@@ -13,6 +13,7 @@ export interface Config {
   collections: {
     tenants: Tenant;
     users: User;
+    roles: Role;
     shops: Shop;
     'payment-methods': PaymentMethod;
     'fulfillment-methods': FulfillmentMethod;
@@ -42,6 +43,7 @@ export interface Config {
   collectionsSelect: {
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    roles: RolesSelect<false> | RolesSelect<true>;
     shops: ShopsSelect<false> | ShopsSelect<true>;
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
@@ -232,6 +234,26 @@ export interface Shop {
          * The reason for the closure.
          */
         reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "roles".
+ */
+export interface Role {
+  id: string;
+  name?: string | null;
+  collections?:
+    | {
+        collectionName?: string | null;
+        read?: boolean | null;
+        write?: boolean | null;
+        edit?: boolean | null;
+        delete?: boolean | null;
         id?: string | null;
       }[]
     | null;
@@ -1286,6 +1308,10 @@ export interface PayloadLockedDocument {
         value: string | User;
       } | null)
     | ({
+        relationTo: 'roles';
+        value: string | Role;
+      } | null)
+    | ({
         relationTo: 'shops';
         value: string | Shop;
       } | null)
@@ -1452,6 +1478,25 @@ export interface UsersSelect<T extends boolean = true> {
   hash?: T;
   loginAttempts?: T;
   lockUntil?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "roles_select".
+ */
+export interface RolesSelect<T extends boolean = true> {
+  name?: T;
+  collections?:
+    | T
+    | {
+        collectionName?: T;
+        read?: T;
+        write?: T;
+        edit?: T;
+        delete?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

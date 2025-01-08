@@ -32,6 +32,7 @@ import { en } from '@payloadcms/translations/languages/en'
 import { de } from '@payloadcms/translations/languages/de'
 import { fr } from '@payloadcms/translations/languages/fr'
 import { Services } from './collections/Services';
+import Roles from './collections/Roles';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -62,6 +63,13 @@ export default buildConfig({
       ...Users,
       admin: {
         ...Users.admin,
+        group: '🏪',
+      },
+    },
+    {
+      ...Roles,
+      admin: {
+        ...Roles.admin,
         group: '🏪',
       },
     },
