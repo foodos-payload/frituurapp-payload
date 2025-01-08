@@ -84,11 +84,11 @@ export default function CheckoutPage({
     initialTimeslots,
     shopInfo,
     fulfillmentMethods,
-    isKiosk = false,
 }: CheckoutPageProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const kioskMode = searchParams.get("kiosk") === "true";
+    const isKiosk = kioskMode;
 
     const branding = useShopBranding();
 

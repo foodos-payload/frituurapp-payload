@@ -1,9 +1,12 @@
+// src/collections/Customers.ts
+
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateCustomer } from './access/byTenant';
 import { readAccess } from './access/readAccess';
+import QRField from '@/fields/CustomerQRField';
 
 export const Customers: CollectionConfig = {
   slug: 'customers',
@@ -33,8 +36,8 @@ export const Customers: CollectionConfig = {
     },
   },
   fields: [
-    tenantField, // Scope customers by tenant
-    shopsField, // Link customers to specific shops
+    tenantField,  // scope by tenant
+    shopsField,   // scope by shop
     {
       name: 'cloudPOSId',
       type: 'number',
@@ -49,12 +52,7 @@ export const Customers: CollectionConfig = {
       name: 'firstname',
       type: 'text',
       required: true,
-      label: {
-        en: 'First Name',
-        nl: 'Voornaam',
-        de: 'Vorname',
-        fr: 'Prénom',
-      },
+      label: { en: 'First Name', nl: 'Voornaam', de: 'Vorname', fr: 'Prénom' },
       admin: {
         description: {
           en: 'First name of the customer.',
@@ -74,12 +72,7 @@ export const Customers: CollectionConfig = {
       name: 'lastname',
       type: 'text',
       required: true,
-      label: {
-        en: 'Last Name',
-        nl: 'Achternaam',
-        de: 'Nachname',
-        fr: 'Nom de Famille',
-      },
+      label: { en: 'Last Name', nl: 'Achternaam', de: 'Nachname', fr: 'Nom de Famille' },
       admin: {
         description: {
           en: 'Last name of the customer.',
@@ -123,12 +116,7 @@ export const Customers: CollectionConfig = {
       name: 'email',
       type: 'email',
       required: true,
-      label: {
-        en: 'Email Address',
-        nl: 'E-mailadres',
-        de: 'E-Mail-Adresse',
-        fr: 'Adresse E-mail',
-      },
+      label: { en: 'Email Address', nl: 'E-mailadres', de: 'E-Mail-Adresse', fr: 'Adresse E-mail' },
       admin: {
         description: {
           en: 'Email address of the customer.',
@@ -147,12 +135,7 @@ export const Customers: CollectionConfig = {
     {
       name: 'phone',
       type: 'text',
-      label: {
-        en: 'Phone Number',
-        nl: 'Telefoonnummer',
-        de: 'Telefonnummer',
-        fr: 'Numéro de Téléphone',
-      },
+      label: { en: 'Phone Number', nl: 'Telefoonnummer', de: 'Telefonnummer', fr: 'Numéro de Téléphone' },
       admin: {
         description: {
           en: 'Phone number of the customer.',
@@ -171,22 +154,12 @@ export const Customers: CollectionConfig = {
     {
       name: 'tags',
       type: 'array',
-      label: {
-        en: 'Tags',
-        nl: 'Tags',
-        de: 'Tags',
-        fr: 'Tags',
-      },
+      label: { en: 'Tags', nl: 'Tags', de: 'Tags', fr: 'Tags' },
       fields: [
         {
           name: 'tag_id',
           type: 'text',
-          label: {
-            en: 'Tag ID',
-            nl: 'Tag-ID',
-            de: 'Tag-ID',
-            fr: 'ID de Tag',
-          },
+          label: { en: 'Tag ID', nl: 'Tag-ID', de: 'Tag-ID', fr: 'ID de Tag' },
           admin: {
             description: {
               en: 'Tag ID associated with the customer.',
@@ -199,12 +172,7 @@ export const Customers: CollectionConfig = {
         {
           name: 'tag_type',
           type: 'text',
-          label: {
-            en: 'Tag Type',
-            nl: 'Tagtype',
-            de: 'Tag-Typ',
-            fr: 'Type de Tag',
-          },
+          label: { en: 'Tag Type', nl: 'Tagtype', de: 'Tag-Typ', fr: 'Type de Tag' },
           admin: {
             description: {
               en: 'Type of tag (e.g., loyalty, preference).',
@@ -216,5 +184,125 @@ export const Customers: CollectionConfig = {
         },
       ],
     },
+
+    // --------- NEW FIELD: memberships array ---------
+    {
+      name: 'memberships',
+      type: 'array',
+      label: { en: 'Memberships' },
+      fields: [
+        {
+          name: 'role',
+          type: 'relationship',
+          relationTo: 'membership-roles',
+          required: true,
+          label: { en: 'Role' },
+        },
+        {
+          name: 'points',
+          type: 'number',
+          defaultValue: 0,
+          label: { en: 'Points' },
+        },
+        {
+          name: 'status',
+          type: 'select',
+          options: [
+            { label: 'Active', value: 'active' },
+            { label: 'Disabled', value: 'disabled' },
+          ],
+          defaultValue: 'active',
+          label: { en: 'Membership Status' },
+        },
+        {
+          name: 'dateJoined',
+          type: 'date',
+          label: { en: 'Date Joined Program' },
+        },
+      ],
+    },
+
+    {
+      name: 'barcode',
+      type: 'text',
+      admin: {
+        readOnly: false,
+        components: {
+          Field: QRField, // Matches the FieldClientComponent signature
+        },
+      },
+    }
+
+
+    // -----------------------------------------------
   ],
+
+  hooks: {
+    beforeDelete: [
+      async ({ req, id }) => {
+        // 1) Find all customer-credits referencing this customer
+        const credits = await req.payload.find({
+          collection: 'customer-credits',
+          where: {
+            customerid: {
+              equals: id, // The `id` of this customer being deleted
+            },
+          },
+          limit: 999, // Or a high enough limit to fetch all
+        });
+
+        // 2) Delete each doc individually
+        for (const doc of credits.docs) {
+          await req.payload.delete({
+            collection: 'customer-credits',
+            id: doc.id,
+          });
+        }
+      },
+    ],
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (!data) return;
+
+        if (operation === 'create' && !data.barcode) {
+          // 1. Generate a random or hashed code
+          // e.g., short random string, or a hashed customer ID, or a UUID
+          const randomCode = `CUST-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+
+          // 2. Assign it
+          data.barcode = randomCode;
+        }
+
+        // On CREATE or UPDATE, if memberships is empty, assign a default role
+        if (operation === 'create' || operation === 'update') {
+          // If `memberships` is NOT provided by the incoming data, we consider it "empty"
+          // or if the array length is 0
+          const memberships = data.memberships || [];
+          if (memberships.length === 0) {
+            // 1) find any membership role with `defaultRole = true`
+            const defaultRoles = await req.payload.find({
+              collection: 'membership-roles',
+              where: { defaultRole: { equals: true } },
+              limit: 10, // if you allow multiple default roles
+            });
+
+            if (defaultRoles.docs.length > 0) {
+              // 2) For each default role doc, add an item to `memberships`
+              defaultRoles.docs.forEach((roleDoc: any) => {
+                memberships.push({
+                  role: roleDoc.id,
+                  points: 0,
+                  status: 'active',
+                  dateJoined: new Date().toISOString(),
+                });
+              });
+            }
+
+            // 3) Save the updated memberships array back to data
+            data.memberships = memberships;
+          }
+        }
+      },
+    ],
+  },
 };

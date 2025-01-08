@@ -1,3 +1,5 @@
+// src/collections/CustomerLoyalty.ts
+
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
@@ -34,7 +36,8 @@ export const CustomerLoyalty: CollectionConfig = {
   },
   fields: [
     tenantField, // Ensure loyalty programs are scoped by tenant
-    shopsField, // Link loyalty programs to specific shops
+    shopsField,  // Link loyalty programs to specific shops
+
     {
       name: 'program_name',
       type: 'text',
@@ -142,6 +145,21 @@ export const CustomerLoyalty: CollectionConfig = {
           nl: 'bijv., Inclusief VIP-voordelen en kortingen',
           de: 'z. B., Enthält VIP-Vorteile und Rabatte',
           fr: 'p.ex., Comprend des avantages VIP et des réductions',
+        },
+      },
+    },
+
+    // NEW FIELD: An array or relationship field to "allowed" roles
+    {
+      name: 'rolesAllowed',
+      type: 'relationship',
+      label: { en: 'Allowed Roles' },
+      relationTo: 'membership-roles',
+      hasMany: true, // This allows multiple role docs
+      required: false, // or true if you always want at least one
+      admin: {
+        description: {
+          en: 'Which membership roles are allowed for this loyalty program?',
         },
       },
     },
