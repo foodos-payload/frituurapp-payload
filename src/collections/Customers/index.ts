@@ -36,6 +36,16 @@ export const Customers: CollectionConfig = {
     tenantField, // Scope customers by tenant
     shopsField, // Link customers to specific shops
     {
+      name: 'cloudPOSId',
+      type: 'number',
+      label: 'CloudPOS Customer ID',
+      required: false,
+      admin: {
+        position: 'sidebar',
+        description: 'The CloudPOS ID for this customer if synced.',
+      },
+    },
+    {
       name: 'firstname',
       type: 'text',
       required: true,

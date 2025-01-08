@@ -34,6 +34,7 @@ export interface Config {
     products: Product;
     subproducts: Subproduct;
     productpopups: Productpopup;
+    pos: Po;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -63,6 +64,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
     productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
+    pos: PosSelect<false> | PosSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -789,6 +791,10 @@ export interface Customer {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
+   * The CloudPOS ID for this customer if synced.
+   */
+  cloudPOSId?: number | null;
+  /**
    * First name of the customer.
    */
   firstname: string;
@@ -872,6 +878,10 @@ export interface Product {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   categories: (string | Category)[];
+  /**
+   * The CloudPOS ID for syncing. Leave empty if not synced yet.
+   */
+  cloudPOSId?: number | null;
   /**
    * Enter the product name in Dutch.
    */
@@ -1032,6 +1042,10 @@ export interface Category {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
+   * The CloudPOS ID of this category. Leave empty if not synced.
+   */
+  cloudPOSId?: number | null;
+  /**
    * Enter the category name in Dutch (default).
    */
   name_nl: string;
@@ -1142,6 +1156,10 @@ export interface Subproduct {
   id: string;
   tenant: string | Tenant;
   shops: (string | Shop)[];
+  /**
+   * The CloudPOS ID for this subproduct. If empty, not synced.
+   */
+  cloudPOSId?: number | null;
   /**
    * Enter the subproduct name in Dutch.
    */
@@ -1338,6 +1356,10 @@ export interface Order {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
+   * The order ID used by CloudPOS if synced.
+   */
+  cloudPOSId?: number | null;
+  /**
    * Auto-incrementing identifier for the order.
    */
   id: number;
@@ -1423,6 +1445,43 @@ export interface Order {
   subtotal?: number | null;
   total_tax?: number | null;
   total?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pos".
+ */
+export interface Po {
+  id: string;
+  /**
+   * Choose which POS system this config belongs to.
+   */
+  provider: 'cloudpos' | 'deliverect';
+  /**
+   * For CloudPOS or other POS providers requiring a license name.
+   */
+  licenseName?: string | null;
+  /**
+   * For CloudPOS or other POS providers requiring a token.
+   */
+  token?: string | null;
+  /**
+   * API key if needed. For CloudPOS, you might not need it, but we keep it for other providers.
+   */
+  apiKey?: string | null;
+  /**
+   * API secret if needed. Hide or show carefully if it’s sensitive.
+   */
+  apiSecret?: string | null;
+  /**
+   * Enable or disable this POS configuration.
+   */
+  active?: boolean | null;
+  /**
+   * Which shop does this POS config belong to?
+   */
+  shop: string | Shop;
   updatedAt: string;
   createdAt: string;
 }
@@ -1524,6 +1583,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'productpopups';
         value: string | Productpopup;
+      } | null)
+    | ({
+        relationTo: 'pos';
+        value: string | Po;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1985,6 +2048,7 @@ export interface MediaSelect<T extends boolean = true> {
 export interface CustomersSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
+  cloudPOSId?: T;
   firstname?: T;
   lastname?: T;
   company_name?: T;
@@ -2073,6 +2137,7 @@ export interface GiftVouchersSelect<T extends boolean = true> {
 export interface OrdersSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
+  cloudPOSId?: T;
   id?: T;
   tempOrdNr?: T;
   status?: T;
@@ -2140,6 +2205,7 @@ export interface OrdersSelect<T extends boolean = true> {
 export interface CategoriesSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
+  cloudPOSId?: T;
   name_nl?: T;
   name_en?: T;
   name_de?: T;
@@ -2166,6 +2232,7 @@ export interface ProductsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
   categories?: T;
+  cloudPOSId?: T;
   name_nl?: T;
   name_en?: T;
   name_de?: T;
@@ -2212,6 +2279,7 @@ export interface ProductsSelect<T extends boolean = true> {
 export interface SubproductsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
+  cloudPOSId?: T;
   name_nl?: T;
   name_en?: T;
   name_de?: T;
@@ -2252,6 +2320,21 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   maximum_option?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pos_select".
+ */
+export interface PosSelect<T extends boolean = true> {
+  provider?: T;
+  licenseName?: T;
+  token?: T;
+  apiKey?: T;
+  apiSecret?: T;
+  active?: T;
+  shop?: T;
   updatedAt?: T;
   createdAt?: T;
 }

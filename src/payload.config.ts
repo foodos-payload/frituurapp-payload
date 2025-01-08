@@ -4,6 +4,7 @@ import path from 'path';
 import { buildConfig } from 'payload';
 import { fileURLToPath } from 'url';
 import { s3Storage } from '@payloadcms/storage-s3';
+import { setupCrons } from './lib/cron/index'
 
 // Import all collections
 import { Pages } from './collections/Pages';
@@ -29,6 +30,7 @@ import { ReservationSettings } from './collections/ReservationSettings';
 import { ReservationEntries } from './collections/ReservationEntries';
 import { Orders } from './collections/Orders';
 import { Media } from './collections/Media';
+import { POS } from './collections/POS';
 import { nl } from '@payloadcms/translations/languages/nl'
 import { en } from '@payloadcms/translations/languages/en'
 import { de } from '@payloadcms/translations/languages/de'
@@ -214,6 +216,7 @@ export default buildConfig({
         group: '🛒',
       },
     },
+    POS
 
   ],
   localization: {
@@ -248,6 +251,10 @@ export default buildConfig({
     schemaOutputFile: path.resolve(dirname, 'generated-schema.graphql'),
   },
   secret: process.env.PAYLOAD_SECRET as string,
+  onInit: async (payload) => {
+    console.log('[Payload] onInit called. Setting up cron jobs...');
+    setupCrons()
+  },
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },

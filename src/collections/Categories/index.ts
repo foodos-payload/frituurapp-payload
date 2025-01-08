@@ -38,6 +38,16 @@ export const Categories: CollectionConfig = {
         tenantField, // Ensure categories are scoped by tenant
         shopsField, // Link categories to one or multiple shops
         {
+            name: 'cloudPOSId',
+            type: 'number',  // or 'text'
+            label: 'CloudPOS ID',
+            required: false,
+            admin: {
+                position: 'sidebar',
+                description: 'The CloudPOS ID of this category. Leave empty if not synced.',
+            },
+        },
+        {
             name: 'name_nl',
             type: 'text',
             label: {

@@ -39,6 +39,16 @@ export const Subproducts: CollectionConfig = {
         tenantField, // Ensure subproducts are scoped by tenant
         shopsField, // Link subproducts to one or multiple shops
         {
+            name: 'cloudPOSId',
+            type: 'number',
+            label: 'CloudPOS ID',
+            required: false,
+            admin: {
+                position: 'sidebar',
+                description: 'The CloudPOS ID for this subproduct. If empty, not synced.',
+            },
+        },
+        {
             name: 'name_nl',
             type: 'text',
             label: {
