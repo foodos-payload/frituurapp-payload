@@ -2,7 +2,7 @@
 export interface LocalProductBase {
     id: string
     name_nl: string
-    price_dinein?: number
+    price?: number
     tax_dinein?: number
     modtime?: number
 }

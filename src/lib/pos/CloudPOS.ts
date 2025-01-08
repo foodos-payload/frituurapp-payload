@@ -41,6 +41,7 @@ interface CloudPOSProduct {
     price: string
     tax: number
     modtime?: number
+    category_id?: number
 }
 
 /** CATEGORIES **/
@@ -62,6 +63,11 @@ interface CloudPOSSubproduct {
 
 /** PRODUCT POPUPS **/
 interface CloudPOSPopup {
+    default_checked_subproduct_id: number
+    minimum_option: number
+    required_option_webshop: boolean
+    required_option_cashregister: boolean
+    multiselect: boolean
     popupid: number
     popup_titel: string
     subproduct_ids?: number[]
@@ -254,7 +260,7 @@ export class CloudPOS extends AbstractPOS {
                 id: local.id,
                 depth: 1, // if needed to get the categories
             })
-            const categories = productDoc.categories || []
+            const categories = productDoc.categories as LocalCategory[] || []
 
             // Find the first category that has a cloudPOSId
             const firstCatWithCloudPOSId = categories.find((cat: any) => cat.cloudPOSId)
@@ -278,7 +284,11 @@ export class CloudPOS extends AbstractPOS {
             let remoteId: number | undefined
             if (!local.cloudPOSId) {
                 // => no prior CloudPOS ID => never synced => create new remote product
-                remoteId = await this.createProductInCloudPOS(local, categoryIdForCloudPOS)
+                if (categoryIdForCloudPOS === undefined) {
+                    // skip or handle
+                } else {
+                    remoteId = await this.createProductInCloudPOS(local, categoryIdForCloudPOS)
+                }
                 // const newId = await this.createProductInCloudPOS(local, categoryIdForCloudPOS)
                 await localPayload.update({
                     collection: 'products',
@@ -293,7 +303,11 @@ export class CloudPOS extends AbstractPOS {
                 const remote = remoteMap.get(local.cloudPOSId)
                 if (!remote) {
                     // => it vanished remotely => re-create if you want
-                    remoteId = await this.createProductInCloudPOS(local, categoryIdForCloudPOS)
+                    if (categoryIdForCloudPOS === undefined) {
+                        // skip or handle
+                    } else {
+                        remoteId = await this.createProductInCloudPOS(local, categoryIdForCloudPOS)
+                    }
                     await localPayload.update({
                         collection: 'products',
                         id: local.id,
@@ -319,8 +333,8 @@ export class CloudPOS extends AbstractPOS {
                             data: {
                                 name_nl: remote.name,
                                 price: parseFloat(remote.price),
-                                tax_dinein: remote.tax,
-                                modtime: remote.modtime,
+                                tax: remote.tax,
+                                modtime: remote.modtime ?? 0,
                             },
                         })
                     } else if (localMod > remoteMod) {
@@ -328,7 +342,11 @@ export class CloudPOS extends AbstractPOS {
                         console.log(
                             `[CloudPOS] Local product ${local.id} is newer => pushing changes to remote...`,
                         )
-                        await this.updateProductInCloudPOS(local, remoteId, categoryIdForCloudPOS)
+                        if (categoryIdForCloudPOS === undefined) {
+                            // skip or handle
+                        } else {
+                            await this.updateProductInCloudPOS(local, remoteId, categoryIdForCloudPOS)
+                        }
                     }
                 }
             }
@@ -382,15 +400,15 @@ export class CloudPOS extends AbstractPOS {
                         cloudPOSId: remote.id,
                         name_nl: remote.name,
                         price: parseFloat(remote.price),
-                        tax_dinein: remote.tax,
-                        modtime: remote.modtime,
+                        tax: remote.tax,
+                        modtime: remote.modtime ?? 0,
 
                         categories: [localCategory.id],
-                        tax: 21,
                         description_nl: '',
 
-                        shops: [this.shopId],
-                        tenant: this.tenantId,
+                        shops: [this.shopId || ''],
+                        tenant: this.tenantId || '',
+                        status: 'enabled',
                     },
                 })
             }
@@ -509,9 +527,10 @@ export class CloudPOS extends AbstractPOS {
                     data: {
                         cloudPOSId: remote.id,
                         name_nl: remote.name,
-                        modtime: remote.modtime,
-                        shops: [this.shopId],
-                        tenant: this.tenantId,
+                        modtime: remote.modtime ?? 0,
+                        shops: [this.shopId || ''],
+                        tenant: this.tenantId || '',
+                        status: 'enabled'
                     },
                 })
             }
@@ -611,8 +630,8 @@ export class CloudPOS extends AbstractPOS {
                             data: {
                                 name_nl: remote.name,
                                 price: parseFloat(remote.price),
-                                tax_dinein: remote.tax,
-                                modtime: remote.modtime,
+                                tax: remote.tax,
+                                modtime: remote.modtime ?? 0,
                             },
                         })
                     } else if (localMod > remoteMod) {
@@ -637,10 +656,11 @@ export class CloudPOS extends AbstractPOS {
                         cloudPOSId: remote.id,
                         name_nl: remote.name,
                         price: parseFloat(remote.price),
-                        tax_dinein: remote.tax,
-                        modtime: remote.modtime,
-                        shops: [this.shopId],
-                        tenant: this.tenantId
+                        tax: remote.tax,
+                        modtime: remote.modtime ?? 0,
+                        shops: [this.shopId || ''],
+                        tenant: this.tenantId || '',
+                        status: 'enabled',
                     },
                 })
             }
@@ -665,12 +685,12 @@ export class CloudPOS extends AbstractPOS {
         const requestBody = {
             id: productCloudId,
             popupid: popup.popupid,
-            popup_titel: popup.popup_title_nl || '',
+            popup_titel: popup.popup_titel || '',
             multiselect: popup.multiselect || false,
             required_option_cashregister: popup.required_option_cashregister || false,
             required_option_webshop: popup.required_option_webshop || false,
             minimum_option: popup.minimum_option || 0,
-            maximum_option: popup.maximum_option || 0,
+            maximum_option: popup.minimum_option || 0,
             default_checked_subproduct_id: popup.default_checked_subproduct_id || 0,
             subproduct_ids: popup.subproduct_ids || [],
         }
@@ -951,10 +971,10 @@ export class CloudPOS extends AbstractPOS {
 
         // 5) getOrCreateCloudPOSCustomer
         const customerid = await this.getOrCreateCloudPOSCustomer(
-            orderDoc.customer_details?.email,
-            orderDoc.customer_details?.firstName,
-            orderDoc.customer_details?.lastName,
-            orderDoc.customer_details?.phone
+            orderDoc.customer_details?.email ?? undefined,
+            orderDoc.customer_details?.firstName ?? undefined,
+            orderDoc.customer_details?.lastName ?? undefined,
+            orderDoc.customer_details?.phone ?? undefined
         );
 
         // 6) Build base "weborderdetail" lines from order_details

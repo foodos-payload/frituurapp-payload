@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
         for (const doc of timeslotResult.docs) {
             if (!doc.method_id || !doc.week) continue;
 
-            const methodType = doc.method_id.method_type || 'unknown';
+            const methodType = typeof doc.method_id === 'string' ? 'unknown' : doc.method_id.method_type || 'unknown';
             const week = doc.week as Record<string, TimeRange[]>;
 
             for (const weekday of Object.keys(week)) {

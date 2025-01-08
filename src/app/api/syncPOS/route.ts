@@ -90,14 +90,19 @@ export async function GET(req: NextRequest) {
             // e.g. if you stored licenseName & token in posDoc
             const { provider, apiKey, apiSecret, licenseName, token } = posDoc
 
-            const instance = createPOSInstance(provider, apiKey, apiSecret, {
-                licenseName,
-                token,
-                shopId: shop.id,
-                tenantId: shop.tenant,
-            })
-            // await instance.syncCategories()
-            // await instance.syncProducts()
+            const instance = createPOSInstance(
+                provider ?? '',
+                apiKey ?? '',
+                apiSecret ?? '',
+                {
+                    licenseName: licenseName ?? '',
+                    token: token ?? '',
+                    shopId: shop.id,
+                    tenantId: typeof shop.tenant === 'string' ? shop.tenant : undefined,
+                }
+            )
+            await instance.syncCategories()
+            await instance.syncProducts()
             await instance.syncSubproducts()
         }
 

@@ -5,11 +5,8 @@ import CheckoutPage from './components/CheckoutPage'
 
 export const dynamic = 'force-dynamic'
 
-export default async function CheckoutRoute({
-    searchParams,
-}: {
-    searchParams: { [key: string]: string | undefined };
-}) {
+export default async function CheckoutRoute(context: any) {
+    const searchParams = context.searchParams || {}
     // 1) Determine kiosk mode from query param
     const isKiosk = searchParams?.kiosk === "true";
     const headersList = await headers()

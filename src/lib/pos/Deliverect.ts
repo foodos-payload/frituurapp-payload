@@ -2,6 +2,12 @@
 import { AbstractPOS } from './AbstractPOS'
 
 export class Deliverect extends AbstractPOS {
+    syncSubproducts(): Promise<void> {
+        throw new Error('Method not implemented.')
+    }
+    syncCategories(): Promise<void> {
+        throw new Error('Method not implemented.')
+    }
     constructor(apiKey: string, apiSecret: string) {
         super(apiKey, apiSecret)
     }

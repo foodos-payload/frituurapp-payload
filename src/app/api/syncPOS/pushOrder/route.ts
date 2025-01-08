@@ -120,12 +120,17 @@ export async function GET(req: NextRequest) {
             const { provider, apiKey, apiSecret, licenseName, token } = posDoc
 
             // Create an instance of your POS
-            const instance = createPOSInstance(provider, apiKey, apiSecret, {
-                licenseName,
-                token,
-                shopId: shop.id,
-                tenantId: shop.tenant,
-            })
+            const instance = createPOSInstance(
+                provider ?? '',
+                apiKey ?? '',
+                apiSecret ?? '',
+                {
+                    licenseName: licenseName ?? '',
+                    token: token ?? '',
+                    shopId: shop.id,
+                    tenantId: typeof shop.tenant === 'string' ? shop.tenant : undefined,
+                }
+            )
 
             if (provider === 'cloudpos') {
                 const cloudPOSInstance = instance as CloudPOS
