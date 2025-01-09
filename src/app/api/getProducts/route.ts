@@ -93,6 +93,8 @@ interface ProductJSON {
     menuOrder: number
     tax?: number | null
     tax_dinein?: number | null
+    allergens?: string[];
+
 }
 
 interface CategoryJSON {
@@ -405,6 +407,9 @@ export async function GET(request: NextRequest) {
 
                     tax: product.tax ?? null,
                     tax_dinein: product.tax_dinein ?? null,
+
+                    allergens: Array.isArray(product.allergens) ? product.allergens : [],
+
                 }
 
                 return prodJSON

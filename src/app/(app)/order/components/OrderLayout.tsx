@@ -15,6 +15,8 @@ import MenuDrawer from './menu/MenuDrawer';
 import ProductPopupFlow from './ProductPopupFlow';
 import '../order.css';
 import { useShopBranding } from '@/context/ShopBrandingContext';
+import { useSearchParams } from "next/navigation"; // <-- For reading "?kiosk=...&allergens=..."
+
 
 /**
  * Minimal shape for a product in your categories.
@@ -58,6 +60,7 @@ type Product = {
     productpopups?: PopupItem[];
     tax?: number | null;
     tax_dinein?: number | null;
+    allergens?: string[];
     // ...
 };
 
@@ -77,8 +80,6 @@ interface Props {
     categorizedProducts: Category[];
     userLocale?: string;
     /** Branding fetched from your /api/getBranding endpoint. */
-
-    isKiosk?: boolean;
 }
 
 /**
@@ -90,8 +91,42 @@ interface Props {
 export default function OrderLayout({
     shopSlug,
     categorizedProducts,
-    isKiosk,
 }: Props) {
+    // 1) Grab the query string from the client side
+    const searchParams = useSearchParams();
+    const kioskParam = searchParams.get("kiosk"); // "true" or null
+    const [allergensList, setAllergensList] = useState<string[]>([]);
+
+    const isKiosk = kioskParam === "true";
+
+    // If you want to do something with allergens in the client:
+
+    useEffect(() => {
+        const storedAllergens = localStorage.getItem("userAllergens");
+        if (storedAllergens) {
+            // e.g. "milk,nuts"
+            const arr = storedAllergens
+                .split(",")
+                .map((a) => a.trim().toLowerCase())
+                .filter(Boolean);
+            setAllergensList(arr);
+        }
+    }, []);
+
+    // 1) Create a callback to update both React state + localStorage
+    function handleAllergensChange(newAllergens: string[]) {
+        setAllergensList(newAllergens);
+
+        if (newAllergens.length > 0) {
+            localStorage.setItem("userAllergens", newAllergens.join(","));
+        } else {
+            localStorage.removeItem("userAllergens");
+        }
+    }
+
+    const [allergensOpen, setAllergensOpen] = useState(false);
+
+
     const [showJsonModal, setShowJsonModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showCartDrawer, setShowCartDrawer] = useState(false);
@@ -171,14 +206,38 @@ export default function OrderLayout({
         activeProductFromList,
     ]);
 
-    // 1) Filter each category’s products by `searchTerm`
-    const filteredCategories = categorizedProducts.map((cat) => {
-        const filteredProds = cat.products.filter((prod) => {
-            const productName = pickProductName(prod, locale).toLowerCase();
-            return productName.includes(searchTerm.toLowerCase());
+    // 2) Filter by searchTerm + allergens
+    function filterCategories(categories: Category[]) {
+        return categories.map((cat) => {
+            const filteredProds = cat.products.filter((prod) => {
+
+                // console.log("[Allergen Debug] Checking product:", prod.name_nl, prod.allergens);
+
+                // a) Name-based search
+                const productName = pickProductName(prod, locale).toLowerCase();
+                const matchesSearchTerm = productName.includes(searchTerm.toLowerCase());
+
+                // b) Allergen filter: exclude if product has ANY allergens in allergensList
+                let hasConflictingAllergen = false;
+                if (allergensList.length > 0 && prod.allergens) {
+                    const productAllergens = prod.allergens.map((all) => all.toLowerCase());
+                    hasConflictingAllergen = allergensList.some((all) =>
+                        productAllergens.includes(all)
+                    );
+                }
+
+                // Hide product if it has any of the userAllergens
+                const passesAllergens = !hasConflictingAllergen;
+
+                return matchesSearchTerm && passesAllergens;
+            });
+
+            return { ...cat, products: filteredProds };
         });
-        return { ...cat, products: filteredProds };
-    });
+    }
+
+    // 5) Apply your filter
+    const filteredCategories = filterCategories(categorizedProducts);
 
     // 2) Keep only categories that have remaining products
     const visibleCategories = filteredCategories.filter(
@@ -273,6 +332,7 @@ export default function OrderLayout({
                         setMobileSearchOpen={setMobileSearchOpen}
                         branding={branding}
                         isKiosk={isKiosk}
+                        onAllergensChange={handleAllergensChange}
                     />
                 </div>
 

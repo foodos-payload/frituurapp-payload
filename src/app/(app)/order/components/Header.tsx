@@ -24,6 +24,8 @@ interface HeaderProps {
     setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isKiosk?: boolean;
     branding?: BrandingProps;
+    onAllergensChange: (newAllergens: string[]) => void; // We'll forward this to the modal
+
 }
 
 export default function Header({
@@ -35,6 +37,7 @@ export default function Header({
     setMobileSearchOpen,
     isKiosk = false,
     branding,
+    onAllergensChange
 }: HeaderProps) {
     const { t } = useTranslation();
     const mobileInputRef = useRef<HTMLInputElement>(null);
@@ -368,6 +371,7 @@ export default function Header({
                 <AllergensModal
                     onClose={() => setAllergensOpen(false)}
                     brandCTA={brandCTA}
+                    onAllergensChange={onAllergensChange}
                 />
             )}
 

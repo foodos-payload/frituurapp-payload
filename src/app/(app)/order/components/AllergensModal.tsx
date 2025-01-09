@@ -1,8 +1,7 @@
 // File: /src/app/(app)/order/components/AllergensModal.tsx
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import React, { useState, useEffect } from "react";
 
 const allergenIcons: Record<string, string> = {
     gluten: "🌾",
@@ -18,7 +17,7 @@ const allergenIcons: Record<string, string> = {
     sulphites: "💨",
     lupin: "🫘",
     molluscs: "🦪",
-}
+};
 
 const ALL_ALLERGENS = [
     "gluten",
@@ -34,65 +33,70 @@ const ALL_ALLERGENS = [
     "sulphites",
     "lupin",
     "molluscs",
-]
+];
 
 interface AllergensModalProps {
-    onClose: () => void
-    brandCTA?: string
+    /** Called when the user closes the modal. */
+    onClose: () => void;
+    /** Optional brand color for highlighting. */
+    brandCTA?: string;
+    /**
+     * A callback passed down from the parent component (e.g. OrderLayout).
+     * Should update the parent's allergen state so the filter re-renders immediately.
+     */
+    onAllergensChange: (newAllergens: string[]) => void;
 }
 
 export default function AllergensModal({
     onClose,
     brandCTA = "#3b82f6",
+    onAllergensChange,
 }: AllergensModalProps) {
-    const [selected, setSelected] = useState<string[]>([])
+    const [selected, setSelected] = useState<string[]>([]);
 
-    const router = useRouter()
-    const searchParams = useSearchParams()
-
+    // 1) On mount, read from localStorage (optional)
     useEffect(() => {
-        const allergensParam = searchParams.get("allergens") || ""
-        const parsed = allergensParam
+        const stored = localStorage.getItem("userAllergens") || "";
+        const arr = stored
             .split(",")
-            .map((a) => a.trim())
-            .filter(Boolean)
-        setSelected(parsed)
-    }, [searchParams])
+            .map((s) => s.trim())
+            .filter(Boolean);
+        setSelected(arr);
+    }, []);
 
     function toggleAllergen(a: string) {
-        setSelected(prev =>
-            prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]
-        )
+        setSelected((prev) =>
+            prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]
+        );
     }
 
+    // 2) On Apply => Save to localStorage, then call onAllergensChange
     function handleApply() {
-        const params = new URLSearchParams(searchParams.toString())
         if (selected.length > 0) {
-            params.set("allergens", selected.join(","))
+            localStorage.setItem("userAllergens", selected.join(","));
+            // Trigger parent re-render
+            onAllergensChange(selected);
         } else {
-            params.delete("allergens")
+            localStorage.removeItem("userAllergens");
+            onAllergensChange([]);
         }
-        router.replace(`?${params.toString()}`)
-        onClose()
+        onClose();
     }
 
+    // 3) On Clear => remove from localStorage, reset selected, call onAllergensChange([])
     function handleClear() {
-        setSelected([])
-        const params = new URLSearchParams(searchParams.toString())
-        params.delete("allergens")
-        router.replace(`?${params.toString()}`)
-        onClose()
-    }
-
-    function handleCancel() {
-        onClose()
+        setSelected([]);
+        localStorage.removeItem("userAllergens");
+        // Trigger parent re-render with empty array
+        onAllergensChange([]);
+        onClose();
     }
 
     return (
         <div
             className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center"
             onClick={(e) => {
-                if (e.target === e.currentTarget) onClose()
+                if (e.target === e.currentTarget) onClose();
             }}
         >
             <div className="bg-white rounded-xl p-6 max-w-sm w-full relative">
@@ -100,33 +104,27 @@ export default function AllergensModal({
 
                 <div className="grid grid-cols-3 gap-4">
                     {ALL_ALLERGENS.map((allergen) => {
-                        const isChecked = selected.includes(allergen)
-                        const icon = allergenIcons[allergen] || "❓"
-
-                        // We'll do inline style: if isChecked => highlight with brandCTA
-                        // Example: a tinted background + a border with brand color
-                        // We'll do something like brandCTA + '33' for a light alpha BG
-                        const alphaBg = brandCTA + "1A" // '1A' ~ 10% alpha in hex
-                        const highlightStyle = {
-                            backgroundColor: alphaBg,
-                            borderColor: brandCTA,
-                        }
+                        const isChecked = selected.includes(allergen);
+                        const icon = allergenIcons[allergen] || "❓";
+                        // Light alpha background using brandCTA
+                        const alphaBg = brandCTA + "1A";
 
                         return (
                             <div
                                 key={allergen}
-                                className={`
-                  flex flex-col items-center justify-center
-                  p-3 cursor-pointer border rounded-xl
-                  transition-colors
-                `}
-                                style={isChecked ? highlightStyle : {}}
+                                className="flex flex-col items-center justify-center p-3
+                           cursor-pointer border rounded-xl transition-colors"
+                                style={
+                                    isChecked
+                                        ? { backgroundColor: alphaBg, borderColor: brandCTA }
+                                        : {}
+                                }
                                 onClick={() => toggleAllergen(allergen)}
                             >
                                 <span className="text-3xl">{icon}</span>
                                 <span className="mt-1 text-sm text-gray-700">{allergen}</span>
                             </div>
-                        )
+                        );
                     })}
                 </div>
 
@@ -137,9 +135,6 @@ export default function AllergensModal({
                     >
                         Clear
                     </button>
-                    {/* <button className="px-4 py-2" onClick={handleCancel}>
-                        Cancel
-                    </button> */}
                     <button
                         onClick={handleApply}
                         style={{ backgroundColor: brandCTA }}
@@ -150,5 +145,5 @@ export default function AllergensModal({
                 </div>
             </div>
         </div>
-    )
+    );
 }
