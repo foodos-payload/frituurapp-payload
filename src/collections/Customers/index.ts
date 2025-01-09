@@ -228,7 +228,7 @@ export const Customers: CollectionConfig = {
       admin: {
         readOnly: false,
         components: {
-          Field: QRField, // Matches the FieldClientComponent signature
+          Field: QRField as any, // Matches the FieldClientComponent signature
         },
       },
     }
