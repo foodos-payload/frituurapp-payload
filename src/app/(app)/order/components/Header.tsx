@@ -24,7 +24,6 @@ interface HeaderProps {
     setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isKiosk?: boolean;
     branding?: BrandingProps;
-    onAllergensChange: (newAllergens: string[]) => void; // We'll forward this to the modal
 
 }
 
@@ -37,15 +36,21 @@ export default function Header({
     setMobileSearchOpen,
     isKiosk = false,
     branding,
-    onAllergensChange
 }: HeaderProps) {
     const { t } = useTranslation();
     const mobileInputRef = useRef<HTMLInputElement>(null);
 
     // 1) Check if allergens are active => read from ?allergens
-    const searchParams = useSearchParams();
-    const allergensParam = searchParams.get("allergens") || "";
-    const hasAllergens = allergensParam.trim().length > 0;
+    const [hasAllergens, setHasAllergens] = useState(false);
+
+    function handleAllergensChange(newAllergens: string[]) {
+        setHasAllergens(newAllergens.length > 0);
+    }
+
+    useEffect(() => {
+        const storedAllergens = localStorage.getItem("userAllergens") || "";
+        setHasAllergens(storedAllergens.trim().length > 0);
+    }, []);
 
     useEffect(() => {
         if (mobileSearchOpen) {
@@ -341,9 +346,9 @@ export default function Header({
                         {/* The Allergen Icon => pulses if allergens exist */}
                         <button
                             className={`
-                p-2 text-white rounded
-                ${hasAllergens ? "pulseBrand" : ""}
-              `}
+                                ${iconBtnClasses} 
+                                ${hasAllergens ? "pulseBrand" : ""}
+                            `}
                             style={
                                 hasAllergens
                                     ? ({ "--pulse-color": brandCTA } as React.CSSProperties)
@@ -371,7 +376,7 @@ export default function Header({
                 <AllergensModal
                     onClose={() => setAllergensOpen(false)}
                     brandCTA={brandCTA}
-                    onAllergensChange={onAllergensChange}
+                    onAllergensChange={handleAllergensChange}
                 />
             )}
 
