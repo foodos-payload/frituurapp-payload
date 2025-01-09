@@ -4,6 +4,8 @@ import { baseListFilter } from './access/baseListFilter';
 import { canMutateMedia } from './access/byTenant';
 import { filterByTenantRead } from './access/byTenant';
 import { generateBlurhash } from './hooks/generateBlurhash'; // Updated to reflect no Base64
+import { S3 } from '@aws-sdk/client-s3';
+
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -52,13 +54,12 @@ export const Media: CollectionConfig = {
         if (operation === 'create') {
           setTimeout(async () => {
             try {
-              const AWS = require('@aws-sdk/client-s3');
-              const s3 = new AWS.S3({
+              const s3 = new S3({
                 region: process.env.DO_REGION,
                 endpoint: process.env.DO_ENDPOINT,
                 credentials: {
-                  accessKeyId: process.env.DO_ACCESS_KEY,
-                  secretAccessKey: process.env.DO_SECRET_KEY,
+                  accessKeyId: process.env.DO_ACCESS_KEY!,
+                  secretAccessKey: process.env.DO_SECRET_KEY!,
                 },
               });
 
