@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher/LanguageSwitcher";
 import { useTranslation } from "@/context/TranslationsContext";
 import { useCart } from "@/context/CartContext";
+import { KioskContainer } from "./components/kiosk/KioskContainer";
 
 interface FulfillmentMethod {
     key: "dine-in" | "takeaway" | "delivery";
@@ -23,33 +24,58 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
 }) => {
     const router = useRouter();
     const { t } = useTranslation();
-    const { setShippingMethod } = useCart(); // Use the CartContext
+    const { setShippingMethod } = useCart();
+    const searchParams = useSearchParams();
+
+    // 1) Check `kiosk` param in client
+    const kioskParam = searchParams.get("kiosk"); // "true" or null
+    const isKiosk = kioskParam === "true";
+
+    // 2) If kiosk => filter out "delivery"
+    let filteredFulfillment = fulfillmentOptions;
+    if (isKiosk) {
+        filteredFulfillment = fulfillmentOptions.filter(
+            (option) => option.key !== "delivery"
+        );
+    }
 
     useEffect(() => {
-        // Set kioskMode in localStorage for compatibility (if needed elsewhere)
-        localStorage.setItem("kioskMode", "false");
-    }, []);
+        // Could store kioskMode in localStorage if needed
+        localStorage.setItem("kioskMode", String(isKiosk));
+    }, [isKiosk]);
 
+    // 3) Handle selecting a method
     const handleSelectOption = (optionKey: "dine-in" | "takeaway" | "delivery") => {
-        const found = fulfillmentOptions.find((f) => f.key === optionKey);
+        const found = filteredFulfillment.find((f) => f.key === optionKey);
         if (!found) return;
 
-        setShippingMethod(optionKey); // Update shipping method in the CartContext
-        router.push("/order"); // Navigate to the order page
+        setShippingMethod(optionKey);
+        router.push("/order");
     };
 
-    const isDineIn = fulfillmentOptions.some((f) => f.key === "dine-in");
-    const isTakeaway = fulfillmentOptions.some((f) => f.key === "takeaway");
-    const isDelivery = fulfillmentOptions.some((f) => f.key === "delivery");
+    // If you're using separate kiosk layout
+    if (isKiosk) {
+        return (
+            <KioskContainer
+                shopSlug={shopSlug}
+                fulfillmentOptions={filteredFulfillment}
+            />
+        );
+    }
+
+    // 4) Otherwise normal mode
+    const isDineIn = filteredFulfillment.some((f) => f.key === "dine-in");
+    const isTakeaway = filteredFulfillment.some((f) => f.key === "takeaway");
+    const isDelivery = filteredFulfillment.some((f) => f.key === "delivery");
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-100 overflow-x-hidden">
             <div className="flex grow items-stretch justify-center px-0 py-0 sm:px-8 sm:py-32 md:px-12 lg:px-16">
                 <div
                     className="bg-white shadow-lg w-full max-w-screen-lg
-                    min-h-full sm:min-h-0
-                    sm:rounded-xl p-4 sm:p-8 lg:p-16
-                    flex flex-col justify-evenly"
+          min-h-full sm:min-h-0
+          sm:rounded-xl p-4 sm:p-8 lg:p-16
+          flex flex-col justify-evenly"
                 >
                     <h1 className="text-2xl sm:text-3xl font-bold text-center mb-8">
                         {t("chooseMode.title")}
@@ -61,9 +87,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isDineIn && handleSelectOption("dine-in")}
                             disabled={!isDineIn}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border 
-                                border-gray-200 bg-white shadow transition-transform hover:scale-105
-                                rounded-xl sm:rounded-xl
-                                ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
+              border-gray-200 bg-white shadow transition-transform hover:scale-105
+              rounded-xl sm:rounded-xl
+              ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DineInIcon.png"
@@ -83,9 +109,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isTakeaway && handleSelectOption("takeaway")}
                             disabled={!isTakeaway}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                                border-gray-200 bg-white shadow transition-transform hover:scale-105
-                                rounded-xl sm:rounded-xl
-                                ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
+              border-gray-200 bg-white shadow transition-transform hover:scale-105
+              rounded-xl sm:rounded-xl
+              ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/TakeAwayIcon.png"
@@ -105,9 +131,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isDelivery && handleSelectOption("delivery")}
                             disabled={!isDelivery}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                                border-gray-200 bg-white shadow transition-transform hover:scale-105
-                                rounded-xl sm:rounded-xl
-                                ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
+              border-gray-200 bg-white shadow transition-transform hover:scale-105
+              rounded-xl sm:rounded-xl
+              ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DeliveryIcon.png"
