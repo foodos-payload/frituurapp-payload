@@ -216,23 +216,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
         try {
             const storedItems = localStorage.getItem("cartItems");
             const storedMethod = localStorage.getItem("selectedShippingMethod");
+            const storedCoupon = localStorage.getItem("appliedCoupon");
+            const storedGiftVoucher = localStorage.getItem("appliedGiftVoucher");
             const storedPoints = localStorage.getItem("pointsUsed");
             const storedCredits = localStorage.getItem("creditsUsed");
 
-            if (storedItems) {
-                setItems(JSON.parse(storedItems));
-            }
-            if (storedMethod) {
-                setSelectedShippingMethod(
-                    storedMethod as "dine-in" | "takeaway" | "delivery"
-                );
-            }
-            if (storedPoints) {
-                setPointsUsed(parseFloat(storedPoints));
-            }
-            if (storedCredits) {
-                setCreditsUsed(parseFloat(storedCredits));
-            }
+            if (storedItems) setItems(JSON.parse(storedItems));
+            if (storedMethod) setSelectedShippingMethod(storedMethod as any);
+            if (storedCoupon) setCoupon(JSON.parse(storedCoupon));
+            if (storedGiftVoucher) setGiftVoucher(JSON.parse(storedGiftVoucher));
+            if (storedPoints) setPointsUsed(parseFloat(storedPoints));
+            if (storedCredits) setCreditsUsed(parseFloat(storedCredits));
         } catch {
             // ignore parse errors
         }
@@ -254,6 +248,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
             localStorage.removeItem("appliedCoupon");
         }
     }, [coupon]);
+
+    // Persist gift voucher to localStorage
+    useEffect(() => {
+        if (giftVoucher) {
+            localStorage.setItem("appliedGiftVoucher", JSON.stringify(giftVoucher));
+        } else {
+            localStorage.removeItem("appliedGiftVoucher");
+        }
+    }, [giftVoucher]);
 
 
     /* ───────────── Cart CRUD Methods ───────────── */
