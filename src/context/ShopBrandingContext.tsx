@@ -12,6 +12,7 @@ export type ShopBranding = {
     siteHeaderImg?: string;
     googleReviewUrl?: string;
     tripAdvisorUrl?: string;
+    kiosk_idle_screen_enabled?: boolean;
     kioskIdleImage?: {
         id: string;
         filename: string;
