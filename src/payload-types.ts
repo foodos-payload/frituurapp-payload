@@ -838,9 +838,6 @@ export interface Customer {
         id?: string | null;
       }[]
     | null;
-  /**
-   * Auto-generated code for scanning / linking this customer.
-   */
   barcode?: string | null;
   updatedAt: string;
   createdAt: string;

@@ -6,7 +6,6 @@ import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateCustomer } from './access/byTenant';
 import { readAccess } from './access/readAccess';
-import QRField from '@/fields/CustomerQRField';
 
 export const Customers: CollectionConfig = {
   slug: 'customers',
@@ -228,7 +227,7 @@ export const Customers: CollectionConfig = {
       admin: {
         readOnly: false,
         components: {
-          Field: QRField as any, // Matches the FieldClientComponent signature
+          Field: '@/fields/CustomerQRField'
         },
       },
     }
