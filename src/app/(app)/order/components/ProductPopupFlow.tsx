@@ -401,10 +401,10 @@ export default function ProductPopupFlow({
                             name_de: sp.linkedProduct?.name_de ?? sp.name_de ?? sp.name_nl,
                             name_fr: sp.linkedProduct?.name_fr ?? sp.name_fr ?? sp.name_nl,
                             price: sp.linkedProduct?.price ?? sp.price,
-                            tax: typeof sp.linkedProduct?.tax === "number" ? sp.linkedProduct!.tax : sp.tax,
+                            tax: typeof sp.linkedProduct?.tax === "number" ? sp.linkedProduct!.tax : sp.tax ?? undefined,
                             tax_dinein: typeof sp.linkedProduct?.tax_dinein === "number"
                                 ? sp.linkedProduct!.tax_dinein
-                                : sp.tax_dinein,
+                                : sp.tax_dinein ?? undefined,
                             image: sp.linkedProduct?.image ?? sp.image
                                 ? {
                                     url: (sp.linkedProduct?.image ?? sp.image)?.url ?? "",
