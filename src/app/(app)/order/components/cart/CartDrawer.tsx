@@ -4,6 +4,7 @@ import React, { useRef, MouseEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CSSTransition } from "react-transition-group";
 import { FiX, FiTrash2 } from "react-icons/fi";
+import PromoButton from "@/app/(app)/shared/PromoButton";
 
 import {
     useCart,
@@ -11,7 +12,6 @@ import {
     getLineItemSignature,
 } from "@/context/CartContext"; // Adjust import path as needed
 import { useTranslation } from "@/context/TranslationsContext"; // Adjust if you have a different translation context
-import PromoCodeModal from "@/app/(app)/shared/PromoCodeModal";
 
 /** Optional branding type for custom colors/styles. */
 type Branding = {
@@ -43,7 +43,6 @@ export default function CartDrawer({
     // Access the cart context
     const {
         items,
-        customer,
         updateItemQuantity,
         removeItem,
         clearCart,
@@ -51,13 +50,6 @@ export default function CartDrawer({
         getCartTotal,
         // final total after coupon/gift/points/credits
         getCartTotalWithDiscounts,
-        // code application methods
-        fetchCustomerByCode,
-        applyCoupon,
-        applyGiftVoucher,
-        // methods for applying points/credits
-        applyCustomerCredits,
-        applyPointsUsage,
     } = useCart();
 
     // For CSSTransitions
@@ -74,53 +66,6 @@ export default function CartDrawer({
     // Basic item count
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
     const hasItems = items.length > 0;
-
-
-
-    // For showing/hiding the promo code modal
-    const [promoModalOpen, setPromoModalOpen] = useState(false);
-
-    // We'll track the "step" in local state. "codeInput" vs "customerOptions"
-    const [promoModalStep, setPromoModalStep] = useState<"codeInput" | "customerOptions">(
-        "codeInput"
-    );
-
-    // Whenever we load a "CUST-" code and we see the context's `customer` is set,
-    // switch the modal step to "customerOptions" if appropriate.
-    useEffect(() => {
-        if (customer && promoModalStep === "codeInput") {
-            // Check if we triggered a CUST code
-            // We can detect this if we have a local variable or state, 
-            // or we can do it simpler: 
-            // "If there's a context customer, we probably used a CUST code."
-            setPromoModalStep("customerOptions");
-        }
-    }, [customer, promoModalStep]);
-
-    /**
-     * Decide which function to call based on the code prefix:
-     * - "CUST-" => fetchCustomerByCode
-     * - "GV" => applyGiftVoucher
-     * - otherwise => applyCoupon
-     */
-    async function handleApplyCode(code: string) {
-        // Always start with step=codeInput in the modal
-        setPromoModalStep("codeInput");
-
-        if (code.toUpperCase().startsWith("CUST-")) {
-            await fetchCustomerByCode(code);
-            // Then the effect above may switch step => "customerOptions"
-        } else if (code.toUpperCase().startsWith("GV")) {
-            await applyGiftVoucher(code);
-            // If it's a gift voucher or normal coupon, 
-            // we can just close the modal immediately
-            setPromoModalOpen(false);
-        } else {
-            await applyCoupon(code);
-            // close modal
-            setPromoModalOpen(false);
-        }
-    }
 
     /** If user clicks overlay => close the drawer. */
     function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
@@ -373,21 +318,13 @@ export default function CartDrawer({
                                 </div>
                             ) : (
                                 <div className="text-md font-semibold">
-                                    €{originalTotal.toFixed(2)}
+
                                 </div>
                             )}
 
                             {/* Button to open the promo modal => step=codeInput */}
-                            <button
-                                type="button"
-                                className="text-blue-600 underline self-start"
-                                onClick={() => {
-                                    setPromoModalStep("codeInput");
-                                    setPromoModalOpen(true);
-                                }}
-                            >
-                                {t("order.cart.apply_code")}
-                            </button>
+                            <PromoButton label="Apply Promo or Scan QR" buttonClass="bg-blue-100 ..." />
+
 
                             {/* Checkout button */}
                             <button
@@ -415,28 +352,6 @@ export default function CartDrawer({
                 </div>
             </CSSTransition>
 
-            {/* Promo Code Modal => we pass down the step & the relevant data */}
-            <PromoCodeModal
-                isOpen={promoModalOpen}
-                onClose={() => {
-                    setPromoModalOpen(false);
-                    setPromoModalStep("codeInput");
-                }}
-                step={promoModalStep}
-                customer={customer ? {
-                    firstname: customer.firstname,
-                    lastname: customer.lastname,
-                    memberships: customer.memberships,
-                } : undefined}
-                totalCredits={1000} // example, or track in state if you fetch from server
-                onSubmitCode={handleApplyCode}
-                onApplyPoints={(points) => {
-                    applyPointsUsage(points);
-                }}
-                onApplyCredits={(credits) => {
-                    applyCustomerCredits(credits);
-                }}
-            />
         </>
     );
 }

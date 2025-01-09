@@ -4,6 +4,7 @@
 import React from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { useCart, getLineItemSignature } from "@/context/CartContext";
+import PromoButton from "../../shared/PromoButton";
 
 type Branding = {
     /** e.g. "#ECAA02" or some other brand color */
@@ -20,6 +21,8 @@ interface OrderSummaryProps {
     handleCheckout: () => void;
 
     cartTotal: number;
+    discountedSubtotal: number;
+    rawSubtotal: number;
     shippingCost: number;
     finalTotal: number;
     fulfillmentMethod: "delivery" | "takeaway" | "dine_in" | "";
@@ -29,19 +32,23 @@ interface OrderSummaryProps {
 }
 
 export default function OrderSummary({
-    couponCode,
-    setCouponCode,
-    handleScanQR,
-    handleApplyCoupon,
     canProceed,
     handleCheckout,
-    cartTotal,
     shippingCost,
     finalTotal,
     fulfillmentMethod,
+    discountedSubtotal,
+    rawSubtotal,
     branding,
 }: OrderSummaryProps) {
-    const { items: cartItems, updateItemQuantity, removeItem } = useCart();
+    const {
+        items: cartItems,
+        updateItemQuantity,
+        removeItem,
+    } = useCart();
+
+    const discount = rawSubtotal - discountedSubtotal;
+    const hasDiscount = discount > 0;
 
     // 1) Fallback to green if no brand color is defined
     const brandColor = branding.primaryColorCTA || "#22c55e";
@@ -200,42 +207,41 @@ export default function OrderSummary({
                     </ul>
                 )}
 
-                {/* Coupon + QR Row */}
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <input
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Coupon code?"
-                        className="
-              flex-1 border border-gray-300 rounded-xl 
-              py-2 px-3 focus:outline-none focus:border-blue-500
-            "
-                    />
-                    <div className="flex gap-2">
-                        <button
-                            onClick={handleApplyCoupon}
-                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl px-3 py-2 transition-colors"
-                        >
-                            Apply
-                        </button>
-                        <button
-                            onClick={handleScanQR}
-                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl px-3 py-2 transition-colors"
-                        >
-                            QR
-                        </button>
-                    </div>
-                </div>
+                {/* 
+          Instead of a simple text input for 'couponCode', 
+          we add a button that opens PromoCodeModal. 
+        */}
+                <PromoButton label="Apply Promo or Scan QR" buttonClass="bg-blue-100 ..." />
+
 
                 {/* Totals + Checkout */}
                 <div className="pt-3 border-t border-gray-200 space-y-2">
-                    {/* Subtotal */}
-                    <div className="flex justify-between items-center">
-                        <span className="text-gray-700 font-medium">Subtotal</span>
-                        <span className="text-gray-900 font-semibold">
-                            €{cartTotal.toFixed(2)}
-                        </span>
-                    </div>
+                    {/* If there is a discount => show both lines; else show a single "Subtotal" */}
+                    {hasDiscount ? (
+                        <>
+                            {/* Original (raw) Subtotal */}
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-700 font-medium">Subtotal</span>
+                                <span className="text-gray-900 font-semibold">
+                                    €{rawSubtotal.toFixed(2)}
+                                </span>
+                            </div>
+
+                            {/* Discount line */}
+                            <div className="flex justify-between items-center text-green-600">
+                                <span className="font-medium">Discount</span>
+                                <span className="font-semibold">–€{discount.toFixed(2)}</span>
+                            </div>
+                        </>
+                    ) : (
+                        // If no discount, show "Subtotal" as the discountedSubtotal
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-700 font-medium">Subtotal</span>
+                            <span className="text-gray-900 font-semibold">
+                                €{discountedSubtotal.toFixed(2)}
+                            </span>
+                        </div>
+                    )}
 
                     {/* Show shipping if "delivery" */}
                     {fulfillmentMethod === "delivery" && (
@@ -267,10 +273,10 @@ export default function OrderSummary({
                         onClick={handleCheckout}
                         disabled={!canProceed()}
                         className={`
-              w-full mt-2 text-white font-medium py-2 rounded-xl focus:outline-none 
-              transition-colors 
-              ${!canProceed() ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}
-            `}
+      w-full mt-2 text-white font-medium py-2 rounded-xl focus:outline-none 
+      transition-colors 
+      ${!canProceed() ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}
+    `}
                         style={{
                             backgroundColor: canProceed() ? brandColor : "#9ca3af", // fallback if disabled
                         }}
@@ -279,6 +285,7 @@ export default function OrderSummary({
                     </button>
                 </div>
             </div>
+
         </div>
     );
 }

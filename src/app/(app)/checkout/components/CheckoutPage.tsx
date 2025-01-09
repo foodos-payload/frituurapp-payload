@@ -172,9 +172,10 @@ export default function CheckoutPage({
     const [couponCode, setCouponCode] = useState("");
 
     // Cart
-    const { items: cartItems, getCartTotal, clearCart } = useCart();
-    const cartTotal = getCartTotal();
-
+    const { items: cartItems, getCartTotal, clearCart, getCartTotalWithDiscounts } = useCart();
+    // Instead of `getCartTotal()`:
+    const rawSubtotal = getCartTotal();
+    const discountedSubtotal = getCartTotalWithDiscounts();
     // Delivery logic
     const deliveryMethodDoc = fulfillmentMethods?.find(
         (fm) => fm.method_type === "delivery" && fm.enabled
@@ -305,9 +306,9 @@ export default function CheckoutPage({
     }, [shippingCost]);
 
     const finalTotal = useMemo(() => {
-        const rawTotal = cartTotal + shippingCost;
-        return parseFloat(rawTotal.toFixed(2));
-    }, [cartTotal, shippingCost]);
+        return parseFloat((discountedSubtotal + shippingCost).toFixed(2));
+    }, [discountedSubtotal, shippingCost]);
+
 
     // 3) If within radius => check if finalTotal >= minimumOrder
     useEffect(() => {
@@ -676,12 +677,13 @@ export default function CheckoutPage({
                                 handleApplyCoupon={handleApplyCoupon}
                                 canProceed={canProceed}
                                 handleCheckout={handleCheckout}
-                                cartTotal={cartTotal}
+                                cartTotal={discountedSubtotal}
                                 shippingCost={shippingCost}
-                                finalTotal={finalTotal}
+                                finalTotal={discountedSubtotal + shippingCost}
                                 fulfillmentMethod={fulfillmentMethod}
                                 branding={branding}
-
+                                rawSubtotal={rawSubtotal}
+                                discountedSubtotal={discountedSubtotal}
                             />
                         </div>
                     </div>
