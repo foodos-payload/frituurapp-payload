@@ -3,7 +3,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { FiMenu, FiSearch, FiX } from "react-icons/fi";
 import { MdOutlineNoFood } from "react-icons/md";
-import { useSearchParams } from "next/navigation";  // We'll read ?allergens=...
 import { useTranslation } from "@/context/TranslationsContext";
 import AllergensModal from "./AllergensModal";
 

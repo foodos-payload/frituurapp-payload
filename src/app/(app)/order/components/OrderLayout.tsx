@@ -332,7 +332,6 @@ export default function OrderLayout({
                         setMobileSearchOpen={setMobileSearchOpen}
                         branding={branding}
                         isKiosk={isKiosk}
-                        onAllergensChange={handleAllergensChange}
                     />
                 </div>
 
