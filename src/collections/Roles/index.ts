@@ -5,6 +5,15 @@ const Roles: CollectionConfig = {
     slug: 'roles',
     admin: {
         useAsTitle: 'name',
+        components: {
+            views: {
+                edit: {
+                    root: {
+                        Component: '@/fields/custom-field/collections-field.tsx'
+                    }
+                }
+            }
+        }
     },
     labels: {
         plural: {
@@ -83,20 +92,20 @@ const Roles: CollectionConfig = {
                     }
                 },
                 {
-                    name: "write",
+                    name: "create",
                     type: "checkbox",
                     label: {
-                        en: "Write",
-                        nl: "Schrijven",
-                        de: "Schreiben",
-                        fr: "Écrire",
+                        en: "Create",
+                        nl: "Aanmaken",
+                        de: "Erstellen",
+                        fr: "Créer",
                     }
                 },
                 {
-                    name: "edit",
+                    name: "update",
                     type: "checkbox",
                     label: {
-                        en: "Edit",
+                        en: "Update",
                         nl: "Bewerken",
                         de: "Bearbeiten",
                         fr: "Modifier",

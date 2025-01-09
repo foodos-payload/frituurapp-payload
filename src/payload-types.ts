@@ -251,8 +251,8 @@ export interface Role {
     | {
         collectionName?: string | null;
         read?: boolean | null;
-        write?: boolean | null;
-        edit?: boolean | null;
+        create?: boolean | null;
+        update?: boolean | null;
         delete?: boolean | null;
         id?: string | null;
       }[]
@@ -1490,8 +1490,8 @@ export interface RolesSelect<T extends boolean = true> {
     | {
         collectionName?: T;
         read?: T;
-        write?: T;
-        edit?: T;
+        create?: T;
+        update?: T;
         delete?: T;
         id?: T;
       };
