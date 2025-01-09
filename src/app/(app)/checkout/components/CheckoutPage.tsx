@@ -419,6 +419,41 @@ export default function CheckoutPage({
             selectedStatus = "awaiting_preparation";
         }
 
+        // 1) Fetch your promotions from localStorage (or wherever they are stored)
+        const localPointsUsed = parseInt(localStorage.getItem("pointsUsed") || "0", 10);
+        const localCreditsUsed = parseInt(localStorage.getItem("creditsUsed") || "0", 10);
+
+        let localCoupon: any = null;
+        try {
+            const couponStr = localStorage.getItem("appliedCoupon") || "null";
+            localCoupon = JSON.parse(couponStr); // yields an object or null
+        } catch (e) {
+            localCoupon = null;
+        }
+
+        let localVoucher: any = null;
+        try {
+            const voucherStr = localStorage.getItem("appliedGiftVoucher") || "null";
+            localVoucher = JSON.parse(voucherStr); // yields an object or null
+        } catch (e) {
+            localVoucher = null;
+        }
+
+        // 2) Build your promotionsUsed object
+        const promotionsUsed: any = {
+            pointsUsed: localPointsUsed,
+            creditsUsed: localCreditsUsed,
+        };
+        // Only add giftVoucherUsed if it is non-null
+        if (localVoucher) {
+            promotionsUsed.giftVoucherUsed = localVoucher;
+        }
+        // Only add couponUsed if it is non-null
+        if (localCoupon) {
+            promotionsUsed.couponUsed = localCoupon;
+        }
+
+        // 3) Build payloadData
         const payloadData = {
             tenant: hostSlug,
             shop: hostSlug,
@@ -464,10 +499,15 @@ export default function CheckoutPage({
                     amount: finalTotal,
                 },
             ],
-            shippingCost: shippingCost,
+            shippingCost,
             distanceKm: deliveryDistance,
+            promotionsUsed,
         };
 
+        // 4) For debugging
+        console.log("About to submit order:", JSON.stringify(payloadData, null, 2));
+
+        // 5) POST to your /api/submitOrder route
         try {
             const res = await fetch("/api/submitOrder", {
                 method: "POST",
@@ -480,8 +520,8 @@ export default function CheckoutPage({
                 return;
             }
 
+            // 6) Clear cart, navigate to summary
             clearCart();
-
             const kioskParam = kioskMode ? "&kiosk=true" : "";
             router.push(`/order-summary?orderId=${json.order.id}${kioskParam}`);
         } catch (err) {
@@ -489,6 +529,7 @@ export default function CheckoutPage({
             alert("Error submitting order. Check console for details.");
         }
     }
+
 
     function handleBackClick() {
         const kioskParam = kioskMode ? "?kiosk=true" : "";

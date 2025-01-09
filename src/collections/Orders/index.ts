@@ -34,26 +34,22 @@ export const Orders: CollectionConfig = {
 
   hooks: {
     beforeChange: [
-      async ({ data, originalDoc, req, operation }) => {
-
-        // 1) If new doc => auto-increment 'tempOrdNr' + 'id'
+      async ({ data, req, operation }) => {
+        // Only run this logic when creating a new order
         if (operation === 'create') {
+          // 1) Auto-increment logic for daily `tempOrdNr` & global `id`
           const today = new Date().toISOString().split('T')[0];
 
-          // -- Kiosk-specific overrides --
           if (data.order_type === 'kiosk') {
             const now = new Date();
-            // Set fulfillment time to moment of order creation
             data.fulfillment_time = now.toTimeString().slice(0, 5);
-
-            // Also set sub_method_label to "terminal" for the first payment line
             if (data.payments && data.payments.length > 0) {
               data.payments[0].sub_method_label = 'terminal';
             }
           }
 
-          // (A) Find lastOrder for tempOrdNr
-          const lastOrder = await req.payload.find({
+          // (A) Find last order *today* => set tempOrdNr
+          const lastOrderToday = await req.payload.find({
             collection: 'orders',
             where: {
               tenant: { equals: data.tenant },
@@ -63,10 +59,10 @@ export const Orders: CollectionConfig = {
             sort: '-tempOrdNr',
             limit: 1,
           });
-          const lastTempOrdNr = lastOrder.docs[0]?.tempOrdNr || 0;
+          const lastTempOrdNr = lastOrderToday.docs[0]?.tempOrdNr || 0;
           data.tempOrdNr = lastTempOrdNr + 1;
 
-          // (B) Find lastFullOrder for numeric id
+          // (B) Find last order overall => set global `id`
           const lastFullOrder = await req.payload.find({
             collection: 'orders',
             where: {
@@ -80,56 +76,39 @@ export const Orders: CollectionConfig = {
           data.id = lastId + 1;
         }
 
-        // 2) Cross-check main product's price from the DB
+        // 2) Optional price cross-check for each line
         if (data.order_details) {
           for (const od of data.order_details) {
             try {
-              // Attempt to find the real product doc
               const productDoc = await req.payload.findByID({
                 collection: 'products',
-                id: od.product, // The relationship ID
+                id: od.product,
               });
-
-              // If found => verify the client-provided price matches the official productDoc
               if (productDoc) {
-                // Suppose your official "price" is productDoc.price if price_unified,
-                // or productDoc.price_dinein / productDoc.price_takeaway depending on the order's method, etc.
-                // We'll do the simplest check using productDoc.price:
                 const officialPrice = productDoc.price_unified
-                  ? productDoc.price // if price_unified => single price
-                  : productDoc.price; // or fallback logic
-
-                // Compare to the client's od.price:
+                  ? productDoc.price
+                  : productDoc.price;
                 if (typeof od.price === 'number' && od.price !== officialPrice) {
                   throw new Error(
-                    `Price mismatch for product ${productDoc.name_nl}. Expected ${officialPrice}, got ${od.price}.`
+                    `Price mismatch for product ${productDoc.name_nl}. ` +
+                    `Expected ${officialPrice}, got ${od.price}.`
                   );
                 }
-
-                // You can also check tax if you want. If mismatch => throw error as well
-                // ...
               } else {
-                console.warn(
-                  `Could NOT find product doc for ID ${od.product}, skipping cross-check.`
-                );
+                console.warn(`No product doc for ID ${od.product}, skipping cross-check.`);
               }
-            } catch (err: any) {
-              console.error(
-                `Error verifying product price for product ID ${od.product}:`,
-                err
-              );
-              throw err; // re-throw to stop order creation
+            } catch (err) {
+              console.error(`Error verifying product price for ID ${od.product}:`, err);
+              throw err;
             }
           }
         }
 
-        // 3) (Optional) If you still want to recalc or log out totals, do it here
-        //    Or you can trust the front-end's subproduct pricing.
-        //    This snippet just logs them:
-        if (data.order_details) {
-          let subtotal = 0;
-          let totalTax = 0;
+        // 3) Calculate net & tax
+        let baseSubtotal = 0;
+        let totalTax = 0;
 
+        if (data.order_details) {
           for (const od of data.order_details) {
             const lineSubtotal = (od.price ?? 0) * (od.quantity ?? 1);
             const fraction = (od.tax ?? 21) / (100 + (od.tax ?? 21));
@@ -143,44 +122,189 @@ export const Orders: CollectionConfig = {
                 const subLineTax = subLineSubtotal * subFraction;
                 const subLineNet = subLineSubtotal - subLineTax;
 
-                subtotal += subLineNet;
+                baseSubtotal += subLineNet;
                 totalTax += subLineTax;
               }
             }
 
-            subtotal += lineNet;
+            baseSubtotal += lineNet;
             totalTax += lineTax;
           }
-
-          // Round to 2 decimals
-          data.subtotal = Math.round(subtotal * 100) / 100;
-          data.total_tax = Math.round(totalTax * 100) / 100;
-          data.total = Math.round((subtotal + totalTax) * 100) / 100;
-
-          console.log(
-            `Final recalculated => subtotal=${data.subtotal}, totalTax=${data.total_tax}, total=${data.total}`
-          );
         }
 
-        // 4) Force the payment's amount to match `data.total`
-        if (data.payments && data.payments.length > 0) {
-          // If you only allow 1 payment row, you can do:
-          data.payments[0].amount = data.total;
+        data.subtotalBeforeDiscount = Math.round(baseSubtotal * 100) / 100;
+        data.total_tax = Math.round(totalTax * 100) / 100;
+        data.subtotal = data.subtotalBeforeDiscount; // legacy
 
-          // Or if you allow multiple payment lines and want 
-          // the sum to match total, do your own sum or distribution logic.
+        // 4) Calculate discount from promotionsUsed => discount entire gross
+        let discount = 0;
+        const gross = baseSubtotal + totalTax;
+
+        if (data.promotionsUsed) {
+          const {
+            pointsUsed,
+            creditsUsed,
+            couponUsed,
+            giftVoucherUsed,
+          } = data.promotionsUsed;
+
+          // (A) membership points
+          if (pointsUsed && pointsUsed > 0) {
+            if (data.customer) {
+              const custDoc = await req.payload.findByID({
+                collection: 'customers',
+                id: data.customer,
+              });
+              const membership = custDoc?.memberships?.[0];
+              if (!membership || (membership.points ?? 0) < pointsUsed) {
+                throw new Error(
+                  `Not enough points. You have ${membership?.points ?? 0}` +
+                  ` but tried to use ${pointsUsed}.`
+                );
+              }
+            }
+            discount += pointsUsed * 0.01;
+          }
+
+          // (B) store credits => 1:1
+          if (creditsUsed && creditsUsed > 0) {
+            if (data.customer) {
+              const foundCredit = await req.payload.find({
+                collection: 'customer-credits',
+                where: { customerid: { equals: data.customer } },
+                limit: 1,
+              });
+              const creditDoc = foundCredit.docs[0];
+              if (!creditDoc || creditDoc.value < creditsUsed) {
+                throw new Error(
+                  `Not enough store credits. You have ${creditDoc ? creditDoc.value : 0}` +
+                  ` but tried to use ${creditsUsed}.`
+                );
+              }
+            }
+            discount += creditsUsed;
+          }
+
+          // (C) couponUsed
+          if (couponUsed && couponUsed.barcode) {
+            try {
+              const foundCoupon = await req.payload.find({
+                collection: 'coupons',
+                where: { barcode: { equals: couponUsed.barcode } },
+                limit: 1,
+              });
+              const couponDoc = foundCoupon.docs[0];
+              if (!couponDoc) {
+                throw new Error(`Coupon ${couponUsed.barcode} not found.`);
+              }
+
+              // Store the coupon's ID in the order's promotionsUsed
+              data.promotionsUsed.couponUsed.couponId = couponDoc.id;
+
+              // Actually apply discount
+              if (couponUsed.value_type === 'fixed') {
+                discount += (couponUsed.value || 0);
+              } else if (couponUsed.value_type === 'percentage') {
+                discount += gross * ((couponUsed.value || 0) / 100);
+              }
+
+              // Now increment `uses` on the coupon
+              const newUses = (couponDoc.uses ?? 0) + 1;
+              const maxUses = couponDoc.max_uses ?? null;
+              let usedFlag = couponDoc.used || false;
+
+              if (maxUses !== null && newUses >= maxUses) {
+                usedFlag = true;
+              }
+
+              // Update the coupon doc
+              await req.payload.update({
+                collection: 'coupons',
+                id: couponDoc.id,
+                data: {
+                  uses: newUses,
+                  used: usedFlag,
+                },
+              });
+            } catch (err) {
+              console.error('Error validating coupon:', err);
+              throw err;
+            }
+          }
+
+          // (D) giftVoucherUsed
+          if (giftVoucherUsed && giftVoucherUsed.barcode) {
+            const findVoucher = await req.payload.find({
+              collection: 'gift-vouchers',
+              where: { barcode: { equals: giftVoucherUsed.barcode } },
+              limit: 1,
+            });
+            const voucherDoc = findVoucher.docs[0];
+            if (!voucherDoc) {
+              throw new Error(`Gift voucher ${giftVoucherUsed.barcode} not found.`);
+            }
+
+            // Store the voucher's ID in the order
+            data.promotionsUsed.giftVoucherUsed.voucherId = voucherDoc.id;
+
+            if (voucherDoc.used) {
+              throw new Error(
+                `Gift voucher ${giftVoucherUsed.barcode} is already used.`
+              );
+            }
+            const nowTime = new Date().toISOString();
+            if (voucherDoc.valid_from && nowTime < voucherDoc.valid_from) {
+              throw new Error(
+                `Gift voucher ${giftVoucherUsed.barcode} is not yet valid.`
+              );
+            }
+            if (voucherDoc.valid_until && nowTime > voucherDoc.valid_until) {
+              throw new Error(
+                `Gift voucher ${giftVoucherUsed.barcode} has expired.`
+              );
+            }
+
+            discount += (giftVoucherUsed.value || 0);
+
+            // Mark the gift voucher as used
+            await req.payload.update({
+              collection: 'gift-vouchers',
+              id: voucherDoc.id,
+              data: {
+                used: true,
+              },
+            });
+          }
+        }
+
+        data.discountTotal = Math.round(discount * 100) / 100;
+
+        // 5) totalAfterDiscount => gross - discount
+        const afterDisc = Math.max(0, gross - discount);
+        data.totalAfterDiscount = Math.round(afterDisc * 100) / 100;
+
+        // 6) Add shipping => final total
+        const shipping = typeof data.shipping_cost === 'number' ? data.shipping_cost : 0;
+        data.total = data.totalAfterDiscount + shipping;
+
+        // 7) Reflect final total in the first payment line
+        if (data.payments && data.payments.length > 0) {
+          data.payments[0].amount = data.total;
         }
       },
     ],
   },
 
+
   fields: [
-    // Tenant + Shop scoping
+    // (A) Tenant + Shop scoping
     tenantField,
     shopsField,
+
+    // (B) Optional external ID
     {
       name: 'cloudPOSId',
-      type: 'number', // or text
+      type: 'number',
       label: 'CloudPOS Order ID',
       required: false,
       admin: {
@@ -188,7 +312,8 @@ export const Orders: CollectionConfig = {
         description: 'The order ID used by CloudPOS if synced.',
       },
     },
-    // Auto-increment ID fields
+
+    // (C) Auto-increment ID fields
     {
       name: 'id',
       type: 'number',
@@ -204,12 +329,12 @@ export const Orders: CollectionConfig = {
       type: 'number',
       label: { en: 'Temporary Order Number' },
       admin: {
-        description: { en: 'Temporary order number for daily usage.' },
+        description: { en: 'Daily incremented order number.' },
         readOnly: true,
       },
     },
 
-    // Order status / type
+    // (D) Order status / type
     {
       name: 'status',
       type: 'select',
@@ -245,9 +370,7 @@ export const Orders: CollectionConfig = {
       },
     },
 
-    // ─────────────────────────────────────────────
-    // (A) order_details array
-    // ─────────────────────────────────────────────
+    // (E) Order details array
     {
       name: 'order_details',
       type: 'array',
@@ -263,105 +386,33 @@ export const Orders: CollectionConfig = {
           required: true,
           label: { en: 'Product' },
         },
-        {
-          name: 'quantity',
-          type: 'number',
-          required: true,
-          label: { en: 'Quantity' },
-        },
-        {
-          name: 'price',
-          type: 'number',
-          required: true,
-          label: { en: 'Price' },
-        },
-        {
-          name: 'tax',
-          type: 'number',
-        },
-        {
-          name: 'tax_dinein',
-          type: 'number',
-        },
-        {
-          name: 'name_nl',
-          type: 'text',
-          label: { en: 'Product Name (Dutch)' },
-        },
-        {
-          name: 'name_en',
-          type: 'text',
-          label: { en: 'Product Name (English)' },
-        },
-        {
-          name: 'name_de',
-          type: 'text',
-          label: { en: 'Product Name (German)' },
-        },
-        {
-          name: 'name_fr',
-          type: 'text',
-          label: { en: 'Product Name (French)' },
-        },
+        { name: 'quantity', type: 'number', required: true, label: { en: 'Quantity' } },
+        { name: 'price', type: 'number', required: true, label: { en: 'Price' } },
+        { name: 'tax', type: 'number', label: { en: 'Tax Rate (%)' } },
+        { name: 'tax_dinein', type: 'number', label: { en: 'Dine-In Tax Rate (%)' } },
+        { name: 'name_nl', type: 'text', label: { en: 'Name (NL)' } },
+        { name: 'name_en', type: 'text', label: { en: 'Name (EN)' } },
+        { name: 'name_de', type: 'text', label: { en: 'Name (DE)' } },
+        { name: 'name_fr', type: 'text', label: { en: 'Name (FR)' } },
         {
           name: 'subproducts',
           type: 'array',
           label: { en: 'Subproducts' },
           fields: [
-            {
-              name: 'subproductId',
-              type: 'text',
-              label: { en: 'Subproduct ID' },
-              admin: {
-                description: {
-                  en: 'An ID or code for this subproduct if needed (no relationship).',
-                },
-              },
-            },
-            {
-              name: 'name_nl',
-              type: 'text',
-              label: { en: 'Subproduct Name (Dutch)' },
-            },
-            {
-              name: 'name_en',
-              type: 'text',
-              label: { en: 'Subproduct Name (English)' },
-            },
-            {
-              name: 'name_de',
-              type: 'text',
-              label: { en: 'Subproduct Name (German)' },
-            },
-            {
-              name: 'name_fr',
-              type: 'text',
-              label: { en: 'Subproduct Name (French)' },
-            },
-            {
-              name: 'price',
-              type: 'number',
-              required: true,
-              label: { en: 'Subproduct Price' },
-            },
-            {
-              name: 'tax',
-              type: 'number',
-              label: { en: 'Subproduct Tax' },
-            },
-            {
-              name: 'tax_dinein',
-              type: 'number',
-              label: { en: 'Subproduct Dinein Tax' },
-            },
+            { name: 'subproductId', type: 'text', label: { en: 'Subproduct ID' } },
+            { name: 'name_nl', type: 'text', label: { en: 'Name (NL)' } },
+            { name: 'name_en', type: 'text', label: { en: 'Name (EN)' } },
+            { name: 'name_de', type: 'text', label: { en: 'Name (DE)' } },
+            { name: 'name_fr', type: 'text', label: { en: 'Name (FR)' } },
+            { name: 'price', type: 'number', label: { en: 'Subproduct Price' } },
+            { name: 'tax', type: 'number', label: { en: 'Tax Rate (%)' } },
+            { name: 'tax_dinein', type: 'number', label: { en: 'Dine-In Tax Rate (%)' } },
           ],
         },
       ],
     },
 
-    // ─────────────────────────────────────────────
-    // (B) payments array
-    // ─────────────────────────────────────────────
+    // (F) Payments array
     {
       name: 'payments',
       type: 'array',
@@ -378,22 +429,21 @@ export const Orders: CollectionConfig = {
           label: { en: 'Payment Method' },
         },
         {
-          name: 'sub_method_label', // New optional text field
+          name: 'sub_method_label',
           type: 'text',
           required: false,
+          label: { en: 'Sub-method Label (e.g. MSP_Bancontact)' },
         },
         {
           name: 'amount',
           type: 'number',
           required: false,
-          label: { en: 'Amount' },
+          label: { en: 'Payment Amount' },
         },
       ],
     },
 
-    // ─────────────────────────────────────────────
-    // (C) fulfillment fields
-    // ─────────────────────────────────────────────
+    // (G) Fulfillment info
     {
       name: 'fulfillment_method',
       type: 'select',
@@ -404,26 +454,16 @@ export const Orders: CollectionConfig = {
       ],
       label: { en: 'Fulfillment Method' },
     },
-    {
-      name: 'fulfillment_date',
-      type: 'text',
-      label: { en: 'Fulfillment Date' },
-    },
-    {
-      name: 'fulfillment_time',
-      type: 'text',
-      label: { en: 'Fulfillment Time' },
-    },
+    { name: 'fulfillment_date', type: 'text', label: { en: 'Fulfillment Date' } },
+    { name: 'fulfillment_time', type: 'text', label: { en: 'Fulfillment Time' } },
 
-    // ─────────────────────────────────────────────
-    // (D) customer_details
-    // ─────────────────────────────────────────────
+    // (H) Customer info
     {
-      name: 'customer',            // or "customerId"
+      name: 'customer',
       type: 'relationship',
       relationTo: 'customers',
-      required: false,             // or true if you always want an associated Customer
       label: { en: 'Customer' },
+      required: false,
       admin: {
         description: { en: 'Link to the customer who placed this order (if known).' },
       },
@@ -443,23 +483,33 @@ export const Orders: CollectionConfig = {
       ],
     },
 
-    // ─────────────────────────────────────────────
-    // (E) Totals (read-only)
-    // ─────────────────────────────────────────────
+    // (I) Totals
     {
       name: 'shipping_cost',
       type: 'number',
       label: { en: 'Shipping Cost' },
       required: false,
       admin: {
-        description: { en: 'Delivery/shipping fee (if any).' },
-        readOnly: false, // Optional: if you never want to edit manually in the admin UI
+        description: { en: 'Delivery fee if applicable.' },
+        readOnly: false,
       },
     },
     {
-      name: 'subtotal',
+      name: 'subtotalBeforeDiscount',
       type: 'number',
-      label: { en: 'Subtotal Amount' },
+      label: { en: 'Subtotal Before Discount' },
+      admin: { readOnly: true },
+    },
+    {
+      name: 'discountTotal',
+      type: 'number',
+      label: { en: 'Discount Total' },
+      admin: { readOnly: true },
+    },
+    {
+      name: 'totalAfterDiscount',
+      type: 'number',
+      label: { en: 'Total After Discount (Net)' },
       admin: { readOnly: true },
     },
     {
@@ -469,10 +519,76 @@ export const Orders: CollectionConfig = {
       admin: { readOnly: true },
     },
     {
+      name: 'subtotal',
+      type: 'number',
+      label: { en: 'Subtotal (Legacy)' },
+      admin: {
+        description: { en: 'Same as net subtotal, for backward compatibility.' },
+        readOnly: true,
+      },
+    },
+    {
       name: 'total',
       type: 'number',
-      label: { en: 'Total Amount' },
+      label: { en: 'Final Total' },
       admin: { readOnly: true },
+    },
+
+    // (J) Promotions used
+    {
+      name: 'promotionsUsed',
+      type: 'group',
+      label: { en: 'Promotions Used' },
+      fields: [
+        {
+          name: 'pointsUsed',
+          type: 'number',
+          defaultValue: 0,
+          label: { en: 'Points Used' },
+          admin: {
+            description: { en: 'How many membership points were redeemed?' },
+          },
+        },
+        {
+          name: 'creditsUsed',
+          type: 'number',
+          defaultValue: 0,
+          label: { en: 'Store Credits Used' },
+          admin: {
+            description: { en: 'How many store credits were used?' },
+          },
+        },
+        {
+          name: 'couponUsed',
+          type: 'group',
+          label: { en: 'Coupon Used' },
+          fields: [
+            { name: 'couponId', type: 'text' },
+            { name: 'barcode', type: 'text' },
+            { name: 'value', type: 'number' },
+            // IMPORTANT: match the front-end: "value_type" = "fixed" | "percentage"
+            { name: 'value_type', type: 'text' },
+            { name: 'valid_from', type: 'date' },
+            { name: 'valid_until', type: 'date' },
+            { name: 'max_uses', type: 'number' },
+            { name: 'used', type: 'checkbox' },
+          ],
+        },
+        {
+          name: 'giftVoucherUsed',
+          type: 'group',
+          label: { en: 'Gift Voucher Used' },
+          fields: [
+            { name: 'voucherId', type: 'text' },
+            { name: 'barcode', type: 'text' },
+            { name: 'value', type: 'number' },
+            // If you also need "value_type" for gift vouchers, add it here:
+            { name: 'valid_from', type: 'date' },
+            { name: 'valid_until', type: 'date' },
+            { name: 'used', type: 'checkbox' },
+          ],
+        },
+      ],
     },
   ],
 };
