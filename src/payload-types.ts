@@ -497,6 +497,23 @@ export interface ShopBranding {
    * Optional direct link for customers to leave a TripAdvisor review.
    */
   tripAdvisorUrl?: string | null;
+  /**
+   * Enable kiosk idle screen functionality.
+   */
+  kiosk_idle_screen_enabled?: boolean | null;
+  /**
+   * Single photo to show in kiosk idle overlay if no videos are provided.
+   */
+  kioskIdleImage?: (string | null) | Media;
+  /**
+   * Multiple videos to loop endlessly if provided.
+   */
+  kioskIdleVideos?:
+    | {
+        video: string | Media;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1915,6 +1932,14 @@ export interface ShopBrandingSelect<T extends boolean = true> {
   primaryColorCTA?: T;
   googleReviewUrl?: T;
   tripAdvisorUrl?: T;
+  kiosk_idle_screen_enabled?: T;
+  kioskIdleImage?: T;
+  kioskIdleVideos?:
+    | T
+    | {
+        video?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

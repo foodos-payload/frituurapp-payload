@@ -243,5 +243,52 @@ export const ShopBranding: CollectionConfig = {
                 },
             },
         },
+        {
+            name: 'kiosk_idle_screen_enabled',
+            type: 'checkbox',
+            label: {
+                en: 'Enable Kiosk Idle Screen',
+                nl: 'Kiosk Idle Screen Inschakelen',
+                de: 'Kiosk-Leerlaufbildschirm Aktivieren',
+                fr: 'Activer l\'Écran de Veille du Kiosque',
+            },
+            defaultValue: true,
+            admin: {
+                description: {
+                    en: 'Enable kiosk idle screen functionality.',
+                    nl: 'Schakel de kiosk idle screen functionaliteit in.',
+                    de: 'Aktivieren Sie die Kiosk-Leerlaufbildschirmfunktion.',
+                    fr: 'Activez la fonctionnalité d\'écran de veille du kiosque.',
+                },
+            },
+        },
+        {
+            name: 'kioskIdleImage',
+            label: 'Kiosk Idle Image (portrait)',
+            type: 'upload',
+            relationTo: 'media',
+            required: false,
+            admin: {
+                description: 'Single photo to show in kiosk idle overlay if no videos are provided.',
+            },
+        },
+        {
+            name: 'kioskIdleVideos',
+            label: 'Kiosk Idle Videos (portrait)',
+            type: 'array',
+            required: false,
+            fields: [
+                {
+                    name: 'video',
+                    label: 'Video',
+                    type: 'upload',
+                    relationTo: 'media',
+                    required: true,
+                },
+            ],
+            admin: {
+                description: 'Multiple videos to loop endlessly if provided.',
+            },
+        },
     ],
 };
