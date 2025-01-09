@@ -6,7 +6,7 @@ import { headers } from 'next/headers';
 import { TranslationProvider } from '@/context/TranslationsContext';
 import { CartProvider } from '@/context/CartContext';
 import { ShopBrandingProvider } from '@/context/ShopBrandingContext';
-// ^ Import your ShopBrandingProvider here
+import { KioskIdleWatcher } from "@/components/kiosk/KioskIdleWatcher"
 
 import './globals.css';
 
@@ -26,6 +26,7 @@ type ShopBranding = {
   primaryColorCTA?: string;
   siteTitle?: string;
   siteHeaderImg?: string;
+  kiosk_idle_screen_enabled?: boolean;
   kioskIdleImage?: {
     id: string;
     filename: string;
@@ -62,6 +63,7 @@ async function getShopBranding(hostSlug: string): Promise<ShopBranding> {
     primaryColorCTA: rawBranding.primaryColorCTA ?? '',
     siteTitle: rawBranding.siteTitle ?? '',
     siteHeaderImg: rawBranding.siteHeaderImg?.s3_url ?? '',
+    kiosk_idle_screen_enabled: rawBranding.kiosk_idle_screen_enabled ?? false,
     kioskIdleImage: rawBranding.kioskIdleImage
       ? {
         id: rawBranding.kioskIdleImage.id,
@@ -110,8 +112,8 @@ export default async function RootLayout({
       <body>
         <TranslationProvider>
           <CartProvider>
-            {/* 3) Provide the branding to children via ShopBrandingProvider */}
             <ShopBrandingProvider branding={branding}>
+              <KioskIdleWatcher />
               {children}
             </ShopBrandingProvider>
           </CartProvider>
