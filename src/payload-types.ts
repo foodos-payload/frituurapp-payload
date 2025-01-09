@@ -1473,6 +1473,10 @@ export interface Order {
    * Link to the customer who placed this order (if known).
    */
   customer?: (string | null) | Customer;
+  /**
+   * If user used barcode, store it for reference.
+   */
+  customerBarcode?: string | null;
   customer_details?: {
     firstName?: string | null;
     lastName?: string | null;
@@ -2288,6 +2292,7 @@ export interface OrdersSelect<T extends boolean = true> {
   fulfillment_date?: T;
   fulfillment_time?: T;
   customer?: T;
+  customerBarcode?: T;
   customer_details?:
     | T
     | {

@@ -422,6 +422,7 @@ export default function CheckoutPage({
         // 1) Fetch your promotions from localStorage (or wherever they are stored)
         const localPointsUsed = parseInt(localStorage.getItem("pointsUsed") || "0", 10);
         const localCreditsUsed = parseInt(localStorage.getItem("creditsUsed") || "0", 10);
+        const localCustomerBarcode = localStorage.getItem("customerBarcode") || "";
 
         let localCoupon: any = null;
         try {
@@ -462,6 +463,7 @@ export default function CheckoutPage({
             fulfillmentMethod,
             fulfillmentDate: selectedDate,
             fulfillmentTime: selectedTime,
+            customerBarcode: localCustomerBarcode || null,
             customerDetails: {
                 firstName: surname,
                 lastName,

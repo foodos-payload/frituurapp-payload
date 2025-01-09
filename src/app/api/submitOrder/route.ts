@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
             status,               // e.g. "pending_payment"
             orderDetails,         // already includes subproduct info + tax?
             payments,
+            customerBarcode,
             fulfillmentMethod,    // 'delivery', 'takeaway', 'dine_in'
             fulfillmentDate,      // e.g. '2025-01-06'
             fulfillmentTime,      // e.g. '09:30'
@@ -217,7 +218,7 @@ export async function POST(request: NextRequest) {
 
                 order_type: orderType || 'web',
                 status: status || 'pending_payment',
-
+                customerBarcode,
                 fulfillment_method: fulfillmentMethod,
                 fulfillment_date: fulfillmentDate,
                 fulfillment_time: fulfillmentTime,
