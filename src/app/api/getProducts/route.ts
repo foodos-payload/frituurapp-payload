@@ -57,6 +57,7 @@ interface PopupJSON {
     multiselect: boolean
     minimum_option: number
     maximum_option: number
+    allowMultipleTimes: boolean
     subproducts: SubproductJSON[]
 }
 
@@ -228,6 +229,7 @@ export async function GET(request: NextRequest) {
                             multiselect: catPopupItem.popup.multiselect,
                             minimum_option: catPopupItem.popup.minimum_option,
                             maximum_option: catPopupItem.popup.maximum_option,
+                            allowMultipleTimes: catPopupItem.popup.allowMultipleTimes ?? false,
                             subproducts: (catPopupItem.popup.subproducts || []).map((sub: any) => {
                                 const baseSub: SubproductJSON = {
                                     id: sub.id,
@@ -319,6 +321,7 @@ export async function GET(request: NextRequest) {
                                 multiselect: prodPopupItem.popup.multiselect,
                                 minimum_option: prodPopupItem.popup.minimum_option,
                                 maximum_option: prodPopupItem.popup.maximum_option,
+                                allowMultipleTimes: prodPopupItem.popup.allowMultipleTimes ?? false,
                                 subproducts: (prodPopupItem.popup.subproducts || []).map((sub: any) => {
                                     const baseSub: SubproductJSON = {
                                         id: sub.id,

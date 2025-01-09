@@ -263,19 +263,26 @@ export default function CartDrawer({
                                                     {/* Subproducts */}
                                                     {item.subproducts && item.subproducts.length > 0 && (
                                                         <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
-                                                            {item.subproducts.map((sp) => {
-                                                                const subName = pickCartSubName(sp, locale);
-                                                                return (
-                                                                    <li key={sp.subproductId}>
-                                                                        {subName} (+€{sp.price.toFixed(2)})
-                                                                    </li>
-                                                                );
-                                                            })}
+                                                            {
+                                                                item.subproducts.map((sp, index) => {
+                                                                    const subName = pickCartSubName(sp, locale);
+                                                                    const uniqueKey = sp.subproductId + "-" + index
+                                                                    return (
+                                                                        <li key={uniqueKey}>
+                                                                            {subName}
+                                                                            {sp.quantity && sp.quantity > 1 && (
+                                                                                <span> x{sp.quantity}</span>
+                                                                            )}
+                                                                            (+€{sp.price.toFixed(2)})
+                                                                        </li>
+                                                                    );
+                                                                })}
                                                         </ul>
-                                                    )}
+                                                    )
+                                                    }
 
                                                     {/* Price */}
-                                                    <div className="text-sm mt-1 flex items-center">
+                                                    < div className="text-sm mt-1 flex items-center" >
                                                         <span className={`font-semibold ${isKiosk ? "text-lg" : "text-md"}`}>
                                                             €{item.price.toFixed(2)}
                                                         </span>

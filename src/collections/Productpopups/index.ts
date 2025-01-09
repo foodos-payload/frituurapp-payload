@@ -257,6 +257,25 @@ export const Productpopups: CollectionConfig = {
             },
         },
         {
+            name: 'allowMultipleTimes',
+            type: 'checkbox',
+            defaultValue: false,
+            label: {
+                en: 'Allow multiple selections',
+                nl: 'Meerdere selecties toestaan',
+                de: 'Mehrfachauswahl zulassen',
+                fr: 'Autoriser plusieurs sélections',
+            },
+            admin: {
+                description: {
+                    en: 'If enabled, users can select the same option multiple times (e.g., extra sauce x3).',
+                    nl: 'Indien ingeschakeld, kunnen gebruikers dezelfde optie meerdere keren selecteren (bv. extra saus x3).',
+                    de: 'Bei Aktivierung kann dieselbe Option mehrmals ausgewählt werden (z.B. zusätzliche Sauce x3).',
+                    fr: 'Si activé, les utilisateurs peuvent sélectionner plusieurs fois la même option (par ex. sauce en extra x3).',
+                },
+            },
+        },
+        {
             name: 'default_checked_subproduct',
             type: 'relationship',
             relationTo: 'subproducts',

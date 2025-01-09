@@ -1229,6 +1229,10 @@ export interface Productpopup {
    */
   maximum_option?: number | null;
   /**
+   * If enabled, users can select the same option multiple times (e.g., extra sauce x3).
+   */
+  allowMultipleTimes?: boolean | null;
+  /**
    * Default subproduct selected when the popup loads.
    */
   default_checked_subproduct?: (string | null) | Subproduct;
@@ -2420,6 +2424,7 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   required_option_webshop?: T;
   minimum_option?: T;
   maximum_option?: T;
+  allowMultipleTimes?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
   updatedAt?: T;

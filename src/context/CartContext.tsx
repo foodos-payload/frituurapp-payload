@@ -41,6 +41,7 @@ export type SubproductSelection = {
     } | null;
     taxRate?: number;
     taxRateDineIn?: number;
+    quantity?: number;
 };
 
 /** The main product line item in the cart. */
@@ -335,7 +336,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             let linePrice = item.price * item.quantity;
             if (item.subproducts) {
                 for (const sp of item.subproducts) {
-                    linePrice += sp.price * item.quantity;
+                    const subQty = sp.quantity ?? 1;
+                    linePrice += sp.price * subQty * item.quantity;
                 }
             }
             total += linePrice;

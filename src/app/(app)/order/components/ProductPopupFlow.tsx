@@ -49,7 +49,7 @@ type PopupDoc = {
     minimum_option?: number;
     /** If you also want a maximum_option, do it similarly. */
     maximum_option?: number;
-    // ...
+    allowMultipleTimes?: boolean;
 };
 
 type PopupItem = {
@@ -190,13 +190,6 @@ export default function ProductPopupFlow({
     const { t } = useTranslation();
     const { addItem, updateItem } = useCart();
 
-    useEffect(() => {
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.body.style.overflow = "";
-        };
-    }, []);
-
     // Sort + filter
     const sortedPopups = (product.productpopups || [])
         .filter((p) => p.popup !== null)
@@ -235,6 +228,57 @@ export default function ProductPopupFlow({
     // New: local error message
     const [errorMessage, setErrorMessage] = useState("");
 
+    const [subproductQuantities, setSubproductQuantities] = useState<Record<string, Record<string, number>>>({})
+
+
+    function incrementQty(popupId: string, subId: string) {
+        setErrorMessage(""); // clear any old error first
+
+        // 1) Calculate the total selected (across all subproducts) so far
+        const totalSoFar = getTotalQuantityForPopup(popupId)
+
+        // 2) If we've reached max, block
+        if (popup.maximum_option && popup.maximum_option > 0) {
+            if (totalSoFar >= popup.maximum_option) {
+                setErrorMessage(`Cannot exceed the maximum of ${popup.maximum_option} total picks.`)
+                return
+            }
+        }
+
+        setSubproductQuantities(prev => {
+            const oldMap = prev[popupId] || {}
+            const oldQty = oldMap[subId] || 0
+            return {
+                ...prev,
+                [popupId]: {
+                    ...oldMap,
+                    [subId]: oldQty + 1
+                }
+            }
+        })
+    }
+
+    /** A helper function to sum up the total picks for a single popup ID. */
+    function getTotalQuantityForPopup(popupId: string): number {
+        const map = subproductQuantities[popupId] || {}
+        return Object.values(map).reduce((acc, qty) => acc + qty, 0)
+    }
+
+    function decrementQty(popupId: string, subId: string) {
+        setSubproductQuantities(prev => {
+            const oldMap = prev[popupId] || {}
+            const oldQty = oldMap[subId] || 0
+            const newQty = Math.max(oldQty - 1, 0)
+            return {
+                ...prev,
+                [popupId]: {
+                    ...oldMap,
+                    [subId]: newQty
+                }
+            }
+        })
+    }
+
     /** Toggle or single-select for subproduct. */
     function handleSubproductClick(sub: Subproduct) {
         setErrorMessage(""); // clear previous errors
@@ -244,6 +288,16 @@ export default function ProductPopupFlow({
             let newArray: string[] = [];
 
             if (multiselect) {
+                // If user tries to add subID but the oldArray is already at max
+                if (
+                    popup.maximum_option &&
+                    popup.maximum_option > 0 &&
+                    !oldArray.includes(subID) && // we're trying to add a new item
+                    oldArray.length >= popup.maximum_option
+                ) {
+                    setErrorMessage(`Cannot exceed the maximum of ${popup.maximum_option} picks.`)
+                    return prev; // do not change anything
+                }
                 // multi-select toggle
                 if (oldArray.includes(subID)) {
                     newArray = oldArray.filter((id) => id !== subID);
@@ -324,53 +378,52 @@ export default function ProductPopupFlow({
                 url: string;
                 alt?: string;
             };
+            quantity: number;
         }> = [];
 
+        // For each subproduct in this popup
         for (const popIt of sortedPopups) {
-            if (!popIt.popup) continue; // skip if no popup
+            if (!popIt.popup) continue;
             const pId = popIt.popup.id;
-            const chosenIDs = selectedOptions[pId] || [];
 
-            // For each subproduct in this popup
-            for (const sp of popIt.popup.subproducts) {
-                // Only if user has chosen this subproduct
-                if (!chosenIDs.includes(sp.id)) continue;
-
-                if (sp.linkedProduct) {
-                    // If subproduct is linked => use data from sp.linkedProduct
+            // if allowMultipleTimes => read from subproductQuantities
+            if (popIt.popup.allowMultipleTimes) {
+                const qtyMap = subproductQuantities[pId] || {};
+                for (const sp of popIt.popup.subproducts) {
+                    const q = qtyMap[sp.id] || 0;
+                    if (q > 0) {
+                        // push just ONE object, but with quantity: q
+                        const subproductData = {
+                            // same logic you had before:
+                            subproductId: sp.linkedProduct?.id ?? sp.id,
+                            name_nl: sp.linkedProduct?.name_nl ?? sp.name_nl,
+                            name_en: sp.linkedProduct?.name_en ?? sp.name_en ?? sp.name_nl,
+                            name_de: sp.linkedProduct?.name_de ?? sp.name_de ?? sp.name_nl,
+                            name_fr: sp.linkedProduct?.name_fr ?? sp.name_fr ?? sp.name_nl,
+                            price: sp.linkedProduct?.price ?? sp.price,
+                            tax: typeof sp.linkedProduct?.tax === "number" ? sp.linkedProduct!.tax : sp.tax,
+                            tax_dinein: typeof sp.linkedProduct?.tax_dinein === "number"
+                                ? sp.linkedProduct!.tax_dinein
+                                : sp.tax_dinein,
+                            image: sp.linkedProduct?.image ?? sp.image
+                                ? {
+                                    url: (sp.linkedProduct?.image ?? sp.image)?.url ?? "",
+                                    alt: (sp.linkedProduct?.image ?? sp.image)?.alt ?? sp.name_nl,
+                                }
+                                : undefined,
+                            quantity: q,  // <--- store how many times user chose it
+                        };
+                        chosenSubs.push(subproductData);
+                    }
+                }
+            } else {
+                // multi-select or single-select => your existing chosenIDs approach
+                const chosenIDs = selectedOptions[pId] || [];
+                for (const sp of popIt.popup.subproducts) {
+                    if (!chosenIDs.includes(sp.id)) continue;
+                    // push one with quantity = 1
                     chosenSubs.push({
                         subproductId: sp.linkedProduct?.id ?? sp.id,
-
-                        // Multi-lingual names
-                        name_nl: sp.linkedProduct?.name_nl ?? sp.name_nl,
-                        name_en: sp.linkedProduct?.name_en ?? sp.name_en ?? sp.name_nl,
-                        name_de: sp.linkedProduct?.name_de ?? sp.name_de ?? sp.name_nl,
-                        name_fr: sp.linkedProduct?.name_fr ?? sp.name_fr ?? sp.name_nl,
-
-                        // Price & tax
-                        price: sp.linkedProduct?.price ?? sp.price,
-                        tax: typeof sp.linkedProduct?.tax === 'number'
-                            ? sp.linkedProduct!.tax
-                            : typeof sp.tax === 'number'
-                                ? sp.tax
-                                : undefined,
-
-                        tax_dinein: typeof sp.linkedProduct?.tax_dinein === 'number'
-                            ? sp.linkedProduct!.tax_dinein
-                            : typeof sp.tax_dinein === 'number'
-                                ? sp.tax_dinein
-                                : undefined,
-                        image: sp.linkedProduct?.image ?? sp.image
-                            ? {
-                                url: (sp.linkedProduct?.image ?? sp.image)?.url ?? "",
-                                alt: (sp.linkedProduct?.image ?? sp.image)?.alt ?? sp.name_nl,
-                            }
-                            : undefined,
-                    });
-                } else {
-                    // Normal subproduct
-                    chosenSubs.push({
-                        subproductId: sp.id,
                         name_nl: sp.name_nl,
                         name_en: sp.name_en ?? sp.name_nl,
                         name_de: sp.name_de ?? sp.name_nl,
@@ -390,6 +443,7 @@ export default function ProductPopupFlow({
                                 alt: sp.image.alt ?? sp.name_nl,
                             }
                             : undefined,
+                        quantity: 1,
                     });
                 }
             }
@@ -451,7 +505,11 @@ export default function ProductPopupFlow({
     }
 
     /** Gather selected items from all steps for top row preview */
-    const selectedItems = gatherAllSelectedItems(sortedPopups, selectedOptions);
+    const selectedItems = gatherAllSelectedItems(
+        sortedPopups,
+        selectedOptions,
+        subproductQuantities
+    );
 
     const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
@@ -570,32 +628,26 @@ export default function ProductPopupFlow({
                 <div className={`${isKiosk ? "mb-24 mt-36 px-4" : "mb-14 mt-5"} w-[95%] mx-auto`}>
                     {/* The selected-items row if any */}
                     {selectedItems.length > 0 && (
-                        <div
-                            className={`
-                selected-items flex flex-row flex-wrap items-center gap-2 mb-6
-                ${isKiosk ? "justify-center" : ""}
-              `}
-                        >
+                        <div className={`flex flex-row flex-wrap items-center gap-2 mb-6 ${isKiosk ? "justify-center" : ""}`}>
                             {selectedItems.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="selected-item-tile animate-add flex items-center gap-1"
-                                >
+                                <div key={item.id} className="selected-item-tile animate-add flex items-center gap-1 relative">
                                     <div className="w-20 h-20 flex items-center justify-center bg-gray-200 rounded-full">
                                         {item.image?.url ? (
-                                            <img
-                                                src={item.image.url}
-                                                alt={item.image.alt || item.name_nl}
-                                                className="object-cover w-full h-full rounded-full"
-                                            />
+                                            <img src={item.image.url} alt={item.image.alt || item.name_nl} className="object-cover w-full h-full rounded-full" />
                                         ) : (
                                             <span className="text-xs text-center px-2">{item.name_nl}</span>
                                         )}
                                     </div>
+                                    {item.quantity > 1 && (
+                                        <span className="font-bold text-lg absolute top-0 right-0 bg-white rounded-full px-2">
+                                            x{item.quantity}
+                                        </span>
+                                    )}
                                 </div>
                             ))}
                         </div>
                     )}
+
 
                     {/* 2) Step label => use popupTitle */}
                     <h2
@@ -605,6 +657,11 @@ export default function ProductPopupFlow({
             `}
                     >
                         {popupTitle}
+                        {popup.maximum_option && popup.maximum_option > 0 && (
+                            <span style={{ fontSize: isKiosk ? "1.25rem" : "1rem", marginLeft: "0.5rem" }}>
+                                {`(max ${popup.maximum_option})`}
+                            </span>
+                        )}
                     </h2>
 
                     {/* If we have an error => display in red */}
@@ -623,20 +680,33 @@ export default function ProductPopupFlow({
             `}
                     >
                         {subproducts.map((sub) => {
-                            const useLinked = !!sub.linkedProduct;
+                            console.log(popup.allowMultipleTimes)
+                            const useLinked = !!sub.linkedProduct
                             const displayName = useLinked
                                 ? pickSubproductName(sub.linkedProduct!, lang)
-                                : pickSubproductName(sub, lang);
-                            const displayPrice = useLinked ? sub.linkedProduct!.price ?? 0 : sub.price;
-                            const displayImage = useLinked ? sub.linkedProduct?.image : sub.image;
+                                : pickSubproductName(sub, lang)
+                            const displayPrice = useLinked ? sub.linkedProduct!.price ?? 0 : sub.price
+                            const displayImage = useLinked ? sub.linkedProduct?.image : sub.image
 
-                            const chosenThisStep = selectedOptions[popupID] || [];
-                            const isSelected = chosenThisStep.includes(sub.id);
+                            const chosenThisStep = selectedOptions[popupID] || []
+                            const isSelected = chosenThisStep.includes(sub.id)
+
+                            // For multiple times:
+                            const qtyMap = subproductQuantities[popupID] || {}
+                            const subQty = qtyMap[sub.id] || 0
+
+                            // If allowMultipleTimes is true, we'll handle plus/minus clicks differently
+                            const handleClickCard = () => {
+                                // If multi-times is false, we still allow the entire card to toggle
+                                if (!popup.allowMultipleTimes) {
+                                    handleSubproductClick(sub)
+                                }
+                            }
 
                             return (
                                 <div
                                     key={sub.id}
-                                    onClick={() => handleSubproductClick(sub)}
+                                    onClick={handleClickCard} // see above
                                     style={{
                                         borderRadius: "0.5rem",
                                         borderLeftWidth: isSelected ? "4px" : "1px",
@@ -644,11 +714,11 @@ export default function ProductPopupFlow({
                                         borderStyle: "solid",
                                     }}
                                     className={`
-                    relative
-                    flex flex-col justify-between
-                    p-2 rounded-lg text-center cursor-pointer transition
-                    ${isSelected ? "bg-gray-100" : "border border-gray-300"}
-                  `}
+        relative
+        flex flex-col justify-between
+        p-2 rounded-lg text-center cursor-pointer transition
+        ${isSelected ? "bg-gray-100" : "border border-gray-300"}
+      `}
                                 >
                                     {/* Possibly an image */}
                                     <div className="flex-grow flex items-center justify-center mb-4">
@@ -665,36 +735,87 @@ export default function ProductPopupFlow({
                                         )}
                                     </div>
 
-                                    {/* Name + Price */}
-                                    <div className="flex flex-col items-center">
-                                        <span
-                                            className={`
-                        text-gray-700 text-center font-bold
-                        ${isKiosk ? "text-lg" : "text-md"}
-                      `}
-                                        >
-                                            {displayName}
-                                        </span>
-                                        <span
-                                            className={`
-                        text-gray-500 font-bold
-                        ${isKiosk ? "text-md" : "text-sm"}
-                      `}
-                                        >
-                                            {displayPrice > 0
-                                                ? `(+ €${displayPrice.toFixed(2)})`
-                                                : `€${displayPrice.toFixed(2)}`}
-                                        </span>
-                                    </div>
+                                    {/* Conditionally render plus/minus vs. single-click UI */}
+                                    {popup.allowMultipleTimes ? (
+                                        // allowMultipleTimes = true => plus/minus
+                                        <div className="flex flex-col items-center">
+                                            <span
+                                                className={`
+              text-gray-700 font-bold text-center
+              ${isKiosk ? "text-lg" : "text-md"}
+            `}
+                                            >
+                                                {displayName}
+                                            </span>
+                                            <span
+                                                className={`
+              text-gray-500 font-bold
+              ${isKiosk ? "text-md" : "text-sm"}
+            `}
+                                            >
+                                                {displayPrice > 0
+                                                    ? `(+ €${displayPrice.toFixed(2)})`
+                                                    : `€${displayPrice.toFixed(2)}`}
+                                            </span>
 
-                                    {/* Checkmark if selected */}
-                                    {isSelected && (
-                                        <div className="absolute bottom-2 right-2" style={{ color: brandCTA }}>
-                                            <FiCheckCircle size={isKiosk ? 28 : 24} />
+                                            {/* Quantity controls */}
+                                            <div className="flex items-center gap-4 mt-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        decrementQty(popupID, sub.id)
+                                                    }}
+                                                    className="bg-gray-200 px-3 py-1 rounded-md font-bold text-lg"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="font-semibold min-w-[24px] text-lg">{subQty}</span>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        incrementQty(popupID, sub.id)
+                                                    }}
+                                                    className="bg-gray-200 px-3 py-1 rounded-md font-bold text-lg"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        // allowMultipleTimes = false => single-click toggle UI
+                                        <div className="flex flex-col items-center">
+                                            <span
+                                                className={`
+              text-gray-700 font-bold text-center
+              ${isKiosk ? "text-lg" : "text-md"}
+            `}
+                                            >
+                                                {displayName}
+                                            </span>
+                                            <span
+                                                className={`
+              text-gray-500 font-bold
+              ${isKiosk ? "text-md" : "text-sm"}
+            `}
+                                            >
+                                                {displayPrice > 0
+                                                    ? `(+ €${displayPrice.toFixed(2)})`
+                                                    : `€${displayPrice.toFixed(2)}`}
+                                            </span>
+
+                                            {/* Checkmark if selected */}
+                                            {isSelected && (
+                                                <div
+                                                    className="absolute bottom-2 right-2"
+                                                    style={{ color: brandCTA }}
+                                                >
+                                                    <FiCheckCircle size={isKiosk ? 28 : 24} />
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
-                            );
+                            )
                         })}
                     </div>
                 </div>
@@ -746,31 +867,46 @@ export default function ProductPopupFlow({
 /** Gather *all* selected subproducts across all popups. */
 function gatherAllSelectedItems(
     sortedPopups: PopupItem[],
-    selectedOptions: Record<string, string[]>
+    selectedOptions: Record<string, string[]>,
+    subproductQuantities: Record<string, Record<string, number>>,
 ) {
     const results: Array<{
         id: string;
         name_nl: string;
         image?: { url: string; alt?: string };
+        quantity: number;
     }> = [];
 
     for (const popIt of sortedPopups) {
         if (!popIt.popup) continue;
-        const chosenIDs = selectedOptions[popIt.popup.id] || [];
-        for (const sub of popIt.popup.subproducts) {
-            if (!chosenIDs.includes(sub.id)) continue;
 
-            if (sub.linkedProduct) {
+        const pId = popIt.popup.id;
+        const { allowMultipleTimes } = popIt.popup;
+
+        if (allowMultipleTimes) {
+            const qtyMap = subproductQuantities[pId] || {};
+            for (const sub of popIt.popup.subproducts) {
+                const q = qtyMap[sub.id] || 0;
+                if (q <= 0) continue;
+
+                // Push once with quantity
                 results.push({
-                    id: sub.linkedProduct.id,
-                    name_nl: sub.linkedProduct.name_nl,
-                    image: sub.linkedProduct.image || undefined,
+                    id: sub.linkedProduct?.id ?? sub.id,
+                    name_nl: sub.linkedProduct?.name_nl ?? sub.name_nl,
+                    image: sub.linkedProduct?.image || sub.image || undefined,
+                    quantity: q, // Attach quantity here
                 });
-            } else {
+            }
+        } else {
+            const chosenIDs = selectedOptions[pId] || [];
+            for (const sub of popIt.popup.subproducts) {
+                if (!chosenIDs.includes(sub.id)) continue;
+
                 results.push({
-                    id: sub.id,
-                    name_nl: sub.name_nl,
-                    image: sub.image || undefined,
+                    id: sub.linkedProduct?.id ?? sub.id,
+                    name_nl: sub.linkedProduct?.name_nl ?? sub.name_nl,
+                    image: sub.linkedProduct?.image || sub.image || undefined,
+                    quantity: 1, // Single selection implies quantity of 1
                 });
             }
         }
