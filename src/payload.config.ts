@@ -252,10 +252,13 @@ export default buildConfig({
   cors: [
     'https://frituurwebshop.be',
     'https://*.frituurwebshop.be',
+    'http://localhost:3000',
   ],
   csrf: [
     'https://frituurwebshop.be',
     'https://*.frituurwebshop.be',
+    'http://localhost:3000',
+    'http://*.localhost:3000',
   ],
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI as string },
