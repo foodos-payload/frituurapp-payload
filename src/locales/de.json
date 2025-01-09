@@ -1,4 +1,5 @@
 {
+  "general": { "tapToOrder": "TIPPEN ZUM BESTELLEN" },
   "chooseMode": {
     "title": "Hier order",
     "dineIn": {

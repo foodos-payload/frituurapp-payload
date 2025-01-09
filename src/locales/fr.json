@@ -1,4 +1,5 @@
 {
+  "general": { "tapToOrder": "APPUYER POUR COMMANDER" },
   "chooseMode": {
     "title": "Commander ici",
     "dineIn": {
