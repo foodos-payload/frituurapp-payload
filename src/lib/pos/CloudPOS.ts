@@ -189,10 +189,12 @@ export class CloudPOS extends AbstractPOS {
     // ─────────────────────────────────────────────────────────────────────────────
 
     public async getProducts(): Promise<CloudPOSProduct[]> {
-        console.log('[CloudPOS] Fetching products...')
-        const requestBody: any = {}
-        const data = await this.doCloudPOSRequest('product.select', requestBody)
-        return data || []
+        console.log('[CloudPOS] Fetching products...');
+        const requestBody: any = {
+            show_deleted: false,
+        };
+        const data = await this.doCloudPOSRequest('product.select', requestBody);
+        return data || [];
     }
 
     // public async deleteProductInCloudPOS(remoteId: number) {
