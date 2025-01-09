@@ -314,9 +314,9 @@ export default function CheckoutPage({
     useEffect(() => {
         if (fulfillmentMethod === "delivery" && isWithinRadius) {
             // Min order check
-            if (finalTotal < minimumOrder) {
+            if (rawSubtotal < minimumOrder) {
                 setDeliveryError(
-                    `Minimum order is €${minimumOrder}, but your total is only €${finalTotal.toFixed(2)}.`
+                    `Minimum order is €${minimumOrder}, but your subtotal is only €${rawSubtotal.toFixed(2)}.`
                 );
             } else {
                 // no problem
@@ -327,7 +327,7 @@ export default function CheckoutPage({
                 }
             }
         }
-    }, [fulfillmentMethod, isWithinRadius, finalTotal, minimumOrder, deliveryError]);
+    }, [fulfillmentMethod, isWithinRadius, finalTotal, minimumOrder, deliveryError, rawSubtotal]);
 
     // canProceed => only enable checkout if address passes google check or not needed
     function canProceed(): boolean {
@@ -373,7 +373,7 @@ export default function CheckoutPage({
                 if (!address || !city || !postalCode) return false;
                 if (!isWithinRadius) return false;
                 // also confirm finalTotal >= minimumOrder
-                if (finalTotal < minimumOrder) return false;
+                if (rawSubtotal < minimumOrder) return false;
                 if (emailRequired && !email) return false;
                 break;
 
