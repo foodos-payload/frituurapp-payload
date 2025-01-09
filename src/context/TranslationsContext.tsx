@@ -10,10 +10,10 @@ interface TranslationDictionary {
 
 interface TranslationContextValue {
     locale: Language;
-    t: (key: string) => string;
+    t: (key: string, replacements?: Record<string, string | number>) => string
     setLocale: (locale: Language) => void;
     availableLocales: Language[];
-    isLoading: boolean;  // <-- We'll add this so components can check
+    isLoading: boolean;
 }
 
 const TranslationContext = createContext<TranslationContextValue | undefined>(undefined);
@@ -40,6 +40,20 @@ function flattenMessages(nestedObj: Record<string, any>, parentKey = ""): Record
         }
     }
     return flatDict;
+}
+
+function applyReplacements(
+    str: string,
+    replacements: Record<string, string | number>
+): string {
+    // Regex to match {{ placeholder }}
+    return str.replace(/{{\s*(\w+)\s*}}/g, (match, keyName) => {
+        // If replacements[keyName] exists, substitute it; otherwise leave it as-is
+        if (replacements[keyName] !== undefined) {
+            return String(replacements[keyName])
+        }
+        return match
+    })
 }
 
 /** Load all locales (flatten them) once at startup. */
@@ -88,12 +102,17 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
     }, [locale]);
 
     // 3) Simple translation function
-    function t(key: string): string {
+    function t(key: string, replacements?: Record<string, string | number>): string {
         if (isLoading) {
-            return "";
+            return ""
         }
-        const dict = translationsMap[locale] || {};
-        return dict[key] ?? key; // fallback to the key if not found
+        const dict = translationsMap[locale] || {}
+        let translation = dict[key] ?? key
+
+        if (replacements) {
+            translation = applyReplacements(translation, replacements)
+        }
+        return translation
     }
 
     const availableLocales = Object.keys(translationsMap);
