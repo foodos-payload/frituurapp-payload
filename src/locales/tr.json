@@ -50,5 +50,10 @@
       "in_delivery": "Teslimatta",
       "complete": "Tamamlandı"
     }
+  },
+  "idlePopUp": {
+    "areYouStillThere": "Hala orada mısınız?",
+    "youWillBeRedirectedInXSeconds": "{{countdown}} saniye içinde yönlendirileceksiniz...",
+    "yesImHere": "Evet, buradayım"
   }
 }

@@ -50,5 +50,10 @@
       "in_delivery": "In Bezorging",
       "complete": "Voltooid"
     }
+  },
+  "idlePopUp": {
+    "areYouStillThere": "Ben je er nog?",
+    "youWillBeRedirectedInXSeconds": "Je wordt over {{countdown}} seconden doorgestuurd...",
+    "yesImHere": "Ja, ik ben er"
   }
 }

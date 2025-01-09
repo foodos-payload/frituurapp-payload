@@ -50,5 +50,10 @@
       "in_delivery": "In Lieferung",
       "complete": "Abgeschlossen"
     }
+  },
+  "idlePopUp": {
+    "areYouStillThere": "Bist du noch da?",
+    "youWillBeRedirectedInXSeconds": "Du wirst in {{countdown}} Sekunden weitergeleitet...",
+    "yesImHere": "Ja, ich bin hier"
   }
 }
