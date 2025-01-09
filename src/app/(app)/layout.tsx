@@ -26,6 +26,18 @@ type ShopBranding = {
   primaryColorCTA?: string;
   siteTitle?: string;
   siteHeaderImg?: string;
+  kioskIdleImage?: {
+    id: string;
+    filename: string;
+    url: string;
+  };
+  kioskIdleVideos?: Array<{
+    video?: {
+      id: string;
+      filename: string;
+      url: string;
+    };
+  }>;
 };
 
 // Example helper to fetch branding from your endpoint
@@ -50,6 +62,26 @@ async function getShopBranding(hostSlug: string): Promise<ShopBranding> {
     primaryColorCTA: rawBranding.primaryColorCTA ?? '',
     siteTitle: rawBranding.siteTitle ?? '',
     siteHeaderImg: rawBranding.siteHeaderImg?.s3_url ?? '',
+    kioskIdleImage: rawBranding.kioskIdleImage
+      ? {
+        id: rawBranding.kioskIdleImage.id,
+        filename: rawBranding.kioskIdleImage.filename,
+        url:
+          rawBranding.kioskIdleImage.s3_url ?? rawBranding.kioskIdleImage.url ?? "",
+      }
+      : undefined,
+
+    kioskIdleVideos: Array.isArray(rawBranding.kioskIdleVideos)
+      ? rawBranding.kioskIdleVideos.map((item: any) => ({
+        video: item.video
+          ? {
+            id: item.video.id,
+            filename: item.video.filename,
+            url: item.video.s3_url ?? item.video.url ?? "",
+          }
+          : undefined,
+      }))
+      : [],
   };
 }
 

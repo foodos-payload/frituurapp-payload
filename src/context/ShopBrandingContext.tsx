@@ -12,6 +12,18 @@ export type ShopBranding = {
     siteHeaderImg?: string;
     googleReviewUrl?: string;
     tripAdvisorUrl?: string;
+    kioskIdleImage?: {
+        id: string;
+        filename: string;
+        url?: string;
+    };
+    kioskIdleVideos?: {
+        video?: {
+            id: string;
+            filename: string;
+            url?: string;
+        };
+    }[];
 };
 
 type ShopBrandingProviderProps = {
