@@ -17,7 +17,7 @@ export default function VideoOverlayPage() {
     // Tap to start => go to kiosk homepage or main kiosk route
     const startApp = () => {
         // Just push the kiosk route
-        router.push("/kiosk-idle");
+        router.push("/index?kiosk=true");
     };
 
     return (
