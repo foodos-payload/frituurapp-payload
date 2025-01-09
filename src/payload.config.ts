@@ -253,6 +253,10 @@ export default buildConfig({
     'https://frituurwebshop.be',
     'https://*.frituurwebshop.be',
   ],
+  csrf: [
+    'https://frituurwebshop.be',
+    'https://*.frituurwebshop.be',
+  ],
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI as string },
     idType: 'uuid',
