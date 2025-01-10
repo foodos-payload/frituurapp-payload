@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:15.2-alpine
-    container_name: postgres-zerotier
+    container_name: postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -48,7 +48,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: ztnet
-      NEXTAUTH_URL: 'http://localhost:3001' # Updated to use port 3001
+      NEXTAUTH_URL: 'http://46.202.159.85:3001'
       NEXTAUTH_SECRET: 'random_secret'
       NEXTAUTH_URL_INTERNAL: 'http://ztnet:3000' # Internal NextAuth URL for 'ztnet' container on port 3000. Do not change unless modifying container name.
     networks:
