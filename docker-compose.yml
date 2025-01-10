@@ -27,7 +27,7 @@ services:
     networks:
       - app-network
     ports:
-      - '8888:9993/udp'
+      - '9993:9993/udp'
     environment:
       - ZT_OVERRIDE_LOCAL_CONF=true
       - ZT_LOCAL_CONF={"settings":{"controllerMode":true}}
