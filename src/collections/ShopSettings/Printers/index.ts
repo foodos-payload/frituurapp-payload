@@ -7,9 +7,9 @@ import { baseListFilter } from './access/baseListFilter';
 import { canMutatePrinter } from './access/byTenant';
 import { readAccess } from './access/readAccess';
 
-import { ensureUniquePrinterNamePerShop } from './hooks/ensureUniquePrinterNamePerShop';
-import { automatePrinterSetup } from './hooks/automatePrinterSetup';
-import { removePrinterOnDelete } from './hooks/removePrinterOnDelete';
+// import { ensureUniquePrinterNamePerShop } from './hooks/ensureUniquePrinterNamePerShop';
+// import { automatePrinterSetup } from './hooks/automatePrinterSetup';
+// import { removePrinterOnDelete } from './hooks/removePrinterOnDelete';
 
 
 export const Printers: CollectionConfig = {
