@@ -14,6 +14,11 @@ interface MultiSafePaySettings {
     // any additional fields you need
 }
 
+interface TerminalIDEntry {
+    kiosk: number;
+    terminal_id: string;
+}
+
 /**
  * Full map from your MSP documentation (gateway IDs).
  * Key = local label after removing "MSP_"
@@ -31,7 +36,7 @@ const MSP_GATEWAY_MAP: Record<string, string> = {
     Belfius: 'BELFIUS',
     'Betaal per Maand': 'SANTANDER',
     Bizum: 'BIZUM',
-    'CBC/KBC': 'CBC',          // The MSP docs show "CBC / KBC"
+    'CBC/KBC': 'CBC', // The MSP docs show "CBC / KBC"
     'Card payments': 'CREDITCARD',
     Dotpay: 'DOTPAY',
     Edenred: 'EDENCOM',
@@ -112,7 +117,7 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
     }
 
     /**
-     * Create a MultiSafePay order (redirect flow).
+     * Create a MultiSafePay order (redirect or terminal flow).
      */
     public async createPayment(localOrderDoc: any): Promise<PaymentCreateResult> {
         // 1) Shop details
@@ -120,21 +125,22 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
         const isTest = this.settings.enable_test_mode ?? false;
 
         // 2) Domain logic
+        //    - Where do we redirect the user after successful or canceled payment?
         const productionDomain =
             localOrderDoc.shopDoc?.domain || `${shopSlug}.frituurapp.be`;
         const localDomain = isTest
             ? `http://${shopSlug}.localhost:3000`
-            : `https://${productionDomain}`;
+            : `${productionDomain}`;
         const notificationDomain = isTest
             ? 'https://frituurapp.ngrok.dev'
             : localDomain;
 
-        // 3) Build request
+        // 3) Build order reference for MSP
         const orderId = `${shopSlug}-${localOrderDoc.id}`;
         const amountInCents = Math.round((localOrderDoc.total ?? 0) * 100);
 
         const requestBody: Record<string, any> = {
-            type: 'redirect',
+            type: 'redirect', // or 'redirect', 'checkout', etc.
             order_id: orderId,
             currency: 'EUR',
             amount: amountInCents,
@@ -161,23 +167,60 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
             },
         };
 
-        // 4) Detect "MSP_" sub_method_label and map to MSP gateway
-        const subMethodLabel = localOrderDoc.payments?.[0]?.sub_method_label;
-        if (typeof subMethodLabel === 'string' && subMethodLabel.startsWith('MSP_')) {
-            // e.g. "MSP_Mastercard" => "Mastercard"
-            const methodName = subMethodLabel.replace(/^MSP_/, '');
-            // e.g. "Mastercard" => "MASTERCARD"
-            const gateway = MSP_GATEWAY_MAP[methodName];
-            if (gateway) {
-                requestBody.gateway = gateway;
+        // 4) If kiosk => set gateway_info.terminal_id
+        if (localOrderDoc.order_type === 'kiosk') {
+            // 4A) If your PaymentMethod doc has 'terminal_ids' field:
+            //     We can find the kiosk => terminal ID match:
+            const pmDoc = localOrderDoc?.payments?.[0]?.payment_method;
+            // pmDoc might be a string or object; you can pass it from the route
+            // but let's assume we have it as localOrderDoc.pmDoc or something similar
+            // or you already found it in "updatedOrderDoc"
+
+            // For example, if we have pmDoc.terminal_ids = [{ kiosk: 1, terminal_id: "198" }, ...]
+            // match localOrderDoc.kioskNumber:
+            let kioskTerminalId = '';
+            if (pmDoc?.terminal_ids && Array.isArray(pmDoc.terminal_ids)) {
+                // find the match
+                const kioskEntry = pmDoc.terminal_ids.find(
+                    (entry: TerminalIDEntry) => entry.kiosk === localOrderDoc.kioskNumber
+                );
+                kioskTerminalId = kioskEntry?.terminal_id || '';
+            }
+
+            // Fallback or default if not found
+            if (!kioskTerminalId) {
+                kioskTerminalId = '198'; // or any default
+            }
+
+            // 4B) Add gateway_info to requestBody => signals a Cloud POS payment
+            requestBody.gateway_info = {
+                terminal_id: kioskTerminalId,
+            };
+
+            // If you don't set any `requestBody.gateway`, MSP will show a "Card Payment" on the terminal
+            // If you want to specify a particular method, you can do:
+            // requestBody.gateway = 'CREDITCARD';
+        } else {
+            // If not kiosk => do normal "redirect" flow
+            // 5) Detect "MSP_" sub_method_label => map to MSP gateway
+            const subMethodLabel = localOrderDoc.payments?.[0]?.sub_method_label;
+            if (
+                typeof subMethodLabel === 'string' &&
+                subMethodLabel.startsWith('MSP_')
+            ) {
+                const methodName = subMethodLabel.replace(/^MSP_/, ''); // e.g. "Mastercard"
+                const gateway = MSP_GATEWAY_MAP[methodName];
+                if (gateway) {
+                    requestBody.gateway = gateway;
+                }
             }
         }
 
-        // ---- CONSOLE LOG for Debugging ----
+        // ---- Console logs for debugging
         console.log('=== MultiSafePay createPayment - Request Body ===');
         console.log(JSON.stringify(requestBody, null, 2));
 
-        // 5) Send to MSP
+        // 6) Send to MSP
         const apiKey = this.resolveApiKey();
         const url = `${this.environmentUrl}orders?api_key=${apiKey}`;
         const response = await fetch(url, {
@@ -185,10 +228,11 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody),
         });
-
         const json = await response.json();
 
-        // ---- CONSOLE LOG for Debugging ----
+        const eventsToken = json.data?.events_token || null;
+        const eventsStreamUrl = json.data?.events_stream_url || null;
+
         console.log('=== MultiSafePay createPayment - Response JSON ===');
         console.log(JSON.stringify(json, null, 2));
 
@@ -206,20 +250,28 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
             redirectUrl: paymentUrl,
             providerOrderId: orderId,
             status: 'pending',
+            eventsToken,
+            eventsStreamUrl,
         };
     }
 
     /**
      * Check the current status of a MultiSafePay order by its providerOrderId.
      */
-    public async getPaymentStatus(providerOrderId: string): Promise<PaymentStatusResult> {
+    public async getPaymentStatus(
+        providerOrderId: string
+    ): Promise<PaymentStatusResult> {
         const apiKey = this.resolveApiKey();
-        const url = `${this.environmentUrl}orders/${encodeURIComponent(providerOrderId)}?api_key=${apiKey}`;
+        const url = `${this.environmentUrl}orders/${encodeURIComponent(
+            providerOrderId
+        )}?api_key=${apiKey}`;
         const response = await fetch(url);
         const json = await response.json();
 
         if (!response.ok || !json.success) {
-            throw new Error(`MultiSafePay getPaymentStatus failed: ${JSON.stringify(json)}`);
+            throw new Error(
+                `MultiSafePay getPaymentStatus failed: ${JSON.stringify(json)}`
+            );
         }
 
         const providerStatus = json.data?.status; // e.g. "completed", "initialized", "cancelled"

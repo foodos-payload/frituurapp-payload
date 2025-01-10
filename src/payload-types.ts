@@ -1552,6 +1552,10 @@ export interface Order {
       used?: boolean | null;
     };
   };
+  /**
+   * If the order was placed from a kiosk, store the kiosk ID here.
+   */
+  kioskNumber?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2373,6 +2377,7 @@ export interface OrdersSelect<T extends boolean = true> {
               used?: T;
             };
       };
+  kioskNumber?: T;
   updatedAt?: T;
   createdAt?: T;
 }

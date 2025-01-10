@@ -150,6 +150,7 @@ export async function POST(request: NextRequest) {
             customerDetails,      // { firstName, lastName, ... }
             shippingCost,
             promotionsUsed,
+            kioskNumber,
         } = body;
 
         // 2) Find the shop doc by slug
@@ -228,6 +229,7 @@ export async function POST(request: NextRequest) {
                 payments: paymentsToStore || [],
                 shipping_cost: typeof shippingCost === 'number' ? shippingCost : 0,
                 promotionsUsed: promotionsUsed || {},
+                kioskNumber: kioskNumber || null,
 
             },
         });

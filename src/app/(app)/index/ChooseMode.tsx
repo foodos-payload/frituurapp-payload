@@ -27,11 +27,12 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
     const { setShippingMethod, clearCart } = useCart();
     const searchParams = useSearchParams();
 
-    // 1) Check `kiosk` param
-    const kioskParam = searchParams.get("kiosk"); // "true" or null
+    // 1) Check `kiosk` and `kioskId` params
+    const kioskParam = searchParams.get("kiosk"); // e.g. "true" or null
+    const kioskIdParam = searchParams.get("kioskId"); // e.g. "1" or null
     const isKiosk = kioskParam === "true";
 
-    // 2) Filter out delivery if kiosk
+    // 2) If kiosk => filter out 'delivery'
     let filteredFulfillment = fulfillmentOptions;
     if (isKiosk) {
         filteredFulfillment = fulfillmentOptions.filter(
@@ -43,16 +44,30 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
     useEffect(() => {
         console.log("[ChooseMode] Clearing cart on initial visit...");
         clearCart();
-        // We do NOT depend on `clearCart` or `isKiosk` here
-        // to avoid infinite re-renders
+        // We intentionally don't include clearCart/isKiosk in the dependency array
+        // to avoid multiple re-renders.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // (B) If you want to store kioskMode in localStorage whenever isKiosk changes
+    // (B) Store kiosk mode and kiosk ID in localStorage whenever isKiosk/kioskId change
     useEffect(() => {
         console.log("[ChooseMode] Setting kioskMode in localStorage =", isKiosk);
         localStorage.setItem("kioskMode", String(isKiosk));
-    }, [isKiosk]);
+
+        if (isKiosk) {
+            if (kioskIdParam) {
+                // e.g. "1"
+                console.log("[ChooseMode] Storing kioskNumber =", kioskIdParam);
+                localStorage.setItem("kioskNumber", kioskIdParam);
+            } else if (!localStorage.getItem("kioskNumber")) {
+                // If no kioskId provided and no existing kioskNumber, remove kioskNumber
+                localStorage.removeItem("kioskNumber");
+            }
+        } else {
+            // If not kiosk, remove kioskNumber
+            localStorage.removeItem("kioskNumber");
+        }
+    }, [isKiosk, kioskIdParam]);
 
     // 3) Handle selecting a method
     const handleSelectOption = (optionKey: "dine-in" | "takeaway" | "delivery") => {
@@ -63,7 +78,7 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
         router.push("/order");
     };
 
-    // If kiosk => show kiosk layout
+    // 4) If kiosk => show kiosk layout
     if (isKiosk) {
         return (
             <KioskContainer
@@ -73,7 +88,7 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
         );
     }
 
-    // Otherwise normal layout
+    // 5) Otherwise normal layout
     const isDineIn = filteredFulfillment.some((f) => f.key === "dine-in");
     const isTakeaway = filteredFulfillment.some((f) => f.key === "takeaway");
     const isDelivery = filteredFulfillment.some((f) => f.key === "delivery");
@@ -83,9 +98,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
             <div className="flex grow items-stretch justify-center px-0 py-0 sm:px-8 sm:py-32 md:px-12 lg:px-16">
                 <div
                     className="bg-white shadow-lg w-full max-w-screen-lg
-            min-h-full sm:min-h-0
-            sm:rounded-xl p-4 sm:p-8 lg:p-16
-            flex flex-col justify-evenly"
+                     min-h-full sm:min-h-0
+                     sm:rounded-xl p-4 sm:p-8 lg:p-16
+                     flex flex-col justify-evenly"
                 >
                     <h1 className="text-2xl sm:text-3xl font-bold text-center mb-8">
                         {t("chooseMode.title")}
@@ -97,9 +112,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isDineIn && handleSelectOption("dine-in")}
                             disabled={!isDineIn}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                border-gray-200 bg-white shadow transition-transform hover:scale-105
-                rounded-xl sm:rounded-xl
-                ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
+                          border-gray-200 bg-white shadow transition-transform hover:scale-105
+                          rounded-xl sm:rounded-xl
+                          ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DineInIcon.png"
@@ -119,9 +134,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isTakeaway && handleSelectOption("takeaway")}
                             disabled={!isTakeaway}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                border-gray-200 bg-white shadow transition-transform hover:scale-105
-                rounded-xl sm:rounded-xl
-                ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
+                          border-gray-200 bg-white shadow transition-transform hover:scale-105
+                          rounded-xl sm:rounded-xl
+                          ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/TakeAwayIcon.png"
@@ -141,9 +156,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isDelivery && handleSelectOption("delivery")}
                             disabled={!isDelivery}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                border-gray-200 bg-white shadow transition-transform hover:scale-105
-                rounded-xl sm:rounded-xl
-                ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
+                          border-gray-200 bg-white shadow transition-transform hover:scale-105
+                          rounded-xl sm:rounded-xl
+                          ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DeliveryIcon.png"

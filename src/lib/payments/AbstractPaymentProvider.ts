@@ -10,6 +10,9 @@ export interface PaymentCreateResult {
     redirectUrl?: string;
     providerOrderId?: string;
     status: string;
+    eventsToken?: string;
+    eventsStreamUrl?: string;
+
 }
 
 /**
@@ -22,6 +25,7 @@ export interface PaymentStatusResult {
     status: string;
     providerOrderId?: string;
     rawResponse?: any;
+
 }
 
 /**

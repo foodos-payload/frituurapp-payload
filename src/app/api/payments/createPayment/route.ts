@@ -1,4 +1,11 @@
-// src/app/api/payments/createPayment/route.ts
+// File: src/app/api/payments/createPayment/route.ts
+
+import { NextRequest, NextResponse } from 'next/server'
+import { getPayload } from 'payload'
+import config from '@payload-config'
+import { getPaymentProviderFromMethodDoc } from '@/lib/payments/PaymentProviderFactory'
+import type { PaymentMethodDoc } from '@/types/PaymentTypes'
+
 /**
  * @openapi
  * /api/payments/createPayment:
@@ -18,6 +25,9 @@
  *                 type: number
  *                 description: The numeric ID of the order
  *                 example: 123
+ *               kioskNumber:
+ *                 type: number
+ *                 description: (Optional) Kiosk # to use for terminal-based payment
  *     responses:
  *       200:
  *         description: Payment created successfully
@@ -28,19 +38,14 @@
  *       500:
  *         description: Server error
  */
-
-// File: src/app/api/payments/createPayment/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@payload-config'
-import { getPaymentProviderFromMethodDoc } from '@/lib/payments/PaymentProviderFactory'
-import type { PaymentMethodDoc } from '@/types/PaymentTypes'
-
 export async function POST(req: NextRequest) {
     try {
-        // 1) Get orderId from the body
+        // 1) Parse request body
         const body = await req.json().catch(() => ({}))
         const orderId = body.orderId
+        // If kioskNumber is passed in the request, we can grab it here:
+        const kioskNumberFromBody = body.kioskNumber ? Number(body.kioskNumber) : null
+
         if (!orderId) {
             return NextResponse.json(
                 { error: 'Missing orderId in JSON body' },
@@ -98,7 +103,6 @@ export async function POST(req: NextRequest) {
         }
 
         let pmDoc: PaymentMethodDoc | null = null
-
         if (typeof paymentMethodIdOrDoc === 'string') {
             const pm = await payload.findByID({
                 collection: 'payment-methods',
@@ -125,11 +129,17 @@ export async function POST(req: NextRequest) {
         // 7) Build Payment Provider
         const provider = await getPaymentProviderFromMethodDoc(pmDoc)
 
-        // 8) Attach the shop slug to the order doc if needed
+        // 8) Attach the shop slug, kioskNumber, etc. to the order doc
+        //    - kioskNumber can come from the order doc or from request body
+        const kioskNumber =
+            kioskNumberFromBody ??
+            (typeof orderDoc.kioskNumber === 'number' ? orderDoc.kioskNumber : null)
+
         const updatedOrderDoc = {
             ...orderDoc,
             shopSlug: shopDoc.slug,
             shopDoc,
+            kioskNumber, // pass this so MSP knows which terminal to use if kiosk
         }
 
         // 9) Create the payment => get redirectUrl
@@ -149,6 +159,8 @@ export async function POST(req: NextRequest) {
             redirectUrl: paymentResult.redirectUrl,
             providerOrderId: paymentResult.providerOrderId,
             status: paymentResult.status,
+            eventsToken: paymentResult.eventsToken,       // from MSP's "data.events_token"
+            eventsStreamUrl: paymentResult.eventsStreamUrl, // from MSP's "data.events_stream_url"
         })
     } catch (err: any) {
         console.error('Error in createPayment route:', err)

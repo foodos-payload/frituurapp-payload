@@ -30,7 +30,11 @@ export const KioskIdleWatcher: React.FC = () => {
     }, [])
 
     const clearLocalStorage = useCallback(() => {
+        const kioskNumber = localStorage.getItem("kioskNumber")
         localStorage.clear()
+        if (kioskNumber) {
+            localStorage.setItem("kioskNumber", kioskNumber)
+        }
     }, [])
 
     const resetIdleTimer = useCallback(() => {

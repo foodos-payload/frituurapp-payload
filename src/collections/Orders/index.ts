@@ -686,5 +686,15 @@ export const Orders: CollectionConfig = {
         },
       ],
     },
+
+    {
+      name: 'kioskNumber',
+      type: 'number',
+      label: 'Kiosk Number',
+      admin: {
+        description: 'If the order was placed from a kiosk, store the kiosk ID here.',
+      },
+    },
+
   ],
 };

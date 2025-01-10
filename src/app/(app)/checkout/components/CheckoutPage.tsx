@@ -50,6 +50,7 @@ interface ShopInfo {
         reason?: string;
     }[];
 }
+
 interface FulfillmentMethodDoc {
     id: string;
     method_type: string;
@@ -58,13 +59,11 @@ interface FulfillmentMethodDoc {
     minimum_order: number;
     settings?: {
         delivery_radius?: number;
-
         checkout_email_required?: boolean;
         checkout_phone_required?: boolean;
         checkout_lastname_required?: boolean;
     };
     enabled: boolean;
-
 }
 
 // Props from server page
@@ -75,7 +74,6 @@ interface CheckoutPageProps {
     shopInfo?: ShopInfo;
     fulfillmentMethods?: FulfillmentMethodDoc[];
     isKiosk?: boolean;
-
 }
 
 export default function CheckoutPage({
@@ -90,11 +88,10 @@ export default function CheckoutPage({
     const kioskMode = searchParams.get("kiosk") === "true";
     const isKiosk = kioskMode;
 
-    // 1) NEW: Track if the user was redirected with ?cancelled=true
+    // 1) Check if user was redirected with ?cancelled=true
     const cancelledParam = searchParams.get("cancelled") === "true";
     const [isPaymentCancelled, setIsPaymentCancelled] = useState(false);
 
-    // 2) On mount (or whenever searchParams changes), set our state
     useEffect(() => {
         if (cancelledParam) {
             setIsPaymentCancelled(true);
@@ -105,10 +102,8 @@ export default function CheckoutPage({
 
     const branding = useShopBranding();
 
-    // ADD: track if distance is being fetched
+    // (A) Distance loading, user data
     const [distanceLoading, setDistanceLoading] = useState(false);
-
-    // Logged in user
     const [loggedInUser, setLoggedInUser] = useState<{ firstName?: string } | null>(null);
     useEffect(() => {
         const storedUser = localStorage.getItem("userData");
@@ -116,12 +111,12 @@ export default function CheckoutPage({
             try {
                 setLoggedInUser(JSON.parse(storedUser));
             } catch {
-                // ignore
+                // ignore error
             }
         }
     }, []);
 
-    // Fulfillment method
+    // (B) Fulfillment method
     const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>("");
     useEffect(() => {
         const storedMethod = localStorage.getItem("selectedShippingMethod") || "";
@@ -137,20 +132,18 @@ export default function CheckoutPage({
         }
     }, [fulfillmentMethod]);
 
-    // Payment + Timeslots
+    // (C) Payment & Timeslots
     const [allTimeslots] = useState<Timeslot[]>(initialTimeslots);
     const [paymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods);
     const [selectedPaymentId, setSelectedPaymentId] = useState("");
 
     useEffect(() => {
-        // On mount, retrieve from storage
         const storedPaymentId = localStorage.getItem("selectedPaymentId") || "";
         if (storedPaymentId) {
             setSelectedPaymentId(storedPaymentId);
         }
     }, []);
     useEffect(() => {
-        // Whenever selectedPaymentId changes, persist
         if (selectedPaymentId) {
             localStorage.setItem("selectedPaymentId", selectedPaymentId);
         }
@@ -172,7 +165,7 @@ export default function CheckoutPage({
         return map;
     }, [shopInfo]);
 
-    // Customer details
+    // (E) Customer details
     const [surname, setSurname] = useState("");
     const [lastName, setLastName] = useState("");
     const [address, setAddress] = useState("");
@@ -181,24 +174,26 @@ export default function CheckoutPage({
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
 
-    // Coupon code
+    // (F) Coupon code
     const [couponCode, setCouponCode] = useState("");
 
-    // Cart
+    // (G) Cart
     const { items: cartItems, getCartTotal, clearCart, getCartTotalWithDiscounts } = useCart();
-    // Instead of `getCartTotal()`:
     const rawSubtotal = getCartTotal();
     const discountedSubtotal = getCartTotalWithDiscounts();
-    // Delivery logic
+
+    // (H) Delivery logic
     const deliveryMethodDoc = fulfillmentMethods?.find(
         (fm) => fm.method_type === "delivery" && fm.enabled
     );
     const selectedMethodDoc = useMemo(() => {
         return fulfillmentMethods?.find((fm) => fm.method_type === fulfillmentMethod);
     }, [fulfillmentMethods, fulfillmentMethod]);
+
     const emailRequired = selectedMethodDoc?.settings?.checkout_email_required === true;
     const phoneRequired = selectedMethodDoc?.settings?.checkout_phone_required === true;
-    const lastNameRequired = selectedMethodDoc?.settings?.checkout_lastname_required === true;
+    const lastNameRequired =
+        selectedMethodDoc?.settings?.checkout_lastname_required === true;
 
     const deliveryFee = deliveryMethodDoc?.delivery_fee ?? 0;
     const extraCostPerKm = deliveryMethodDoc?.extra_cost_per_km ?? 0;
@@ -207,14 +202,11 @@ export default function CheckoutPage({
 
     const [deliveryDistance, setDeliveryDistance] = useState<number | null>(null);
     const [deliveryError, setDeliveryError] = useState<string | null>(null);
-    // For a “please enter address” notice, we have a separate state
     const [addressNotice, setAddressNotice] = useState<string | null>(null);
     const [isWithinRadius, setIsWithinRadius] = useState(true);
 
-    // (1) shippingCost stored as a state
-    const [shippingCost, setShippingCost] = useState(0); // NEW: default 0
-
-    // (2) On mount, restore shipping cost from localStorage if present
+    // shippingCost state
+    const [shippingCost, setShippingCost] = useState(0);
     useEffect(() => {
         const storedShippingCost = localStorage.getItem("shippingCost");
         if (storedShippingCost) {
@@ -222,11 +214,9 @@ export default function CheckoutPage({
         }
     }, []);
 
-    // 1) If fulfillmentMethod === 'delivery' => whenever address changes => do distance check
-    // Whenever the user picks “delivery”, check address distance
+    // (I) Distance check for "delivery"
     useEffect(() => {
         if (fulfillmentMethod !== "delivery") {
-            // Not delivery => clear distance + errors
             setDeliveryDistance(null);
             setDeliveryError(null);
             setAddressNotice(null);
@@ -234,23 +224,20 @@ export default function CheckoutPage({
             return;
         }
 
-        // If there's no address yet => show the "Please enter address" notice (yellow)
         if (!address || !city || !postalCode) {
             setDistanceLoading(false);
             setDeliveryDistance(null);
-            setDeliveryError(null); // no actual error
+            setDeliveryError(null);
             setAddressNotice("Please enter your complete address.");
             setIsWithinRadius(true);
             return;
         } else {
-            // We do have address => clear the addressNotice
             setAddressNotice(null);
         }
 
-        // Now do the distance check
         async function checkDistance() {
             try {
-                setDistanceLoading(true);  // 1) start loading
+                setDistanceLoading(true);
                 const url =
                     `/api/calculateDistance?host=${encodeURIComponent(hostSlug)}` +
                     `&address_1=${encodeURIComponent(address)}` +
@@ -260,23 +247,23 @@ export default function CheckoutPage({
                 const res = await fetch(url);
                 const data = await res.json();
 
-                setDistanceLoading(false);  // 2) stop loading
+                setDistanceLoading(false);
 
                 if (data.status === "OK") {
                     const distMeters = data.rows[0].elements[0].distance.value;
                     const distKm = distMeters / 1000;
                     setDeliveryDistance(distKm);
 
-                    // Check radius
                     if (deliveryRadius > 0 && distKm > deliveryRadius) {
                         setIsWithinRadius(false);
-                        setDeliveryError(`You are too far for delivery. Max radius is ${deliveryRadius}km.`);
+                        setDeliveryError(
+                            `You are too far for delivery. Max radius is ${deliveryRadius}km.`
+                        );
                     } else {
                         setIsWithinRadius(true);
                         setDeliveryError(null);
                     }
                 } else {
-                    // Some other error from Google
                     setDeliveryDistance(null);
                     setIsWithinRadius(false);
                     setDeliveryError(data.error || "Failed to calculate distance.");
@@ -290,30 +277,20 @@ export default function CheckoutPage({
         }
 
         checkDistance();
-    }, [
-        fulfillmentMethod,
-        address,
-        city,
-        postalCode,
-        hostSlug,
-        deliveryRadius,
-    ]);
+    }, [fulfillmentMethod, address, city, postalCode, hostSlug, deliveryRadius]);
 
-    // 2) shipping cost = base fee + ( distKM * extraCostPerKM ) for entire distance
+    // shipping cost = base fee + distance * extraCost
     const computedShippingCost = useMemo(() => {
         if (fulfillmentMethod !== "delivery") return 0;
         if (!isWithinRadius || !deliveryDistance) return 0;
         const rawCost = deliveryFee + deliveryDistance * extraCostPerKm;
-        // Round to 2 decimals:
         return parseFloat(rawCost.toFixed(2));
     }, [fulfillmentMethod, isWithinRadius, deliveryDistance, deliveryFee, extraCostPerKm]);
 
-    // (3) Whenever computedShippingCost changes, update shippingCost state
     useEffect(() => {
         setShippingCost(computedShippingCost);
     }, [computedShippingCost]);
 
-    // (4) Whenever shippingCost changes, persist to localStorage
     useEffect(() => {
         localStorage.setItem("shippingCost", shippingCost.toString());
     }, [shippingCost]);
@@ -322,31 +299,33 @@ export default function CheckoutPage({
         return parseFloat((discountedSubtotal + shippingCost).toFixed(2));
     }, [discountedSubtotal, shippingCost]);
 
-
-    // 3) If within radius => check if finalTotal >= minimumOrder
+    // (J) Check min order
     useEffect(() => {
         if (fulfillmentMethod === "delivery" && isWithinRadius) {
-            // Min order check
             if (rawSubtotal < minimumOrder) {
                 setDeliveryError(
-                    `Minimum order is €${minimumOrder}, but your subtotal is only €${rawSubtotal.toFixed(2)}.`
+                    `Minimum order is €${minimumOrder}, but your subtotal is only €${rawSubtotal.toFixed(
+                        2
+                    )}.`
                 );
             } else {
-                // no problem
-                // if not already an error from the distance check, we can clear it
-                // (avoid overwriting "too far" error in case radius changed)
                 if (deliveryError?.includes("far for delivery") === false) {
                     setDeliveryError(null);
                 }
             }
         }
-    }, [fulfillmentMethod, isWithinRadius, finalTotal, minimumOrder, deliveryError, rawSubtotal]);
+    }, [
+        fulfillmentMethod,
+        isWithinRadius,
+        finalTotal,
+        minimumOrder,
+        deliveryError,
+        rawSubtotal,
+    ]);
 
-    // canProceed => only enable checkout if address passes google check or not needed
+    // (K) canProceed => only enable if required fields are satisfied
     function canProceed(): boolean {
-        // If kiosk => only check minimal things
         if (isKiosk) {
-            // e.g. require cart not empty, have a selectedPaymentId
             if (!selectedPaymentId) return false;
             if (!cartItems || cartItems.length === 0) return false;
             return true;
@@ -356,42 +335,33 @@ export default function CheckoutPage({
         if (!selectedDate || !selectedTime) return false;
         if (!selectedPaymentId) return false;
 
-        // Grab those booleans:
         const selectedMethodDoc = fulfillmentMethods?.find(
             (fm) => fm.method_type === fulfillmentMethod
         );
         const emailRequired = selectedMethodDoc?.settings?.checkout_email_required === true;
         const phoneRequired = selectedMethodDoc?.settings?.checkout_phone_required === true;
-        const lastNameRequired = selectedMethodDoc?.settings?.checkout_lastname_required === true;
+        const lastNameRequired =
+            selectedMethodDoc?.settings?.checkout_lastname_required === true;
 
         switch (fulfillmentMethod) {
             case "takeaway":
-                // Surname always needed or not? (Your example requires it, so we keep it)
                 if (!surname) return false;
-                // Now conditionally require lastName:
                 if (lastNameRequired && !lastName) return false;
-                // Conditionally require phone:
                 if (phoneRequired && !phone) return false;
-                // If email is required:
                 if (emailRequired && !email) return false;
                 break;
 
             case "delivery":
-                // You always require surname
                 if (!surname) return false;
-                // Maybe lastName is optional unless lastNameRequired = true:
                 if (lastNameRequired && !lastName) return false;
                 if (phoneRequired && !phone) return false;
-                // address/city/postalCode are always required for delivery
                 if (!address || !city || !postalCode) return false;
                 if (!isWithinRadius) return false;
-                // also confirm finalTotal >= minimumOrder
                 if (rawSubtotal < minimumOrder) return false;
                 if (emailRequired && !email) return false;
                 break;
 
             case "dine_in":
-                // If you require surname for dine_in:
                 if (!surname) return false;
                 if (lastNameRequired && !lastName) return false;
                 if (phoneRequired && !phone) return false;
@@ -405,9 +375,11 @@ export default function CheckoutPage({
         return true;
     }
 
-
-    async function handleCheckout() {
-        // If kiosk => override the fulfillment date/time with "now"
+    /**
+     * handleCheckout - creates the order + MSP payment, returns localOrderId or null
+     */
+    async function handleCheckout(): Promise<number | null> {
+        // If kiosk => override date/time
         if (isKiosk) {
             const now = new Date();
             const isoDate = now.toISOString().slice(0, 10);
@@ -418,17 +390,17 @@ export default function CheckoutPage({
 
         if (!canProceed()) {
             alert("Please fill all required fields (and be within the radius / min order).");
-            return;
+            return null;
         }
 
-        // 1) Determine if payment is cash or MSP (or any other online method)
-        let selectedStatus = "pending_payment"; // for MSP or online
+        // 1) Payment status for MSP/cash
+        let selectedStatus = "pending_payment";
         const pmDoc = paymentMethods.find((pm) => pm.id === selectedPaymentId);
         if (pmDoc?.label?.toLowerCase()?.includes("cash")) {
-            selectedStatus = "awaiting_preparation"; // for cash
+            selectedStatus = "awaiting_preparation";
         }
 
-        // 2) Gather promotions from localStorage
+        // 2) Promotions from localStorage
         const localPointsUsed = parseInt(localStorage.getItem("pointsUsed") || "0", 10);
         const localCreditsUsed = parseInt(localStorage.getItem("creditsUsed") || "0", 10);
         const localCustomerBarcode = localStorage.getItem("customerBarcode") || "";
@@ -436,16 +408,16 @@ export default function CheckoutPage({
         let localCoupon: any = null;
         try {
             const couponStr = localStorage.getItem("appliedCoupon") || "null";
-            localCoupon = JSON.parse(couponStr); // yields an object or null
-        } catch (e) {
+            localCoupon = JSON.parse(couponStr);
+        } catch {
             localCoupon = null;
         }
 
         let localVoucher: any = null;
         try {
             const voucherStr = localStorage.getItem("appliedGiftVoucher") || "null";
-            localVoucher = JSON.parse(voucherStr); // yields an object or null
-        } catch (e) {
+            localVoucher = JSON.parse(voucherStr);
+        } catch {
             localVoucher = null;
         }
 
@@ -453,19 +425,28 @@ export default function CheckoutPage({
             pointsUsed: localPointsUsed,
             creditsUsed: localCreditsUsed,
         };
-        if (localVoucher) {
-            promotionsUsed.giftVoucherUsed = localVoucher;
-        }
-        if (localCoupon) {
-            promotionsUsed.couponUsed = localCoupon;
+        if (localVoucher) promotionsUsed.giftVoucherUsed = localVoucher;
+        if (localCoupon) promotionsUsed.couponUsed = localCoupon;
+
+        // 3) kioskNumber
+        let kioskNumber: number | null = null;
+        if (isKiosk) {
+            try {
+                const storedKioskNumber = localStorage.getItem("kioskNumber");
+                if (storedKioskNumber) {
+                    kioskNumber = parseInt(storedKioskNumber, 10);
+                }
+            } catch (err) {
+                console.warn("Failed to parse kioskNumber:", err);
+            }
         }
 
-        // 3) Build the payload for /api/submitOrder
+        // 4) Build payload
         const payloadData = {
             tenant: hostSlug,
             shop: hostSlug,
             orderType: isKiosk ? "kiosk" : "web",
-            status: selectedStatus, // 'pending_payment' or 'awaiting_preparation'
+            status: selectedStatus,
             fulfillmentMethod,
             fulfillmentDate: selectedDate,
             fulfillmentTime: selectedTime,
@@ -504,17 +485,18 @@ export default function CheckoutPage({
             payments: [
                 {
                     payment_method: selectedPaymentId,
-                    amount: finalTotal,
+                    amount: parseFloat((discountedSubtotal + shippingCost).toFixed(2)),
                 },
             ],
             shippingCost,
             distanceKm: deliveryDistance,
             promotionsUsed,
+            kioskNumber: kioskNumber || undefined,
         };
 
         console.log("About to submit order:", JSON.stringify(payloadData, null, 2));
 
-        // 4) Create local order
+        // 5) Create local order
         let localOrderId: number | null = null;
         try {
             const res = await fetch("/api/submitOrder", {
@@ -526,33 +508,30 @@ export default function CheckoutPage({
 
             if (!json.success) {
                 alert("Order creation failed: " + json.message);
-                return;
+                return null;
             }
-
             localOrderId = json.order.id;
             console.log("Local order created. ID =", localOrderId);
         } catch (err) {
             console.error("Error submitting order:", err);
             alert("Error submitting order. Check console for details.");
-            return;
+            return null;
         }
 
         if (!localOrderId) {
             alert("Could not determine local order ID.");
-            return;
+            return null;
         }
 
-        // 5) If it's a cash method, finish locally (like before)
+        // 6) If cash => finish
         if (pmDoc?.label?.toLowerCase()?.includes("cash")) {
-            // Clear cart, go directly to order summary
             clearCart();
             const kioskParam = isKiosk ? "&kiosk=true" : "";
             router.push(`/order-summary?orderId=${localOrderId}${kioskParam}`);
-            return;
+            return localOrderId;
         }
 
-        // 6) Otherwise, it's MultiSafePay or another online method:
-        //    Call /api/payments/createPayment => get redirectUrl => redirect the user
+        // 7) Otherwise => create MSP payment
         try {
             const resp = await fetch("/api/payments/createPayment", {
                 method: "POST",
@@ -565,23 +544,49 @@ export default function CheckoutPage({
             if (!resp.ok || data.error) {
                 console.error("createPayment error:", data.error || data);
                 alert("Failed to create payment. Check console.");
-                return;
+                return null;
             }
 
+            // If MSP gave us a redirect URL:
             if (data.redirectUrl) {
-                console.log("Redirecting user to MSP payment URL =", data.redirectUrl);
-                window.location.href = data.redirectUrl;
+                if (!isKiosk) {
+                    // Normal web flow => redirect
+                    console.log("Redirecting user to MSP payment URL =", data.redirectUrl);
+                    window.location.href = data.redirectUrl;
+                } else {
+                    // Kiosk => do NOT redirect
+                    console.log("Kiosk mode: skipping MSP redirect...");
+                }
+
+                // If your SSE flow needs eventsToken/eventsStreamUrl, store them:
+                if (isKiosk && data.eventsToken) {
+                    localStorage.setItem("mspEventsToken", data.eventsToken);
+                }
+                if (isKiosk && data.eventsStreamUrl) {
+                    localStorage.setItem("mspEventsStreamUrl", data.eventsStreamUrl);
+                }
+
+                return localOrderId;
             } else {
-                console.log("No redirectUrl returned, payment might be completed or an error occurred.");
-                // Optionally route them to summary or show an error.
+                // No redirect => Possibly auto-complete or error
+                console.log("No redirectUrl, payment might be completed or an error occurred.");
+
+                // If your SSE flow needs them, store them here if present:
+                if (isKiosk && data.eventsToken) {
+                    localStorage.setItem("mspEventsToken", data.eventsToken);
+                }
+                if (isKiosk && data.eventsStreamUrl) {
+                    localStorage.setItem("mspEventsStreamUrl", data.eventsStreamUrl);
+                }
+
+                return localOrderId;
             }
         } catch (err) {
             console.error("Error calling createPayment:", err);
             alert("Error calling createPayment. Check console.");
+            return null;
         }
     }
-
-
 
     function handleBackClick() {
         const kioskParam = kioskMode ? "?kiosk=true" : "";
@@ -607,14 +612,13 @@ export default function CheckoutPage({
         alert("handleRemoveItem stub.");
     }
 
-    //KIOSK LOGIC 
+    // KIOSK logic
     useEffect(() => {
         if (isKiosk) {
-            // For kiosk mode, auto-select current date/time
+            // For kiosk mode, auto-select "today" + "ASAP"
             const now = new Date();
-            setSelectedDate(now.toISOString().slice(0, 10)); // "YYYY-MM-DD"
+            setSelectedDate(now.toISOString().slice(0, 10));
             setSelectedTime("ASAP");
-            // Or some placeholder.
 
             // Pre-fill kiosk user details
             setSurname("Kiosk");
@@ -627,31 +631,28 @@ export default function CheckoutPage({
         }
     }, [isKiosk]);
 
-
     return (
         <div className="checkout-page">
             {isKiosk ? (
                 <KioskPaymentOptions
                     handleBackClick={handleBackClick}
-                    handleCheckout={handleCheckout}
+                    handleCheckout={handleCheckout} // must return Promise<number | null>
                     paymentMethods={paymentMethods}
                     setSelectedPaymentId={setSelectedPaymentId}
                     branding={branding}
+                    shopSlug={hostSlug} // needed if kiosk wants to do local or SSE logic
                 />
             ) : (
-                // Normal checkout flow
                 <>
                     <div className="checkout-form container mx-auto my-16 flex flex-wrap items-start gap-8 justify-evenly lg:gap-20">
-
-                        {/* Left column - main form content */}
+                        {/* Left column */}
                         <div className="w-full max-w-2xl grid gap-8 md:flex-1">
-                            {/* 1) If payment was cancelled, show an error message */}
                             {isPaymentCancelled && (
                                 <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
                                     Payment was cancelled. Please try again or choose another method.
                                 </div>
                             )}
-                            {/* Back button */}
+
                             <div className="flex justify-between mb-2">
                                 <button
                                     onClick={handleBackClick}
@@ -662,7 +663,7 @@ export default function CheckoutPage({
                                 </button>
                             </div>
 
-                            {/* (A) Hello user / login */}
+                            {/* Hello user / login */}
                             <div className="user-greeting">
                                 {loggedInUser ? (
                                     <div className="mb-3">
@@ -670,7 +671,6 @@ export default function CheckoutPage({
                                             Hello, {loggedInUser.firstName || "User"}!
                                         </h2>
                                         <div className="mt-1 text-sm">
-                                            {/* Example: link to account or logout if you want */}
                                             <button
                                                 onClick={() => alert("Logout stub")}
                                                 className="text-red-600 hover:underline mr-4"
@@ -692,14 +692,14 @@ export default function CheckoutPage({
                                 )}
                             </div>
 
-                            {/* --- NEW: Move the deliveryError (or min-order warnings) above the fulfillment methods --- */}
+                            {/* Show any delivery errors above fulfillment methods */}
                             {deliveryError && fulfillmentMethod === "delivery" && (
                                 <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
                                     {deliveryError}
                                 </div>
                             )}
 
-                            {/* (B) Fulfillment Method */}
+                            {/* Fulfillment Method */}
                             <FulfillmentMethodSelector
                                 allTimeslots={allTimeslots}
                                 fulfillmentMethod={fulfillmentMethod}
@@ -710,10 +710,9 @@ export default function CheckoutPage({
                                 }}
                                 deliveryRadius={deliveryRadius}
                                 branding={branding}
-
                             />
 
-                            {/* (C) Timeslots */}
+                            {/* Timeslots */}
                             {fulfillmentMethod && (
                                 <TimeSlotSelector
                                     fulfillmentMethod={fulfillmentMethod}
@@ -725,11 +724,10 @@ export default function CheckoutPage({
                                     closedDateReasons={closedDateReasons}
                                     hostSlug={hostSlug}
                                     branding={branding}
-
                                 />
                             )}
 
-                            {/* (D) Customer details => pass deliveryError so it shows under address */}
+                            {/* Customer details */}
                             {fulfillmentMethod && (
                                 <CustomerDetailsForm
                                     fulfillmentMethod={fulfillmentMethod}
@@ -754,17 +752,15 @@ export default function CheckoutPage({
                                     lastNameRequired={lastNameRequired}
                                     distanceLoading={distanceLoading}
                                     branding={branding}
-
                                 />
                             )}
 
-                            {/* (E) Payment methods */}
+                            {/* Payment methods */}
                             <PaymentMethodSelector
                                 paymentMethods={paymentMethods}
                                 selectedPaymentId={selectedPaymentId}
                                 setSelectedPaymentId={setSelectedPaymentId}
                                 branding={branding}
-
                             />
                         </div>
 
@@ -773,8 +769,8 @@ export default function CheckoutPage({
                             <OrderSummary
                                 couponCode={couponCode}
                                 setCouponCode={setCouponCode}
-                                handleScanQR={handleScanQR}
-                                handleApplyCoupon={handleApplyCoupon}
+                                handleScanQR={() => alert("Not implemented.")}
+                                handleApplyCoupon={() => alert("Not implemented.")}
                                 canProceed={canProceed}
                                 handleCheckout={handleCheckout}
                                 cartTotal={discountedSubtotal}
@@ -792,4 +788,3 @@ export default function CheckoutPage({
         </div>
     );
 }
-
