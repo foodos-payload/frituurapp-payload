@@ -27,10 +27,11 @@ services:
     networks:
       - app-network
     ports:
-      - '9994:9993/udp' # Changed from 9993:9993
+      - '9994:9993/udp'
     environment:
       - ZT_OVERRIDE_LOCAL_CONF=true
-      - ZT_ALLOW_MANAGEMENT_FROM=172.31.255.0/29
+      - ZT_LOCAL_CONF={"settings":{"controllerMode":true}}
+      - ZT_ALLOW_MANAGEMENT_FROM=0.0.0.0/0
 
   ztnet:
     image: sinamics/ztnet:latest
@@ -50,7 +51,7 @@ services:
       POSTGRES_DB: ztnet
       NEXTAUTH_URL: 'http://46.202.159.85:3001'
       NEXTAUTH_SECRET: 'random_secret'
-      NEXTAUTH_URL_INTERNAL: 'http://ztnet:3000' # Internal NextAuth URL for 'ztnet' container on port 3000. Do not change unless modifying container name.
+      NEXTAUTH_URL_INTERNAL: 'http://ztnet:3000'
     networks:
       - app-network
     depends_on:
