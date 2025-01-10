@@ -1,15 +1,12 @@
-// File: src/app/api/mspWebhook/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { getPayload } from 'payload';
-import config from '@payload-config';
-import { MultiSafePayProvider } from '@/lib/payments/MultiSafePayProvider'; // or use getPaymentProviderFromMethodDoc
-
 /**
  * @openapi
  * /api/mspWebhook:
  *   get:
- *     summary: MultiSafePay Notification Webhook
- *     description: MSP sends GET notifications to this endpoint with transaction info. We look up the order, get status from MSP, and update our DB.
+ *     summary: MultiSafePay Webhook Endpoint
+ *     description: >
+ *       MSP sends GET notifications to this endpoint with `orderId` and `transactionid`.  
+ *       We directly call our `checkPaymentStatus` utility to confirm the status in MSP,
+ *       then we can update the local order doc accordingly.
  *     tags:
  *       - MSP Webhooks
  *     parameters:
@@ -18,112 +15,93 @@ import { MultiSafePayProvider } from '@/lib/payments/MultiSafePayProvider'; // o
  *         required: true
  *         schema:
  *           type: string
- *         description: The local order ID (numeric in your DB)
+ *         description: The local order ID (numeric, stored as string in query)
  *       - in: query
  *         name: transactionid
- *         required: true
+ *         required: false
  *         schema:
  *           type: string
- *         description: The MSP transaction/order reference, e.g. "frituur-den-overkant-15"
+ *         description: MSP's transaction reference (optional for logging)
  *       - in: query
  *         name: timestamp
  *         required: false
  *         schema:
  *           type: string
- *         description: A timestamp (unused in this example, but MSP includes it)
+ *         description: A timestamp
  *     responses:
  *       200:
  *         description: Webhook processed successfully
  *       400:
- *         description: Missing parameters or invalid data
+ *         description: Missing or invalid query params
  *       500:
  *         description: Server error
  */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { checkPaymentStatus } from '@/lib/payments/checkPaymentStatus'
+import { getPayload } from 'payload'
+import config from '@payload-config'
+
 export async function GET(req: NextRequest) {
     try {
-        // 1) Parse query params from MSP
-        const { searchParams } = req.nextUrl;
-        const orderIdParam = searchParams.get('orderId');
-        const transactionId = searchParams.get('transactionid');
+        const { searchParams } = req.nextUrl
+        const orderIdParam = searchParams.get('orderId')
+        const transactionId = searchParams.get('transactionid') // optional
 
-        if (!orderIdParam || !transactionId) {
+        if (!orderIdParam) {
             return NextResponse.json(
-                { error: 'Missing required query params: orderId / transactionid' },
+                { error: 'Missing orderId in query params' },
                 { status: 400 },
-            );
+            )
         }
 
-        // Convert local orderIdParam (string) to a number if your local orders use numeric ID
-        const localOrderId = Number(orderIdParam);
-        if (Number.isNaN(localOrderId)) {
+        const orderId = Number(orderIdParam)
+        if (Number.isNaN(orderId)) {
             return NextResponse.json(
                 { error: `orderId must be a valid number, got "${orderIdParam}"` },
                 { status: 400 },
-            );
+            )
         }
 
-        // 2) Initialize Payload
-        const payload = await getPayload({ config });
+        // 1) Use our local function to check the payment status
+        const { orderDoc, providerResult } = await checkPaymentStatus(orderId)
 
-        // 3) Find the local order by its numeric ID
-        const orderRes = await payload.find({
-            collection: 'orders',
-            where: { id: { equals: localOrderId } },
-            limit: 1,
-        });
-        const orderDoc = orderRes.docs?.[0];
-        if (!orderDoc) {
-            return NextResponse.json(
-                { error: `No order found with id=${localOrderId}` },
-                { status: 404 },
-            );
-        }
-
-        // 4) Build or retrieve the MSP provider
-        //    Typically you'd read the PaymentMethod doc & pass its MSP settings,
-        //    but if you only have one MSP account, you can do:
-        const provider = new MultiSafePayProvider('', {
-            enable_test_mode: false, // or read from your environment
-            live_api_key: 'YOUR_LIVE_KEY_HERE',
-            test_api_key: 'YOUR_TEST_KEY_HERE',
-        });
-
-        // 5) Query MSP for the current payment status
-        const statusCheck = await provider.getPaymentStatus(transactionId);
-        // e.g. { status: "completed", providerOrderId: "frituur-den-overkant-15", ... }
-        const mspStatus = statusCheck.status;
-        console.log('MSP reported status:', mspStatus);
-
-        // 6) Map MSP status to your local order status
-        let localOrderStatus = orderDoc.status; // keep the existing if not recognized
-        if (mspStatus === 'completed') {
-            localOrderStatus = 'complete';
-        } else if (mspStatus === 'initialized' || mspStatus === 'pending') {
-            localOrderStatus = 'pending_payment';
-        } else if (mspStatus === 'cancelled') {
+        // 2) Convert MSP status to local status (if needed)
+        let localOrderStatus = orderDoc.status
+        if (providerResult.status === 'completed') {
+            // Instead of "complete", move to "awaiting_preparation"
+            localOrderStatus = 'awaiting_preparation';
+        } else if (providerResult.status === 'cancelled') {
             localOrderStatus = 'cancelled';
-        } else {
-            console.warn(`Unhandled MSP status: ${mspStatus}`);
+        } else if (
+            providerResult.status === 'initialized' ||
+            providerResult.status === 'pending'
+        ) {
+            localOrderStatus = 'pending_payment';
         }
 
-        // 7) Update the local order doc, e.g. setting new status + storing transactionId
-        await payload.update({
-            collection: 'orders',
-            id: String(orderDoc.id),
-            data: {
-                status: localOrderStatus,
-                providerOrderId: transactionId, // if you want
-            },
-        });
+        // 3) If the status changed, update the local DB
+        if (localOrderStatus !== orderDoc.status) {
+            const payload = await getPayload({ config })
+            await payload.update({
+                collection: 'orders',
+                id: String(orderDoc.id),
+                data: {
+                    status: localOrderStatus,
+                },
+            })
+        }
 
-        // 8) Return success to MSP
+        // 4) Return success to MSP
         return NextResponse.json({
-            message: 'Webhook processed successfully',
-            localOrderId,
-            updatedStatus: localOrderStatus,
-        });
-    } catch (error: any) {
-        console.error('Error in mspWebhook route:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+            message: 'Webhook processed successfully (direct local call)',
+            orderId,
+            transactionId,
+            providerStatus: providerResult.status,
+            localStatus: localOrderStatus,
+        })
+    } catch (err: any) {
+        console.error('Error in mspWebhook route:', err)
+        return NextResponse.json({ error: err.message }, { status: 500 })
     }
 }
