@@ -727,59 +727,40 @@ export interface ReservationSetting {
 export interface Printer {
   id: string;
   tenant: string | Tenant;
+  shops: (string | Shop)[];
   /**
-   * Select the shop associated with this printer.
+   * Copy/paste the ZeroTier IP of the new printer.
    */
-  printername: string | Shop;
+  zerotierIP: string;
+  printer_name?: string | null;
   /**
-   * Settings for this shop printer.
+   * Enter the queue name from the printer setup portal.
    */
-  printer_settings?: {
-    /**
-     * Default printer ID.
-     */
-    default_printer_id?: string | null;
-    /**
-     * Enable printing functionality.
-     */
-    print_enabled?: boolean | null;
-    /**
-     * Enable kitchen printing functionality.
-     */
-    kitchen_enabled?: boolean | null;
-    /**
-     * Enable customer printing functionality.
-     */
-    customer_enabled?: boolean | null;
-    /**
-     * Number of kitchen tickets to print.
-     */
-    kitchen_ticket_amount?: number | null;
-    /**
-     * Printer ID for the kitchen printer.
-     */
-    kitchen_printer_id?: string | null;
-    /**
-     * List of Kiosk printers (add multiple).
-     */
-    kiosk_printers?:
-      | {
-          /**
-           * Kiosk ID.
-           */
-          kiosk_id?: string | null;
-          /**
-           * Kiosk PrintNode ID.
-           */
-          kiosk_printnode_id?: string | null;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Enable printing of category headers.
-     */
-    print_category_headers?: boolean | null;
-  };
+  queue_name: string;
+  /**
+   * Select whether this printer is a kitchen or kiosk printer.
+   */
+  printer_type: 'kitchen' | 'kiosk';
+  /**
+   * Differentiate multiple kiosk/kitchen printers in the same shop.
+   */
+  unique_id: string;
+  /**
+   * Enable or disable printing functionality.
+   */
+  print_enabled?: boolean | null;
+  /**
+   * Also print a customer copy on the kitchen printer if enabled.
+   */
+  customer_enabled?: boolean | null;
+  /**
+   * How many copies to print for each kitchen ticket?
+   */
+  kitchen_ticket_amount?: number | null;
+  /**
+   * If enabled, print category headers on the kitchen ticket.
+   */
+  print_category_headers?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2072,25 +2053,16 @@ export interface TablesSelect<T extends boolean = true> {
  */
 export interface PrintersSelect<T extends boolean = true> {
   tenant?: T;
-  printername?: T;
-  printer_settings?:
-    | T
-    | {
-        default_printer_id?: T;
-        print_enabled?: T;
-        kitchen_enabled?: T;
-        customer_enabled?: T;
-        kitchen_ticket_amount?: T;
-        kitchen_printer_id?: T;
-        kiosk_printers?:
-          | T
-          | {
-              kiosk_id?: T;
-              kiosk_printnode_id?: T;
-              id?: T;
-            };
-        print_category_headers?: T;
-      };
+  shops?: T;
+  zerotierIP?: T;
+  printer_name?: T;
+  queue_name?: T;
+  printer_type?: T;
+  unique_id?: T;
+  print_enabled?: T;
+  customer_enabled?: T;
+  kitchen_ticket_amount?: T;
+  print_category_headers?: T;
   updatedAt?: T;
   createdAt?: T;
 }

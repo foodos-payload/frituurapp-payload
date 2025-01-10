@@ -1,43 +1,70 @@
-version: '3'
-
 services:
-  payload:
-    image: node:18-alpine
-    ports:
-      - '3000:3000'
+  postgres:
+    image: postgres:15.2-alpine
+    container_name: postgres-zerotier
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ztnet
     volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
-    working_dir: /home/node/app/
-    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm dev"
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  zerotier:
+    image: zyclonite/zerotier:1.14.2
+    hostname: zerotier
+    container_name: zerotier
+    restart: unless-stopped
+    volumes:
+      - zerotier:/var/lib/zerotier-one
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    networks:
+      - app-network
+    ports:
+      - '9994:9993/udp' # Changed from 9993:9993
+    environment:
+      - ZT_OVERRIDE_LOCAL_CONF=true
+      - ZT_ALLOW_MANAGEMENT_FROM=172.31.255.0/29
+
+  ztnet:
+    image: sinamics/ztnet:latest
+    container_name: ztnet
+    working_dir: /app
+    volumes:
+      - zerotier:/var/lib/zerotier-one
+    restart: unless-stopped
+    ports:
+      - 3001:3000
+      # - 127.0.0.1:3001:3000 #<--- Use / Uncomment this line to restrict access to localhost only
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ztnet
+      NEXTAUTH_URL: 'http://localhost:3001' # Updated to use port 3001
+      NEXTAUTH_SECRET: 'random_secret'
+      NEXTAUTH_URL_INTERNAL: 'http://ztnet:3000' # Internal NextAuth URL for 'ztnet' container on port 3000. Do not change unless modifying container name.
+    networks:
+      - app-network
     depends_on:
-      - mongo
-      # - postgres
-    env_file:
-      - .env
-
-  # Ensure your DATABASE_URI uses 'mongo' as the hostname ie. mongodb://mongo/my-db-name
-  mongo:
-    image: mongo:latest
-    ports:
-      - '27017:27017'
-    command:
-      - --storageEngine=wiredTiger
-    volumes:
-      - data:/data/db
-    logging:
-      driver: none
-
-  # Uncomment the following to use postgres
-  # postgres:
-  #   restart: always
-  #   image: postgres:latest
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
+      - postgres
+      - zerotier
 
 volumes:
-  data:
-  # pgdata:
-  node_modules:
+  zerotier:
+  postgres-data:
+
+networks:
+  app-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.31.255.0/29
