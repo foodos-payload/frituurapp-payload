@@ -1,8 +1,15 @@
+import { hasPermission } from '@/access/permissionChecker';
 import type { CollectionConfig } from 'payload';
 
 
 const Roles: CollectionConfig = {
     slug: 'roles',
+    access: {
+        create: hasPermission('roles', 'create'),
+        delete: hasPermission('roles', 'delete'),
+        read: hasPermission('roles', 'read'),
+        update: hasPermission('roles', 'update'),
+    },
     admin: {
         useAsTitle: 'name',
         components: {

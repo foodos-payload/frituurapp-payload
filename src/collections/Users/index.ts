@@ -1,18 +1,15 @@
 import type { CollectionConfig } from 'payload';
-
-import { createAccess } from './access/create';
-import { readAccess } from './access/read';
-import { updateAndDeleteAccess } from './access/updateAndDelete';
 import { externalUsersLogin } from './endpoints/externalUsersLogin';
 import { setCookieBasedOnDomain } from './hooks/setCookieBasedOnDomain';
+import { hasPermission } from '@/access/permissionChecker';
 
 const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    create: createAccess,
-    delete: updateAndDeleteAccess,
-    read: readAccess,
-    update: updateAndDeleteAccess,
+    create: hasPermission('users', 'create'),
+    delete: hasPermission('users', 'delete'),
+    read: hasPermission('users', 'read'),
+    update: hasPermission('users', 'update'),
   },
   admin: {
     useAsTitle: 'email',
@@ -41,7 +38,8 @@ const Users: CollectionConfig = {
   fields: [
     {
       name: 'roles',
-      type: 'select',
+      type: 'relationship',
+      relationTo: 'roles',
       label: {
         en: 'Roles',
         nl: 'Rollen',
@@ -58,10 +56,6 @@ const Users: CollectionConfig = {
           fr: 'Attribuez des rôles à l\'utilisateur.',
         },
       },
-      options: [
-        { label: { en: 'Super Admin', nl: 'Superbeheerder', de: 'Superadministrator', fr: 'Super Administrateur' }, value: 'super-admin' },
-        { label: { en: 'User', nl: 'Gebruiker', de: 'Benutzer', fr: 'Utilisateur' }, value: 'user' },
-      ],
     },
     {
       name: 'tenants',

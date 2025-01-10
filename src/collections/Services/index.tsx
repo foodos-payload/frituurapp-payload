@@ -1,14 +1,14 @@
 import type { CollectionConfig } from 'payload';
-import { isSuperAdmin } from '../../access/isSuperAdmin';
 import { afterOperationHook } from './hooks/afterChange';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const Services: CollectionConfig = {
     slug: 'services',
     access: {
-        create: isSuperAdmin,
-        delete: isSuperAdmin,
-        read: () => true,
-        update: isSuperAdmin,
+        create: hasPermission('services', 'create'),
+        delete: hasPermission('services', 'delete'),
+        read: hasPermission('services', 'read'),
+        update: hasPermission('services', 'update'),
     },
     admin: {
         useAsTitle: 'title_nl',

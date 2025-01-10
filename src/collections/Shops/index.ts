@@ -1,18 +1,18 @@
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateShop } from './access/byTenant';
 import { filterByShopRead } from './access/byShop';
 import { ensureUniqueName } from './hooks/ensureUniqueName';
 import { slugify } from './hooks/slugify';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const Shops: CollectionConfig = {
   slug: 'shops',
   access: {
-    create: canMutateShop,
-    delete: canMutateShop,
+    create: hasPermission('shops', 'create'),
+    delete: hasPermission('shops', 'delete'),
     read: filterByShopRead,
-    update: canMutateShop,
+    update: hasPermission('shops', 'update'),
   },
   admin: {
     baseListFilter,

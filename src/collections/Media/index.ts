@@ -1,17 +1,17 @@
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateMedia } from './access/byTenant';
 import { filterByTenantRead } from './access/byTenant';
 import { generateBlurhash } from './hooks/generateBlurhash'; // Updated to reflect no Base64
+import { hasPermission } from '@/access/permissionChecker';
 
 export const Media: CollectionConfig = {
   slug: 'media',
   access: {
-    create: canMutateMedia,
-    delete: canMutateMedia,
+    create: hasPermission('media', 'create'),
+    delete: hasPermission('media', 'delete'),
     read: filterByTenantRead,
-    update: canMutateMedia,
+    update: hasPermission('media', 'update'),
   },
   admin: {
     baseListFilter,

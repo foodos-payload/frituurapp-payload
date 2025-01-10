@@ -24,7 +24,6 @@ export function CollectionsTable({ collectionNames, doc }: CollectionsTableProps
                 create: false,
                 update: false,
                 delete: false,
-                id: name
             }))
     )
     const [initialPermissions] = useState(doc?.collections || [])
@@ -63,10 +62,12 @@ export function CollectionsTable({ collectionNames, doc }: CollectionsTableProps
                 name: roleName,
                 collections: collectionsPermissionsState
             })
-            toast.success('Role permissions updated successfully')
             setIsFormChanged(false)
+            setTimeout(() => {
+                window.location.replace('/admin/collections/roles')
+            }, 1000)
         } catch (error: any) {
-            toast.error(error.message || 'An error occurred while updating role permissions')
+            console.log(error)
         }
     }
 
@@ -109,7 +110,7 @@ export function CollectionsTable({ collectionNames, doc }: CollectionsTableProps
             {/* Permissions Grid */}
             <div className='flex flex-col gap-2'>
                 {collectionsPermissionsState.map((item) => (
-                    <div key={item.id} className='flex justify-between items-center'>
+                    <div key={item.collectionName} className='flex justify-between items-center'>
                         <h2 className='text-lg font-bold'>{item.collectionName}</h2>
                         <div className='flex gap-2'>
                             {PERMISSION_ACTIONS.map(({ action, label }) => (

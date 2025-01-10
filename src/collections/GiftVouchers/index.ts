@@ -2,18 +2,16 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateGiftVoucher } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
-import { readAccess } from './access/readAccess';
 import { ensureUniqueBarcodePerShop } from './hooks/ensureUniqueBarcodePerShop';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const GiftVouchers: CollectionConfig = {
   slug: 'gift-vouchers',
   access: {
-    create: canMutateGiftVoucher,
-    delete: canMutateGiftVoucher,
-    read: readAccess,
-    update: canMutateGiftVoucher,
+    create: hasPermission('gift-vouchers', 'create'),
+    delete: hasPermission('gift-vouchers', 'delete'),
+    read: hasPermission('gift-vouchers', 'read'),
+    update: hasPermission('gift-vouchers', 'update'),
   },
   admin: {
     baseListFilter,

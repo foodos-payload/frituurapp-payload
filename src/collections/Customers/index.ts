@@ -2,16 +2,15 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateCustomer } from './access/byTenant';
-import { readAccess } from './access/readAccess';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const Customers: CollectionConfig = {
   slug: 'customers',
   access: {
-    create: canMutateCustomer,
-    delete: canMutateCustomer,
-    read: readAccess,
-    update: canMutateCustomer,
+    create: hasPermission('customers', 'create'),
+    delete: hasPermission('customers', 'delete'),
+    read: hasPermission('customers', 'read'),
+    update: hasPermission('customers', 'update'),
   },
   admin: {
     baseListFilter,

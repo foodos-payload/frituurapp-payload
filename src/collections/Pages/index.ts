@@ -2,17 +2,16 @@ import type { CollectionConfig } from 'payload';
 
 import { tenantField } from '../../fields/TenantField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutatePage } from './access/byTenant';
-import { readAccess } from './access/readAccess';
 import { ensureUniqueSlug } from './hooks/ensureUniqueSlug';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
   access: {
-    create: canMutatePage,
-    delete: canMutatePage,
-    read: readAccess,
-    update: canMutatePage,
+    create: hasPermission('pages', 'create'),
+    delete: hasPermission('pages', 'delete'),
+    read: hasPermission('pages', 'read'),
+    update: hasPermission('pages', 'update'),
   },
   admin: {
     baseListFilter,

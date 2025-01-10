@@ -134,7 +134,7 @@ export interface User {
   /**
    * Assign roles to the user.
    */
-  roles?: ('super-admin' | 'user')[] | null;
+  roles?: (string | Role)[] | null;
   tenants?:
     | {
         /**
@@ -166,6 +166,26 @@ export interface User {
   loginAttempts?: number | null;
   lockUntil?: string | null;
   password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "roles".
+ */
+export interface Role {
+  id: string;
+  name?: string | null;
+  collections?:
+    | {
+        collectionName?: string | null;
+        read?: boolean | null;
+        create?: boolean | null;
+        update?: boolean | null;
+        delete?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -234,26 +254,6 @@ export interface Shop {
          * The reason for the closure.
          */
         reason?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "roles".
- */
-export interface Role {
-  id: string;
-  name?: string | null;
-  collections?:
-    | {
-        collectionName?: string | null;
-        read?: boolean | null;
-        create?: boolean | null;
-        update?: boolean | null;
-        delete?: boolean | null;
         id?: string | null;
       }[]
     | null;

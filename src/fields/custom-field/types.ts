@@ -1,7 +1,6 @@
 export type PermissionAction = 'read' | 'create' | 'update' | 'delete'
 
 export interface CollectionPermission {
-    id: string
     collectionName: string
     read: boolean
     create: boolean

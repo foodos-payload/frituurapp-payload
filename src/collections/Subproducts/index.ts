@@ -3,18 +3,16 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateSubproduct } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
 import { ensureUniqueNamePerShop } from './hooks/ensureUniqueNamePerShop';
-import { readAccess } from './access/readAccess';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const Subproducts: CollectionConfig = {
     slug: 'subproducts',
     access: {
-        create: canMutateSubproduct,
-        delete: canMutateSubproduct,
-        read: readAccess,
-        update: canMutateSubproduct,
+        create: hasPermission('subproducts', 'create'),
+        delete: hasPermission('subproducts', 'delete'),
+        read: hasPermission('subproducts', 'read'),
+        update: hasPermission('subproducts', 'update'),
     },
     admin: {
         baseListFilter,
