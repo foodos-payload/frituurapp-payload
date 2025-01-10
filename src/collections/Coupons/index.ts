@@ -196,12 +196,11 @@ export const Coupons: CollectionConfig = {
       },
       admin: {
         description: {
-          en: 'Mark if the coupon has already been fully used.',
-          nl: 'Markeer als de kortingsbon al volledig is gebruikt.',
-          de: 'Markieren Sie, ob der Gutschein bereits vollständig verwendet wurde.',
-          fr: 'Marquez si le coupon a déjà été entièrement utilisé.',
+          en: 'Mark if the gift voucher has been used.',
+          nl: 'Markeer als de cadeaubon al is gebruikt.',
+          de: 'Markieren Sie, ob der Geschenkgutschein bereits verwendet wurde.',
+          fr: 'Marquez si le bon cadeau a été utilisé.',
         },
-        condition: (data) => data?.max_uses > 0 && data?.uses >= data?.max_uses,
       },
     },
   ],

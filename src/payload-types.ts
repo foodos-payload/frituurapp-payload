@@ -1371,7 +1371,7 @@ export interface Coupon {
    */
   uses?: number | null;
   /**
-   * Mark if the coupon has already been fully used.
+   * Mark if the gift voucher has been used.
    */
   used?: boolean | null;
   updatedAt: string;
