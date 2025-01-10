@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:15.2-alpine
-    container_name: postgres
+    container_name: postgres-zerotier
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
