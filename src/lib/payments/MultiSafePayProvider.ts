@@ -173,6 +173,10 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
             }
         }
 
+        // ---- CONSOLE LOG for Debugging ----
+        console.log('=== MultiSafePay createPayment - Request Body ===');
+        console.log(JSON.stringify(requestBody, null, 2));
+
         // 5) Send to MSP
         const apiKey = this.resolveApiKey();
         const url = `${this.environmentUrl}orders?api_key=${apiKey}`;
@@ -183,6 +187,11 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
         });
 
         const json = await response.json();
+
+        // ---- CONSOLE LOG for Debugging ----
+        console.log('=== MultiSafePay createPayment - Response JSON ===');
+        console.log(JSON.stringify(json, null, 2));
+
         if (!response.ok || !json.success) {
             throw new Error(
                 `MultiSafePay createPayment failed: ${JSON.stringify(json)}`
