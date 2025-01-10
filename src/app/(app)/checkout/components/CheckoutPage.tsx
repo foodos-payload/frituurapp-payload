@@ -90,6 +90,19 @@ export default function CheckoutPage({
     const kioskMode = searchParams.get("kiosk") === "true";
     const isKiosk = kioskMode;
 
+    // 1) NEW: Track if the user was redirected with ?cancelled=true
+    const cancelledParam = searchParams.get("cancelled") === "true";
+    const [isPaymentCancelled, setIsPaymentCancelled] = useState(false);
+
+    // 2) On mount (or whenever searchParams changes), set our state
+    useEffect(() => {
+        if (cancelledParam) {
+            setIsPaymentCancelled(true);
+        } else {
+            setIsPaymentCancelled(false);
+        }
+    }, [cancelledParam]);
+
     const branding = useShopBranding();
 
     // ADD: track if distance is being fetched
@@ -629,8 +642,15 @@ export default function CheckoutPage({
                 // Normal checkout flow
                 <>
                     <div className="checkout-form container mx-auto my-16 flex flex-wrap items-start gap-8 justify-evenly lg:gap-20">
+
                         {/* Left column - main form content */}
                         <div className="w-full max-w-2xl grid gap-8 md:flex-1">
+                            {/* 1) If payment was cancelled, show an error message */}
+                            {isPaymentCancelled && (
+                                <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
+                                    Payment was cancelled. Please try again or choose another method.
+                                </div>
+                            )}
                             {/* Back button */}
                             <div className="flex justify-between mb-2">
                                 <button
