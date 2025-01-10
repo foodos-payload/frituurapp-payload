@@ -1428,7 +1428,7 @@ export interface Order {
    */
   id: number;
   /**
-   * Temporary order number for daily usage.
+   * Daily incremented order number.
    */
   tempOrdNr?: number | null;
   /**
@@ -1462,15 +1462,12 @@ export interface Order {
         name_fr?: string | null;
         subproducts?:
           | {
-              /**
-               * An ID or code for this subproduct if needed (no relationship).
-               */
               subproductId?: string | null;
               name_nl?: string | null;
               name_en?: string | null;
               name_de?: string | null;
               name_fr?: string | null;
-              price: number;
+              price?: number | null;
               tax?: number | null;
               tax_dinein?: number | null;
               id?: string | null;
@@ -1497,6 +1494,10 @@ export interface Order {
    * Link to the customer who placed this order (if known).
    */
   customer?: (string | null) | Customer;
+  /**
+   * If user used barcode, store it for reference.
+   */
+  customerBarcode?: string | null;
   customer_details?: {
     firstName?: string | null;
     lastName?: string | null;
@@ -1507,12 +1508,46 @@ export interface Order {
     postalCode?: string | null;
   };
   /**
-   * Delivery/shipping fee (if any).
+   * Delivery fee if applicable.
    */
   shipping_cost?: number | null;
-  subtotal?: number | null;
+  subtotalBeforeDiscount?: number | null;
+  discountTotal?: number | null;
+  totalAfterDiscount?: number | null;
   total_tax?: number | null;
+  /**
+   * Same as net subtotal, for backward compatibility.
+   */
+  subtotal?: number | null;
   total?: number | null;
+  promotionsUsed?: {
+    /**
+     * How many membership points were redeemed?
+     */
+    pointsUsed?: number | null;
+    /**
+     * How many store credits were used?
+     */
+    creditsUsed?: number | null;
+    couponUsed?: {
+      couponId?: string | null;
+      barcode?: string | null;
+      value?: number | null;
+      value_type?: string | null;
+      valid_from?: string | null;
+      valid_until?: string | null;
+      max_uses?: number | null;
+      used?: boolean | null;
+    };
+    giftVoucherUsed?: {
+      voucherId?: string | null;
+      barcode?: string | null;
+      value?: number | null;
+      valid_from?: string | null;
+      valid_until?: string | null;
+      used?: boolean | null;
+    };
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -2286,6 +2321,7 @@ export interface OrdersSelect<T extends boolean = true> {
   fulfillment_date?: T;
   fulfillment_time?: T;
   customer?: T;
+  customerBarcode?: T;
   customer_details?:
     | T
     | {
@@ -2298,9 +2334,40 @@ export interface OrdersSelect<T extends boolean = true> {
         postalCode?: T;
       };
   shipping_cost?: T;
-  subtotal?: T;
+  subtotalBeforeDiscount?: T;
+  discountTotal?: T;
+  totalAfterDiscount?: T;
   total_tax?: T;
+  subtotal?: T;
   total?: T;
+  promotionsUsed?:
+    | T
+    | {
+        pointsUsed?: T;
+        creditsUsed?: T;
+        couponUsed?:
+          | T
+          | {
+              couponId?: T;
+              barcode?: T;
+              value?: T;
+              value_type?: T;
+              valid_from?: T;
+              valid_until?: T;
+              max_uses?: T;
+              used?: T;
+            };
+        giftVoucherUsed?:
+          | T
+          | {
+              voucherId?: T;
+              barcode?: T;
+              value?: T;
+              valid_from?: T;
+              valid_until?: T;
+              used?: T;
+            };
+      };
   updatedAt?: T;
   createdAt?: T;
 }

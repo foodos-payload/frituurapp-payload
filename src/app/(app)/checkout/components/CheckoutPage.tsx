@@ -172,9 +172,10 @@ export default function CheckoutPage({
     const [couponCode, setCouponCode] = useState("");
 
     // Cart
-    const { items: cartItems, getCartTotal, clearCart } = useCart();
-    const cartTotal = getCartTotal();
-
+    const { items: cartItems, getCartTotal, clearCart, getCartTotalWithDiscounts } = useCart();
+    // Instead of `getCartTotal()`:
+    const rawSubtotal = getCartTotal();
+    const discountedSubtotal = getCartTotalWithDiscounts();
     // Delivery logic
     const deliveryMethodDoc = fulfillmentMethods?.find(
         (fm) => fm.method_type === "delivery" && fm.enabled
@@ -305,17 +306,17 @@ export default function CheckoutPage({
     }, [shippingCost]);
 
     const finalTotal = useMemo(() => {
-        const rawTotal = cartTotal + shippingCost;
-        return parseFloat(rawTotal.toFixed(2));
-    }, [cartTotal, shippingCost]);
+        return parseFloat((discountedSubtotal + shippingCost).toFixed(2));
+    }, [discountedSubtotal, shippingCost]);
+
 
     // 3) If within radius => check if finalTotal >= minimumOrder
     useEffect(() => {
         if (fulfillmentMethod === "delivery" && isWithinRadius) {
             // Min order check
-            if (finalTotal < minimumOrder) {
+            if (rawSubtotal < minimumOrder) {
                 setDeliveryError(
-                    `Minimum order is €${minimumOrder}, but your total is only €${finalTotal.toFixed(2)}.`
+                    `Minimum order is €${minimumOrder}, but your subtotal is only €${rawSubtotal.toFixed(2)}.`
                 );
             } else {
                 // no problem
@@ -326,7 +327,7 @@ export default function CheckoutPage({
                 }
             }
         }
-    }, [fulfillmentMethod, isWithinRadius, finalTotal, minimumOrder, deliveryError]);
+    }, [fulfillmentMethod, isWithinRadius, finalTotal, minimumOrder, deliveryError, rawSubtotal]);
 
     // canProceed => only enable checkout if address passes google check or not needed
     function canProceed(): boolean {
@@ -372,7 +373,7 @@ export default function CheckoutPage({
                 if (!address || !city || !postalCode) return false;
                 if (!isWithinRadius) return false;
                 // also confirm finalTotal >= minimumOrder
-                if (finalTotal < minimumOrder) return false;
+                if (rawSubtotal < minimumOrder) return false;
                 if (emailRequired && !email) return false;
                 break;
 
@@ -418,6 +419,42 @@ export default function CheckoutPage({
             selectedStatus = "awaiting_preparation";
         }
 
+        // 1) Fetch your promotions from localStorage (or wherever they are stored)
+        const localPointsUsed = parseInt(localStorage.getItem("pointsUsed") || "0", 10);
+        const localCreditsUsed = parseInt(localStorage.getItem("creditsUsed") || "0", 10);
+        const localCustomerBarcode = localStorage.getItem("customerBarcode") || "";
+
+        let localCoupon: any = null;
+        try {
+            const couponStr = localStorage.getItem("appliedCoupon") || "null";
+            localCoupon = JSON.parse(couponStr); // yields an object or null
+        } catch (e) {
+            localCoupon = null;
+        }
+
+        let localVoucher: any = null;
+        try {
+            const voucherStr = localStorage.getItem("appliedGiftVoucher") || "null";
+            localVoucher = JSON.parse(voucherStr); // yields an object or null
+        } catch (e) {
+            localVoucher = null;
+        }
+
+        // 2) Build your promotionsUsed object
+        const promotionsUsed: any = {
+            pointsUsed: localPointsUsed,
+            creditsUsed: localCreditsUsed,
+        };
+        // Only add giftVoucherUsed if it is non-null
+        if (localVoucher) {
+            promotionsUsed.giftVoucherUsed = localVoucher;
+        }
+        // Only add couponUsed if it is non-null
+        if (localCoupon) {
+            promotionsUsed.couponUsed = localCoupon;
+        }
+
+        // 3) Build payloadData
         const payloadData = {
             tenant: hostSlug,
             shop: hostSlug,
@@ -426,6 +463,7 @@ export default function CheckoutPage({
             fulfillmentMethod,
             fulfillmentDate: selectedDate,
             fulfillmentTime: selectedTime,
+            customerBarcode: localCustomerBarcode || null,
             customerDetails: {
                 firstName: surname,
                 lastName,
@@ -463,10 +501,15 @@ export default function CheckoutPage({
                     amount: finalTotal,
                 },
             ],
-            shippingCost: shippingCost,
+            shippingCost,
             distanceKm: deliveryDistance,
+            promotionsUsed,
         };
 
+        // 4) For debugging
+        console.log("About to submit order:", JSON.stringify(payloadData, null, 2));
+
+        // 5) POST to your /api/submitOrder route
         try {
             const res = await fetch("/api/submitOrder", {
                 method: "POST",
@@ -479,8 +522,8 @@ export default function CheckoutPage({
                 return;
             }
 
+            // 6) Clear cart, navigate to summary
             clearCart();
-
             const kioskParam = kioskMode ? "&kiosk=true" : "";
             router.push(`/order-summary?orderId=${json.order.id}${kioskParam}`);
         } catch (err) {
@@ -488,6 +531,7 @@ export default function CheckoutPage({
             alert("Error submitting order. Check console for details.");
         }
     }
+
 
     function handleBackClick() {
         const kioskParam = kioskMode ? "?kiosk=true" : "";
@@ -676,12 +720,13 @@ export default function CheckoutPage({
                                 handleApplyCoupon={handleApplyCoupon}
                                 canProceed={canProceed}
                                 handleCheckout={handleCheckout}
-                                cartTotal={cartTotal}
+                                cartTotal={discountedSubtotal}
                                 shippingCost={shippingCost}
-                                finalTotal={finalTotal}
+                                finalTotal={discountedSubtotal + shippingCost}
                                 fulfillmentMethod={fulfillmentMethod}
                                 branding={branding}
-
+                                rawSubtotal={rawSubtotal}
+                                discountedSubtotal={discountedSubtotal}
                             />
                         </div>
                     </div>

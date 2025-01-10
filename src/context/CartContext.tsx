@@ -121,6 +121,7 @@ export type CustomerInfo = {
     phone?: string | null;
     barcode?: string;
     memberships?: Membership[];
+    totalCredits?: number;
     // plus other fields if needed
 };
 
@@ -161,6 +162,8 @@ type CartContextValue = {
 
     /** If the user wants to apply store credits. */
     applyCustomerCredits: (amount: number) => void;
+    removeCreditsUsage: () => void;
+    removePointsUsage: () => void;
 
     /** We store them locally so we can subtract in getCartTotalWithDiscounts. */
     pointsUsed: number;   // how many *currency units* we've discounted from membership
@@ -212,6 +215,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [pointsUsed, setPointsUsed] = useState<number>(0);
     const [creditsUsed, setCreditsUsed] = useState<number>(0);
 
+    const [pointsSpentFromMembership, setPointsSpentFromMembership] = useState<number>(0);
+
+
     // Load from localStorage on mount
     useEffect(() => {
         try {
@@ -221,6 +227,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             const storedGiftVoucher = localStorage.getItem("appliedGiftVoucher");
             const storedPoints = localStorage.getItem("pointsUsed");
             const storedCredits = localStorage.getItem("creditsUsed");
+            const storedCustomerDetails = localStorage.getItem("customerDetails");
+
 
             if (storedItems) setItems(JSON.parse(storedItems));
             if (storedMethod) setSelectedShippingMethod(storedMethod as any);
@@ -228,6 +236,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
             if (storedGiftVoucher) setGiftVoucher(JSON.parse(storedGiftVoucher));
             if (storedPoints) setPointsUsed(parseFloat(storedPoints));
             if (storedCredits) setCreditsUsed(parseFloat(storedCredits));
+            if (storedCustomerDetails) {
+                const parsed = JSON.parse(storedCustomerDetails);
+                setCustomer(parsed);
+            }
         } catch {
             // ignore parse errors
         }
@@ -358,13 +370,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 return;
             }
             const data = await res.json();
+            const totalCredits: number = data.credits?.reduce((sum: number, c: { value?: number }) => sum + (c.value || 0), 0) || 0;
 
-            // Set the fetched customer into state
-            setCustomer(data.customer);
+            // If you want to store it in the customer object:
+            const customerWithCredits = {
+                ...data.customer,
+                totalCredits,
+            };
 
-            // NEW: store the customer's barcode in localStorage
-            if (data.customer?.barcode) {
+            // store in state
+            setCustomer(customerWithCredits);
+
+            // NEW: store the customer's barcode and details in localStorage
+            if (data.customer) {
                 localStorage.setItem("customerBarcode", data.customer.barcode);
+                localStorage.setItem("customerDetails", JSON.stringify(customerWithCredits));
             }
         } catch (err) {
             console.error("fetchCustomerByCode error:", err);
@@ -488,8 +508,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
         };
         setCustomer(updatedCustomer);
 
-        // track how many currency units we discount
+        // 4) Increase `pointsUsed` in currency
         setPointsUsed((prev) => prev + discountAmount);
+
+        // 5) Record how many raw points we spent this time, so we can restore them if user removes usage
+        setPointsSpentFromMembership((prev) => prev + pointsRequested);
+    }
+
+    /**
+   * removePointsUsage => set pointsUsed to 0 (and optionally restore membership points if you wish).
+   */
+    function removePointsUsage() {
+        if (!customer || !customer.memberships || customer.memberships.length === 0) {
+            return;
+        }
+        if (pointsSpentFromMembership <= 0) {
+            // means we haven't actually spent any membership points
+            return;
+        }
+
+        // 1) Restore membership's raw points
+        const membership = customer.memberships[0];
+        membership.points += pointsSpentFromMembership;
+
+        // 2) Reset the 'pointsUsed' currency discount
+        setPointsUsed(0);
+
+        // 3) Reset the 'pointsSpentFromMembership'
+        setPointsSpentFromMembership(0);
+
+        // 4) Update the user in state
+        const updatedMembership = { ...membership };
+        const updatedCustomer: CustomerInfo = {
+            ...customer,
+            memberships: [updatedMembership, ...customer.memberships.slice(1)],
+        };
+        setCustomer(updatedCustomer);
     }
 
     /**
@@ -498,6 +552,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     function applyCustomerCredits(amount: number) {
         // If you want to also update the server or the `customer` object, do it here.
         setCreditsUsed((prev) => prev + amount);
+    }
+
+    /**
+   * removeCreditsUsage => set creditsUsed back to 0 (or subtract, if partial).
+   */
+    function removeCreditsUsage() {
+        setCreditsUsed(0);
     }
 
     /**
@@ -576,6 +637,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         creditsUsed,
         applyPointsUsage,
         applyCustomerCredits,
+        removeCreditsUsage,
+        removePointsUsage,
 
         // final total
         getCartTotalWithDiscounts,

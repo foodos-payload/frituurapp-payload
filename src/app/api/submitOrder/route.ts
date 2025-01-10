@@ -69,26 +69,28 @@ export const dynamic = 'force-dynamic';
  *                 description: Array of payment objects
  *                 items:
  *                   type: object
+ *               promotionsUsed:
+ *                 type: object
+ *                 description: Points, credits, coupons, gift vouchers, etc.
  *           example:
  *             tenant: "frituur-den-overkant"
  *             shop: "frituur-den-overkant"
  *             orderType: "web"
  *             status: "awaiting_preparation"
- *             fulfillmentMethod: "dine_in"
+ *             fulfillmentMethod: "delivery"
  *             fulfillmentDate: "2025-01-09"
  *             fulfillmentTime: "10:30"
  *             customerDetails:
  *               firstName: "Jonas"
- *               lastName: ""
- *               email: ""
- *               phone: ""
- *               address: ""
- *               city: ""
- *               postalCode: ""
+ *               lastName: "Smith"
+ *               email: "jonas@example.com"
+ *               phone: "123456789"
+ *               address: "123 Main Street"
+ *               city: "Gent"
+ *               postalCode: "9000"
  *             orderDetails:
  *               - product: "693ef168-98ab-4253-9540-ee8ffe7c5f01"
  *                 name_nl: "Twister Fries"
- *                 name_en: "Twister Fries"
  *                 tax: 6
  *                 quantity: 1
  *                 price: 4.2
@@ -97,62 +99,23 @@ export const dynamic = 'force-dynamic';
  *                     name_nl: "Ketchup"
  *                     price: 0.5
  *                     tax: 6
- *                     tax_dinein: 12
- *               - product: "3484d364-3207-4000-831a-2e5f45adf7a9"
- *                 name_nl: "Kleine Friet"
- *                 tax: 12
- *                 quantity: 1
- *                 price: 2.5
- *                 subproducts:
- *                   - subproductId: "c415bd71-90d3-4faf-8edf-a687f3f79afa"
- *                     name_nl: "Ketchup"
- *                     price: 0.5
- *                     tax: 6
- *                     tax_dinein: 12
- *               - product: "e0e40d21-7e3b-4855-a931-6cac14958249"
- *                 name_nl: "Pizza BBQ Chicken"
- *                 tax: 6
- *                 quantity: 1
- *                 price: 10
- *                 subproducts:
- *                   - subproductId: "0eb9ecf7-dd76-44e3-aee8-1cacad09d979"
- *                     name_nl: "Fanta"
- *                     price: 1.5
- *                     tax: 6
- *                     tax_dinein: 12
- *               - product: "862266ef-50ff-4706-a187-5ae81e170e78"
- *                 name_nl: "Appeltaart"
- *                 tax: 6
- *                 tax_dinein: 12
- *                 quantity: 1
- *                 price: 3.5
- *                 subproducts: []
- *               - product: "3c322c1e-58ca-40da-adab-0217e060068e"
- *                 name_nl: "Moelleux au Chocolat"
- *                 tax: 6
- *                 tax_dinein: 12
- *                 quantity: 1
- *                 price: 4.5
- *                 subproducts: []
- *               - product: "9e225b65-1dd0-425f-a55c-2ba6caed8b0d"
- *                 name_nl: "Bicky Burger"
- *                 tax: 6
- *                 quantity: 1
- *                 price: 3
- *                 subproducts:
- *                   - subproductId: "0ce7badf-eece-408b-bbd2-f0813e91e7f8"
- *                     name_nl: "Mayonaise (potje)"
- *                     price: 1
- *                     tax: 6
- *                     tax_dinein: 12
- *                   - subproductId: "0eb9ecf7-dd76-44e3-aee8-1cacad09d979"
- *                     name_nl: "Fanta"
- *                     price: 1.5
- *                     tax: 6
- *                     tax_dinein: 12
  *             payments:
  *               - payment_method: "15e3683d-9848-4326-8a06-91bde0f0f4c1"
  *                 amount: 32.7
+ *             promotionsUsed:
+ *               pointsUsed: 20
+ *               creditsUsed: 5
+ *               couponsUsed:
+ *                 - couponId: "abc123"
+ *                   barcode: "SALE15"
+ *                   value: 15
+ *                   valueType: "fixed"
+ *                   validFrom: "2025-01-01T00:00:00.000Z"
+ *                   validUntil: "2025-01-31T23:59:59.000Z"
+ *               giftVouchersUsed:
+ *                 - voucherId: "gv123"
+ *                   barcode: "GV555"
+ *                   value: 10
  *     responses:
  *       '200':
  *         description: Successfully created an order
@@ -167,17 +130,26 @@ export async function POST(request: NextRequest) {
 
         // 1) Parse JSON from the request body
         const body = await request.json();
+
+        // (A) Add a console.log here to verify
+        console.log(
+            "submitOrder route => incoming payload:\n",
+            JSON.stringify(body, null, 2)
+        );
+
         const {
             shop,                  // e.g. "frituur-den-overkant"
             orderType,            // e.g. "web"
             status,               // e.g. "pending_payment"
             orderDetails,         // already includes subproduct info + tax?
             payments,
+            customerBarcode,
             fulfillmentMethod,    // 'delivery', 'takeaway', 'dine_in'
             fulfillmentDate,      // e.g. '2025-01-06'
             fulfillmentTime,      // e.g. '09:30'
             customerDetails,      // { firstName, lastName, ... }
             shippingCost,
+            promotionsUsed,
         } = body;
 
         // 2) Find the shop doc by slug
@@ -246,7 +218,7 @@ export async function POST(request: NextRequest) {
 
                 order_type: orderType || 'web',
                 status: status || 'pending_payment',
-
+                customerBarcode,
                 fulfillment_method: fulfillmentMethod,
                 fulfillment_date: fulfillmentDate,
                 fulfillment_time: fulfillmentTime,
@@ -255,6 +227,8 @@ export async function POST(request: NextRequest) {
                 order_details: orderDetails || [],  // Pass exactly as front-end gave us
                 payments: paymentsToStore || [],
                 shipping_cost: typeof shippingCost === 'number' ? shippingCost : 0,
+                promotionsUsed: promotionsUsed || {},
+
             },
         });
 
