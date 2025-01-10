@@ -396,14 +396,9 @@ export default function CheckoutPage({
     async function handleCheckout() {
         // If kiosk => override the fulfillment date/time with "now"
         if (isKiosk) {
-            // e.g., “now” in your timezone, or store in a state first
             const now = new Date();
-            // Example: "YYYY-MM-DD" for the date
             const isoDate = now.toISOString().slice(0, 10);
-            // Example: store HH:MM 24h format for the time
             const isoTime = now.toISOString().slice(11, 16);
-
-            // Force these to override any user selection
             setSelectedDate(isoDate);
             setSelectedTime(isoTime);
         }
@@ -413,13 +408,14 @@ export default function CheckoutPage({
             return;
         }
 
-        let selectedStatus = "pending_payment";
+        // 1) Determine if payment is cash or MSP (or any other online method)
+        let selectedStatus = "pending_payment"; // for MSP or online
         const pmDoc = paymentMethods.find((pm) => pm.id === selectedPaymentId);
         if (pmDoc?.label?.toLowerCase()?.includes("cash")) {
-            selectedStatus = "awaiting_preparation";
+            selectedStatus = "awaiting_preparation"; // for cash
         }
 
-        // 1) Fetch your promotions from localStorage (or wherever they are stored)
+        // 2) Gather promotions from localStorage
         const localPointsUsed = parseInt(localStorage.getItem("pointsUsed") || "0", 10);
         const localCreditsUsed = parseInt(localStorage.getItem("creditsUsed") || "0", 10);
         const localCustomerBarcode = localStorage.getItem("customerBarcode") || "";
@@ -440,26 +436,23 @@ export default function CheckoutPage({
             localVoucher = null;
         }
 
-        // 2) Build your promotionsUsed object
         const promotionsUsed: any = {
             pointsUsed: localPointsUsed,
             creditsUsed: localCreditsUsed,
         };
-        // Only add giftVoucherUsed if it is non-null
         if (localVoucher) {
             promotionsUsed.giftVoucherUsed = localVoucher;
         }
-        // Only add couponUsed if it is non-null
         if (localCoupon) {
             promotionsUsed.couponUsed = localCoupon;
         }
 
-        // 3) Build payloadData
+        // 3) Build the payload for /api/submitOrder
         const payloadData = {
             tenant: hostSlug,
             shop: hostSlug,
             orderType: isKiosk ? "kiosk" : "web",
-            status: selectedStatus,
+            status: selectedStatus, // 'pending_payment' or 'awaiting_preparation'
             fulfillmentMethod,
             fulfillmentDate: selectedDate,
             fulfillmentTime: selectedTime,
@@ -506,10 +499,10 @@ export default function CheckoutPage({
             promotionsUsed,
         };
 
-        // 4) For debugging
         console.log("About to submit order:", JSON.stringify(payloadData, null, 2));
 
-        // 5) POST to your /api/submitOrder route
+        // 4) Create local order
+        let localOrderId: number | null = null;
         try {
             const res = await fetch("/api/submitOrder", {
                 method: "POST",
@@ -517,20 +510,64 @@ export default function CheckoutPage({
                 body: JSON.stringify(payloadData),
             });
             const json = await res.json();
+
             if (!json.success) {
                 alert("Order creation failed: " + json.message);
                 return;
             }
 
-            // 6) Clear cart, navigate to summary
-            clearCart();
-            const kioskParam = kioskMode ? "&kiosk=true" : "";
-            router.push(`/order-summary?orderId=${json.order.id}${kioskParam}`);
+            localOrderId = json.order.id;
+            console.log("Local order created. ID =", localOrderId);
         } catch (err) {
             console.error("Error submitting order:", err);
             alert("Error submitting order. Check console for details.");
+            return;
+        }
+
+        if (!localOrderId) {
+            alert("Could not determine local order ID.");
+            return;
+        }
+
+        // 5) If it's a cash method, finish locally (like before)
+        if (pmDoc?.label?.toLowerCase()?.includes("cash")) {
+            // Clear cart, go directly to order summary
+            clearCart();
+            const kioskParam = isKiosk ? "&kiosk=true" : "";
+            router.push(`/order-summary?orderId=${localOrderId}${kioskParam}`);
+            return;
+        }
+
+        // 6) Otherwise, it's MultiSafePay or another online method:
+        //    Call /api/payments/createPayment => get redirectUrl => redirect the user
+        try {
+            const resp = await fetch("/api/payments/createPayment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderId: localOrderId }),
+            });
+            const data = await resp.json();
+            console.log("Response from createPayment:", data);
+
+            if (!resp.ok || data.error) {
+                console.error("createPayment error:", data.error || data);
+                alert("Failed to create payment. Check console.");
+                return;
+            }
+
+            if (data.redirectUrl) {
+                console.log("Redirecting user to MSP payment URL =", data.redirectUrl);
+                window.location.href = data.redirectUrl;
+            } else {
+                console.log("No redirectUrl returned, payment might be completed or an error occurred.");
+                // Optionally route them to summary or show an error.
+            }
+        } catch (err) {
+            console.error("Error calling createPayment:", err);
+            alert("Error calling createPayment. Check console.");
         }
     }
+
 
 
     function handleBackClick() {
