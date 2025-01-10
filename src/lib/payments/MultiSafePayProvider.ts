@@ -1,4 +1,4 @@
-// src/lib/payments/MultiSafePayProvider.ts
+// File: src/lib/payments/MultiSafePayProvider.ts
 
 import {
     AbstractPaymentProvider,
@@ -14,13 +14,97 @@ interface MultiSafePaySettings {
     // any additional fields you need
 }
 
+/**
+ * Full map from your MSP documentation (gateway IDs).
+ * Key = local label after removing "MSP_"
+ * Value = MSP's recognized "gateway" string.
+ */
+const MSP_GATEWAY_MAP: Record<string, string> = {
+    // Payment methods:
+    Alipay: 'ALIPAY',
+    'Alipay+': 'ALIPAYPLUS',
+    'Amazon Pay': 'AMAZONBTN',
+    'American Express': 'AMEX',
+    'Apple Pay': 'APPLEPAY',
+    Bancontact: 'MISTERCASH',
+    'Bank transfer': 'BANKTRANS',
+    Belfius: 'BELFIUS',
+    'Betaal per Maand': 'SANTANDER',
+    Bizum: 'BIZUM',
+    'CBC/KBC': 'CBC',          // The MSP docs show "CBC / KBC"
+    'Card payments': 'CREDITCARD',
+    Dotpay: 'DOTPAY',
+    Edenred: 'EDENCOM',
+    'E-Invoicing': 'EINVOICE',
+    EPS: 'EPS',
+    Giropay: 'GIROPAY',
+    'Google Pay': 'GOOGLEPAY',
+    iDEAL: 'IDEAL',
+    'iDEAL QR': 'IDEALQR',
+    in3: 'IN3',
+    Klarna: 'KLARNA',
+    Maestro: 'MAESTRO',
+    Mastercard: 'MASTERCARD',
+    'MB Way': 'MBWAY',
+    Multibanco: 'MULTIBANCO',
+    MyBank: 'MYBANK',
+    'Pay After Delivery': 'BNPL_MF',
+    'Pay After Delivery installments': 'BNPL_INSTM',
+    PayPal: 'PAYPAL',
+    Paysafecard: 'PSAFECARD',
+    'Request to Pay': 'DBRTP',
+    Riverty: 'AFTERPAY',
+    'Direct debit': 'DIRDEB',
+    Sofort: 'DIRECTBANK',
+    Trustly: 'TRUSTLY',
+    TrustPay: 'TRUSTPAY',
+    'Visa, Cartes Bancaires, Dankort, V Pay': 'VISA',
+    'WeChat Pay': 'WECHAT',
+    Zinia: 'ZINIA',
+
+    // Gift cards (add more if your local "MSP_..." labels match these):
+    'Amsterdam stadspas': 'AMSGIFT',
+    'Baby Cadeaubon': 'BABYCAD',
+    Beautyandwellness: 'BEAUTYWELL',
+    'Beauty cadeau': 'BEAUTYCAD',
+    Bloemencadeaukaart: 'BLOEMENCAD',
+    Boekenbon: 'BOEKENBON',
+    'Degrotespeelgoedwinkel': 'DEGROTESPL',
+    Dordtpas: 'DORDTPAS',
+    'Edenred Ticket Compliments': 'EDENCOM',
+    'Edenred Ticket EcoCheque': 'EDENCO',
+    'Edenred Ticket Restaurant': 'EDENRES',
+    'Edenred Ticket Sport & Culture': 'EDENSPORTS',
+    Fashioncheque: 'FASHIONCHQ',
+    Fashiongiftcard: 'FASHIONGFT',
+    Fietsenbon: 'FIETSENBON',
+    Gelrepas: 'GELREPAS',
+    Gezondheidsbon: 'GEZONDHEID',
+    Good4fun: 'GOOD4FUN',
+    'Horses & Gifts': 'HORSESGIFT',
+    'Monizze eco voucher': 'MONIECO',
+    'Monizze gift voucher': 'MONIGIFT',
+    'Monizze meal voucher': 'MONIMEAL',
+    'Nationale bioscoopbon': 'NATNLBIOSC',
+    'Nationale tuinbon': 'NATNLETUIN',
+    Parfumcadeaukaart: 'PARFUMCADE',
+    'Rotterdampas': 'ROTGIFT',
+    'U-pas': 'UPAS',
+    Sportenfit: 'SPORTENFIT',
+    Sodexo: 'SODESPORTS',
+    'Vuur & rook gift card': 'VRGIFTCARD',
+    'VVV Cadeaukaart': 'VVVGIFTCRD',
+    Webshopgiftcard: 'WEBSHOPGFT',
+    Wijncadeau: 'WIJNCADEAU',
+    YourGift: 'YOURGIFT',
+};
+
 export class MultiSafePayProvider extends AbstractPaymentProvider {
     private environmentUrl: string;
 
     constructor(apiKey: string, settings: MultiSafePaySettings) {
         super(apiKey, settings);
 
-        // Decide whether to use test or live environment
         const isTest = settings.enable_test_mode;
         this.environmentUrl = isTest
             ? 'https://testapi.multisafepay.com/v1/json/'
@@ -31,30 +115,25 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
      * Create a MultiSafePay order (redirect flow).
      */
     public async createPayment(localOrderDoc: any): Promise<PaymentCreateResult> {
-        // If the Shop doc was attached, we can read it:
+        // 1) Shop details
         const shopSlug = localOrderDoc?.shopSlug || 'frituur-den-overkant';
         const isTest = this.settings.enable_test_mode ?? false;
 
-        // Use the shopDoc’s domain if available
+        // 2) Domain logic
         const productionDomain =
             localOrderDoc.shopDoc?.domain || `${shopSlug}.frituurapp.be`;
-
-        // If test mode => local dev
-        // Otherwise => the shop’s production domain
         const localDomain = isTest
             ? `http://${shopSlug}.localhost:3000`
             : `https://${productionDomain}`;
-
-        // Same for notification callbacks
         const notificationDomain = isTest
             ? 'https://frituurapp.ngrok.dev'
             : localDomain;
 
-        // 3) Build the MSP order payload
+        // 3) Build request
         const orderId = `${shopSlug}-${localOrderDoc.id}`;
         const amountInCents = Math.round((localOrderDoc.total ?? 0) * 100);
 
-        const requestBody = {
+        const requestBody: Record<string, any> = {
             type: 'redirect',
             order_id: orderId,
             currency: 'EUR',
@@ -62,36 +141,39 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
             description: `Order #${localOrderDoc.id}`,
 
             payment_options: {
-                // MSP will post to this endpoint with status updates
                 notification_url: `${notificationDomain}/api/mspWebhook?orderId=${localOrderDoc.id}`,
-
-                // After paying, user is redirected back to the local shop domain
                 redirect_url: `${localDomain}/order-summary?orderId=${localOrderDoc.id}`,
-
-                // If the user cancels payment, they come back here
                 cancel_url: `${localDomain}/checkout?orderId=${localOrderDoc.id}&cancelled=true`,
-
                 close_window: true,
             },
 
             customer: {
-                locale: 'nl_NL', // or "en_US", etc. 
+                locale: 'nl_NL',
                 ip_address: localOrderDoc?.ipAddress || '0.0.0.0',
                 first_name: localOrderDoc?.customer_details?.firstName || '',
                 last_name: localOrderDoc?.customer_details?.lastName || '',
                 address1: localOrderDoc?.customer_details?.address || '',
                 zip_code: localOrderDoc?.customer_details?.postalCode || '',
                 city: localOrderDoc?.customer_details?.city || '',
-                country: 'BE', // or dynamically
+                country: 'BE', // or dynamic from order
                 phone: localOrderDoc?.customer_details?.phone || '',
                 email: localOrderDoc?.customer_details?.email || '',
             },
-
-            // Optional: e.g. specify "gateway": "IDEAL" or "CREDITCARD" to skip MSP method selection
-            // gateway: 'IDEAL',
         };
 
-        // 4) Send to MSP
+        // 4) Detect "MSP_" sub_method_label and map to MSP gateway
+        const subMethodLabel = localOrderDoc.payments?.[0]?.sub_method_label;
+        if (typeof subMethodLabel === 'string' && subMethodLabel.startsWith('MSP_')) {
+            // e.g. "MSP_Mastercard" => "Mastercard"
+            const methodName = subMethodLabel.replace(/^MSP_/, '');
+            // e.g. "Mastercard" => "MASTERCARD"
+            const gateway = MSP_GATEWAY_MAP[methodName];
+            if (gateway) {
+                requestBody.gateway = gateway;
+            }
+        }
+
+        // 5) Send to MSP
         const apiKey = this.resolveApiKey();
         const url = `${this.environmentUrl}orders?api_key=${apiKey}`;
         const response = await fetch(url, {
@@ -102,13 +184,15 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
 
         const json = await response.json();
         if (!response.ok || !json.success) {
-            throw new Error(`MultiSafePay createPayment failed: ${JSON.stringify(json)}`);
+            throw new Error(
+                `MultiSafePay createPayment failed: ${JSON.stringify(json)}`
+            );
         }
 
-        // MSP responds with { success: true, data: { payment_url, order_id, ... } }
+        // MSP returns { success: true, data: { payment_url, order_id, ... } }
         const paymentUrl = json.data?.payment_url;
 
-        // Return the result to the calling code
+        // Return result
         return {
             redirectUrl: paymentUrl,
             providerOrderId: orderId,
@@ -139,7 +223,7 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
     }
 
     /**
-     * Pick the correct API key based on test mode or live mode.
+     * Decide test vs. live API key
      */
     private resolveApiKey(): string {
         if (this.settings.enable_test_mode) {
