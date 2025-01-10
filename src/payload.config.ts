@@ -253,12 +253,16 @@ export default buildConfig({
     'https://frituurwebshop.be',
     'https://*.frituurwebshop.be',
     'http://localhost:3000',
+    'https://frituurapp.ngrok.dev',
+    'http://frituurapp.ngrok.dev',
   ],
   csrf: [
     'https://frituurwebshop.be',
     'https://*.frituurwebshop.be',
     'http://localhost:3000',
     'http://*.localhost:3000',
+    'https://frituurapp.ngrok.dev',
+    'http://frituurapp.ngrok.dev',
   ],
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI as string },

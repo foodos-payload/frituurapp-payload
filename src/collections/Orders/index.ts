@@ -388,6 +388,19 @@ export const Orders: CollectionConfig = {
       },
     },
 
+    // (C) NEW: providerOrderId for Payment Providers
+    {
+      name: 'providerOrderId',
+      type: 'text',
+      label: 'Payment Provider Order ID',
+      required: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Order ID from e.g. MultiSafePay, Mollie, etc.',
+        readOnly: true,
+      },
+    },
+
     // (C) Auto-increment ID fields
     {
       name: 'id',

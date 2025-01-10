@@ -1424,6 +1424,10 @@ export interface Order {
    */
   cloudPOSId?: number | null;
   /**
+   * Order ID from e.g. MultiSafePay, Mollie, etc.
+   */
+  providerOrderId?: string | null;
+  /**
    * Auto-incrementing identifier for the order.
    */
   id: number;
@@ -2278,6 +2282,7 @@ export interface OrdersSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
   cloudPOSId?: T;
+  providerOrderId?: T;
   id?: T;
   tempOrdNr?: T;
   status?: T;
