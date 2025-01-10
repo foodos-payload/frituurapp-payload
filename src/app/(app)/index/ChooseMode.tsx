@@ -24,14 +24,14 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
 }) => {
     const router = useRouter();
     const { t } = useTranslation();
-    const { setShippingMethod } = useCart();
+    const { setShippingMethod, clearCart } = useCart();
     const searchParams = useSearchParams();
 
-    // 1) Check `kiosk` param in client
+    // 1) Check `kiosk` param
     const kioskParam = searchParams.get("kiosk"); // "true" or null
     const isKiosk = kioskParam === "true";
 
-    // 2) If kiosk => filter out "delivery"
+    // 2) Filter out delivery if kiosk
     let filteredFulfillment = fulfillmentOptions;
     if (isKiosk) {
         filteredFulfillment = fulfillmentOptions.filter(
@@ -39,8 +39,18 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
         );
     }
 
+    // (A) Clear cart once on initial mount
     useEffect(() => {
-        // Could store kioskMode in localStorage if needed
+        console.log("[ChooseMode] Clearing cart on initial visit...");
+        clearCart();
+        // We do NOT depend on `clearCart` or `isKiosk` here
+        // to avoid infinite re-renders
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // (B) If you want to store kioskMode in localStorage whenever isKiosk changes
+    useEffect(() => {
+        console.log("[ChooseMode] Setting kioskMode in localStorage =", isKiosk);
         localStorage.setItem("kioskMode", String(isKiosk));
     }, [isKiosk]);
 
@@ -53,7 +63,7 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
         router.push("/order");
     };
 
-    // If you're using separate kiosk layout
+    // If kiosk => show kiosk layout
     if (isKiosk) {
         return (
             <KioskContainer
@@ -63,7 +73,7 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
         );
     }
 
-    // 4) Otherwise normal mode
+    // Otherwise normal layout
     const isDineIn = filteredFulfillment.some((f) => f.key === "dine-in");
     const isTakeaway = filteredFulfillment.some((f) => f.key === "takeaway");
     const isDelivery = filteredFulfillment.some((f) => f.key === "delivery");
@@ -73,9 +83,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
             <div className="flex grow items-stretch justify-center px-0 py-0 sm:px-8 sm:py-32 md:px-12 lg:px-16">
                 <div
                     className="bg-white shadow-lg w-full max-w-screen-lg
-          min-h-full sm:min-h-0
-          sm:rounded-xl p-4 sm:p-8 lg:p-16
-          flex flex-col justify-evenly"
+            min-h-full sm:min-h-0
+            sm:rounded-xl p-4 sm:p-8 lg:p-16
+            flex flex-col justify-evenly"
                 >
                     <h1 className="text-2xl sm:text-3xl font-bold text-center mb-8">
                         {t("chooseMode.title")}
@@ -86,10 +96,10 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                         <button
                             onClick={() => isDineIn && handleSelectOption("dine-in")}
                             disabled={!isDineIn}
-                            className={`flex flex-col items-center w-80 sm:w-52 p-4 border 
-              border-gray-200 bg-white shadow transition-transform hover:scale-105
-              rounded-xl sm:rounded-xl
-              ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`flex flex-col items-center w-80 sm:w-52 p-4 border
+                border-gray-200 bg-white shadow transition-transform hover:scale-105
+                rounded-xl sm:rounded-xl
+                ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DineInIcon.png"
@@ -109,9 +119,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isTakeaway && handleSelectOption("takeaway")}
                             disabled={!isTakeaway}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-              border-gray-200 bg-white shadow transition-transform hover:scale-105
-              rounded-xl sm:rounded-xl
-              ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
+                border-gray-200 bg-white shadow transition-transform hover:scale-105
+                rounded-xl sm:rounded-xl
+                ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/TakeAwayIcon.png"
@@ -131,9 +141,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isDelivery && handleSelectOption("delivery")}
                             disabled={!isDelivery}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-              border-gray-200 bg-white shadow transition-transform hover:scale-105
-              rounded-xl sm:rounded-xl
-              ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
+                border-gray-200 bg-white shadow transition-transform hover:scale-105
+                rounded-xl sm:rounded-xl
+                ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DeliveryIcon.png"
