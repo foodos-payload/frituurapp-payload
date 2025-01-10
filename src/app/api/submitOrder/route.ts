@@ -125,31 +125,6 @@ export const dynamic = 'force-dynamic';
  *         description: Server error
  */
 
-function buildKitchenTicket(order: any): string {
-    // For demonstration, build a simple multi-line string
-    let output = `KITCHEN TICKET\nOrder #${order.id}\n\nItems:\n`;
-    if (Array.isArray(order.order_details)) {
-        for (const item of order.order_details) {
-            output += `- ${item.name_nl || item.name_en || 'Unnamed'} x ${item.quantity}\n`;
-        }
-    }
-    output += `\nFulfillment Method: ${order.fulfillment_method || ''}\n`;
-    output += `---------------\n`;
-    return output;
-}
-
-function buildCustomerTicket(order: any): string {
-    let output = `CUSTOMER TICKET\nOrder #${order.id}\n\n`;
-    if (Array.isArray(order.order_details)) {
-        for (const item of order.order_details) {
-            output += `- ${item.name_nl || item.name_en || 'Unnamed'} x ${item.quantity}\n`;
-        }
-    }
-    output += `\nThank you for your order!\n`;
-    output += `---------------\n`;
-    return output;
-}
-
 export async function POST(request: NextRequest) {
     try {
         const payload = await getPayload({ config });
@@ -278,19 +253,17 @@ export async function POST(request: NextRequest) {
             limit: 50,
         });
 
-        // Build out the text we want to print
-        const kitchenText = buildKitchenTicket(createdOrder);
-        const customerText = buildCustomerTicket(createdOrder);
 
         for (const p of printers.docs) {
             try {
-                // Print the kitchen ticket
+                // Always print the "kitchen" ticket
                 await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        printerName: p.printer_name,  // e.g. "my-shop-kitchen-1"
-                        content: kitchenText,
+                        printerName: "frituur-den-overkant-kitchen-main",   // e.g. "frituur-den-overkant-kitchen-main"
+                        ticketType: 'kitchen',         // Let the printOrder route build kitchen layout
+                        orderData: createdOrder,
                     }),
                 });
 
@@ -301,7 +274,8 @@ export async function POST(request: NextRequest) {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             printerName: p.printer_name,
-                            content: customerText,
+                            ticketType: 'customer',      // Build the customer ticket layout
+                            orderData: createdOrder,
                         }),
                     });
                 }

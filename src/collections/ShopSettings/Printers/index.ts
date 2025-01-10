@@ -101,31 +101,20 @@ export const Printers: CollectionConfig = {
         //         });
         //     },
         // ],
-        afterChange: [automatePrinterSetup],
-        afterDelete: [removePrinterOnDelete],
+        // afterChange: [automatePrinterSetup],
+        // afterDelete: [removePrinterOnDelete], # TODO: Implement this hook after staging works
     },
     fields: [
         tenantField, // Possibly required, ensure user picks a tenant
         shopsField,  // Possibly required, ensure user picks at least one shop
 
         {
-            name: 'available_printers',
-            type: 'ui',
-            label: 'Check for new printers',
-            admin: {
-                components: {
-                    Field: '@/fields/AvailablePrintersButton',
-                },
-            },
-        },
-
-        {
-            name: 'zerotierIP',
+            name: 'awlIP',
             type: 'text',
-            label: 'ZeroTier IP',
+            label: 'AWL IP',
             required: true,
             admin: {
-                description: 'Copy/paste the ZeroTier IP of the new printer.',
+                description: 'Copy/paste the AWL IP of the new printer.',
             },
         },
         {

@@ -729,9 +729,9 @@ export interface Printer {
   tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
-   * Copy/paste the ZeroTier IP of the new printer.
+   * Copy/paste the AWL IP of the new printer.
    */
-  zerotierIP: string;
+  awlIP: string;
   printer_name?: string | null;
   /**
    * Enter the queue name from the printer setup portal.
@@ -2054,7 +2054,7 @@ export interface TablesSelect<T extends boolean = true> {
 export interface PrintersSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
-  zerotierIP?: T;
+  awlIP?: T;
   printer_name?: T;
   queue_name?: T;
   printer_type?: T;
