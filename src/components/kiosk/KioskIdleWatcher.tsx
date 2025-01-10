@@ -16,10 +16,13 @@ export const KioskIdleWatcher: React.FC = () => {
     const isKioskMode = searchParams.get("kiosk") === "true"
     const isKioskIdleScreen = pathname === "/kiosk-idle"
 
+    // ---- NEW: Dynamically pick the idle interval ----
+    // Let's say kiosk = 60s, non-kiosk = 600s (10 minutes).
+    const INACTIVITY_DELAY_SECONDS = isKioskMode ? 60 : 600
+
     // Local state / refs for the idle logic
     const [showIdleModal, setShowIdleModal] = useState(false)
     const [countdown, setCountdown] = useState(15)
-    const INACTIVITY_DELAY_SECONDS = 60
     const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const countdownRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -33,13 +36,16 @@ export const KioskIdleWatcher: React.FC = () => {
         const kioskNumber = localStorage.getItem("kioskNumber")
         localStorage.clear()
         if (kioskNumber) {
+            // If you want to preserve kioskNumber for kiosk usage
             localStorage.setItem("kioskNumber", kioskNumber)
         }
     }, [])
 
     const resetIdleTimer = useCallback(() => {
-        // Only do something if we want the timer
-        if (!isKioskMode || isKioskIdleScreen) return
+        // If we’re on the kiosk idle screen, or if we never want watchers,
+        // skip. Otherwise, start the timer with the newly dynamic interval.
+        if (isKioskIdleScreen) return
+
         clearTimers()
         idleTimeoutRef.current = setTimeout(() => {
             setShowIdleModal(true)
@@ -48,12 +54,13 @@ export const KioskIdleWatcher: React.FC = () => {
                 setCountdown((prev) => prev - 1)
             }, 1000)
         }, INACTIVITY_DELAY_SECONDS * 1000)
-    }, [isKioskMode, isKioskIdleScreen, clearTimers])
+    }, [isKioskIdleScreen, INACTIVITY_DELAY_SECONDS, clearTimers])
 
     // 3) useEffects
     useEffect(() => {
-        // If we’re skipping, do not start watchers
-        if (!isKioskMode || isKioskIdleScreen) return
+        // If we’re on the kiosk idle screen, don’t start watchers
+        // (But we no longer skip if !isKioskMode, because we want the same logic on non-kiosk)
+        if (isKioskIdleScreen) return
 
         const events = ["mousemove", "keydown", "click", "touchstart"]
         events.forEach((evt) =>
@@ -67,30 +74,40 @@ export const KioskIdleWatcher: React.FC = () => {
                 window.removeEventListener(evt, resetIdleTimer)
             )
         }
-    }, [isKioskMode, isKioskIdleScreen, resetIdleTimer, clearTimers])
+    }, [isKioskIdleScreen, resetIdleTimer, clearTimers])
 
+    // Decide what to do after idle countdown hits 0
     useEffect(() => {
         if (countdown <= 0 && showIdleModal) {
             clearTimers()
             setShowIdleModal(false)
             clearLocalStorage()
-            // Decide where to go
-            if (kiosk_idle_screen_enabled) {
-                router.push("/kiosk-idle")
+
+            // If kiosk mode is on, decide between kiosk idle screen or kiosk homepage
+            if (isKioskMode) {
+                if (kiosk_idle_screen_enabled) {
+                    router.push("/kiosk-idle")
+                } else {
+                    router.push("/index?kiosk=true")
+                }
             } else {
-                router.push("/index?kiosk=true")
+                // For non-kiosk, navigate somewhere else, e.g. homepage
+                router.push("/index")
             }
         }
-    }, [countdown, showIdleModal, kiosk_idle_screen_enabled, router, clearTimers, clearLocalStorage])
+    }, [
+        countdown,
+        showIdleModal,
+        kiosk_idle_screen_enabled,
+        router,
+        clearTimers,
+        clearLocalStorage,
+        isKioskMode,
+    ])
 
-    // 4) If we want to skip the entire idle logic on /index?kiosk=true 
-    //    when kiosk_idle_screen_enabled is true, or skip when kioskMode is false, etc.
-    //    DO IT AFTER all hooks have been called:
-    const skipIdleLogic =
-        !isKioskMode ||
-        isKioskIdleScreen ||
-        (pathname === "/index" && kiosk_idle_screen_enabled === false)
-
+    // 4) If you want to skip the entire idle logic under special conditions, do it AFTER hooking:
+    //    For instance, if you never want watchers on the kiosk idle screen, or your page is something else:
+    const skipIdleLogic = isKioskIdleScreen
     if (skipIdleLogic) {
         return null
     }
@@ -110,8 +127,12 @@ export const KioskIdleWatcher: React.FC = () => {
                     style={{ backdropFilter: "blur(3px)" }}
                 >
                     <div className="bg-white p-6 rounded-xl shadow-md max-w-sm mx-auto text-center">
-                        <h2 className="text-xl font-bold mb-4">{t("idlePopUp.areYouStillThere")}</h2>
-                        <p>{t("idlePopUp.youWillBeRedirectedInXSeconds", { countdown })}</p>
+                        <h2 className="text-xl font-bold mb-4">
+                            {t("idlePopUp.areYouStillThere")}
+                        </h2>
+                        <p>
+                            {t("idlePopUp.youWillBeRedirectedInXSeconds", { countdown })}
+                        </p>
                         <button
                             className="mt-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded"
                             onClick={handleConfirmStay}
