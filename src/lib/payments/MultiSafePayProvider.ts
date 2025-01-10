@@ -31,16 +31,22 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
      * Create a MultiSafePay order (redirect flow).
      */
     public async createPayment(localOrderDoc: any): Promise<PaymentCreateResult> {
-        // 1) Figure out the local domain to which user returns
-        //    e.g. if you store "shopSlug" on the order doc, "frituur-den-overkant"
-        //    then we build "http://frituur-den-overkant.localhost:3000"
+        // If the Shop doc was attached, we can read it:
         const shopSlug = localOrderDoc?.shopSlug || 'frituur-den-overkant';
-        const localDomain = `http://${shopSlug}.localhost:3000`;
+        const isTest = this.settings.enable_test_mode ?? false;
 
-        // 2) Decide the domain for MSP notification callbacks:
-        //    If test mode => use ngrok domain
-        //    Else => use the same local domain (or your real production domain)
-        const notificationDomain = this.settings.enable_test_mode
+        // Use the shopDoc’s domain if available
+        const productionDomain =
+            localOrderDoc.shopDoc?.domain || `${shopSlug}.frituurapp.be`;
+
+        // If test mode => local dev
+        // Otherwise => the shop’s production domain
+        const localDomain = isTest
+            ? `http://${shopSlug}.localhost:3000`
+            : `https://${productionDomain}`;
+
+        // Same for notification callbacks
+        const notificationDomain = isTest
             ? 'https://frituurapp.ngrok.dev'
             : localDomain;
 
@@ -76,7 +82,7 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
                 address1: localOrderDoc?.customer_details?.address || '',
                 zip_code: localOrderDoc?.customer_details?.postalCode || '',
                 city: localOrderDoc?.customer_details?.city || '',
-                country: 'NL', // or dynamically
+                country: 'BE', // or dynamically
                 phone: localOrderDoc?.customer_details?.phone || '',
                 email: localOrderDoc?.customer_details?.email || '',
             },

@@ -128,6 +128,7 @@ export async function POST(req: NextRequest) {
         const updatedOrderDoc = {
             ...orderDoc,
             shopSlug: shopDoc.slug,
+            shopDoc,
         }
 
         // 9) Create the payment => get redirectUrl
