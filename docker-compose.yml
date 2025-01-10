@@ -31,7 +31,7 @@ services:
     environment:
       - ZT_OVERRIDE_LOCAL_CONF=true
       - ZT_LOCAL_CONF={"settings":{"controllerMode":true}}
-      # - ZT_ALLOW_MANAGEMENT_FROM=0.0.0.0/0
+      - ZT_ALLOW_MANAGEMENT_FROM=0.0.0.0/0
 
   ztnet:
     image: sinamics/ztnet:latest
