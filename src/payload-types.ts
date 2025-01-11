@@ -156,6 +156,24 @@ export interface User {
    * The username of the user.
    */
   username?: string | null;
+  transactions?:
+    | {
+        service?: (string | null) | Service;
+        status?: ('success' | 'failed') | null;
+        date?: string | null;
+        amount?: number | null;
+        currency?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  service?: (string | null) | Service;
+  status?: ('active' | 'inactive') | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  subscription_amount?: number | null;
+  subscription_currency?: string | null;
+  subscription_id?: string | null;
+  stripe_customer_id?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -259,6 +277,112 @@ export interface Shop {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services".
+ */
+export interface Service {
+  id: string;
+  title_nl: string;
+  title_en?: string | null;
+  title_de?: string | null;
+  title_fr?: string | null;
+  description_nl?: string | null;
+  description_en?: string | null;
+  description_de?: string | null;
+  description_fr?: string | null;
+  monthly_price: string;
+  yearly_price: string;
+  role?: (string | null) | Role;
+  yearly_price_discount?: string | null;
+  try_demo?: string | null;
+  service_thumbnail: string | Media;
+  /**
+   * Stripe referral code for this service
+   */
+  referral_code?: string | null;
+  /**
+   * Stripe coupon code for this service
+   */
+  coupon_code?: string | null;
+  /**
+   * Semantic versioning (e.g., 1.0.0)
+   */
+  service_version: string;
+  service_last_update_date: string;
+  /**
+   * Select tenants for which this service should be hidden
+   */
+  hide_for_tenants?: (string | Tenant)[] | null;
+  /**
+   * URL for additional information about the service
+   */
+  get_more_info_url?: string | null;
+  stripe_monthly_product_id?: string | null;
+  stripe_yearly_product_id?: string | null;
+  stripe_monthly_price_id?: string | null;
+  stripe_yearly_price_id?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  tenant: string | Tenant;
+  /**
+   * Optional tags to organize media files.
+   */
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Blurhash representation of the image for quick previews.
+   */
+  blurhash?: string | null;
+  /**
+   * URL of the original image in S3.
+   */
+  s3_url?: string | null;
+  /**
+   * Alternative text for the media file to improve accessibility.
+   */
+  alt_text?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    medium?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -620,64 +744,6 @@ export interface Page {
   tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  tenant: string | Tenant;
-  /**
-   * Optional tags to organize media files.
-   */
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Blurhash representation of the image for quick previews.
-   */
-  blurhash?: string | null;
-  /**
-   * URL of the original image in S3.
-   */
-  s3_url?: string | null;
-  /**
-   * Alternative text for the media file to improve accessibility.
-   */
-  alt_text?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    medium?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1247,53 +1313,6 @@ export interface Order {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "services".
- */
-export interface Service {
-  id: string;
-  title_nl: string;
-  title_en?: string | null;
-  title_de?: string | null;
-  title_fr?: string | null;
-  description_nl?: string | null;
-  description_en?: string | null;
-  description_de?: string | null;
-  description_fr?: string | null;
-  monthly_price: string;
-  yearly_price: string;
-  yearly_price_discount?: string | null;
-  try_demo?: string | null;
-  service_thumbnail: string | Media;
-  /**
-   * Stripe referral code for this service
-   */
-  referral_code?: string | null;
-  /**
-   * Stripe coupon code for this service
-   */
-  coupon_code?: string | null;
-  /**
-   * Semantic versioning (e.g., 1.0.0)
-   */
-  service_version: string;
-  service_last_update_date: string;
-  /**
-   * Select tenants for which this service should be hidden
-   */
-  hide_for_tenants?: (string | Tenant)[] | null;
-  /**
-   * URL for additional information about the service
-   */
-  get_more_info_url?: string | null;
-  stripe_monthly_product_id?: string | null;
-  stripe_yearly_product_id?: string | null;
-  stripe_monthly_price_id?: string | null;
-  stripe_yearly_price_id?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -1469,6 +1488,24 @@ export interface UsersSelect<T extends boolean = true> {
       };
   shops?: T;
   username?: T;
+  transactions?:
+    | T
+    | {
+        service?: T;
+        status?: T;
+        date?: T;
+        amount?: T;
+        currency?: T;
+        id?: T;
+      };
+  service?: T;
+  status?: T;
+  start_date?: T;
+  end_date?: T;
+  subscription_amount?: T;
+  subscription_currency?: T;
+  subscription_id?: T;
+  stripe_customer_id?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2028,6 +2065,7 @@ export interface ServicesSelect<T extends boolean = true> {
   description_fr?: T;
   monthly_price?: T;
   yearly_price?: T;
+  role?: T;
   yearly_price_discount?: T;
   try_demo?: T;
   service_thumbnail?: T;

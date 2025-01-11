@@ -88,6 +88,11 @@ export const Services: CollectionConfig = {
             required: true,
         },
         {
+            name: 'role',
+            type: 'relationship',
+            relationTo: 'roles',
+        },
+        {
             name: 'yearly_price_discount',
             type: 'text',
         },

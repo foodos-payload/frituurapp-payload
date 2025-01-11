@@ -1,12 +1,13 @@
 import { getServices } from '@/lib/services'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Media, Service } from '@/payload-types'
+import { Media, Role } from '@/payload-types'
 import Image from 'next/image'
 import { SubscribeButton } from '@/components/ui/subscribe-button'
+import { getUserMe } from '@/utilities/user-me'
 
 export default async function Services() {
-    const services = await getServices() as Service[]
-
+    const services = await getServices()
+    const { user } = await getUserMe()
     return (
         <div className="py-24 sm:py-32">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -36,8 +37,12 @@ export default async function Services() {
                                 <CardFooter className="flex flex-col gap-3">
                                     <SubscribeButton
                                         priceId={service.stripe_monthly_price_id || ''}
+                                        id={service.id}
                                         variant="default"
-                                    >
+                                        user={user}
+                                        amount={service.monthly_price}                                    
+                                        serviceRole={service.role as Role}
+                                        >
                                         Subscribe Monthly
                                     </SubscribeButton>
                                 </CardFooter>
