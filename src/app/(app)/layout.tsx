@@ -102,7 +102,7 @@ export default async function RootLayout({
   const branding = await getShopBranding(hostSlug);
 
   // 3) Use branding.primaryColorCTA or fallback "#CE2027"
-  const scrollbarColor = branding.primaryColorCTA || '#CE2027';
+  const scrollbarColor = branding.categoryCardBgColor || '#CE2027';
 
   return (
     <html className={baseClass} lang="en" style={
