@@ -331,6 +331,10 @@ export default function OrderLayout({
                         setMobileSearchOpen={setMobileSearchOpen}
                         branding={branding}
                         isKiosk={isKiosk}
+                        onCategoryClick={() => {
+                            // If user clicks a category in the UI, optionally reset the search
+                            setMobileSearchOpen(false);
+                        }}
                     />
                 </div>
 
@@ -343,6 +347,7 @@ export default function OrderLayout({
                     onCategoryClick={() => {
                         // If user clicks a category in the UI, optionally reset the search
                         setSearchTerm('');
+                        setMobileSearchOpen(false);
                     }}
                     branding={branding}
                     cartRef={cartRef}

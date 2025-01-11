@@ -23,6 +23,7 @@ interface HeaderProps {
     setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isKiosk?: boolean;
     branding?: BrandingProps;
+    onCategoryClick?: (slug: string) => void;
 }
 
 export default function Header({
