@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation"; // or "next/router" if older Next
 import { FiShoppingCart, FiArrowLeft } from "react-icons/fi";
 import { useCart } from "../../../../../context/CartContext";
@@ -34,11 +35,19 @@ export default function CartButton({
 
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = getCartTotal();
+    const [goBackLoading, setGoBackLoading] = useState(false);
 
     const brandCTA = branding?.primaryColorCTA || "#3b82f6";
 
     // For the "Go Back" button
     function handleGoBack() {
+        // If already loading (button pressed once), do nothing
+        if (goBackLoading) return;
+
+        setGoBackLoading(true);
+
+        // Optionally: we could do a small setTimeout if you want a forced delay,
+        // but typically the route transitions quickly:
         if (isKiosk) {
             router.push("/index?kiosk=true");
         } else {
@@ -77,19 +86,38 @@ export default function CartButton({
                     onClick={handleGoBack}
                     style={{ borderRadius: "0.5rem" }}
                     className="
-            hidden md:flex
-            rounded-lg
-            border border-[#CE2027]
-            text-[#CE2027]
-            font-bold
-            p-2.5
-            gap-2
-            items-center
-            justify-center
-            focus:outline-none
-          "
+                        hidden md:flex
+                        rounded-lg
+                        border border-[#CE2027]
+                        text-[#CE2027]
+                        font-bold
+                        p-2.5
+                        gap-2
+                        items-center
+                        justify-center
+                        focus:outline-none
+                    "
+                    disabled={goBackLoading}
                 >
-                    <FiArrowLeft />
+                    {goBackLoading ? (
+                        // Spinner SVG
+                        <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            className="animate-spin"
+                            strokeWidth="3"
+                            fill="none"
+                            stroke="currentColor"
+                        >
+                            <circle cx="12" cy="12" r="10" className="opacity-20" />
+                            <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                        </svg>
+                    ) : (
+                        // Original arrow icon
+                        <FiArrowLeft />
+                    )}
+
                     <span className={`${buttonTextSize}`}>{t("order.footer.go_back")}</span>
                 </button>
 

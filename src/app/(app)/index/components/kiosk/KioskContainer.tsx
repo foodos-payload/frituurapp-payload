@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LanguageSwitcher } from "../../../../components/LanguageSwitcher/LanguageSwitcher";
 import { useTranslation } from "@/context/TranslationsContext";
@@ -25,20 +25,36 @@ export const KioskContainer: React.FC<KioskContainerProps> = ({
 }) => {
     const { t } = useTranslation();
     const router = useRouter();
-    const { setShippingMethod } = useCart(); // Use CartContext
-    // ***** NEW: Grab branding from the global provider  *****
+    const { setShippingMethod } = useCart();
     const branding = useShopBranding();
 
+    // Track which method is "loading" => show spinner, disable other cards
+    const [loadingMethod, setLoadingMethod] = useState<"" | "dine-in" | "takeaway" | "delivery">("");
+
     useEffect(() => {
-        localStorage.setItem("kioskMode", "true"); // Optional if still used elsewhere
+        localStorage.setItem("kioskMode", "true");
     }, []);
 
+    /**
+     * The original selectOption logic => sets shipping method, then navigates.
+     */
     const selectOption = (key: "dine-in" | "takeaway" | "delivery") => {
         const found = fulfillmentOptions.find((f) => f.key === key);
         if (!found) return;
 
-        setShippingMethod(key); // Update shipping method in CartContext
-        router.push("/order?kiosk=true"); // Navigate to order page
+        setShippingMethod(key);
+        router.push("/order?kiosk=true");
+    };
+
+    /**
+     * handleClickMethod => sets loading spinner for the clicked card, then calls `selectOption`.
+     */
+    const handleClickMethod = (key: "dine-in" | "takeaway" | "delivery") => {
+        // If we already have a loading method, skip
+        if (loadingMethod) return;
+
+        setLoadingMethod(key);
+        selectOption(key);
     };
 
     return (
@@ -63,10 +79,16 @@ export const KioskContainer: React.FC<KioskContainerProps> = ({
                     {fulfillmentOptions.map((f) => (
                         <div
                             key={f.methodId}
-                            onClick={() => selectOption(f.key as "dine-in" | "takeaway" | "delivery")}
-                            className="border border-gray-200 rounded-xl p-8 w-full w-[400px] h-[400px] flex flex-col justify-center
-                             cursor-pointer transition-transform transform hover:scale-105
-                             shadow-md text-center bg-[#ffffffa8]"
+                            onClick={() => handleClickMethod(f.key)}
+                            // If any card is loading => disable pointer events on all,
+                            // but user can see the spinner on the clicked one.
+                            className={`
+                border border-gray-200 rounded-xl p-8 w-full w-[400px] h-[400px] 
+                flex flex-col justify-center items-center cursor-pointer 
+                transition-transform transform hover:scale-105 
+                shadow-md text-center bg-[#ffffffa8]
+                ${loadingMethod ? "pointer-events-none" : ""}
+              `}
                         >
                             <img
                                 src={
@@ -86,13 +108,32 @@ export const KioskContainer: React.FC<KioskContainerProps> = ({
                                         ? t("chooseMode.takeAway.label")
                                         : t("chooseMode.delivery.label")}
                             </h2>
-                            <p className="mt-2 text-xl text-gray-600">
-                                {f.key === "dine-in"
-                                    ? t("chooseMode.dineIn.hint")
-                                    : f.key === "takeaway"
-                                        ? t("chooseMode.takeAway.hint")
-                                        : t("chooseMode.delivery.hint")}
-                            </p>
+
+                            {/* Show spinner if this card is clicked, else show hint text */}
+                            {loadingMethod === f.key ? (
+                                <div className="mt-2 flex items-center justify-center">
+                                    <svg
+                                        width="28"
+                                        height="28"
+                                        viewBox="0 0 24 24"
+                                        className="animate-spin text-gray-700"
+                                        strokeWidth="3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <circle cx="12" cy="12" r="10" className="opacity-25" />
+                                        <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                                    </svg>
+                                </div>
+                            ) : (
+                                <p className="mt-2 text-xl text-gray-600">
+                                    {f.key === "dine-in"
+                                        ? t("chooseMode.dineIn.hint")
+                                        : f.key === "takeaway"
+                                            ? t("chooseMode.takeAway.hint")
+                                            : t("chooseMode.delivery.hint")}
+                                </p>
+                            )}
                         </div>
                     ))}
                 </div>

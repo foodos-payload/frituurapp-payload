@@ -111,7 +111,7 @@ export default function KioskPaymentOptions({
 }: KioskPaymentOptionsProps) {
     const router = useRouter();
 
-    // "terminal" => waiting for card, "cash" => waiting for cash
+    // (A) "terminal" => waiting for card, "cash" => waiting for cash
     const [loadingState, setLoadingState] = useState<null | "terminal" | "cash">(null);
 
     // Payment error
@@ -207,6 +207,7 @@ export default function KioskPaymentOptions({
         };
 
         es.onmessage = (evt) => {
+            // e.g. lines from MSP: "data: { ... }"
             if (!evt.data) return;
             try {
                 const parsed = JSON.parse(evt.data);
@@ -234,14 +235,13 @@ export default function KioskPaymentOptions({
     /**
      * handlePayWithCard:
      *  - find card method
-     *  - skip if already loading (debounce)
+     *  - skip if already loading
      *  - show "terminal" overlay
      *  - call handleCheckout => create order + MSP payment
      *  - then SSE if possible, else poll local doc
      */
     const handlePayWithCard = async () => {
-        // If user already clicked, do nothing:
-        if (loadingState) return;
+        if (loadingState) return; // if already in progress, skip
 
         setPaymentErrorMessage("");
         const cardMethod = paymentMethods.find((pm) =>
@@ -256,7 +256,7 @@ export default function KioskPaymentOptions({
 
         setLoadingState("terminal");
 
-        // Create order
+        // Create order => handleCheckout
         const localOrderId = await handleCheckout(cardMethod.id);
         if (!localOrderId) {
             setLoadingState(null);
@@ -264,19 +264,18 @@ export default function KioskPaymentOptions({
             return;
         }
 
-        // SSE or fallback
+        // Attempt SSE => or fallback to local doc polling
         trySubscribeSSE(localOrderId);
     };
 
     /**
      * handlePayWithCash:
      *  - find "cash"
-     *  - skip if already loading (debounce)
+     *  - skip if already loading
      *  - show "cash" overlay
      *  - create order => no SSE needed
      */
     const handlePayWithCash = async () => {
-        // If user already clicked, do nothing:
         if (loadingState) return;
 
         setPaymentErrorMessage("");
@@ -297,7 +296,7 @@ export default function KioskPaymentOptions({
             setPaymentErrorMessage("Could not create cash order. Please try again.");
             return;
         }
-        // handleCheckout finishes the cart if success => no SSE needed
+        // Typically no SSE/poll for cash, handleCheckout finishes order immediately.
     };
 
     const showOverlay = !!loadingState;
@@ -328,7 +327,7 @@ export default function KioskPaymentOptions({
                                 width={256}
                                 height={256}
                             />
-                            <h2 className="text-4xl mb-8">Please pay with cash...</h2>
+                            <h2 className="text-4xl mb-8">Please pay with cash at counter...</h2>
                         </>
                     )}
                     <h1 className="text-5xl font-bold mb-8">Printing ticket...</h1>

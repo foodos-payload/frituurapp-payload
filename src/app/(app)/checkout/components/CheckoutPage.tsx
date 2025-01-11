@@ -87,6 +87,17 @@ export default function CheckoutPage({
     const kioskMode = searchParams.get("kiosk") === "true";
     const isKiosk = kioskMode;
 
+    // Manage local back-button loading state:
+    const [backBtnLoading, setBackBtnLoading] = useState(false);
+
+    function handleBackClick() {
+        if (backBtnLoading) return; // Avoid double-click
+        setBackBtnLoading(true);
+
+        const kioskParam = isKiosk ? "?kiosk=true" : "";
+        router.push(`/order${kioskParam}`);
+    }
+
     // 1) Check if user was redirected with ?cancelled=true
     const cancelledParam = searchParams.get("cancelled") === "true";
     const [isPaymentCancelled, setIsPaymentCancelled] = useState(false);
@@ -601,12 +612,6 @@ export default function CheckoutPage({
         }
     }
 
-
-    function handleBackClick() {
-        const kioskParam = kioskMode ? "?kiosk=true" : "";
-        router.push(`/order${kioskParam}`);
-    }
-
     function handleLoginClick() {
         console.log("Navigate to login page or show a login modal, etc.");
     }
@@ -678,8 +683,24 @@ export default function CheckoutPage({
                                 <button
                                     onClick={handleBackClick}
                                     className="bg-gray-100 text-red-700 px-3 py-2 rounded-xl hover:bg-gray-200 flex items-center gap-2"
+                                    disabled={backBtnLoading}
                                 >
-                                    <span className="font-bold text-lg">←</span>
+                                    {backBtnLoading ? (
+                                        <svg
+                                            width="24"
+                                            height="24"
+                                            viewBox="0 0 24 24"
+                                            className="animate-spin"
+                                            strokeWidth="3"
+                                            fill="none"
+                                            stroke="currentColor"
+                                        >
+                                            <circle cx="12" cy="12" r="10" className="opacity-20" />
+                                            <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                                        </svg>
+                                    ) : (
+                                        <span className="font-bold text-lg">←</span>
+                                    )}
                                     <span>Forgot something?</span>
                                 </button>
                             </div>

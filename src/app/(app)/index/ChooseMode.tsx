@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher/LanguageSwitcher";
 import { useTranslation } from "@/context/TranslationsContext";
@@ -26,6 +26,8 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
     const { t } = useTranslation();
     const { setShippingMethod, clearCart } = useCart();
     const searchParams = useSearchParams();
+    const [loadingMethod, setLoadingMethod] = useState<"" | "dine-in" | "takeaway" | "delivery">("");
+
 
     // 1) Check `kiosk` and `kioskId` params
     const kioskParam = searchParams.get("kiosk"); // e.g. "true" or null
@@ -38,6 +40,17 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
         filteredFulfillment = fulfillmentOptions.filter(
             (option) => option.key !== "delivery"
         );
+    }
+
+    function handleClickMethod(methodKey: "dine-in" | "takeaway" | "delivery") {
+        // If we already have a loading method, skip to prevent double-clicks.
+        if (loadingMethod) return;
+
+        // 1) Set the local spinner state
+        setLoadingMethod(methodKey);
+
+        // 2) Actually proceed with the existing logic
+        handleSelectOption(methodKey);
     }
 
     // (A) Clear cart once on initial mount
@@ -98,9 +111,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
             <div className="flex grow items-stretch justify-center px-0 py-0 sm:px-8 sm:py-32 md:px-12 lg:px-16">
                 <div
                     className="bg-white shadow-lg w-full max-w-screen-lg
-                     min-h-full sm:min-h-0
-                     sm:rounded-xl p-4 sm:p-8 lg:p-16
-                     flex flex-col justify-evenly"
+                min-h-full sm:min-h-0
+                sm:rounded-xl p-4 sm:p-8 lg:p-16
+                flex flex-col justify-evenly"
                 >
                     <h1 className="text-2xl sm:text-3xl font-bold text-center mb-8">
                         {t("chooseMode.title")}
@@ -109,12 +122,12 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                     <div className="flex flex-wrap justify-center gap-6">
                         {/* Dine In */}
                         <button
-                            onClick={() => isDineIn && handleSelectOption("dine-in")}
-                            disabled={!isDineIn}
+                            onClick={() => isDineIn && handleClickMethod("dine-in")}
+                            disabled={!isDineIn || !!loadingMethod}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                          border-gray-200 bg-white shadow transition-transform hover:scale-105
-                          rounded-xl sm:rounded-xl
-                          ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
+                    border-gray-200 bg-white shadow transition-transform hover:scale-105
+                    rounded-xl sm:rounded-xl
+                    ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DineInIcon.png"
@@ -124,19 +137,38 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             <h2 className="mt-2 sm:mt-4 text-xl sm:text-2xl font-semibold">
                                 {t("chooseMode.dineIn.label")}
                             </h2>
-                            <p className="mt-1 text-gray-600 text-sm sm:text-md">
-                                {t("chooseMode.dineIn.hint")}
-                            </p>
+
+                            {/* If loadingMethod is "dine-in", show spinner; else show normal hint */}
+                            {loadingMethod === "dine-in" ? (
+                                <div className="mt-1 flex items-center justify-center">
+                                    <svg
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        className="animate-spin text-gray-700"
+                                        strokeWidth="3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <circle cx="12" cy="12" r="10" className="opacity-25" />
+                                        <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                                    </svg>
+                                </div>
+                            ) : (
+                                <p className="mt-1 text-gray-600 text-sm sm:text-md">
+                                    {t("chooseMode.dineIn.hint")}
+                                </p>
+                            )}
                         </button>
 
                         {/* Takeaway */}
                         <button
-                            onClick={() => isTakeaway && handleSelectOption("takeaway")}
-                            disabled={!isTakeaway}
+                            onClick={() => isTakeaway && handleClickMethod("takeaway")}
+                            disabled={!isTakeaway || !!loadingMethod}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                          border-gray-200 bg-white shadow transition-transform hover:scale-105
-                          rounded-xl sm:rounded-xl
-                          ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
+                    border-gray-200 bg-white shadow transition-transform hover:scale-105
+                    rounded-xl sm:rounded-xl
+                    ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/TakeAwayIcon.png"
@@ -146,19 +178,37 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             <h2 className="mt-2 sm:mt-4 text-xl sm:text-2xl font-semibold">
                                 {t("chooseMode.takeAway.label")}
                             </h2>
-                            <p className="mt-1 text-gray-600 text-sm sm:text-md">
-                                {t("chooseMode.takeAway.hint")}
-                            </p>
+
+                            {loadingMethod === "takeaway" ? (
+                                <div className="mt-1 flex items-center justify-center">
+                                    <svg
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        className="animate-spin text-gray-700"
+                                        strokeWidth="3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <circle cx="12" cy="12" r="10" className="opacity-25" />
+                                        <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                                    </svg>
+                                </div>
+                            ) : (
+                                <p className="mt-1 text-gray-600 text-sm sm:text-md">
+                                    {t("chooseMode.takeAway.hint")}
+                                </p>
+                            )}
                         </button>
 
                         {/* Delivery */}
                         <button
-                            onClick={() => isDelivery && handleSelectOption("delivery")}
-                            disabled={!isDelivery}
+                            onClick={() => isDelivery && handleClickMethod("delivery")}
+                            disabled={!isDelivery || !!loadingMethod}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                          border-gray-200 bg-white shadow transition-transform hover:scale-105
-                          rounded-xl sm:rounded-xl
-                          ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
+                    border-gray-200 bg-white shadow transition-transform hover:scale-105
+                    rounded-xl sm:rounded-xl
+                    ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <img
                                 src="/images/DeliveryIcon.png"
@@ -168,9 +218,27 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             <h2 className="mt-2 sm:mt-4 text-xl sm:text-2xl font-semibold">
                                 {t("chooseMode.delivery.label")}
                             </h2>
-                            <p className="mt-1 text-gray-600 text-sm sm:text-md">
-                                {t("chooseMode.delivery.hint")}
-                            </p>
+
+                            {loadingMethod === "delivery" ? (
+                                <div className="mt-1 flex items-center justify-center">
+                                    <svg
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        className="animate-spin text-gray-700"
+                                        strokeWidth="3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <circle cx="12" cy="12" r="10" className="opacity-25" />
+                                        <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                                    </svg>
+                                </div>
+                            ) : (
+                                <p className="mt-1 text-gray-600 text-sm sm:text-md">
+                                    {t("chooseMode.delivery.hint")}
+                                </p>
+                            )}
                         </button>
                     </div>
 
@@ -181,4 +249,5 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
             </div>
         </div>
     );
+
 };
