@@ -146,7 +146,7 @@ export default buildConfig({
       ...POS,
       admin: {
         ...POS.admin,
-        group: '🛠️
+        group: '🛠️'
       }
     },
 

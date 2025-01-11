@@ -23,6 +23,7 @@ export interface Config {
     'reservation-settings': ReservationSetting;
     tables: Table;
     printers: Printer;
+    pos: Po;
     pages: Page;
     media: Media;
     customers: Customer;
@@ -36,7 +37,6 @@ export interface Config {
     products: Product;
     subproducts: Subproduct;
     productpopups: Productpopup;
-    pos: Po;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -55,6 +55,7 @@ export interface Config {
     'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
     tables: TablesSelect<false> | TablesSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
+    pos: PosSelect<false> | PosSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     customers: CustomersSelect<false> | CustomersSelect<true>;
@@ -68,7 +69,6 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
     productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
-    pos: PosSelect<false> | PosSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -1166,6 +1166,43 @@ export interface Printer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pos".
+ */
+export interface Po {
+  id: string;
+  /**
+   * Choose which POS system this config belongs to.
+   */
+  provider: 'cloudpos' | 'deliverect';
+  /**
+   * For CloudPOS or other POS providers requiring a license name.
+   */
+  licenseName?: string | null;
+  /**
+   * For CloudPOS or other POS providers requiring a token.
+   */
+  token?: string | null;
+  /**
+   * API key if needed. For CloudPOS, you might not need it, but we keep it for other providers.
+   */
+  apiKey?: string | null;
+  /**
+   * API secret if needed. Hide or show carefully if it’s sensitive.
+   */
+  apiSecret?: string | null;
+  /**
+   * Enable or disable this POS configuration.
+   */
+  active?: boolean | null;
+  /**
+   * Which shop does this POS config belong to?
+   */
+  shop: string | Shop;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */
 export interface Page {
@@ -1572,43 +1609,6 @@ export interface Order {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pos".
- */
-export interface Po {
-  id: string;
-  /**
-   * Choose which POS system this config belongs to.
-   */
-  provider: 'cloudpos' | 'deliverect';
-  /**
-   * For CloudPOS or other POS providers requiring a license name.
-   */
-  licenseName?: string | null;
-  /**
-   * For CloudPOS or other POS providers requiring a token.
-   */
-  token?: string | null;
-  /**
-   * API key if needed. For CloudPOS, you might not need it, but we keep it for other providers.
-   */
-  apiKey?: string | null;
-  /**
-   * API secret if needed. Hide or show carefully if it’s sensitive.
-   */
-  apiSecret?: string | null;
-  /**
-   * Enable or disable this POS configuration.
-   */
-  active?: boolean | null;
-  /**
-   * Which shop does this POS config belong to?
-   */
-  shop: string | Shop;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -1663,6 +1663,10 @@ export interface PayloadLockedDocument {
         value: string | Printer;
       } | null)
     | ({
+        relationTo: 'pos';
+        value: string | Po;
+      } | null)
+    | ({
         relationTo: 'pages';
         value: string | Page;
       } | null)
@@ -1713,10 +1717,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'productpopups';
         value: string | Productpopup;
-      } | null)
-    | ({
-        relationTo: 'pos';
-        value: string | Po;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -2133,6 +2133,21 @@ export interface PrintersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pos_select".
+ */
+export interface PosSelect<T extends boolean = true> {
+  provider?: T;
+  licenseName?: T;
+  token?: T;
+  apiKey?: T;
+  apiSecret?: T;
+  active?: T;
+  shop?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages_select".
  */
 export interface PagesSelect<T extends boolean = true> {
@@ -2534,21 +2549,6 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   allowMultipleTimes?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pos_select".
- */
-export interface PosSelect<T extends boolean = true> {
-  provider?: T;
-  licenseName?: T;
-  token?: T;
-  apiKey?: T;
-  apiSecret?: T;
-  active?: T;
-  shop?: T;
   updatedAt?: T;
   createdAt?: T;
 }

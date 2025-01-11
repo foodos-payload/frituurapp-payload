@@ -2,6 +2,7 @@
 "use client"
 
 import React from "react"
+import { useSearchParams } from "next/navigation"
 import {
     DigitalMenuRow,
     CategoryTitleRow,
@@ -12,9 +13,6 @@ interface Branding {
     headerBackgroundColor?: string
     siteTitle?: string
     primaryColorCTA?: string
-    logo?: {
-        url: string
-    }
 }
 
 interface DigitalMenuLayoutProps {
@@ -26,25 +24,32 @@ export default function DigitalMenuLayout({
     rows,
     branding,
 }: DigitalMenuLayoutProps) {
+    // If you need to read searchParams:
+    const searchParams = useSearchParams()
+    const kiosk = searchParams.get("kiosk") === "true"
+
     return (
         <div
             className="w-full h-full flex flex-col p-2 gap-3"
             style={{ overflow: "hidden" }}
         >
+            {/* Possibly show something if kiosk mode */}
+            {kiosk && (
+                <div className="bg-yellow-100 text-yellow-800 p-2 text-center">
+                    Kiosk Mode Activated
+                </div>
+            )}
+
             {rows.map((row, rowIndex) => {
                 if (row.type === "category-title") {
                     const catRow = row as CategoryTitleRow
-
-                    // Use branding.headerBackgroundColor or fallback color:
                     const categoryBgColor = branding.headerBackgroundColor || "#dadada"
 
                     return (
                         <div
                             key={`row-${rowIndex}`}
                             className="text-xl font-bold p-2 rounded"
-                            style={{
-                                backgroundColor: categoryBgColor,
-                            }}
+                            style={{ backgroundColor: categoryBgColor }}
                         >
                             {catRow.categoryName}
                         </div>
@@ -64,12 +69,10 @@ export default function DigitalMenuLayout({
     )
 }
 
-// A small sub-component to handle the "product-row" with X columns
 function ProductRowComponent({ row }: { row: ProductRow }) {
     const products = row.products
-    const numCols = products.length // typically 2, 3, or 4
+    const numCols = products.length
 
-    // We'll do a simple row with "numCols" columns in a grid
     let gridColsClass = "grid-cols-2"
     if (numCols === 3) gridColsClass = "grid-cols-3"
     if (numCols === 4) gridColsClass = "grid-cols-4"
@@ -83,9 +86,7 @@ function ProductRowComponent({ row }: { row: ProductRow }) {
                         key={p.id}
                         className="border p-2 rounded flex items-center justify-between"
                     >
-                        <span className="text-lg font-semibold">
-                            {p.name_nl}
-                        </span>
+                        <span className="text-lg font-semibold">{p.name_nl}</span>
                         <span className="ml-2 text-lg">
                             {isPromo && (
                                 <span className="line-through text-gray-500 mr-2">

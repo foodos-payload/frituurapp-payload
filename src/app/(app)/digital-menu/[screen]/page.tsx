@@ -6,76 +6,58 @@ import DigitalMenuLayout from "../components/DigitalMenuLayout"
 import { getPayload } from "payload"
 import config from "@payload-config"
 
-// 1) Use a dynamic route: /digital-menu/[screen]?menuId=someID
-//    Or you can do a custom approach
-
+// Next recommends `export const dynamic` for dynamic routes in the App Router
 export const dynamic = "force-dynamic"
+
+// 1) Minimal type for your route props
+type DigitalMenuPageProps = {
+    params?: Promise<{ screen?: string }>
+    // no need to handle kiosk or other queries here
+    // searchParams?: { [key: string]: string | undefined }
+}
 
 export default async function DigitalMenuPage({
     params,
-    searchParams,
-}: {
-    params: { screen: string }
-    searchParams: { [key: string]: string | undefined }
-}) {
-    // A) Which screen index are we on? e.g. /digital-menu/2 => screen=2
-    const screenIndex = parseInt(params.screen || "1", 10) || 1
+}: DigitalMenuPageProps) {
+    // A) We'll handle screen index if you truly need it server-side
+    const screenNum = parseInt((await params)?.screen || "1", 10) || 1
 
     // B) Derive host slug from request headers
     const requestHeaders = await headers()
     const fullHost = requestHeaders.get("host") || ""
     const hostSlug = fullHost.split(".")[0] || "defaultShop"
 
-    // C) Optionally read a ?menuId= from query or find the digital menu doc by shop
-    const menuId = searchParams.menuId // if you pass ?menuId=abc in URL
-
-    // We'll fetch from Payload on the server side:
+    // 1) Access Payload
     const payload = await getPayload({ config })
 
-    // D) 1) Load the shop doc to get its ID (so we can find a digital-menus doc)
+    // 2) Find the shop
     const shopResult = await payload.find({
         collection: "shops",
         where: { slug: { equals: hostSlug } },
         limit: 1,
     })
     const shop = shopResult.docs[0]
-
     if (!shop) {
-        // fallback logic if no shop found
         return <div>Shop not found for host: {hostSlug}</div>
     }
 
-    // E) 2) If menuId is given, use that. Otherwise find the first digitalMenus doc referencing this shop.
-    let menuDoc: any = null
-    if (menuId) {
-        // fetch by ID
-        const foundMenu = await payload.findByID({
-            collection: "digital-menus",
-            id: menuId,
-            depth: 2,
-        })
-        menuDoc = foundMenu
-    } else {
-        // fetch any digital menu that references this shop
-        // or tenant
-        const menuRes = await payload.find({
-            collection: "digital-menus",
-            where: {
-                shops: {
-                    in: [shop.id],
-                },
+    // 3) Find a single digital-menus doc referencing this shop
+    const menuRes = await payload.find({
+        collection: "digital-menus",
+        where: {
+            shops: {
+                in: [shop.id],
             },
-            limit: 1,
-            depth: 2,
-        })
-        menuDoc = menuRes.docs[0]
-    }
-
+        },
+        limit: 1,
+        depth: 2,
+    })
+    const menuDoc = menuRes.docs[0]
     if (!menuDoc) {
         return <div>No Digital Menu config found for shop: {shop.name}</div>
     }
 
-    // F) Now fetch categories + products from /api/getProducts
+    // 4) Fetch categories + products from /api/getProducts
     const productsUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getProducts?host=${encodeURIComponent(
         hostSlug
     )}`
@@ -98,39 +80,44 @@ export default async function DigitalMenuPage({
         return (a.name_nl || "").localeCompare(b.name_nl || "")
     })
 
-    // G) Apply category overrides from `menuDoc.categoryOverrides`
+    // 5) Build catOverrides if needed
     const catOverrides: Record<string, { displayName?: string; columnsForProducts?: number }> = {}
     for (const overrideItem of menuDoc.categoryOverrides || []) {
-        if (overrideItem.category?.id) {
+        if (typeof overrideItem.category !== "string" && overrideItem.category?.id) {
             catOverrides[overrideItem.category.id] = {
-                displayName: overrideItem.displayName,
-                columnsForProducts: overrideItem.columnsForProducts,
+                displayName: overrideItem.displayName ?? undefined,
+                columnsForProducts: overrideItem.columnsForProducts ?? undefined,
             }
         }
     }
 
-    // H) Build pages from categories with dynamic maxRows
+    // 6) Build pages from categories
     const maxRows = menuDoc.maxRows || 10
     const pages = buildPagesFromCategories(categories, maxRows, catOverrides)
 
-    // clamp screenIndex
+    // clamp
     const maxScreenNum = pages.length === 0 ? 1 : pages.length
-    const actualScreenIndex = Math.min(Math.max(screenIndex, 1), maxScreenNum)
+    const actualScreenIndex = Math.min(Math.max(screenNum, 1), maxScreenNum)
     const rowsForThisScreen = pages.length > 0 ? pages[actualScreenIndex - 1] : []
 
-    // I) If the digital menu doc has a `shopBranding` relationship, we can skip
-    //    the old fetchBranding approach. Instead just read `menuDoc.shopBranding`.
-    // For example:
+    // 7) Branding doc
     const brandingDoc = menuDoc.shopBranding
-
-    // We'll pass it directly to <DigitalMenuLayout> as an object
     const branding = {
-        headerBackgroundColor: brandingDoc?.headerBackgroundColor,
-        siteTitle: brandingDoc?.siteTitle,
-        primaryColorCTA: brandingDoc?.primaryColorCTA,
-        logo: brandingDoc?.logo ? { url: brandingDoc.logo.url } : null,
+        headerBackgroundColor:
+            typeof brandingDoc === "object"
+                ? brandingDoc?.headerBackgroundColor ?? undefined
+                : undefined,
+        siteTitle:
+            typeof brandingDoc === "object"
+                ? brandingDoc?.siteTitle ?? undefined
+                : undefined,
+        primaryColorCTA:
+            typeof brandingDoc === "object"
+                ? brandingDoc?.primaryColorCTA ?? undefined
+                : undefined,
     }
 
+    // 8) Render => pass rows + branding to <DigitalMenuLayout>
     return (
         <main
             className="bg-white"
@@ -140,10 +127,7 @@ export default async function DigitalMenuPage({
                 overflow: "hidden",
             }}
         >
-            <DigitalMenuLayout
-                rows={rowsForThisScreen}
-                branding={branding}
-            />
+            <DigitalMenuLayout rows={rowsForThisScreen} branding={branding} />
         </main>
     )
 }
