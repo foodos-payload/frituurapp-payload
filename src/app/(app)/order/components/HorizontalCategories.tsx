@@ -17,6 +17,7 @@ interface Category {
 
 type Branding = {
   categoryCardBgColor?: string;
+  primaryColorCTA?: string;
   // ...
 };
 
