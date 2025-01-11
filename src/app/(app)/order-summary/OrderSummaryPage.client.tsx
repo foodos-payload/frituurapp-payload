@@ -234,8 +234,11 @@ export function OrderSummaryPage({
     // Confetti previous status check
     const previousStatusRef = useRef<OrderStatus | null>(null);
 
+    // Loading state for the "Create New Order" button spinner
+    const [createNewOrderLoading, setCreateNewOrderLoading] = useState(false);
+
     // SWR fetch
-    const { data: order, error, isLoading, isValidating } = useSWR<Order>(
+    const { data: order, error, isLoading } = useSWR<Order>(
         `/api/orders?host=${encodeURIComponent(hostSlug)}&orderId=${encodeURIComponent(orderId)}`,
         fetcher,
         { refreshInterval: 5000 }
@@ -302,15 +305,22 @@ export function OrderSummaryPage({
 
     // "Create New Order" => clear localstorage + navigate
     const handleCreateNewOrderClick = useCallback(() => {
+        if (createNewOrderLoading) return; // avoid double click
+        setCreateNewOrderLoading(true);
+
+        // Clear local storage
         localStorage.removeItem("selectedShippingMethod");
         localStorage.removeItem("selectedPaymentId");
         localStorage.removeItem("shippingCost");
+
+        // We'll never reset createNewOrderLoading to false, 
+        // because we navigate away and won't come back
         if (kioskMode) {
             router.push(`/index?kiosk=true`);
         } else {
             router.push(`/index`);
         }
-    }, [kioskMode, router]);
+    }, [kioskMode, router, createNewOrderLoading]);
 
     // If error
     if (error) {
@@ -444,7 +454,9 @@ export function OrderSummaryPage({
                         )}
                         {/* Order ID/time */}
                         <div className="font-bold text-lg uppercase tracking-wider">
-                            <div className="text-4xl font-semibold mb-1">Order #{displayedOrderNumber}</div>
+                            <div className="text-4xl font-semibold mb-1">
+                                Order #{displayedOrderNumber}
+                            </div>
                             <div className="text-white-500 text-xl">
                                 {order.fulfillment_time || "No time"}{" "}
                                 {order.fulfillment_date
@@ -472,12 +484,12 @@ export function OrderSummaryPage({
                                 return (
                                     <div
                                         className={`
-                                            ${colorClasses}
-                                            px-6 py-3
-                                            rounded-full
-                                            text-4xl
-                                            animate-pulse-border
-                                        `}
+                      ${colorClasses}
+                      px-6 py-3
+                      rounded-full
+                      text-4xl
+                      animate-pulse-border
+                    `}
                                         style={activeStyles as React.CSSProperties}
                                     >
                                         {label}
@@ -567,40 +579,68 @@ export function OrderSummaryPage({
                             </div>
                         )}
 
-                        {/* If discount => show discount line */}
+                        {/* If discount => show discount line (only if discountTotal > 0) */}
                         {(order.discountTotal ?? 0) > 0 && (
                             <div className="flex items-center justify-end p-3 pt-3 text-red-600">
                                 <span className="text-2xl font-semibold">
-                                    Discount: -€{order.discountTotal?.toFixed(2)}
+                                    Discount: -€{(order.discountTotal ?? 0).toFixed(2)}
                                 </span>
                             </div>
                         )}
 
-                        {/* If promotionsUsed => extra lines */}
+                        {/* If promotionsUsed => extra lines, skip if 0 */}
                         {order.promotionsUsed && (
                             <div className="px-3 text-lg text-gray-600 space-y-1">
+
+                                {/* Points */}
                                 {order.promotionsUsed.pointsUsed && order.promotionsUsed.pointsUsed > 0 && (
-                                    <div>Membership Points: -€{(order.promotionsUsed.pointsUsed * 0.01).toFixed(2)}</div>
+                                    <div>
+                                        Membership Points: -€
+                                        {order.promotionsUsed.pointsUsed > 0
+                                            ? ((order.promotionsUsed.pointsUsed ?? 0) * 0.01).toFixed(2)
+                                            : ""}
+                                    </div>
                                 )}
+
+                                {/* Credits */}
                                 {order.promotionsUsed.creditsUsed && order.promotionsUsed.creditsUsed > 0 && (
-                                    <div>Store Credits: -€{order.promotionsUsed.creditsUsed.toFixed(2)}</div>
+                                    <div>
+                                        Store Credits: -€
+                                        {order.promotionsUsed.creditsUsed > 0
+                                            ? (order.promotionsUsed.creditsUsed ?? 0).toFixed(2)
+                                            : ""}
+                                    </div>
                                 )}
+
+                                {/* Coupon */}
                                 {order.promotionsUsed.couponUsed?.barcode && (
                                     <div>
                                         Coupon: {order.promotionsUsed.couponUsed.barcode}
                                         {order.promotionsUsed.couponUsed.value_type === "fixed"
-                                            ? ` => -€${order.promotionsUsed.couponUsed.value}`
-                                            : ` => -${order.promotionsUsed.couponUsed.value}%`}
+                                            ? ` => -€${(order.promotionsUsed.couponUsed.value ?? 0) > 0
+                                                ? order.promotionsUsed.couponUsed.value
+                                                : ""
+                                            }`
+                                            : ` => -${(order.promotionsUsed.couponUsed.value ?? 0) > 0
+                                                ? order.promotionsUsed.couponUsed.value
+                                                : ""
+                                            }%`}
                                     </div>
                                 )}
-                                {order.promotionsUsed.giftVoucherUsed?.barcode && (
-                                    <div>
-                                        Gift Voucher: {order.promotionsUsed.giftVoucherUsed.barcode} =&gt;
-                                        -€{order.promotionsUsed.giftVoucherUsed.value?.toFixed(2)}
-                                    </div>
-                                )}
+
+                                {/* Gift Voucher */}
+                                {order.promotionsUsed.giftVoucherUsed?.barcode &&
+                                    (order.promotionsUsed.giftVoucherUsed.value ?? 0) > 0 && (
+                                        <div>
+                                            Gift Voucher: {order.promotionsUsed.giftVoucherUsed.barcode} =&gt; -€
+                                            {(order.promotionsUsed.giftVoucherUsed.value ?? 0) > 0
+                                                ? (order.promotionsUsed.giftVoucherUsed.value ?? 0).toFixed(2)
+                                                : ""}
+                                        </div>
+                                    )}
                             </div>
                         )}
+
 
                         {/* shipping cost if any */}
                         {shippingCost > 0 && (
@@ -613,7 +653,9 @@ export function OrderSummaryPage({
 
                         {/* Final total */}
                         <div className="flex items-center justify-end p-3 pt-3">
-                            <span className="text-3xl font-bold">€{totalPaid.toFixed(2)}</span>
+                            <span className="text-3xl font-bold">
+                                €{totalPaid.toFixed(2)}
+                            </span>
                         </div>
                     </div>
 
@@ -624,7 +666,23 @@ export function OrderSummaryPage({
                         className="bg-green-600 text-white px-8 py-4 mt-12 rounded text-4xl"
                         style={{ backgroundColor: brandCTA }}
                     >
-                        Create New Order ({countdown}s)
+                        {createNewOrderLoading ? (
+                            // spinner
+                            <svg
+                                width="36"
+                                height="36"
+                                viewBox="0 0 24 24"
+                                className="mx-auto animate-spin"
+                                strokeWidth="3"
+                                fill="none"
+                                stroke="currentColor"
+                            >
+                                <circle cx="12" cy="12" r="10" className="opacity-20" />
+                                <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                            </svg>
+                        ) : (
+                            `Create New Order (${countdown}s)`
+                        )}
                     </button>
                 </div>
             </div>
@@ -689,11 +747,11 @@ export function OrderSummaryPage({
                                 <div key={step} className="flex items-center">
                                     <div
                                         className={`
-                                            ${colorClasses}
-                                            ${opacityClass}
-                                            px-2 py-1 rounded-full text-md transition-colors
-                                            ${isCurrent ? "animate-pulse-border" : ""}
-                                        `}
+                      ${colorClasses}
+                      ${opacityClass}
+                      px-2 py-1 rounded-full text-md transition-colors
+                      ${isCurrent ? "animate-pulse-border" : ""}
+                    `}
                                         style={activeStyles as React.CSSProperties}
                                     >
                                         {label}
@@ -829,16 +887,21 @@ export function OrderSummaryPage({
                         {/* If promotionsUsed => extra lines */}
                         {order.promotionsUsed && (
                             <div className="px-3 text-sm text-gray-700 space-y-1">
-                                {order.promotionsUsed.pointsUsed && order.promotionsUsed.pointsUsed > 0 && (
-                                    <div>
-                                        Membership Points: -€{(order.promotionsUsed.pointsUsed * 0.01).toFixed(2)}
-                                    </div>
-                                )}
-                                {order.promotionsUsed.creditsUsed && order.promotionsUsed.creditsUsed > 0 && (
-                                    <div>
-                                        Store Credits: -€{order.promotionsUsed.creditsUsed.toFixed(2)}
-                                    </div>
-                                )}
+                                {/* Only display if > 0 */}
+                                {order.promotionsUsed.pointsUsed &&
+                                    order.promotionsUsed.pointsUsed > 0 && (
+                                        <div>
+                                            Membership Points: -€
+                                            {((order.promotionsUsed.pointsUsed ?? 0) * 0.01).toFixed(2)}
+                                        </div>
+                                    )}
+                                {order.promotionsUsed.creditsUsed &&
+                                    order.promotionsUsed.creditsUsed > 0 && (
+                                        <div>
+                                            Store Credits: -€
+                                            {(order.promotionsUsed.creditsUsed ?? 0).toFixed(2)}
+                                        </div>
+                                    )}
                                 {order.promotionsUsed.couponUsed?.barcode && (
                                     <div>
                                         Coupon: {order.promotionsUsed.couponUsed.barcode}
@@ -847,12 +910,13 @@ export function OrderSummaryPage({
                                             : ` => -${order.promotionsUsed.couponUsed.value}%`}
                                     </div>
                                 )}
-                                {order.promotionsUsed.giftVoucherUsed?.barcode && (
-                                    <div>
-                                        Gift Voucher: {order.promotionsUsed.giftVoucherUsed.barcode} {'>'}
-                                        -€{order.promotionsUsed.giftVoucherUsed.value?.toFixed(2)}
-                                    </div>
-                                )}
+                                {order.promotionsUsed.giftVoucherUsed?.barcode &&
+                                    (order.promotionsUsed.giftVoucherUsed.value ?? 0) > 0 && (
+                                        <div>
+                                            Gift Voucher: {order.promotionsUsed.giftVoucherUsed.barcode} =&gt;
+                                            -€{(order.promotionsUsed.giftVoucherUsed.value ?? 0).toFixed(2)}
+                                        </div>
+                                    )}
                             </div>
                         )}
 
@@ -900,14 +964,14 @@ export function OrderSummaryPage({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="
-                                                inline-flex items-center
-                                                bg-white border border-gray-300
-                                                px-3 py-4
-                                                text-sm text-gray-700
-                                                rounded shadow-sm
-                                                hover:shadow hover:bg-gray-50
-                                                transition
-                                            "
+                        inline-flex items-center
+                        bg-white border border-gray-300
+                        px-3 py-4
+                        text-sm text-gray-700
+                        rounded shadow-sm
+                        hover:shadow hover:bg-gray-50
+                        transition
+                      "
                                         >
                                             <img
                                                 src="https://lh3.googleusercontent.com/COxitqgJr1sJnIDe8-jiKhxDx1FrYbtRHKJ9z_hELisAlapwE9LUPh6fcXIfb5vwpbMl4xl9H9TRFPc5NOO8Sb3VSgIBrfRYvW6cUA"
@@ -925,14 +989,14 @@ export function OrderSummaryPage({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="
-                                                inline-flex items-center
-                                                bg-white border border-gray-300
-                                                px-3 py-4
-                                                text-sm text-gray-700
-                                                rounded shadow-sm
-                                                hover:shadow hover:bg-gray-50
-                                                transition
-                                            "
+                        inline-flex items-center
+                        bg-white border border-gray-300
+                        px-3 py-4
+                        text-sm text-gray-700
+                        rounded shadow-sm
+                        hover:shadow hover:bg-gray-50
+                        transition
+                      "
                                         >
                                             <img
                                                 src="https://static.tacdn.com/img2/brand_refresh/Tripadvisor_lockup_horizontal_secondary_registered.svg"
@@ -955,11 +1019,27 @@ export function OrderSummaryPage({
                             onClick={handleCreateNewOrderClick}
                             style={{ backgroundColor: brandCTA }}
                             className="
-                                block w-full mt-0 text-white
-                                px-4 py-3 rounded-b-xl text-center text-lg
-                            "
+                block w-full mt-0 text-white
+                px-4 py-3 rounded-b-xl text-center text-lg
+              "
                         >
-                            Create New Order
+                            {createNewOrderLoading ? (
+                                // spinner
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    className="mx-auto animate-spin"
+                                    strokeWidth="3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                >
+                                    <circle cx="12" cy="12" r="10" className="opacity-20" />
+                                    <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                                </svg>
+                            ) : (
+                                "Create New Order"
+                            )}
                         </button>
                     </div>
                 </div>
