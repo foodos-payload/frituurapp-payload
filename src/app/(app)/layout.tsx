@@ -101,15 +101,22 @@ export default async function RootLayout({
   // 2) Fetch branding once at layout level
   const branding = await getShopBranding(hostSlug);
 
+  // 3) Use branding.primaryColorCTA or fallback "#CE2027"
+  const scrollbarColor = branding.primaryColorCTA || '#CE2027';
+
   return (
-    <html className={baseClass} lang="en">
+    <html className={baseClass} lang="en" style={
+      {
+        '--scrollbar-thumb-color': scrollbarColor,
+      } as React.CSSProperties
+    }>
       <head>
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
           strategy="beforeInteractive"
         />
       </head>
-      <body>
+      <body className="scollbar-webkit">
         <TranslationProvider>
           <CartProvider>
             <ShopBrandingProvider branding={branding}>

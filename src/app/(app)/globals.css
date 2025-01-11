@@ -89,3 +89,21 @@ h1, h2, h3, h4, h5, h6 {
     @apply bg-background text-foreground;
   } */
 } 
+
+:root {
+  --scrollbar-thumb-color: #CE2027; /* fallback red */
+}
+
+/* Custom scrollbar styling */
+*::-webkit-scrollbar {
+  width: 12px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: white;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-color);
+  border-radius: 20px;
+}

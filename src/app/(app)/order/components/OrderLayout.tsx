@@ -309,8 +309,7 @@ export default function OrderLayout({
             {/* MAIN LAYOUT CONTAINER */}
             <div
                 className="
-          main-container 
-          
+          main-container
           relative 
           flex 
           flex-col 
