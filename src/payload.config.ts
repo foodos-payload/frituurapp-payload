@@ -252,11 +252,15 @@ export default buildConfig({
   cors: [
     'https://frituurwebshop.be',
     'https://*.frituurwebshop.be',
+    'https://frituur-den-overkant.frituurwebshop.be',
+    'http://frituur-den-overkant.frituurwebshop.be',
     'http://localhost:3000',
   ],
   csrf: [
     'https://frituurwebshop.be',
     'https://*.frituurwebshop.be',
+    'https://frituur-den-overkant.frituurwebshop.be',
+    'http://frituur-den-overkant.frituurwebshop.be',
     'http://localhost:3000',
     'http://*.localhost:3000',
   ],
