@@ -4,6 +4,8 @@ import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { canMutateOrder } from './access/byTenant';
 import { readAccess } from './access/readAccess';
+import { generateOrderSummaryEmail } from '../../email/generateOrderSummaryEmail'
+
 
 export const Orders: CollectionConfig = {
   slug: 'orders',
@@ -365,6 +367,85 @@ export const Orders: CollectionConfig = {
                 },
               });
             }
+          }
+        }
+      },
+    ],
+    afterChange: [
+      async ({ doc, operation, req }) => {
+        if (operation === 'create') {
+          try {
+            let branding: any = {}
+
+            // 1) If there's at least one shop attached, use the first
+            if (doc.shops && doc.shops.length > 0) {
+              const firstShopId = doc.shops[0]?.id ?? doc.shops[0]
+              if (firstShopId) {
+                // (A) Fetch the Shop doc
+                const shopDoc = await req.payload.findByID({
+                  collection: 'shops',
+                  id: firstShopId,
+                })
+                if (shopDoc) {
+                  // (B) Find the ShopBranding doc referencing this shop
+                  const brandingRes = await req.payload.find({
+                    collection: 'shop-branding',
+                    where: { shops: { in: [shopDoc.id] } },
+                    depth: 2,
+                    limit: 1,
+                  })
+                  const brandingDoc = brandingRes.docs[0] || null
+
+                  // Convert the returned doc into a simpler object if needed:
+                  // e.g. { logoUrl, headerBackgroundColor, primaryColorCTA, siteTitle, etc. }
+                  branding = {
+                    siteTitle: brandingDoc?.siteTitle || shopDoc.name,
+                    logoUrl: brandingDoc?.siteLogo,
+                    headerBackgroundColor: brandingDoc?.headerBackgroundColor,
+                    primaryColorCTA: brandingDoc?.primaryColorCTA,
+                    googleReviewUrl: brandingDoc?.googleReviewUrl,
+                    tripAdvisorUrl: brandingDoc?.tripAdvisorUrl,
+                    // ... add any other fields from brandingDoc that you want
+                  }
+                }
+              }
+            }
+
+            // 2) Build your "itemLines" array (same as before)
+            const orderDetails = doc.order_details || []
+            const itemLines = orderDetails.map((detail: any) => {
+              const subprods = (detail.subproducts || []).map((sp: any) => ({
+                name: sp.name_nl || 'Unnamed subproduct',
+                price: sp.price ?? 0,
+              }))
+              return {
+                name: detail.name_nl || detail.product?.name_nl || 'Unnamed product',
+                quantity: detail.quantity ?? 1,
+                price: detail.price ?? 0,
+                subproducts: subprods,
+              }
+            })
+
+            // 3) Generate email HTML
+            const html = await generateOrderSummaryEmail({
+              orderNumber: doc.id.toString(),
+              itemLines,
+              totalPrice: doc.total?.toFixed(2) || '0.00',
+              shippingCost: doc.shipping_cost?.toFixed(2) || '0.00',
+              fulfillmentMethod: doc.fulfillment_method,
+              customerDetails: doc.customer_details || {},
+              branding, // pass along our branding object
+            })
+
+            // 4) Send the email
+            await req.payload.sendEmail({
+              to: doc.customer_details?.email || 'no-email-provided@example.com',
+              from: 'info@frituurapp.be',
+              subject: `Your Order #${doc.id}`,
+              html,
+            })
+          } catch (err) {
+            console.error('Error sending order summary email:', err)
           }
         }
       },
