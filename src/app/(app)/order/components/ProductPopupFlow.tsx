@@ -4,6 +4,7 @@ import React, { useState, useEffect, MouseEvent } from "react";
 import { useCart, CartItem } from "../../../../context/CartContext";
 import { FiCheckCircle } from "react-icons/fi";
 import { useTranslation } from "@/context/TranslationsContext";
+
 /**
  * Minimal subproduct/link types
  */
@@ -227,77 +228,65 @@ export default function ProductPopupFlow({
 
     // New: local error message
     const [errorMessage, setErrorMessage] = useState("");
+    const [isOverMax, setIsOverMax] = useState(false);
 
-    const [subproductQuantities, setSubproductQuantities] = useState<Record<string, Record<string, number>>>({})
+    // Keep track of quantities for popups allowing multiple times
+    const [subproductQuantities, setSubproductQuantities] = useState<
+        Record<string, Record<string, number>>
+    >({});
 
-
-    function incrementQty(popupId: string, subId: string) {
-        setErrorMessage(""); // clear any old error first
-
-        // 1) Calculate the total selected (across all subproducts) so far
-        const totalSoFar = getTotalQuantityForPopup(popupId)
-
-        // 2) If we've reached max, block
-        if (popup.maximum_option && popup.maximum_option > 0) {
-            if (totalSoFar >= popup.maximum_option) {
-                setErrorMessage(`Cannot exceed the maximum of ${popup.maximum_option} total picks.`)
-                return
-            }
-        }
-
-        setSubproductQuantities(prev => {
-            const oldMap = prev[popupId] || {}
-            const oldQty = oldMap[subId] || 0
-            return {
-                ...prev,
-                [popupId]: {
-                    ...oldMap,
-                    [subId]: oldQty + 1
-                }
-            }
-        })
-    }
-
-    /** A helper function to sum up the total picks for a single popup ID. */
+    /** Sum the total picks for a single popup ID. */
     function getTotalQuantityForPopup(popupId: string): number {
-        const map = subproductQuantities[popupId] || {}
-        return Object.values(map).reduce((acc, qty) => acc + qty, 0)
+        const map = subproductQuantities[popupId] || {};
+        return Object.values(map).reduce((acc, qty) => acc + qty, 0);
     }
 
-    function decrementQty(popupId: string, subId: string) {
-        setSubproductQuantities(prev => {
-            const oldMap = prev[popupId] || {}
-            const oldQty = oldMap[subId] || 0
-            const newQty = Math.max(oldQty - 1, 0)
+    /** For multiTimes => increment quantity. (No blocking, just let them exceed max) */
+    function incrementQty(popupId: string, subId: string) {
+        if (popup.maximum_option && popup.maximum_option > 0 && totalSoFar >= popup.maximum_option) {
+            setIsOverMax(true);
+            setTimeout(() => setIsOverMax(false), 1000); // 1 second highlight
+            return; // block increment
+        }
+        setSubproductQuantities((prev) => {
+            const oldMap = prev[popupId] || {};
+            const oldQty = oldMap[subId] || 0;
             return {
                 ...prev,
                 [popupId]: {
                     ...oldMap,
-                    [subId]: newQty
-                }
-            }
-        })
+                    [subId]: oldQty + 1,
+                },
+            };
+        });
     }
 
-    /** Toggle or single-select for subproduct. */
+    /** For multiTimes => decrement quantity. */
+    function decrementQty(popupId: string, subId: string) {
+        setSubproductQuantities((prev) => {
+            const oldMap = prev[popupId] || {};
+            const oldQty = oldMap[subId] || 0;
+            const newQty = Math.max(oldQty - 1, 0);
+            return {
+                ...prev,
+                [popupId]: {
+                    ...oldMap,
+                    [subId]: newQty,
+                },
+            };
+        });
+    }
+
+    /** Toggle or single-select for subproduct (no multiple times). */
     function handleSubproductClick(sub: Subproduct) {
-        setErrorMessage(""); // clear previous errors
+        setErrorMessage("");
         const subID = sub.id;
+
         setSelectedOptions((prev) => {
             const oldArray = prev[popupID] || [];
             let newArray: string[] = [];
 
             if (multiselect) {
-                // If user tries to add subID but the oldArray is already at max
-                if (
-                    popup.maximum_option &&
-                    popup.maximum_option > 0 &&
-                    !oldArray.includes(subID) && // we're trying to add a new item
-                    oldArray.length >= popup.maximum_option
-                ) {
-                    setErrorMessage(`Cannot exceed the maximum of ${popup.maximum_option} picks.`)
-                    return prev; // do not change anything
-                }
                 // multi-select toggle
                 if (oldArray.includes(subID)) {
                     newArray = oldArray.filter((id) => id !== subID);
@@ -305,12 +294,10 @@ export default function ProductPopupFlow({
                     newArray = [...oldArray, subID];
                 }
             } else {
-                // single select:
+                // single select
                 if (oldArray.includes(subID)) {
-                    // if already selected => uncheck
                     newArray = [];
                 } else {
-                    // otherwise select
                     newArray = [subID];
                 }
             }
@@ -322,18 +309,14 @@ export default function ProductPopupFlow({
         });
     }
 
-
-    /** Move forward or finish. */
+    /** Next/Back buttons */
     function handleNext() {
-        setErrorMessage(""); // reset
-        // If popup has minimum_option => enforce it
+        setErrorMessage("");
+        // If there's a minimum_option => enforce it
         if (popup.minimum_option && popup.minimum_option > 0) {
             const chosenIDs = selectedOptions[popup.id] || [];
             if (chosenIDs.length < popup.minimum_option) {
-                // Instead of alert, store an error
-                setErrorMessage(
-                    `Je moet minstens ${popup.minimum_option} optie(s) kiezen!`
-                );
+                setErrorMessage(`Je moet minstens ${popup.minimum_option} optie(s) kiezen!`);
                 return;
             }
         }
@@ -351,10 +334,11 @@ export default function ProductPopupFlow({
         if (currentIndex > 0) setCurrentIndex((i) => i - 1);
     }
 
+    /** Finalize => gather all subproducts from all popups + add or update cart */
     function handleFinish() {
         setErrorMessage("");
 
-        // 1) Final check on minimum_option for the *current* (last) popup
+        // last popup => enforce minimum
         if (popup.minimum_option && popup.minimum_option > 0) {
             const chosenIDs = selectedOptions[popup.id] || [];
             if (chosenIDs.length < popup.minimum_option) {
@@ -363,8 +347,7 @@ export default function ProductPopupFlow({
             }
         }
 
-        // 2) Gather subproducts from *all* popups into chosenSubs
-        //    We'll do it by checking `selectedOptions[pId]` for each popup
+        // Gather subproducts from *all* popups
         const chosenSubs: Array<{
             subproductId: string;
             name_nl: string;
@@ -374,14 +357,10 @@ export default function ProductPopupFlow({
             price: number;
             tax?: number;
             tax_dinein?: number;
-            image?: {
-                url: string;
-                alt?: string;
-            };
+            image?: { url: string; alt?: string };
             quantity: number;
         }> = [];
 
-        // For each subproduct in this popup
         for (const popIt of sortedPopups) {
             if (!popIt.popup) continue;
             const pId = popIt.popup.id;
@@ -392,51 +371,47 @@ export default function ProductPopupFlow({
                 for (const sp of popIt.popup.subproducts) {
                     const q = qtyMap[sp.id] || 0;
                     if (q > 0) {
-                        // push just ONE object, but with quantity: q
-                        const subproductData = {
-                            // same logic you had before:
+                        const subData = {
                             subproductId: sp.linkedProduct?.id ?? sp.id,
                             name_nl: sp.linkedProduct?.name_nl ?? sp.name_nl,
                             name_en: sp.linkedProduct?.name_en ?? sp.name_en ?? sp.name_nl,
                             name_de: sp.linkedProduct?.name_de ?? sp.name_de ?? sp.name_nl,
                             name_fr: sp.linkedProduct?.name_fr ?? sp.name_fr ?? sp.name_nl,
                             price: sp.linkedProduct?.price ?? sp.price,
-                            tax: typeof sp.linkedProduct?.tax === "number" ? sp.linkedProduct!.tax : sp.tax ?? undefined,
-                            tax_dinein: typeof sp.linkedProduct?.tax_dinein === "number"
-                                ? sp.linkedProduct!.tax_dinein
-                                : sp.tax_dinein ?? undefined,
+                            tax:
+                                typeof sp.linkedProduct?.tax === "number"
+                                    ? sp.linkedProduct!.tax
+                                    : sp.tax ?? undefined,
+                            tax_dinein:
+                                typeof sp.linkedProduct?.tax_dinein === "number"
+                                    ? sp.linkedProduct!.tax_dinein
+                                    : sp.tax_dinein ?? undefined,
                             image: sp.linkedProduct?.image ?? sp.image
                                 ? {
                                     url: (sp.linkedProduct?.image ?? sp.image)?.url ?? "",
-                                    alt: (sp.linkedProduct?.image ?? sp.image)?.alt ?? sp.name_nl,
+                                    alt:
+                                        (sp.linkedProduct?.image ?? sp.image)?.alt ?? sp.name_nl,
                                 }
                                 : undefined,
-                            quantity: q,  // <--- store how many times user chose it
+                            quantity: q,
                         };
-                        chosenSubs.push(subproductData);
+                        chosenSubs.push(subData);
                     }
                 }
             } else {
-                // multi-select or single-select => your existing chosenIDs approach
+                // multi-select or single-select => existing approach
                 const chosenIDs = selectedOptions[pId] || [];
                 for (const sp of popIt.popup.subproducts) {
                     if (!chosenIDs.includes(sp.id)) continue;
-                    // push one with quantity = 1
                     chosenSubs.push({
                         subproductId: sp.linkedProduct?.id ?? sp.id,
                         name_nl: sp.name_nl,
                         name_en: sp.name_en ?? sp.name_nl,
                         name_de: sp.name_de ?? sp.name_nl,
                         name_fr: sp.name_fr ?? sp.name_nl,
-
-                        // Use sp.price
                         price: sp.price,
-
-                        // If sp.tax or sp.tax_dinein exist, store them. Otherwise default to null or 0:
                         tax: typeof sp.tax === "number" ? sp.tax : undefined,
                         tax_dinein: typeof sp.tax_dinein === "number" ? sp.tax_dinein : undefined,
-
-
                         image: sp.image
                             ? {
                                 url: sp.image.url,
@@ -449,20 +424,20 @@ export default function ProductPopupFlow({
             }
         }
 
-        // 3) Define the basePrice and main product tax fields
-        const basePrice = product.price ?? 0
-        const mainTax = product.tax ?? 0
-        const mainTaxDinein = product.tax_dinein ?? 0
+        // define product's base price + tax
+        const basePrice = product.price ?? 0;
+        const mainTax = product.tax ?? 0;
+        const mainTaxDinein = product.tax_dinein ?? 0;
 
-        // 4) Add or update in cart
+        // Add or update in cart
         if (editingItem && editingItemSignature) {
             updateItem(editingItemSignature, {
                 price: basePrice,
-                taxRate: mainTax,        // for example: store top-level product tax
+                taxRate: mainTax,
                 taxRateDineIn: mainTaxDinein,
                 subproducts: chosenSubs,
                 hasPopups: true,
-            })
+            });
         } else {
             addItem({
                 productId: product.id,
@@ -472,7 +447,7 @@ export default function ProductPopupFlow({
                 productNameDE: product.name_de ?? product.name_nl,
                 productNameFR: product.name_fr ?? product.name_nl,
                 price: basePrice,
-                taxRate: mainTax,         // for example: store top-level product tax
+                taxRate: mainTax,
                 taxRateDineIn: mainTaxDinein,
                 quantity: 1,
                 image: product.image
@@ -482,11 +457,11 @@ export default function ProductPopupFlow({
                     }
                     : undefined,
                 note: "",
-                subproducts: chosenSubs, // The final array of subproducts
+                subproducts: chosenSubs,
                 hasPopups: true,
-            })
+            });
 
-            // Optionally dispatch a "product-added" event for a cart animation or similar
+            // dispatch a "product-added" event
             window.dispatchEvent(
                 new CustomEvent("product-added", {
                     detail: {
@@ -500,6 +475,7 @@ export default function ProductPopupFlow({
         onClose();
     }
 
+    /** If user clicks outside the modal => close */
     function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
         if (e.target === e.currentTarget) onClose();
     }
@@ -511,7 +487,15 @@ export default function ProductPopupFlow({
         subproductQuantities
     );
 
+    // brandCTA color
     const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+
+    // Check if user is over the max => if totalSoFar > maximum_option => highlight
+    const totalSoFar = getTotalQuantityForPopup(popup.id);
+    // const isOverMax =
+    //     popup.maximum_option &&
+    //     popup.maximum_option > 0 &&
+    //     totalSoFar > popup.maximum_option;
 
     return (
         <div
@@ -625,17 +609,32 @@ export default function ProductPopupFlow({
                 </div>
 
                 {/* Main content area */}
-                <div className={`${isKiosk ? "mb-24 mt-36 px-4" : "mb-14 mt-5"} w-[95%] mx-auto`}>
+                <div
+                    className={`${isKiosk ? "mb-24 mt-36 px-4" : "mb-14 mt-5"
+                        } w-[95%] mx-auto`}
+                >
                     {/* The selected-items row if any */}
                     {selectedItems.length > 0 && (
-                        <div className={`flex flex-row flex-wrap items-center gap-2 mb-6 ${isKiosk ? "justify-center" : ""}`}>
+                        <div
+                            className={`flex flex-row flex-wrap items-center gap-2 mb-6 ${isKiosk ? "justify-center" : ""
+                                }`}
+                        >
                             {selectedItems.map((item) => (
-                                <div key={item.id} className="selected-item-tile animate-add flex items-center gap-1 relative">
+                                <div
+                                    key={item.id}
+                                    className="selected-item-tile animate-add flex items-center gap-1 relative"
+                                >
                                     <div className="w-20 h-20 flex items-center justify-center bg-gray-200 rounded-full">
                                         {item.image?.url ? (
-                                            <img src={item.image.url} alt={item.image.alt || item.name_nl} className="object-cover w-full h-full rounded-full" />
+                                            <img
+                                                src={item.image.url}
+                                                alt={item.image.alt || item.name_nl}
+                                                className="object-cover w-full h-full rounded-full"
+                                            />
                                         ) : (
-                                            <span className="text-xs text-center px-2">{item.name_nl}</span>
+                                            <span className="text-xs text-center px-2">
+                                                {item.name_nl}
+                                            </span>
                                         )}
                                     </div>
                                     {item.quantity > 1 && (
@@ -648,18 +647,28 @@ export default function ProductPopupFlow({
                         </div>
                     )}
 
-
-                    {/* 2) Step label => use popupTitle */}
+                    {/* Step label => use popupTitle */}
                     <h2
                         className={`
               font-semibold text-center
-              ${isKiosk ? "text-2xl mb-8 mt-10" : "text-xl mt-20 mb-10"}
+              ${isKiosk
+                                ? "text-2xl mb-8 mt-10"
+                                : "text-xl mt-20 mb-10"
+                            }
             `}
                     >
                         {popupTitle}
                         {popup.maximum_option && popup.maximum_option > 0 && (
-                            <span style={{ fontSize: isKiosk ? "1.25rem" : "1rem", marginLeft: "0.5rem" }}>
-                                {`(max ${popup.maximum_option})`}
+                            <span
+                                style={{
+                                    fontSize: isKiosk ? "1.25rem" : "1rem",
+                                    marginLeft: "0.5rem",
+                                    color: isOverMax ? "red" : "inherit",
+                                    transform: isOverMax ? "scale(1.1)" : "none",
+                                    transition: "all 0.2s ease",
+                                }}
+                            >
+                                (max {popup.maximum_option})
                             </span>
                         )}
                     </h2>
@@ -671,42 +680,49 @@ export default function ProductPopupFlow({
                         </div>
                     )}
 
-                    {/* 3) Subproduct tile grid */}
+                    {/* Subproduct tile grid */}
                     <div
                         className={`
               mt-4
               grid gap-4
-              ${isKiosk ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2 md:grid-cols-3"}
+              ${isKiosk
+                                ? "grid-cols-2 md:grid-cols-3"
+                                : "grid-cols-2 md:grid-cols-3"
+                            }
             `}
                     >
                         {subproducts.map((sub) => {
-                            console.log(popup.allowMultipleTimes)
-                            const useLinked = !!sub.linkedProduct
+                            const useLinked = !!sub.linkedProduct;
                             const displayName = useLinked
                                 ? pickSubproductName(sub.linkedProduct!, lang)
-                                : pickSubproductName(sub, lang)
-                            const displayPrice = useLinked ? sub.linkedProduct!.price ?? 0 : sub.price
-                            const displayImage = useLinked ? sub.linkedProduct?.image : sub.image
+                                : pickSubproductName(sub, lang);
+                            const displayPrice = useLinked
+                                ? sub.linkedProduct!.price ?? 0
+                                : sub.price;
+                            const displayImage = useLinked
+                                ? sub.linkedProduct?.image
+                                : sub.image;
 
-                            const chosenThisStep = selectedOptions[popupID] || []
-                            const isSelected = chosenThisStep.includes(sub.id)
+                            const chosenThisStep = selectedOptions[popupID] || [];
+                            const isSelected = chosenThisStep.includes(sub.id);
 
-                            // For multiple times:
-                            const qtyMap = subproductQuantities[popupID] || {}
-                            const subQty = qtyMap[sub.id] || 0
+                            // multipleTimes => track subQty
+                            const qtyMap = subproductQuantities[popupID] || {};
+                            const subQty = qtyMap[sub.id] || 0;
 
-                            // If allowMultipleTimes is true, we'll handle plus/minus clicks differently
+                            // If allowMultipleTimes => clicking card increments
                             const handleClickCard = () => {
-                                // If multi-times is false, we still allow the entire card to toggle
-                                if (!popup.allowMultipleTimes) {
-                                    handleSubproductClick(sub)
+                                if (popup.allowMultipleTimes) {
+                                    incrementQty(popup.id, sub.id);
+                                } else {
+                                    handleSubproductClick(sub);
                                 }
-                            }
+                            };
 
                             return (
                                 <div
                                     key={sub.id}
-                                    onClick={handleClickCard} // see above
+                                    onClick={handleClickCard}
                                     style={{
                                         borderRadius: "0.5rem",
                                         borderLeftWidth: isSelected ? "4px" : "1px",
@@ -714,11 +730,14 @@ export default function ProductPopupFlow({
                                         borderStyle: "solid",
                                     }}
                                     className={`
-        relative
-        flex flex-col justify-between
-        p-2 rounded-lg text-center cursor-pointer transition
-        ${isSelected ? "bg-gray-100" : "border border-gray-300"}
-      `}
+                    relative
+                    flex flex-col justify-between
+                    p-2 rounded-lg text-center cursor-pointer transition
+                    ${isSelected
+                                            ? "bg-gray-100"
+                                            : "border border-gray-300"
+                                        }
+                  `}
                                 >
                                     {/* Possibly an image */}
                                     <div className="flex-grow flex items-center justify-center mb-4">
@@ -737,21 +756,21 @@ export default function ProductPopupFlow({
 
                                     {/* Conditionally render plus/minus vs. single-click UI */}
                                     {popup.allowMultipleTimes ? (
-                                        // allowMultipleTimes = true => plus/minus
+                                        // allowMultipleTimes => plus/minus
                                         <div className="flex flex-col items-center">
                                             <span
                                                 className={`
-              text-gray-700 font-bold text-center
-              ${isKiosk ? "text-lg" : "text-md"}
-            `}
+                          text-gray-700 font-bold text-center
+                          ${isKiosk ? "text-lg" : "text-md"}
+                        `}
                                             >
                                                 {displayName}
                                             </span>
                                             <span
                                                 className={`
-              text-gray-500 font-bold
-              ${isKiosk ? "text-md" : "text-sm"}
-            `}
+                          text-gray-500 font-bold
+                          ${isKiosk ? "text-md" : "text-sm"}
+                        `}
                                             >
                                                 {displayPrice > 0
                                                     ? `(+ €${displayPrice.toFixed(2)})`
@@ -762,20 +781,36 @@ export default function ProductPopupFlow({
                                             <div className="flex items-center gap-4 mt-2">
                                                 <button
                                                     onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        decrementQty(popupID, sub.id)
+                                                        e.stopPropagation();
+                                                        decrementQty(popupID, sub.id);
                                                     }}
-                                                    className="bg-gray-200 px-3 py-1 rounded-md font-bold text-lg"
+                                                    style={{ backgroundColor: brandCTA }}
+                                                    className="
+                            text-white
+                            px-3 py-1
+                            rounded-full
+                            font-bold
+                            text-lg
+                          "
                                                 >
                                                     -
                                                 </button>
-                                                <span className="font-semibold min-w-[24px] text-lg">{subQty}</span>
+                                                <span className="font-semibold min-w-[24px] text-lg">
+                                                    {subQty}
+                                                </span>
                                                 <button
                                                     onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        incrementQty(popupID, sub.id)
+                                                        e.stopPropagation();
+                                                        incrementQty(popupID, sub.id);
                                                     }}
-                                                    className="bg-gray-200 px-3 py-1 rounded-md font-bold text-lg"
+                                                    style={{ backgroundColor: brandCTA }}
+                                                    className="
+                            text-white
+                            px-3 py-1
+                            rounded-full
+                            font-bold
+                            text-lg
+                          "
                                                 >
                                                     +
                                                 </button>
@@ -786,17 +821,17 @@ export default function ProductPopupFlow({
                                         <div className="flex flex-col items-center">
                                             <span
                                                 className={`
-              text-gray-700 font-bold text-center
-              ${isKiosk ? "text-lg" : "text-md"}
-            `}
+                          text-gray-700 font-bold text-center
+                          ${isKiosk ? "text-lg" : "text-md"}
+                        `}
                                             >
                                                 {displayName}
                                             </span>
                                             <span
                                                 className={`
-              text-gray-500 font-bold
-              ${isKiosk ? "text-md" : "text-sm"}
-            `}
+                          text-gray-500 font-bold
+                          ${isKiosk ? "text-md" : "text-sm"}
+                        `}
                                             >
                                                 {displayPrice > 0
                                                     ? `(+ €${displayPrice.toFixed(2)})`
@@ -815,7 +850,7 @@ export default function ProductPopupFlow({
                                         </div>
                                     )}
                                 </div>
-                            )
+                            );
                         })}
                     </div>
                 </div>
@@ -856,7 +891,9 @@ export default function ProductPopupFlow({
               ${isKiosk ? "text-2xl px-6 py-3" : "text-xl px-4 py-2"}
             `}
                     >
-                        {currentIndex < sortedPopups.length - 1 ? t("order.popup.next") : t("order.popup.confirm")}
+                        {currentIndex < sortedPopups.length - 1
+                            ? t("order.popup.next")
+                            : t("order.popup.confirm")}
                     </button>
                 </div>
             </div>
@@ -868,7 +905,7 @@ export default function ProductPopupFlow({
 function gatherAllSelectedItems(
     sortedPopups: PopupItem[],
     selectedOptions: Record<string, string[]>,
-    subproductQuantities: Record<string, Record<string, number>>,
+    subproductQuantities: Record<string, Record<string, number>>
 ) {
     const results: Array<{
         id: string;
