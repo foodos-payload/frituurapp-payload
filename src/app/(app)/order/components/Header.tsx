@@ -74,7 +74,7 @@ export default function Header({
     const bgColor = branding?.headerBackgroundColor?.trim() || "#ffffff";
     const isCustomBG =
         bgColor.toLowerCase() !== "#ffffff" && bgColor.toLowerCase() !== "#fff";
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const brandCTA = branding?.primaryColorCTA || "#068b59";
 
     // brand logo if any
     let encodedLogoUrl: string | undefined;

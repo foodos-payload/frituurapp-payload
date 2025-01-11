@@ -37,7 +37,7 @@ export default function CartButton({
     const totalPrice = getCartTotal();
     const [goBackLoading, setGoBackLoading] = useState(false);
 
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const brandCTA = branding?.primaryColorCTA || "#068b59";
 
     // For the "Go Back" button
     function handleGoBack() {

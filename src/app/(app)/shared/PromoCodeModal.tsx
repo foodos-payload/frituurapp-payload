@@ -285,7 +285,7 @@ export default function PromoCodeModal({
                                         <button
                                             type="submit"
                                             disabled={promoLoading === "loading"}
-                                            style={{ backgroundColor: branding.primaryColorCTA }}
+                                            style={{ backgroundColor: branding.primaryColorCTA || "#068b59" }}
                                             className={`
                         ${kioskActionButtonClass}
                         w-full
@@ -422,7 +422,7 @@ export default function PromoCodeModal({
                                                         <button
                                                             type="submit"
                                                             disabled={pointsLoading === "loading"}
-                                                            style={{ backgroundColor: branding.primaryColorCTA }}
+                                                            style={{ backgroundColor: branding.primaryColorCTA || "#068b59" }}
                                                             className={`
                                                     ${kioskActionButtonClass}
                                                     bg-green-600 text-white
@@ -495,7 +495,7 @@ export default function PromoCodeModal({
                                                         <button
                                                             type="submit"
                                                             disabled={promoLoading === "loading"}
-                                                            style={{ backgroundColor: branding.primaryColorCTA }}
+                                                            style={{ backgroundColor: branding.primaryColorCTA || "#068b59" }}
                                                             className={`
                                 ${kioskActionButtonClass}
                                 text-white rounded
@@ -616,7 +616,7 @@ export default function PromoCodeModal({
                                                         <button
                                                             type="submit"
                                                             disabled={creditsLoading === "loading"}
-                                                            style={{ backgroundColor: branding.primaryColorCTA }}
+                                                            style={{ backgroundColor: branding.primaryColorCTA || "#068b59" }}
                                                             className={`
                                 ${kioskActionButtonClass}
                                 text-white rounded

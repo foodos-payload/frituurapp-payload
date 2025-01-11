@@ -57,7 +57,7 @@ export default function CartDrawer({
     const drawerRef = useRef<HTMLDivElement>(null);
 
     // Branding color for the checkout button
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const brandCTA = branding?.primaryColorCTA || "#068b59";
 
     // Original vs discounted
     const originalTotal = getCartTotal();

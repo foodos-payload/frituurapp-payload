@@ -36,7 +36,7 @@ export default function MenuDrawer({
         }
     }
 
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const brandCTA = branding?.primaryColorCTA || "#068b59";
 
     return (
         <>

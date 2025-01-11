@@ -41,7 +41,7 @@ export default function VerticalCategories({
   }, [activeCategory]);
 
   // We'll use this brand color as fallback if none is provided
-  const brandBgColor = branding?.categoryCardBgColor || "#3b82f6";
+  const brandBgColor = branding?.primaryColorCTA || "#CE2027";
 
   // For hover changes on non-active items:
   function handleMouseEnter(e: MouseEvent<HTMLAnchorElement>, isActive: boolean) {

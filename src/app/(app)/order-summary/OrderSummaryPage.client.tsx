@@ -218,7 +218,7 @@ export function OrderSummaryPage({
 
     // Grab branding
     const branding = useShopBranding();
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6"; // fallback bluish
+    const brandCTA = branding?.primaryColorCTA || "#068b59"; // fallback bluish
 
     // Local state
     const [userLocale, setUserLocale] = useState("nl");
