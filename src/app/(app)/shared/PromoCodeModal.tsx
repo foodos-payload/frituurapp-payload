@@ -10,6 +10,7 @@ import React, {
 import { CSSTransition } from "react-transition-group";
 import { FiTrash2 } from "react-icons/fi";
 import { useShopBranding } from "@/context/ShopBrandingContext";
+import { FiX } from "react-icons/fi";
 
 type ModalStep = "codeInput" | "customerOptions";
 type Membership = { points: number };
@@ -236,30 +237,22 @@ export default function PromoCodeModal({
                             {/* Close button */}
                             <button
                                 onClick={handleClose}
+                                title="Close Modal"
                                 className="
-                  absolute top-2 right-2
-                  bg-red-600 text-white
-                  rounded-full p-2
-                  shadow
-                  hover:bg-red-700
-                  transition-colors
-                  z-50
-                "
+    absolute
+    top-2 right-2
+    bg-red-500
+    text-white
+    rounded-xl
+    shadow-xl
+    p-3
+    hover:bg-red-600
+    transition-colors
+    z-50
+  "
+                                style={{ minWidth: "44px", minHeight: "44px" }}
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className={`${kioskTrashClass}`}
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
+                                <FiX className="w-6 h-6" />
                             </button>
 
                             {/* STEP 1 => codeInput */}
