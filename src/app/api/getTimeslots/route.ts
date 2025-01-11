@@ -185,7 +185,7 @@ export async function GET(request: NextRequest) {
             where: {
                 shops: { in: [shop.id] },
             },
-            limit: 100,
+            limit: 300,
             depth: 3,
         });
 
@@ -271,16 +271,18 @@ export async function GET(request: NextRequest) {
         );
 
         // 5) Fetch recent orders to see usage
-        const today = new Date();
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + 10);
+
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
 
         const ordersResult = await payload.find({
             collection: 'orders',
             where: {
                 shops: { in: [shop.id] },
                 fulfillment_date: {
-                    greater_than: today.toISOString(),
+                    greater_than: yesterday.toISOString(),
                     less_than_equal: endDate.toISOString(),
                 },
             },
