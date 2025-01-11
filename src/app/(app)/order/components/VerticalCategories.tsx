@@ -115,7 +115,7 @@ export default function VerticalCategories({
               </div>
             )}
 
-            <div className={isKiosk ? "text-center font-semibold" : ""}>
+            <div className={isKiosk ? "text-center font-bold" : "font-bold"}>
               {cat.label}
             </div>
           </a>

@@ -345,17 +345,53 @@ export async function GET(request: NextRequest) {
             return slotDateTime > now;
         });
 
+        // Create a nested Map: dateMethodMap[date][fulfillmentMethod] = array of slots
+        const dateMethodMap = new Map<string, Map<string, any[]>>();
+
+        for (const slot of upcomingTimeslots) {
+            const { date, fulfillmentMethod } = slot;
+
+            if (!dateMethodMap.has(date)) {
+                dateMethodMap.set(date, new Map());
+            }
+            const methodMap = dateMethodMap.get(date)!;
+
+            if (!methodMap.has(fulfillmentMethod)) {
+                methodMap.set(fulfillmentMethod, []);
+            }
+            methodMap.get(fulfillmentMethod)!.push(slot);
+        }
+
+        // For each date, for each fulfillment method => sort by time => remove the first slot
+        for (const [date, methodMap] of dateMethodMap.entries()) {
+            for (const [method, slots] of methodMap.entries()) {
+                // Sort by HH:MM string
+                slots.sort((a, b) => a.time.localeCompare(b.time));
+                // Remove the earliest slot for that method on that date
+                slots.shift();
+            }
+        }
+
+        // Flatten back into a single array
+        const prunedTimeslots: any[] = [];
+        for (const [date, methodMap] of dateMethodMap.entries()) {
+            for (const [method, slots] of methodMap.entries()) {
+                prunedTimeslots.push(...slots);
+            }
+        }
+
         console.log(
-            `[getTimeslots] After filtering out past slots => ${upcomingTimeslots.length}`
+            `[getTimeslots] After skipping first slot per day per method => ${prunedTimeslots.length}`
         );
 
+        // Return them
         return NextResponse.json({
             shop: {
                 id: shop.id,
                 slug: shop.slug,
                 name: shop.name,
             },
-            timeslots: upcomingTimeslots,
+            timeslots: prunedTimeslots,
         });
     } catch (err: any) {
         console.error('Error in getTimeslots route:', err);
