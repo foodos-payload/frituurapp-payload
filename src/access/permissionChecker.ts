@@ -19,11 +19,8 @@ interface Role {
 async function getRoleFromPayload(req: PayloadRequest): Promise<Role | null> {
     try {
         if (!req.user?.roles?.[0]) return null
-
-        const role = await req.payload.findByID({
-            collection: 'roles',
-            id: req.user.roles[0],
-        })
+        const role = req.user.roles[0]
+      
 
         return role as Role
     } catch (error) {
