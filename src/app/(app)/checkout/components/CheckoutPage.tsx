@@ -378,7 +378,7 @@ export default function CheckoutPage({
     /**
      * handleCheckout - creates the order + MSP payment, returns localOrderId or null
      */
-    async function handleCheckout(): Promise<number | null> {
+    async function handleCheckout(forcedPaymentId?: string): Promise<number | null> {
         // If kiosk => override date/time
         if (isKiosk) {
             const now = new Date();
@@ -388,19 +388,23 @@ export default function CheckoutPage({
             setSelectedTime(isoTime);
         }
 
-        if (!canProceed()) {
-            alert("Please fill all required fields (and be within the radius / min order).");
+        // 1) If forcedPaymentId is provided (kiosk), use it. Otherwise fallback to local state.
+        const actualPaymentId = forcedPaymentId || selectedPaymentId;
+
+        // 2) Check if we can proceed. Skip the check for kiosk mode.
+        if (!isKiosk && !canProceed()) {
+            console.log("Please fill all required fields (and be within the radius / min order).");
             return null;
         }
 
-        // 1) Payment status for MSP/cash
+        // 3) Payment status for MSP/cash
         let selectedStatus = "pending_payment";
-        const pmDoc = paymentMethods.find((pm) => pm.id === selectedPaymentId);
+        const pmDoc = paymentMethods.find((pm) => pm.id === actualPaymentId);
         if (pmDoc?.label?.toLowerCase()?.includes("cash")) {
             selectedStatus = "awaiting_preparation";
         }
 
-        // 2) Promotions from localStorage
+        // 4) Gather local promotions from localStorage
         const localPointsUsed = parseInt(localStorage.getItem("pointsUsed") || "0", 10);
         const localCreditsUsed = parseInt(localStorage.getItem("creditsUsed") || "0", 10);
         const localCustomerBarcode = localStorage.getItem("customerBarcode") || "";
@@ -428,7 +432,7 @@ export default function CheckoutPage({
         if (localVoucher) promotionsUsed.giftVoucherUsed = localVoucher;
         if (localCoupon) promotionsUsed.couponUsed = localCoupon;
 
-        // 3) kioskNumber
+        // 5) kioskNumber if kiosk
         let kioskNumber: number | null = null;
         if (isKiosk) {
             try {
@@ -441,7 +445,7 @@ export default function CheckoutPage({
             }
         }
 
-        // 4) Build payload
+        // 6) Build payload
         const payloadData = {
             tenant: hostSlug,
             shop: hostSlug,
@@ -484,7 +488,8 @@ export default function CheckoutPage({
             })),
             payments: [
                 {
-                    payment_method: selectedPaymentId,
+                    // IMPORTANT: Use the actualPaymentId
+                    payment_method: actualPaymentId,
                     amount: parseFloat((discountedSubtotal + shippingCost).toFixed(2)),
                 },
             ],
@@ -496,7 +501,7 @@ export default function CheckoutPage({
 
         console.log("About to submit order:", JSON.stringify(payloadData, null, 2));
 
-        // 5) Create local order
+        // 7) Create local order
         let localOrderId: number | null = null;
         try {
             const res = await fetch("/api/submitOrder", {
@@ -523,7 +528,7 @@ export default function CheckoutPage({
             return null;
         }
 
-        // 6) If cash => finish
+        // 8) If cash => finish
         if (pmDoc?.label?.toLowerCase()?.includes("cash")) {
             clearCart();
             const kioskParam = isKiosk ? "&kiosk=true" : "";
@@ -531,7 +536,7 @@ export default function CheckoutPage({
             return localOrderId;
         }
 
-        // 7) Otherwise => create MSP payment
+        // 9) Otherwise => create MSP payment
         try {
             const resp = await fetch("/api/payments/createPayment", {
                 method: "POST",
@@ -547,7 +552,7 @@ export default function CheckoutPage({
                 return null;
             }
 
-            // If MSP gave us a redirect URL:
+            // If MSP gave us a redirect URL
             if (data.redirectUrl) {
                 if (!isKiosk) {
                     // Normal web flow => redirect
@@ -558,7 +563,7 @@ export default function CheckoutPage({
                     console.log("Kiosk mode: skipping MSP redirect...");
                 }
 
-                // If your SSE flow needs eventsToken/eventsStreamUrl, store them:
+                // If your SSE flow needs eventsToken/eventsStreamUrl, store them
                 if (isKiosk && data.eventsToken) {
                     localStorage.setItem("mspEventsToken", data.eventsToken);
                 }
@@ -571,7 +576,6 @@ export default function CheckoutPage({
                 // No redirect => Possibly auto-complete or error
                 console.log("No redirectUrl, payment might be completed or an error occurred.");
 
-                // If your SSE flow needs them, store them here if present:
                 if (isKiosk && data.eventsToken) {
                     localStorage.setItem("mspEventsToken", data.eventsToken);
                 }
@@ -587,6 +591,7 @@ export default function CheckoutPage({
             return null;
         }
     }
+
 
     function handleBackClick() {
         const kioskParam = kioskMode ? "?kiosk=true" : "";
@@ -615,17 +620,17 @@ export default function CheckoutPage({
     // KIOSK logic
     useEffect(() => {
         if (isKiosk) {
-            // For kiosk mode, auto-select "today" + "ASAP"
+            // For kiosk mode, auto-select "today" + current time
             const now = new Date();
             setSelectedDate(now.toISOString().slice(0, 10));
-            setSelectedTime("ASAP");
+            setSelectedTime(now.toISOString().slice(11, 16)); // Set current time
 
             // Pre-fill kiosk user details
             setSurname("Kiosk");
             setLastName("");
             setEmail("guest@frituurapp.be");
-            setPhone("");
-            setCity("");
+            setPhone("000");
+            setCity("Kiosk");
             setAddress("");
             setPostalCode("");
         }
@@ -638,7 +643,6 @@ export default function CheckoutPage({
                     handleBackClick={handleBackClick}
                     handleCheckout={handleCheckout} // must return Promise<number | null>
                     paymentMethods={paymentMethods}
-                    setSelectedPaymentId={setSelectedPaymentId}
                     branding={branding}
                     shopSlug={hostSlug}
                 />
@@ -780,6 +784,7 @@ export default function CheckoutPage({
                                 branding={branding}
                                 rawSubtotal={rawSubtotal}
                                 discountedSubtotal={discountedSubtotal}
+                                isKiosk={isKiosk}
                             />
                         </div>
                     </div>

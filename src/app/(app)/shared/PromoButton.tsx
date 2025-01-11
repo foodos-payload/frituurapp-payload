@@ -6,12 +6,15 @@ import PromoCodeModal from "./PromoCodeModal"; // or wherever your modal is
 
 type Props = {
     label?: string;
+    /** Additional classes for styling (e.g. bigger text in kiosk mode) */
     buttonClass?: string;
+    isKiosk?: boolean;
 };
 
 export default function PromoButton({
     label = "Apply Promo Code / Scan QR",
-    buttonClass = "bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl px-3 py-2"
+    buttonClass = "",
+    isKiosk = false,
 }: Props) {
     const {
         fetchCustomerByCode,
@@ -27,7 +30,8 @@ export default function PromoButton({
         applyCustomerCredits,
         removeCreditsUsage,
         creditsUsed,
-        customer
+        customer,
+
     } = useCart();
 
     // State for the modal
@@ -54,6 +58,7 @@ export default function PromoButton({
     // This is called by the PromoCodeModal after user enters code
     async function handleApplyCode(code: string) {
         setModalStep("codeInput");
+
         // If code is 'GV...' => gift voucher, or normal => coupon
         if (code.toUpperCase().startsWith("CUST-")) {
             await fetchCustomerByCode(code);
@@ -68,17 +73,13 @@ export default function PromoButton({
 
     // Wrap your onClick with the local spinner
     async function handleOpenModal() {
-        // Show spinner
         setLoadingState("loading");
-
         try {
             // If you had any async logic before opening the modal, do it here:
             // e.g. await fetchSomething();
-            // Then open the modal
             setModalStep(customer ? "customerOptions" : "codeInput");
             setModalOpen(true);
         } finally {
-            // Hide spinner
             setLoadingState("idle");
         }
     }
@@ -93,6 +94,7 @@ export default function PromoButton({
           px-4 py-2 rounded-xl shadow-sm focus:outline-none inline-flex
           items-center gap-2 w-full text-center justify-center
           disabled:opacity-50
+          ${buttonClass}
         `}
             >
                 {loadingState === "loading" ? (
@@ -109,6 +111,7 @@ export default function PromoButton({
                     setModalStep("codeInput");
                 }}
                 step={modalStep}
+                isKiosk={isKiosk}
                 customer={
                     customer
                         ? {
@@ -128,6 +131,7 @@ export default function PromoButton({
                 onRemoveCoupon={handleRemoveCoupon}
                 currentlyUsedPoints={pointsUsed}
                 currentlyUsedCredits={creditsUsed}
+
             />
         </>
     );

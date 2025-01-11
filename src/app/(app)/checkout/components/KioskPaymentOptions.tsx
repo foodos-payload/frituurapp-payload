@@ -14,19 +14,12 @@ interface PaymentMethod {
 interface KioskPaymentOptionsProps {
     handleBackClick: () => void;
     /**
-     * handleCheckout should:
-     *   1) Set the selectedPaymentId
-     *   2) Create the order (POST /api/submitOrder)
-     *   3) Create the payment (POST /api/payments/createPayment)
-     *   4) Return the localOrderId (number) if successful, or null if error
+     * handleCheckout now receives a paymentId argument directly.
+     * You no longer rely on `selectedPaymentId` state being updated first.
      */
-    handleCheckout: () => Promise<number | null>;
+    handleCheckout: (forcedPaymentId: string) => Promise<number | null>;
     paymentMethods: PaymentMethod[];
-    setSelectedPaymentId: (id: string) => void;
-    branding: any; // or a more specific type if you have one
-    /**
-     * The shop slug so we can call /api/orders?host=slug
-     */
+    branding: any;
     shopSlug: string;
 }
 
@@ -113,13 +106,12 @@ export default function KioskPaymentOptions({
     handleBackClick,
     handleCheckout,
     paymentMethods,
-    setSelectedPaymentId,
     branding,
     shopSlug,
 }: KioskPaymentOptionsProps) {
     const router = useRouter();
 
-    // (A) "terminal" => waiting for card, "cash" => waiting for cash
+    // "terminal" => waiting for card, "cash" => waiting for cash
     const [loadingState, setLoadingState] = useState<null | "terminal" | "cash">(null);
 
     // Payment error
@@ -184,10 +176,10 @@ export default function KioskPaymentOptions({
     };
 
     /**
- * Connect to SSE if we have eventsToken in localStorage,
- * but instead of the MSP "events_stream_url", we point to
- * our own proxy => /api/mspEventsProxy?eventsToken=XYZ
- */
+     * Connect to SSE if we have eventsToken in localStorage,
+     * but instead of the MSP "events_stream_url", we point to
+     * our own proxy => /api/mspEventsProxy?eventsToken=XYZ
+     */
     const trySubscribeSSE = (orderId: number) => {
         const eventsToken = localStorage.getItem("mspEventsToken");
         if (!eventsToken) {
@@ -215,7 +207,6 @@ export default function KioskPaymentOptions({
         };
 
         es.onmessage = (evt) => {
-            // e.g. lines from MSP: "data: { ... }"
             if (!evt.data) return;
             try {
                 const parsed = JSON.parse(evt.data);
@@ -243,11 +234,15 @@ export default function KioskPaymentOptions({
     /**
      * handlePayWithCard:
      *  - find card method
+     *  - skip if already loading (debounce)
      *  - show "terminal" overlay
      *  - call handleCheckout => create order + MSP payment
      *  - then SSE if possible, else poll local doc
      */
     const handlePayWithCard = async () => {
+        // If user already clicked, do nothing:
+        if (loadingState) return;
+
         setPaymentErrorMessage("");
         const cardMethod = paymentMethods.find((pm) =>
             pm.label.toLowerCase().includes("msp") ||
@@ -259,30 +254,33 @@ export default function KioskPaymentOptions({
             return;
         }
 
-        setSelectedPaymentId(cardMethod.id);
         setLoadingState("terminal");
 
-        // Create order + MSP payment
-        const localOrderId = await handleCheckout();
+        // Create order
+        const localOrderId = await handleCheckout(cardMethod.id);
         if (!localOrderId) {
             setLoadingState(null);
             setPaymentErrorMessage("Could not create order for card payment. Please try again.");
             return;
         }
 
-        // Attempt SSE => fallback to local doc poll if SSE fails
+        // SSE or fallback
         trySubscribeSSE(localOrderId);
     };
-
 
     /**
      * handlePayWithCash:
      *  - find "cash"
+     *  - skip if already loading (debounce)
      *  - show "cash" overlay
      *  - create order => no SSE needed
      */
     const handlePayWithCash = async () => {
+        // If user already clicked, do nothing:
+        if (loadingState) return;
+
         setPaymentErrorMessage("");
+
         const cashMethod = paymentMethods.find((pm) =>
             pm.label.toLowerCase().includes("cash")
         );
@@ -291,16 +289,15 @@ export default function KioskPaymentOptions({
             return;
         }
 
-        setSelectedPaymentId(cashMethod.id);
         setLoadingState("cash");
 
-        const localOrderId = await handleCheckout();
+        const localOrderId = await handleCheckout(cashMethod.id);
         if (!localOrderId) {
             setLoadingState(null);
             setPaymentErrorMessage("Could not create cash order. Please try again.");
             return;
         }
-        // Typically no SSE or poll for cash, as handleCheckout finishes immediately.
+        // handleCheckout finishes the cart if success => no SSE needed
     };
 
     const showOverlay = !!loadingState;

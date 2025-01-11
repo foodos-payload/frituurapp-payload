@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, MouseEvent, useState, useEffect } from "react";
+import React, { useRef, MouseEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CSSTransition } from "react-transition-group";
 import { FiX, FiTrash2 } from "react-icons/fi";
@@ -52,7 +52,7 @@ export default function CartDrawer({
         getCartTotalWithDiscounts,
     } = useCart();
 
-    // For CSSTransitions
+    // Refs for CSSTransition
     const overlayRef = useRef<HTMLDivElement>(null);
     const drawerRef = useRef<HTMLDivElement>(null);
 
@@ -86,10 +86,26 @@ export default function CartDrawer({
         removeItem(lineSig);
     }
 
+    /**
+     * Local spinner states for the "Checkout" button:
+     * "idle" => user hasn't clicked yet
+     * "loading" => user clicked => show spinner until route transition or delay
+     */
+    const [checkoutLoadingState, setCheckoutLoadingState] = useState<"idle" | "loading">("idle");
+
     /** Checkout => navigate to /checkout */
-    function handleCheckout() {
+    async function handleCheckoutClick() {
+        if (!hasItems || checkoutLoadingState === "loading") return;
+
+        // Start spinner
+        setCheckoutLoadingState("loading");
+
+        // You might do an async call here if needed, or rely on route transitions:
         const kioskParam = isKiosk ? "?kiosk=true" : "";
         router.push(`/checkout${kioskParam}`);
+
+        // You can optionally set a small timeout if the route transitions quickly:
+        // setTimeout(() => setCheckoutLoadingState("idle"), 2000);
     }
 
     // Some kiosk-specific styling
@@ -99,6 +115,11 @@ export default function CartDrawer({
     const kioskItemSpacing = isKiosk ? "gap-6" : "gap-4";
     const kioskItemPadding = isKiosk ? "p-6 text-xl" : "p-4 md:p-6";
     const kioskQuantityBtnSize = isKiosk ? "w-12 h-12 text-lg" : "w-10 h-10 text-sm";
+
+    // Font sizes for discount lines
+    const discountContainerClasses = isKiosk
+        ? "text-xl text-green-600 flex flex-col"
+        : "text-sm text-green-600 flex flex-col";
 
     return (
         <>
@@ -151,7 +172,10 @@ export default function CartDrawer({
                         </button>
 
                         <h2 className={`${kioskHeaderText} font-semibold`}>
-                            {t("order.cart.title")} <span className={isKiosk ? "text-xl" : "text-sm"}>({itemCount})</span>
+                            {t("order.cart.title")}{" "}
+                            <span className={isKiosk ? "text-xl" : "text-sm"}>
+                                ({itemCount})
+                            </span>
                         </h2>
 
                         {hasItems ? (
@@ -184,14 +208,17 @@ export default function CartDrawer({
                                         <li key={lineSig}>
                                             <div
                                                 className="rounded-lg flex w-full overflow-hidden relative items-center bg-white shadow-sm"
-                                                style={{ minHeight: isKiosk ? "110px" : "80px" }}
+                                                style={{
+                                                    minHeight: isKiosk ? "110px" : "80px",
+                                                }}
                                             >
                                                 {/* Thumbnail */}
                                                 {item.image?.url ? (
                                                     <img
                                                         src={item.image.url}
                                                         alt={item.image.alt ?? item.productName}
-                                                        className={`rounded-md object-cover ${isKiosk ? "w-20 h-20" : "w-16 h-16"}`}
+                                                        className={`rounded-md object-cover ${isKiosk ? "w-20 h-20" : "w-16 h-16"
+                                                            }`}
                                                     />
                                                 ) : (
                                                     <div className="w-16 h-16 bg-gray-100" />
@@ -200,7 +227,8 @@ export default function CartDrawer({
                                                 {/* Right side => name, subproducts, price */}
                                                 <div className="flex-1 min-h-[60px] ml-3">
                                                     <div
-                                                        className={`font-semibold ${isKiosk ? "text-xl" : "text-md"} line-clamp-2`}
+                                                        className={`font-semibold ${isKiosk ? "text-xl" : "text-md"
+                                                            } line-clamp-2`}
                                                     >
                                                         {displayName}
                                                     </div>
@@ -208,27 +236,28 @@ export default function CartDrawer({
                                                     {/* Subproducts */}
                                                     {item.subproducts && item.subproducts.length > 0 && (
                                                         <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
-                                                            {
-                                                                item.subproducts.map((sp, index) => {
-                                                                    const subName = pickCartSubName(sp, locale);
-                                                                    const uniqueKey = sp.subproductId + "-" + index
-                                                                    return (
-                                                                        <li key={uniqueKey}>
-                                                                            {subName}
-                                                                            {sp.quantity && sp.quantity > 1 && (
-                                                                                <span> x{sp.quantity}</span>
-                                                                            )}
-                                                                            (+€{sp.price.toFixed(2)})
-                                                                        </li>
-                                                                    );
-                                                                })}
+                                                            {item.subproducts.map((sp, index) => {
+                                                                const subName = pickCartSubName(sp, locale);
+                                                                const uniqueKey = sp.subproductId + "-" + index;
+                                                                return (
+                                                                    <li key={uniqueKey}>
+                                                                        {subName}
+                                                                        {sp.quantity && sp.quantity > 1 && (
+                                                                            <span> x{sp.quantity}</span>
+                                                                        )}
+                                                                        (+€{sp.price.toFixed(2)})
+                                                                    </li>
+                                                                );
+                                                            })}
                                                         </ul>
-                                                    )
-                                                    }
+                                                    )}
 
                                                     {/* Price */}
-                                                    < div className="text-sm mt-1 flex items-center" >
-                                                        <span className={`font-semibold ${isKiosk ? "text-lg" : "text-md"}`}>
+                                                    <div className="text-sm mt-1 flex items-center">
+                                                        <span
+                                                            className={`font-semibold ${isKiosk ? "text-lg" : "text-md"
+                                                                }`}
+                                                        >
                                                             €{item.price.toFixed(2)}
                                                         </span>
                                                     </div>
@@ -247,7 +276,9 @@ export default function CartDrawer({
                                 hover:bg-gray-50
                                 ${kioskQuantityBtnSize}
                               `}
-                                                            onClick={() => handleQuantityChange(item, item.quantity - 1)}
+                                                            onClick={() =>
+                                                                handleQuantityChange(item, item.quantity - 1)
+                                                            }
                                                         >
                                                             -
                                                         </button>
@@ -257,7 +288,10 @@ export default function CartDrawer({
                                 border-y border-gray-300
                                 text-center
                                 px-2
-                                ${isKiosk ? "w-10 text-lg" : "w-8 text-sm"}
+                                ${isKiosk
+                                                                    ? "w-10 text-lg"
+                                                                    : "w-8 text-sm"
+                                                                }
                               `}
                                                         >
                                                             {item.quantity}
@@ -272,17 +306,23 @@ export default function CartDrawer({
                                 border-gray-300 p-2
                                 ${kioskQuantityBtnSize}
                               `}
-                                                            onClick={() => handleQuantityChange(item, item.quantity + 1)}
+                                                            onClick={() =>
+                                                                handleQuantityChange(item, item.quantity + 1)
+                                                            }
                                                         >
                                                             +
                                                         </button>
                                                     </div>
 
                                                     {/* Edit / Remove */}
-                                                    <div className={`flex items-center gap-3 mt-1 ${isKiosk ? "text-lg" : ""}`}>
+                                                    <div
+                                                        className={`flex items-center gap-3 mt-1 ${isKiosk ? "text-lg" : ""
+                                                            }`}
+                                                    >
                                                         {item.hasPopups && onEditItem && (
                                                             <button
-                                                                className={`text-blue-500 hover:underline ${isKiosk ? "text-lg" : "text-xs"}`}
+                                                                className={`text-blue-500 hover:underline ${isKiosk ? "text-lg" : "text-xs"
+                                                                    }`}
                                                                 onClick={() => onEditItem(item)}
                                                             >
                                                                 {t("order.cart.edit_product")}
@@ -315,27 +355,37 @@ export default function CartDrawer({
                         <div className="px-8 mb-4 pt-3 flex flex-col gap-3">
                             {/* If discount is active => show old & new total */}
                             {discountedTotal < originalTotal ? (
-                                <div className="text-sm text-green-600 flex flex-col">
+                                <div className={discountContainerClasses}>
                                     <span>
-                                        {t("order.cart.original_total")} €{originalTotal.toFixed(2)}
+                                        {t("order.cart.original_total")} €
+                                        {originalTotal.toFixed(2)}
                                     </span>
                                     <span className="font-semibold">
-                                        {t("order.cart.discounted_total")} €{discountedTotal.toFixed(2)}
+                                        {t("order.cart.discounted_total")} €
+                                        {discountedTotal.toFixed(2)}
                                     </span>
                                 </div>
                             ) : (
-                                <div className="text-md font-semibold">
-
+                                <div
+                                    className={`${isKiosk ? "text-xl" : "text-md"
+                                        } font-semibold`}
+                                >
+                                    {/* If no discount, you could show "Subtotal" here if desired */}
                                 </div>
                             )}
 
-                            {/* Button to open the promo modal => step=codeInput */}
-                            <PromoButton label="Apply Promo or Scan QR" buttonClass="bg-blue-100 ..." />
+                            {/* Button to open the promo modal => bigger in kiosk mode */}
+                            <PromoButton
+                                label="Apply Promo or Scan QR"
+                                // In kiosk mode => bigger text/padding
+                                buttonClass={isKiosk ? "p-5 text-2xl" : ""}
+                                isKiosk={isKiosk}
+                            />
 
-
-                            {/* Checkout button */}
+                            {/* Checkout button with spinner */}
                             <button
-                                onClick={handleCheckout}
+                                onClick={handleCheckoutClick}
+                                disabled={checkoutLoadingState === "loading"}
                                 style={{
                                     borderRadius: "0.5rem",
                                     backgroundColor: brandCTA,
@@ -345,20 +395,31 @@ export default function CartDrawer({
                   block w-full text-center rounded-lg shadow-md
                   font-semibold
                   ${isKiosk ? "p-5 text-2xl" : "p-3 text-lg"}
+                  disabled:opacity-50
                 `}
                             >
-                                {t("order.cart.checkout")}{" "}
-                                {discountedTotal < originalTotal ? (
-                                    <span className="mx-2">€{discountedTotal.toFixed(2)}</span>
+                                {checkoutLoadingState === "loading" ? (
+                                    <SpinnerIcon />
                                 ) : (
-                                    <span className="mx-2">€{originalTotal.toFixed(2)}</span>
+                                    // Show normal text if not loading
+                                    <>
+                                        {t("order.cart.checkout")}{" "}
+                                        {discountedTotal < originalTotal ? (
+                                            <span className="mx-2">
+                                                €{discountedTotal.toFixed(2)}
+                                            </span>
+                                        ) : (
+                                            <span className="mx-2">
+                                                €{originalTotal.toFixed(2)}
+                                            </span>
+                                        )}
+                                    </>
                                 )}
                             </button>
                         </div>
                     )}
                 </div>
             </CSSTransition>
-
         </>
     );
 }
@@ -397,4 +458,24 @@ function pickCartSubName(
         default:
             return sp.name_nl;
     }
+}
+
+/** 
+ * A simple spinner icon
+ */
+function SpinnerIcon() {
+    return (
+        <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            className="animate-spin mx-auto"
+            strokeWidth="3"
+            fill="none"
+            stroke="currentColor"
+        >
+            <circle cx="12" cy="12" r="10" className="opacity-25" />
+            <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+        </svg>
+    );
 }

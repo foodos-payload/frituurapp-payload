@@ -19,7 +19,7 @@ interface OrderSummaryProps {
     canProceed: () => boolean;
     /** The real checkout function from CheckoutPage. */
     handleCheckout: () => Promise<number | null>;
-
+    isKiosk: boolean;
     cartTotal: number; // not used directly, but you have it
     discountedSubtotal: number;
     rawSubtotal: number;
@@ -48,6 +48,7 @@ export default function OrderSummary({
     setCouponCode,
     handleScanQR,
     handleApplyCoupon,
+    isKiosk,
 }: OrderSummaryProps) {
     const {
         items: cartItems,
@@ -248,7 +249,7 @@ export default function OrderSummary({
                 )}
 
                 {/* Example: “Apply Promo or Scan QR” button */}
-                <PromoButton label="Apply Promo or Scan QR" buttonClass="bg-blue-100 ..." />
+                <PromoButton isKiosk={isKiosk} label="Apply Promo or Scan QR" buttonClass="bg-blue-100 ..." />
 
                 {/* Totals + Checkout */}
                 <div className="pt-3 border-t border-gray-200 space-y-2">

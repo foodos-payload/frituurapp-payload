@@ -170,6 +170,7 @@ type CartContextValue = {
     creditsUsed: number;  // how many currency units we've discounted from store credits
 
     getCartTotalWithDiscounts: () => number;
+    getKioskMode: () => boolean;
 };
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -228,6 +229,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             const storedPoints = localStorage.getItem("pointsUsed");
             const storedCredits = localStorage.getItem("creditsUsed");
             const storedCustomerDetails = localStorage.getItem("customerDetails");
+            const storedKioskMode = localStorage.getItem("kioskNumber") !== null;
 
 
             if (storedItems) setItems(JSON.parse(storedItems));
@@ -642,6 +644,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         // final total
         getCartTotalWithDiscounts,
+
+        //
+        getKioskMode: () => {
+            return localStorage.getItem("kioskMode") === "true";
+        }
     };
 
     return (
