@@ -23,7 +23,6 @@ interface HeaderProps {
     setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isKiosk?: boolean;
     branding?: BrandingProps;
-
 }
 
 export default function Header({
@@ -199,9 +198,7 @@ export default function Header({
 
                         {/* Show site title on non-kiosk or if no kioskBannerImg */}
                         {(!isKiosk || !kioskBannerImg) && (
-                            <span className="text-base font-semibold">
-                                {displayedSiteTitle}
-                            </span>
+                            <span className="text-base font-semibold">{displayedSiteTitle}</span>
                         )}
                     </div>
 
@@ -345,9 +342,9 @@ export default function Header({
                         {/* The Allergen Icon => pulses if allergens exist */}
                         <button
                             className={`
-                                ${iconBtnClasses} 
-                                ${hasAllergens ? "pulseBrand" : ""}
-                            `}
+                ${iconBtnClasses} 
+                ${hasAllergens ? "pulseBrand" : ""}
+              `}
                             style={
                                 hasAllergens
                                     ? ({ "--pulse-color": brandCTA } as React.CSSProperties)
@@ -355,10 +352,8 @@ export default function Header({
                             }
                             onClick={() => setAllergensOpen(true)}
                         >
-                            <MdOutlineNoFood size={22} color={hasAllergens ? "black" : "black"} />
-                            {/* You can also fill color with brandCTA if you like:
-                  color={hasAllergens ? brandCTA : "black"}
-               */}
+                            {/* Remove explicit 'color="black"' so it inherits from .text-white if isCustomBG */}
+                            <MdOutlineNoFood size={22} />
                         </button>
 
                         {showMenuTrigger && (
