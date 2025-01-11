@@ -18,6 +18,7 @@ export interface Config {
     'fulfillment-methods': FulfillmentMethod;
     timeslots: Timeslot;
     'shop-branding': ShopBranding;
+    'digital-menus': DigitalMenu;
     'reservation-entries': ReservationEntry;
     'reservation-settings': ReservationSetting;
     tables: Table;
@@ -49,6 +50,7 @@ export interface Config {
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
     timeslots: TimeslotsSelect<false> | TimeslotsSelect<true>;
     'shop-branding': ShopBrandingSelect<false> | ShopBrandingSelect<true>;
+    'digital-menus': DigitalMenusSelect<false> | DigitalMenusSelect<true>;
     'reservation-entries': ReservationEntriesSelect<false> | ReservationEntriesSelect<true>;
     'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
     tables: TablesSelect<false> | TablesSelect<true>;
@@ -577,6 +579,404 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "digital-menus".
+ */
+export interface DigitalMenu {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  name: string;
+  shopBranding?: (string | null) | ShopBranding;
+  maxRows?: number | null;
+  categoryOverrides?:
+    | {
+        category: string | Category;
+        displayName?: string | null;
+        columnsForProducts?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  products?: (string | Product)[] | null;
+  autoRotateInterval?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * The CloudPOS ID of this category. Leave empty if not synced.
+   */
+  cloudPOSId?: number | null;
+  /**
+   * Enter the category name in Dutch (default).
+   */
+  name_nl: string;
+  /**
+   * Enter the category name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the category name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the category name in French.
+   */
+  name_fr?: string | null;
+  /**
+   * Determines the front-end order of categories (lowest first).
+   */
+  menuOrder?: number | null;
+  /**
+   * Reference an image from the Media library.
+   */
+  image?: (string | null) | Media;
+  /**
+   * Timestamp for last modification
+   */
+  modtime: number;
+  /**
+   * Category status (enabled or disabled)
+   */
+  status: 'enabled' | 'disabled';
+  /**
+   * Assign product popups to this category. These popups will apply to all products in the category.
+   */
+  productpopups?:
+    | {
+        popup: string | Productpopup;
+        /**
+         * The order in which this popup will appear.
+         */
+        order?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "productpopups".
+ */
+export interface Productpopup {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Enter the popup title in Dutch (default).
+   */
+  popup_title_nl: string;
+  /**
+   * Enter the popup title in English.
+   */
+  popup_title_en?: string | null;
+  /**
+   * Enter the popup title in German.
+   */
+  popup_title_de?: string | null;
+  /**
+   * Enter the popup title in French.
+   */
+  popup_title_fr?: string | null;
+  /**
+   * Allow selecting multiple options in this popup.
+   */
+  multiselect?: boolean | null;
+  /**
+   * Require selection of an option in the cash register.
+   */
+  required_option_cashregister?: boolean | null;
+  /**
+   * Require selection of an option in the webshop.
+   */
+  required_option_webshop?: boolean | null;
+  /**
+   * Minimum number of options to select.
+   */
+  minimum_option?: number | null;
+  /**
+   * Maximum number of options to select. Set to 0 for no limit.
+   */
+  maximum_option?: number | null;
+  /**
+   * If enabled, users can select the same option multiple times (e.g., extra sauce x3).
+   */
+  allowMultipleTimes?: boolean | null;
+  /**
+   * Default subproduct selected when the popup loads.
+   */
+  default_checked_subproduct?: (string | null) | Subproduct;
+  /**
+   * List of subproducts associated with this popup.
+   */
+  subproducts?: (string | Subproduct)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subproducts".
+ */
+export interface Subproduct {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * The CloudPOS ID for this subproduct. If empty, not synced.
+   */
+  cloudPOSId?: number | null;
+  /**
+   * Enter the subproduct name in Dutch.
+   */
+  name_nl: string;
+  /**
+   * Enter the subproduct name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the subproduct name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the subproduct name in French.
+   */
+  name_fr?: string | null;
+  /**
+   * Use a unified sale price for all fulfillment methods.
+   */
+  price_unified?: boolean | null;
+  /**
+   * The unified sale price.
+   */
+  price?: number | null;
+  /**
+   * Sale price for dine-in.
+   */
+  price_dinein?: number | null;
+  /**
+   * Sale price for takeaway.
+   */
+  price_takeaway?: number | null;
+  /**
+   * Sale price for delivery.
+   */
+  price_delivery?: number | null;
+  /**
+   * Enable linking to an existing product. If enabled, price and tax fields will be hidden.
+   */
+  linked_product_enabled?: boolean | null;
+  /**
+   * Select a product to link with this subproduct.
+   */
+  linked_product?: (string | null) | Product;
+  /**
+   * Enable stock tracking for this subproduct.
+   */
+  stock_enabled?: boolean | null;
+  /**
+   * Stock quantity
+   */
+  stock_quantity?: number | null;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax?: number | null;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax_table?: number | null;
+  /**
+   * Reference an image from the Media library.
+   */
+  image?: (string | null) | Media;
+  /**
+   * Timestamp for last modification.
+   */
+  modtime: number;
+  /**
+   * Mark this subproduct as deleted
+   */
+  deleted?: boolean | null;
+  /**
+   * Subproduct status (enabled or disabled).
+   */
+  status: 'enabled' | 'disabled';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  categories: (string | Category)[];
+  /**
+   * The CloudPOS ID for syncing. Leave empty if not synced yet.
+   */
+  cloudPOSId?: number | null;
+  /**
+   * Enter the product name in Dutch.
+   */
+  name_nl: string;
+  /**
+   * Enter the name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the name in French.
+   */
+  name_fr?: string | null;
+  /**
+   * Select all allergens that apply to this product.
+   */
+  allergens?:
+    | (
+        | 'gluten'
+        | 'eggs'
+        | 'fish'
+        | 'peanuts'
+        | 'soybeans'
+        | 'milk'
+        | 'nuts'
+        | 'celery'
+        | 'mustard'
+        | 'sesame'
+        | 'sulphites'
+        | 'lupin'
+        | 'molluscs'
+      )[]
+    | null;
+  /**
+   * Use a unified sale price for all fulfillment methods.
+   */
+  price_unified?: boolean | null;
+  /**
+   * The unified sale price.
+   */
+  price?: number | null;
+  /**
+   * Sale price for dine-in.
+   */
+  price_dinein?: number | null;
+  /**
+   * Sale price for takeaway.
+   */
+  price_takeaway?: number | null;
+  /**
+   * Sale price for delivery.
+   */
+  price_delivery?: number | null;
+  /**
+   * Products with a lower menuOrder appear first. If two items share the same menuOrder, they’re sorted alphabetically by name.
+   */
+  menuOrder?: number | null;
+  /**
+   * Check if this product is on promotion. Old price field will appear.
+   */
+  isPromotion?: boolean | null;
+  /**
+   * Please put the old (original) price here, and use the normal price field for the new price.
+   */
+  old_price?: number | null;
+  /**
+   * Enable stock tracking for this product.
+   */
+  enable_stock?: boolean | null;
+  /**
+   * Specify the stock quantity for this product.
+   */
+  quantity?: number | null;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax: number;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax_dinein?: number | null;
+  /**
+   * Enable product visibility in the POS system.
+   */
+  posshow?: boolean | null;
+  /**
+   * Product barcode (if applicable).
+   */
+  barcode?: string | null;
+  /**
+   * Reference an image from the Media library.
+   */
+  image?: (string | null) | Media;
+  /**
+   * Timestamp for last modification.
+   */
+  modtime: number;
+  /**
+   * Enter the default description in Dutch.
+   */
+  description_nl: string;
+  /**
+   * Enter the description in English.
+   */
+  description_en?: string | null;
+  /**
+   * Enter the description in German.
+   */
+  description_de?: string | null;
+  /**
+   * Enter the description in French.
+   */
+  description_fr?: string | null;
+  /**
+   * Show this product in the webshop.
+   */
+  webshopshow?: boolean | null;
+  /**
+   * Allow this product to be ordered via the webshop.
+   */
+  webshoporderable?: boolean | null;
+  /**
+   * Product status (enabled or disabled).
+   */
+  status: 'enabled' | 'disabled';
+  /**
+   * Enable this to prevent category-specific popups from applying to this product.
+   */
+  exclude_category_popups?: boolean | null;
+  /**
+   * Assign popups to this product and define their order.
+   */
+  productpopups?:
+    | {
+        /**
+         * Select a popup to assign to this product.
+         */
+        popup: string | Productpopup;
+        /**
+         * Order in which this popup appears in the product workflow.
+         */
+        order: number;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "reservation-entries".
  */
 export interface ReservationEntry {
@@ -943,380 +1343,6 @@ export interface CustomerCredit {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "products".
- */
-export interface Product {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  categories: (string | Category)[];
-  /**
-   * The CloudPOS ID for syncing. Leave empty if not synced yet.
-   */
-  cloudPOSId?: number | null;
-  /**
-   * Enter the product name in Dutch.
-   */
-  name_nl: string;
-  /**
-   * Enter the name in English.
-   */
-  name_en?: string | null;
-  /**
-   * Enter the name in German.
-   */
-  name_de?: string | null;
-  /**
-   * Enter the name in French.
-   */
-  name_fr?: string | null;
-  /**
-   * Select all allergens that apply to this product.
-   */
-  allergens?:
-    | (
-        | 'gluten'
-        | 'eggs'
-        | 'fish'
-        | 'peanuts'
-        | 'soybeans'
-        | 'milk'
-        | 'nuts'
-        | 'celery'
-        | 'mustard'
-        | 'sesame'
-        | 'sulphites'
-        | 'lupin'
-        | 'molluscs'
-      )[]
-    | null;
-  /**
-   * Use a unified sale price for all fulfillment methods.
-   */
-  price_unified?: boolean | null;
-  /**
-   * The unified sale price.
-   */
-  price?: number | null;
-  /**
-   * Sale price for dine-in.
-   */
-  price_dinein?: number | null;
-  /**
-   * Sale price for takeaway.
-   */
-  price_takeaway?: number | null;
-  /**
-   * Sale price for delivery.
-   */
-  price_delivery?: number | null;
-  /**
-   * Products with a lower menuOrder appear first. If two items share the same menuOrder, they’re sorted alphabetically by name.
-   */
-  menuOrder?: number | null;
-  /**
-   * Check if this product is on promotion. Old price field will appear.
-   */
-  isPromotion?: boolean | null;
-  /**
-   * Please put the old (original) price here, and use the normal price field for the new price.
-   */
-  old_price?: number | null;
-  /**
-   * Enable stock tracking for this product.
-   */
-  enable_stock?: boolean | null;
-  /**
-   * Specify the stock quantity for this product.
-   */
-  quantity?: number | null;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax: number;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax_dinein?: number | null;
-  /**
-   * Enable product visibility in the POS system.
-   */
-  posshow?: boolean | null;
-  /**
-   * Product barcode (if applicable).
-   */
-  barcode?: string | null;
-  /**
-   * Reference an image from the Media library.
-   */
-  image?: (string | null) | Media;
-  /**
-   * Timestamp for last modification.
-   */
-  modtime: number;
-  /**
-   * Enter the default description in Dutch.
-   */
-  description_nl: string;
-  /**
-   * Enter the description in English.
-   */
-  description_en?: string | null;
-  /**
-   * Enter the description in German.
-   */
-  description_de?: string | null;
-  /**
-   * Enter the description in French.
-   */
-  description_fr?: string | null;
-  /**
-   * Show this product in the webshop.
-   */
-  webshopshow?: boolean | null;
-  /**
-   * Allow this product to be ordered via the webshop.
-   */
-  webshoporderable?: boolean | null;
-  /**
-   * Product status (enabled or disabled).
-   */
-  status: 'enabled' | 'disabled';
-  /**
-   * Enable this to prevent category-specific popups from applying to this product.
-   */
-  exclude_category_popups?: boolean | null;
-  /**
-   * Assign popups to this product and define their order.
-   */
-  productpopups?:
-    | {
-        /**
-         * Select a popup to assign to this product.
-         */
-        popup: string | Productpopup;
-        /**
-         * Order in which this popup appears in the product workflow.
-         */
-        order: number;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
- */
-export interface Category {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * The CloudPOS ID of this category. Leave empty if not synced.
-   */
-  cloudPOSId?: number | null;
-  /**
-   * Enter the category name in Dutch (default).
-   */
-  name_nl: string;
-  /**
-   * Enter the category name in English.
-   */
-  name_en?: string | null;
-  /**
-   * Enter the category name in German.
-   */
-  name_de?: string | null;
-  /**
-   * Enter the category name in French.
-   */
-  name_fr?: string | null;
-  /**
-   * Determines the front-end order of categories (lowest first).
-   */
-  menuOrder?: number | null;
-  /**
-   * Reference an image from the Media library.
-   */
-  image?: (string | null) | Media;
-  /**
-   * Timestamp for last modification
-   */
-  modtime: number;
-  /**
-   * Category status (enabled or disabled)
-   */
-  status: 'enabled' | 'disabled';
-  /**
-   * Assign product popups to this category. These popups will apply to all products in the category.
-   */
-  productpopups?:
-    | {
-        popup: string | Productpopup;
-        /**
-         * The order in which this popup will appear.
-         */
-        order?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "productpopups".
- */
-export interface Productpopup {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Enter the popup title in Dutch (default).
-   */
-  popup_title_nl: string;
-  /**
-   * Enter the popup title in English.
-   */
-  popup_title_en?: string | null;
-  /**
-   * Enter the popup title in German.
-   */
-  popup_title_de?: string | null;
-  /**
-   * Enter the popup title in French.
-   */
-  popup_title_fr?: string | null;
-  /**
-   * Allow selecting multiple options in this popup.
-   */
-  multiselect?: boolean | null;
-  /**
-   * Require selection of an option in the cash register.
-   */
-  required_option_cashregister?: boolean | null;
-  /**
-   * Require selection of an option in the webshop.
-   */
-  required_option_webshop?: boolean | null;
-  /**
-   * Minimum number of options to select.
-   */
-  minimum_option?: number | null;
-  /**
-   * Maximum number of options to select. Set to 0 for no limit.
-   */
-  maximum_option?: number | null;
-  /**
-   * If enabled, users can select the same option multiple times (e.g., extra sauce x3).
-   */
-  allowMultipleTimes?: boolean | null;
-  /**
-   * Default subproduct selected when the popup loads.
-   */
-  default_checked_subproduct?: (string | null) | Subproduct;
-  /**
-   * List of subproducts associated with this popup.
-   */
-  subproducts?: (string | Subproduct)[] | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "subproducts".
- */
-export interface Subproduct {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * The CloudPOS ID for this subproduct. If empty, not synced.
-   */
-  cloudPOSId?: number | null;
-  /**
-   * Enter the subproduct name in Dutch.
-   */
-  name_nl: string;
-  /**
-   * Enter the subproduct name in English.
-   */
-  name_en?: string | null;
-  /**
-   * Enter the subproduct name in German.
-   */
-  name_de?: string | null;
-  /**
-   * Enter the subproduct name in French.
-   */
-  name_fr?: string | null;
-  /**
-   * Use a unified sale price for all fulfillment methods.
-   */
-  price_unified?: boolean | null;
-  /**
-   * The unified sale price.
-   */
-  price?: number | null;
-  /**
-   * Sale price for dine-in.
-   */
-  price_dinein?: number | null;
-  /**
-   * Sale price for takeaway.
-   */
-  price_takeaway?: number | null;
-  /**
-   * Sale price for delivery.
-   */
-  price_delivery?: number | null;
-  /**
-   * Enable linking to an existing product. If enabled, price and tax fields will be hidden.
-   */
-  linked_product_enabled?: boolean | null;
-  /**
-   * Select a product to link with this subproduct.
-   */
-  linked_product?: (string | null) | Product;
-  /**
-   * Enable stock tracking for this subproduct.
-   */
-  stock_enabled?: boolean | null;
-  /**
-   * Stock quantity
-   */
-  stock_quantity?: number | null;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax?: number | null;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax_table?: number | null;
-  /**
-   * Reference an image from the Media library.
-   */
-  image?: (string | null) | Media;
-  /**
-   * Timestamp for last modification.
-   */
-  modtime: number;
-  /**
-   * Mark this subproduct as deleted
-   */
-  deleted?: boolean | null;
-  /**
-   * Subproduct status (enabled or disabled).
-   */
-  status: 'enabled' | 'disabled';
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "coupons".
  */
 export interface Coupon {
@@ -1615,6 +1641,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'shop-branding';
         value: string | ShopBranding;
+      } | null)
+    | ({
+        relationTo: 'digital-menus';
+        value: string | DigitalMenu;
       } | null)
     | ({
         relationTo: 'reservation-entries';
@@ -1972,6 +2002,29 @@ export interface ShopBrandingSelect<T extends boolean = true> {
         video?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "digital-menus_select".
+ */
+export interface DigitalMenusSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  name?: T;
+  shopBranding?: T;
+  maxRows?: T;
+  categoryOverrides?:
+    | T
+    | {
+        category?: T;
+        displayName?: T;
+        columnsForProducts?: T;
+        id?: T;
+      };
+  products?: T;
+  autoRotateInterval?: T;
   updatedAt?: T;
   createdAt?: T;
 }
