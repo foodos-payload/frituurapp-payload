@@ -22,6 +22,7 @@ import { Printers } from './collections/ShopSettings/Printers';
 import { FulfillmentMethods } from './collections/ShopSettings/FulfillmentMethods';
 import { Timeslots } from './collections/ShopSettings/Timeslots';
 import { ShopBranding } from './collections/ShopSettings/ShopBranding'
+import { DigitalMenus } from './collections/DigitalMenus'
 import { Customers } from './collections/Customers';
 import { CustomerCredits } from './collections/CustomerCredits';
 import { CustomerLoyalty } from './collections/CustomerLoyalty';
@@ -106,6 +107,13 @@ export default buildConfig({
       },
     },
     {
+      ...DigitalMenus,
+      admin: {
+        ...DigitalMenus.admin,
+        group: '🛠️',
+      },
+    },
+    {
       ...ReservationEntries,
       admin: {
         ...ReservationEntries.admin,
@@ -134,6 +142,14 @@ export default buildConfig({
         group: '🛠️',
       },
     },
+    {
+      ...POS,
+      admin: {
+        ...POS.admin,
+        group: '🛠️
+      }
+    },
+
     {
       ...Pages,
       admin: {
@@ -225,8 +241,6 @@ export default buildConfig({
         group: '🛒',
       },
     },
-    POS
-
   ],
   localization: {
     locales: ['nl', 'en', 'de', 'fr'],
