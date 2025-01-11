@@ -6,6 +6,7 @@ import { LanguageSwitcher } from "../../components/LanguageSwitcher/LanguageSwit
 import { useTranslation } from "@/context/TranslationsContext";
 import { useCart } from "@/context/CartContext";
 import { KioskContainer } from "./components/kiosk/KioskContainer";
+import Image from "next/image";
 
 interface FulfillmentMethod {
     key: "dine-in" | "takeaway" | "delivery";
@@ -111,9 +112,9 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
             <div className="flex grow items-stretch justify-center px-0 py-0 sm:px-8 sm:py-32 md:px-12 lg:px-16">
                 <div
                     className="bg-white shadow-lg w-full max-w-screen-lg
-                min-h-full sm:min-h-0
-                sm:rounded-xl p-4 sm:p-8 lg:p-16
-                flex flex-col justify-evenly"
+          min-h-full sm:min-h-0
+          sm:rounded-xl p-4 sm:p-8 lg:p-16
+          flex flex-col justify-evenly"
                 >
                     <h1 className="text-2xl sm:text-3xl font-bold text-center mb-8">
                         {t("chooseMode.title")}
@@ -125,15 +126,21 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isDineIn && handleClickMethod("dine-in")}
                             disabled={!isDineIn || !!loadingMethod}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                    border-gray-200 bg-white shadow transition-transform hover:scale-105
-                    rounded-xl sm:rounded-xl
-                    ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
+              border-gray-200 bg-white shadow transition-transform hover:scale-105
+              rounded-xl sm:rounded-xl
+              ${!isDineIn ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
-                            <img
-                                src="/images/DineInIcon.png"
-                                alt="Dine In"
-                                className="w-20 sm:w-28 md:w-32 h-20 sm:h-28 md:h-32 object-contain"
-                            />
+                            <div className="relative w-20 sm:w-28 md:w-32 h-20 sm:h-28 md:h-32">
+                                <Image
+                                    src="/images/DineInIcon.png"
+                                    alt="Dine In"
+                                    fill
+                                    className="object-contain"
+                                // OPTIONAL: If you want Next to generate multiple sizes:
+                                // sizes="(max-width: 640px) 80px, (max-width: 768px) 112px, (max-width: 1024px) 128px, 100vw"
+                                // priority or placeholder props as needed
+                                />
+                            </div>
                             <h2 className="mt-2 sm:mt-4 text-xl sm:text-2xl font-semibold">
                                 {t("chooseMode.dineIn.label")}
                             </h2>
@@ -166,15 +173,18 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isTakeaway && handleClickMethod("takeaway")}
                             disabled={!isTakeaway || !!loadingMethod}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                    border-gray-200 bg-white shadow transition-transform hover:scale-105
-                    rounded-xl sm:rounded-xl
-                    ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
+              border-gray-200 bg-white shadow transition-transform hover:scale-105
+              rounded-xl sm:rounded-xl
+              ${!isTakeaway ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
-                            <img
-                                src="/images/TakeAwayIcon.png"
-                                alt="Takeaway"
-                                className="w-20 sm:w-28 md:w-32 h-20 sm:h-28 md:h-32 object-contain"
-                            />
+                            <div className="relative w-20 sm:w-28 md:w-32 h-20 sm:h-28 md:h-32">
+                                <Image
+                                    src="/images/TakeAwayIcon.png"
+                                    alt="Takeaway"
+                                    fill
+                                    className="object-contain"
+                                />
+                            </div>
                             <h2 className="mt-2 sm:mt-4 text-xl sm:text-2xl font-semibold">
                                 {t("chooseMode.takeAway.label")}
                             </h2>
@@ -206,15 +216,18 @@ export const ChooseMode: React.FC<ChooseModeProps> = ({
                             onClick={() => isDelivery && handleClickMethod("delivery")}
                             disabled={!isDelivery || !!loadingMethod}
                             className={`flex flex-col items-center w-80 sm:w-52 p-4 border
-                    border-gray-200 bg-white shadow transition-transform hover:scale-105
-                    rounded-xl sm:rounded-xl
-                    ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
+              border-gray-200 bg-white shadow transition-transform hover:scale-105
+              rounded-xl sm:rounded-xl
+              ${!isDelivery ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
-                            <img
-                                src="/images/DeliveryIcon.png"
-                                alt="Delivery"
-                                className="w-20 sm:w-28 md:w-32 h-20 sm:h-28 md:h-32 object-contain"
-                            />
+                            <div className="relative w-20 sm:w-28 md:w-32 h-20 sm:h-28 md:h-32">
+                                <Image
+                                    src="/images/DeliveryIcon.png"
+                                    alt="Delivery"
+                                    fill
+                                    className="object-contain"
+                                />
+                            </div>
                             <h2 className="mt-2 sm:mt-4 text-xl sm:text-2xl font-semibold">
                                 {t("chooseMode.delivery.label")}
                             </h2>

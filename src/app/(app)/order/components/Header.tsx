@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import Image from "next/image";
 import { FiMenu, FiSearch, FiX } from "react-icons/fi";
 import { MdOutlineNoFood } from "react-icons/md";
 import { useTranslation } from "@/context/TranslationsContext";
@@ -188,10 +189,12 @@ export default function Header({
                     {/* LEFT: brand / logo */}
                     <div className="flex items-center space-x-5">
                         {encodedLogoUrl ? (
-                            <img
+                            <Image
                                 src={encodedLogoUrl}
                                 alt="Site Logo"
                                 className={isKiosk ? "object-contain h-14" : "object-contain h-8"}
+                                width={isKiosk ? 56 : 32} // Adjust width and height as needed
+                                height={isKiosk ? 56 : 32}
                             />
                         ) : (
                             <div className="font-bold text-sm md:text-lg">[Your Logo]</div>

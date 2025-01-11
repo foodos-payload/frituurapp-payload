@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useRef, MouseEvent } from "react";
+import Link from "next/link";
 import { CSSTransition } from "react-transition-group";
 // We'll still import LanguageSwitcher, but no custom props:
 import { LanguageSwitcher } from "../../../../components/LanguageSwitcher/LanguageSwitcher";
@@ -69,7 +70,7 @@ export default function MenuDrawer({
             fixed
             top-0 bottom-0 left-0
             z-[9998]
-            w-11/12 max-w-lg
+            w-full max-w-lg md:w-11/12
             bg-white
             shadow-lg
             flex flex-col
@@ -116,7 +117,7 @@ export default function MenuDrawer({
                         </div>
 
                         {/* Example: a "Login" button */}
-                        <a
+                        <Link
                             href="/login"
                             style={{ borderRadius: "0.5rem", backgroundColor: brandCTA }}
                             className="
@@ -128,19 +129,19 @@ export default function MenuDrawer({
                             "
                         >
                             {t("order.menu.login")}
-                        </a>
+                        </Link>
 
-                        {/* Another link */}
-                        <a href="/contact" className="text-center hover:text-blue-600">
+                        <Link href="/contact" className="text-center hover:text-blue-600">
                             {t("order.menu.contact")}
-                        </a>
+                        </Link>
+
                     </nav>
 
                     {/* Footer / version */}
                     <div className="mt-auto text-center p-8 text-[10px] text-gray-400">
-                        <a href="/" title="4.0.15">
+                        <span title="4.0.15">
                             Frituurapp v2.0
-                        </a>
+                        </span>
                     </div>
                 </div>
             </CSSTransition>
