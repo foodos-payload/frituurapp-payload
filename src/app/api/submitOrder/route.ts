@@ -124,6 +124,7 @@ export const dynamic = 'force-dynamic';
  *       '500':
  *         description: Server error
  */
+
 export async function POST(request: NextRequest) {
     try {
         const payload = await getPayload({ config });
@@ -234,7 +235,58 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        // 6) (Option B) SERVER-SIDE push to CloudPOS route, if you want
+        // 6) **Print** to all kitchen printers in this shop
+        //    - We'll query the 'printers' collection for printers with:
+        //       - shops includes shopID
+        //       - printer_type = 'kitchen'
+        //       - print_enabled = true
+        //
+        //    Then for each printer, print the "kitchen" ticket,
+        //    and if customer_enabled = true, also print the "customer" ticket.
+        const printers = await payload.find({
+            collection: 'printers',
+            where: {
+                and: [
+                    { shops: { in: [shopID] } },
+                    { printer_type: { equals: 'kitchen' } },
+                    { print_enabled: { equals: true } },
+                ],
+            },
+            limit: 50,
+        });
+
+
+        for (const p of printers.docs) {
+            try {
+                // Always print the "kitchen" ticket
+                await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        printerName: "frituur-den-overkant-kitchen-main",   // e.g. "frituur-den-overkant-kitchen-main"
+                        ticketType: 'kitchen',         // Let the printOrder route build kitchen layout
+                        orderData: createdOrder,
+                    }),
+                });
+
+                // If that printer also prints a customer copy
+                if (p?.customer_enabled === true) {
+                    await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            printerName: p.printer_name,
+                            ticketType: 'customer',      // Build the customer ticket layout
+                            orderData: createdOrder,
+                        }),
+                    });
+                }
+            } catch (printErr) {
+                console.error(`Error printing to printer ${p.printer_name}:`, printErr);
+            }
+        }
+
+        // 7)SERVER-SIDE push to CloudPOS route, if you want
         try {
             // Build the full URL if you need the domain
             const baseUrl = process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000';
@@ -251,7 +303,7 @@ export async function POST(request: NextRequest) {
             console.error('Error calling pushOrder route:', pushErr);
         }
 
-        // 7) Return success
+        // 8) Return success
         return NextResponse.json({
             success: true,
             order: createdOrder,

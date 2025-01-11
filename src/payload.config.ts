@@ -1,4 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres';
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import path from 'path';
 import { buildConfig } from 'payload';
@@ -252,6 +253,8 @@ export default buildConfig({
   cors: [
     'https://frituurwebshop.be',
     'https://*.frituurwebshop.be',
+    'https://frituur-den-overkant.frituurwebshop.be',
+    'http://frituur-den-overkant.frituurwebshop.be',
     'http://localhost:3000',
     'https://frituurapp.ngrok.dev',
     'http://frituurapp.ngrok.dev',
@@ -259,6 +262,8 @@ export default buildConfig({
   csrf: [
     'https://frituurwebshop.be',
     'https://*.frituurwebshop.be',
+    'https://frituur-den-overkant.frituurwebshop.be',
+    'http://frituur-den-overkant.frituurwebshop.be',
     'http://localhost:3000',
     'http://*.localhost:3000',
     'https://frituurapp.ngrok.dev',
@@ -269,6 +274,21 @@ export default buildConfig({
     idType: 'uuid',
   }),
   editor: lexicalEditor({}),
+  email: nodemailerAdapter({
+    // By default (no config), uses Ethereal for dev
+    // For production, provide transport config or e.g. SendGrid, SMTP, etc.
+    // e.g.:
+    transportOptions: {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    },
+    defaultFromName: 'Frituurapp',
+    defaultFromAddress: 'info@frituurapp.be',
+  }),
   graphQL: {
     schemaOutputFile: path.resolve(dirname, 'generated-schema.graphql'),
   },
