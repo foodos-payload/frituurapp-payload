@@ -251,9 +251,13 @@ export const Orders: CollectionConfig = {
             const lineTax = lineSubtotal * fraction;
             const lineNet = lineSubtotal - lineTax;
 
+            // IMPORTANT: If subproduct has its own quantity, multiply that as well:
             if (od.subproducts) {
               for (const sub of od.subproducts) {
-                const subLineSubtotal = (sub.price ?? 0) * (od.quantity ?? 1);
+                // If sub.quantity is defined, multiply it separately:
+                const subQty = sub.quantity ?? 1; // fallback to 1 if not present
+                const subLineSubtotal = (sub.price ?? 0) * (od.quantity ?? 1) * subQty;
+
                 const subFraction = (sub.tax ?? 21) / (100 + (sub.tax ?? 21));
                 const subLineTax = subLineSubtotal * subFraction;
                 const subLineNet = subLineSubtotal - subLineTax;
@@ -297,7 +301,6 @@ export const Orders: CollectionConfig = {
                   `Not enough points. You have ${membership?.points ?? 0} but tried to use ${pointsUsed}.`
                 );
               }
-              // We'll deduct them below (once discount is final).
             }
             discount += pointsUsed * 0.01;
           }
@@ -484,7 +487,6 @@ export const Orders: CollectionConfig = {
     ],
   },
 
-
   fields: [
     // (A) Tenant + Shop scoping
     tenantField,
@@ -609,6 +611,16 @@ export const Orders: CollectionConfig = {
             { name: 'price', type: 'number', label: { en: 'Subproduct Price' } },
             { name: 'tax', type: 'number', label: { en: 'Tax Rate (%)' } },
             { name: 'tax_dinein', type: 'number', label: { en: 'Dine-In Tax Rate (%)' } },
+            // <-- NEW optional "quantity" field for subproducts
+            {
+              name: 'quantity',
+              type: 'number',
+              required: false,
+              label: { en: 'Quantity' },
+              admin: {
+                description: 'If subproduct can have multiple units.',
+              },
+            },
           ],
         },
       ],
@@ -776,7 +788,6 @@ export const Orders: CollectionConfig = {
             { name: 'couponId', type: 'text' },
             { name: 'barcode', type: 'text' },
             { name: 'value', type: 'number' },
-            // IMPORTANT: match the front-end: "value_type" = "fixed" | "percentage"
             { name: 'value_type', type: 'text' },
             { name: 'valid_from', type: 'date' },
             { name: 'valid_until', type: 'date' },
@@ -792,7 +803,6 @@ export const Orders: CollectionConfig = {
             { name: 'voucherId', type: 'text' },
             { name: 'barcode', type: 'text' },
             { name: 'value', type: 'number' },
-            // If you also need "value_type" for gift vouchers, add it here:
             { name: 'valid_from', type: 'date' },
             { name: 'valid_until', type: 'date' },
             { name: 'used', type: 'checkbox' },
@@ -809,6 +819,5 @@ export const Orders: CollectionConfig = {
         description: 'If the order was placed from a kiosk, store the kiosk ID here.',
       },
     },
-
   ],
 };

@@ -15,9 +15,9 @@ interface SubproductEntry {
     price?: number
     tax?: number
     tax_dinein?: number
+    quantity?: number // NEW: subproduct quantity
 }
 
-// MetaData remains the same
 interface MetaData {
     id: number
     key?: string
@@ -79,7 +79,6 @@ export function OrderDetailsList({
     checkedItems,
     toggleItemCheck,
 }: Props) {
-    // 2) Pull locale from the global translation context
     const { locale } = useTranslation()
 
     return (
@@ -87,7 +86,7 @@ export function OrderDetailsList({
             {details.map((detail) => {
                 const isChecked = checkedItems.has(detail.id)
 
-                // 3) For the main product, pick the correct name
+                // Pick the main product name
                 const productName = pickName(
                     detail.product?.name_nl,
                     detail.product?.name_en,
@@ -101,17 +100,18 @@ export function OrderDetailsList({
                         key={detail.id}
                         onClick={() => !isArchived && toggleItemCheck(detail.id)}
                         className={`
-              border-b border-gray-300 last:border-none pb-2 cursor-pointer
-              ${isChecked ? "bg-blue-50" : "bg-white"}
-            `}
+                            border-b border-gray-300 last:border-none pb-2 cursor-pointer
+                            ${isChecked ? "bg-blue-50" : "bg-white"}
+                        `}
                     >
                         <div className="flex items-start justify-between gap-3">
+                            {/* Checkbox if not archived */}
                             {!isArchived && (
                                 <div
                                     className={`
-                    w-4 h-4 mt-[3px] flex-shrink-0 border-2 border-gray-600 rounded-full flex items-center justify-center
-                    ${isChecked ? "bg-blue-600 border-blue-600" : ""}
-                  `}
+                                        w-4 h-4 mt-[3px] flex-shrink-0 border-2 border-gray-600 rounded-full flex items-center justify-center
+                                        ${isChecked ? "bg-blue-600 border-blue-600" : ""}
+                                    `}
                                 >
                                     {isChecked && <div className="w-2 h-2 bg-white rounded-full" />}
                                 </div>
@@ -137,11 +137,10 @@ export function OrderDetailsList({
                                     </div>
                                 )}
 
-                                {/* Subproducts */}
+                                {/* Subproducts => show quantity if > 1 */}
                                 {detail.subproducts && detail.subproducts.length > 0 && (
                                     <div className="mt-1 text-xs text-gray-500">
                                         {detail.subproducts.map((sub) => {
-                                            // 4) For subproducts, pick the correct name
                                             const subName = pickName(
                                                 sub.name_nl,
                                                 sub.name_en,
@@ -149,7 +148,14 @@ export function OrderDetailsList({
                                                 sub.name_fr,
                                                 locale,
                                             )
-                                            return <div key={sub.id}>- {subName}</div>
+                                            const subQty = sub.quantity && sub.quantity > 1
+                                                ? ` x${sub.quantity}`
+                                                : ""
+                                            return (
+                                                <div key={sub.id}>
+                                                    - {subQty} {subName}
+                                                </div>
+                                            )
                                         })}
                                     </div>
                                 )}

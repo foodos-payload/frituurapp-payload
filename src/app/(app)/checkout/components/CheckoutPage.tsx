@@ -497,6 +497,7 @@ export default function CheckoutPage({
                         price: sp.price,
                         tax: sp.tax,
                         tax_dinein: sp.tax_dinein,
+                        quantity: sp.quantity ?? 1,
                     })) || [],
             })),
             payments: [

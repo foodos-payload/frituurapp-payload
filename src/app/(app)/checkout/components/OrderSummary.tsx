@@ -31,8 +31,8 @@ interface OrderSummaryProps {
 
 /**
  * OrderSummary with local spinner logic on the "Proceed to Checkout" button.
- * 
- * Because `handleCheckout()` does the real fetch + router logic, 
+ *
+ * Because `handleCheckout()` does the real fetch + router logic,
  * you might see the spinner for a short time if the route transitions quickly.
  */
 export default function OrderSummary({
@@ -65,7 +65,7 @@ export default function OrderSummary({
     // Local spinner states: "idle" | "loading" | "check"
     const [loadingState, setLoadingState] = useState<"idle" | "loading" | "check">("idle");
 
-    // Wrap your click handler in a debounce of (say) 1 second
+    // Debounced checkout click to prevent double-click spam:
     const debouncedCheckoutClick = useMemo(
         () =>
             debounce(async () => {
@@ -80,12 +80,6 @@ export default function OrderSummary({
         [handleCheckout, canProceed, loadingState]
     );
 
-    /** 
-     * The user clicks “Proceed to Checkout.”
-     * We show a local spinner, call `handleCheckout()`, 
-     * then briefly show a check icon, and reset to "idle" 
-     * unless the page navigates away.
-     */
     async function handleCheckoutClick() {
         // If cannot proceed or already loading, do nothing.
         if (!canProceed() || loadingState === "loading") return;
@@ -126,8 +120,21 @@ export default function OrderSummary({
         removeItem(sig);
     }
 
-    function getSubLine(subName: string, subPrice: number) {
-        return `${subName} (+€${subPrice.toFixed(2)})`;
+    /**
+     * Construct a single line of text for a subproduct,
+     * including “ x{qty}” if quantity > 1, and the total sub-line price.
+     *
+     * E.g. if subproduct = { name_nl: "Onions", price: 0.5, quantity: 2 } =>
+     * => "Onions x2 (+€1.00)"
+     */
+    function getSubLine(
+        subName: string,
+        singlePrice: number,
+        subQty?: number
+    ): string {
+        const effectiveQty = subQty && subQty > 1 ? ` x${subQty}` : "";
+        const subLineTotal = singlePrice * (subQty || 1);
+        return `${subName}${effectiveQty} (+€${subLineTotal.toFixed(2)})`;
     }
 
     return (
@@ -146,17 +153,25 @@ export default function OrderSummary({
                     <ul className="flex flex-col gap-4">
                         {cartItems.map((item, idx) => {
                             const displayName = item.productName || "Untitled Product";
-                            const subTotal = item.subproducts?.reduce((acc, sp) => acc + sp.price, 0) || 0;
-                            const linePrice = (item.price + subTotal) * item.quantity;
+
+                            // Sum the subproduct lines
+                            // (If each subproduct has subPrice & subQuantity, we sum them here)
+                            const subLineTotal = item.subproducts?.reduce(
+                                (acc, sp) => acc + sp.price * (sp.quantity || 1),
+                                0
+                            ) || 0;
+
+                            // The total line price => item price + subLineTotal, all × item.quantity
+                            const linePrice = (item.price + subLineTotal) * item.quantity;
 
                             return (
                                 <li key={`${item.productId}-${idx}`}>
                                     <div
                                         className="
-                      rounded-xl flex w-full overflow-hidden relative 
-                      items-center bg-white shadow-sm
-                      p-3
-                    "
+                                            rounded-xl flex w-full overflow-hidden relative
+                                            items-center bg-white shadow-sm
+                                            p-3
+                                        "
                                         style={{ minHeight: "80px" }}
                                     >
                                         {/* Thumbnail */}
@@ -179,11 +194,18 @@ export default function OrderSummary({
                                             {/* Subproducts */}
                                             {item.subproducts && item.subproducts.length > 0 && (
                                                 <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
-                                                    {item.subproducts.map((sp, sIdx) => (
-                                                        <li key={`${sp.subproductId}-${sIdx}`}>
-                                                            {getSubLine(sp.name_nl, sp.price)}
-                                                        </li>
-                                                    ))}
+                                                    {item.subproducts.map((sp, sIdx) => {
+                                                        // Combine name + quantity + total sub-line price
+                                                        return (
+                                                            <li key={`${sp.subproductId}-${sIdx}`}>
+                                                                {getSubLine(
+                                                                    sp.name_nl,
+                                                                    sp.price,
+                                                                    sp.quantity
+                                                                )}
+                                                            </li>
+                                                        );
+                                                    })}
                                                 </ul>
                                             )}
 
@@ -201,20 +223,20 @@ export default function OrderSummary({
                                                     aria-label="Decrease Quantity"
                                                     type="button"
                                                     className="
-                            focus:outline-none border-r border 
-                            rounded-l border-gray-300 hover:bg-gray-50
-                            w-8 h-8 flex items-center justify-center 
-                          "
+                                                        focus:outline-none border-r border
+                                                        rounded-l border-gray-300 hover:bg-gray-50
+                                                        w-8 h-8 flex items-center justify-center
+                                                    "
                                                     onClick={() => handleDecrease(item.productId)}
                                                 >
                                                     -
                                                 </button>
                                                 <div
                                                     className="
-                            flex items-center justify-center 
-                            border-y border-gray-300 text-center px-2
-                            w-8 text-sm
-                          "
+                                                        flex items-center justify-center
+                                                        border-y border-gray-300 text-center px-2
+                                                        w-8 text-sm
+                                                    "
                                                 >
                                                     {item.quantity}
                                                 </div>
@@ -223,10 +245,10 @@ export default function OrderSummary({
                                                     aria-label="Increase Quantity"
                                                     type="button"
                                                     className="
-                            focus:outline-none border-l border 
-                            rounded-r hover:bg-gray-50 border-gray-300
-                            w-8 h-8 flex items-center justify-center
-                          "
+                                                        focus:outline-none border-l border
+                                                        rounded-r hover:bg-gray-50 border-gray-300
+                                                        w-8 h-8 flex items-center justify-center
+                                                    "
                                                     onClick={() => handleIncrease(item.productId)}
                                                 >
                                                     +
@@ -248,8 +270,12 @@ export default function OrderSummary({
                     </ul>
                 )}
 
-                {/* Example: “Apply Promo or Scan QR” button */}
-                <PromoButton isKiosk={isKiosk} label="Apply Promo or Scan QR" buttonClass="bg-blue-100 ..." />
+                {/* “Apply Promo or Scan QR” button */}
+                <PromoButton
+                    isKiosk={isKiosk}
+                    label="Apply Promo or Scan QR"
+                    buttonClass="bg-blue-100 ..."
+                />
 
                 {/* Totals + Checkout */}
                 <div className="pt-3 border-t border-gray-200 space-y-2">
@@ -302,15 +328,15 @@ export default function OrderSummary({
                         </div>
                     )}
 
-                    {/* Local Spinner Button */}
+                    {/* Spinner Button */}
                     <button
                         onClick={debouncedCheckoutClick}
                         disabled={!canProceed() || loadingState === "loading"}
                         className={`
-              w-full mt-2 text-white font-medium py-2 rounded-xl focus:outline-none 
-              transition-colors 
-              ${!canProceed() ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}
-            `}
+                            w-full mt-2 text-white font-medium py-2 rounded-xl focus:outline-none
+                            transition-colors
+                            ${!canProceed() ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}
+                        `}
                         style={{
                             backgroundColor: canProceed() ? brandColor : "#9ca3af",
                         }}
@@ -339,7 +365,11 @@ export default function OrderSummary({
                                 strokeWidth="3"
                                 className="mx-auto"
                             >
-                                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                                <path
+                                    d="M5 13l4 4L19 7"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
                             </svg>
                         ) : (
                             // Default text

@@ -1474,6 +1474,10 @@ export interface Order {
               price?: number | null;
               tax?: number | null;
               tax_dinein?: number | null;
+              /**
+               * If subproduct can have multiple units.
+               */
+              quantity?: number | null;
               id?: string | null;
             }[]
           | null;
@@ -2314,6 +2318,7 @@ export interface OrdersSelect<T extends boolean = true> {
               price?: T;
               tax?: T;
               tax_dinein?: T;
+              quantity?: T;
               id?: T;
             };
         id?: T;
