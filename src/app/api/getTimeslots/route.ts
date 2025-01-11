@@ -1,10 +1,9 @@
-
 // File: src/app/api/getTimeslots/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import { NextRequest, NextResponse } from 'next/server';
+import { getPayload } from 'payload';
+import config from '@payload-config';
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
 // 1 => Monday, 2 => Tuesday, 3 => Wednesday, etc.
 const dayIndexMap: Record<string, string> = {
@@ -160,11 +159,14 @@ export async function GET(request: NextRequest) {
         const methodDocs = fmResult.docs || [];
 
         // [LOG] Show which fulfillment methods we found
-        console.log(`[getTimeslots] Fulfillment methods for shop=${shop.slug}`, methodDocs.map(m => ({
-            id: m.id,
-            method_type: m.method_type,
-            shared_booked_slots: m.settings?.shared_booked_slots,
-        })));
+        console.log(
+            `[getTimeslots] Fulfillment methods for shop=${shop.slug}`,
+            methodDocs.map((m) => ({
+                id: m.id,
+                method_type: m.method_type,
+                shared_booked_slots: m.settings?.shared_booked_slots,
+            }))
+        );
 
         // Build a map methodType -> { shared_booked_slots: boolean }
         const methodInfo: Record<string, any> = {};
@@ -199,7 +201,11 @@ export async function GET(request: NextRequest) {
         for (const doc of timeslotResult.docs) {
             if (!doc.method_id || !doc.week) continue;
 
-            const methodType = typeof doc.method_id === 'string' ? 'unknown' : doc.method_id.method_type || 'unknown';
+            const methodType =
+                typeof doc.method_id === 'string'
+                    ? 'unknown'
+                    : doc.method_id.method_type || 'unknown';
+
             const week = doc.week as Record<string, TimeRange[]>;
 
             for (const weekday of Object.keys(week)) {
@@ -232,7 +238,9 @@ export async function GET(request: NextRequest) {
         }
 
         // [LOG] Show how many day-based slots we created
-        console.log(`[getTimeslots] Created ${dayBasedSlots.length} dayBasedSlots (ignoring the date).`);
+        console.log(
+            `[getTimeslots] Created ${dayBasedSlots.length} dayBasedSlots (ignoring the date).`
+        );
 
         // 4) Expand day-based slots to date-based for next 10 days
         const nextTen = getNextTenDates();
@@ -247,7 +255,7 @@ export async function GET(request: NextRequest) {
 
         for (const dateStr of nextTen) {
             const thisDay = getDayOfWeek(dateStr);
-            const daySlots = dayBasedSlots.filter(s => s.day === thisDay);
+            const daySlots = dayBasedSlots.filter((s) => s.day === thisDay);
             for (const s of daySlots) {
                 finalTimeslots.push({
                     ...s,
@@ -258,7 +266,9 @@ export async function GET(request: NextRequest) {
         }
 
         // [LOG] We now have a date-based array of timeslots
-        console.log(`[getTimeslots] total date-based timeslots => ${finalTimeslots.length}`);
+        console.log(
+            `[getTimeslots] total date-based timeslots => ${finalTimeslots.length}`
+        );
 
         // 5) Fetch recent orders to see usage
         const today = new Date();
@@ -325,9 +335,19 @@ export async function GET(request: NextRequest) {
         }
 
         // [LOG] Show a summary of final timeslots with usage
-        // This can be verbose, so maybe just log the ones that are fully booked:
-        const fullyBooked = finalTimeslots.filter(ts => ts.isFullyBooked);
+        const fullyBooked = finalTimeslots.filter((ts) => ts.isFullyBooked);
         console.log('[getTimeslots] fullyBooked slots =>', fullyBooked);
+
+        // 7) Filter out timeslots that have already passed
+        const now = new Date();
+        const upcomingTimeslots = finalTimeslots.filter((slot) => {
+            const slotDateTime = new Date(`${slot.date}T${slot.time}:00`);
+            return slotDateTime > now;
+        });
+
+        console.log(
+            `[getTimeslots] After filtering out past slots => ${upcomingTimeslots.length}`
+        );
 
         return NextResponse.json({
             shop: {
@@ -335,7 +355,7 @@ export async function GET(request: NextRequest) {
                 slug: shop.slug,
                 name: shop.name,
             },
-            timeslots: finalTimeslots,
+            timeslots: upcomingTimeslots,
         });
     } catch (err: any) {
         console.error('Error in getTimeslots route:', err);

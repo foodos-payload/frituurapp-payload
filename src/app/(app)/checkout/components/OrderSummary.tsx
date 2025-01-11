@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { useCart, getLineItemSignature } from "@/context/CartContext";
 import PromoButton from "../../shared/PromoButton";
+import debounce from "lodash.debounce";
 
 type Branding = {
     /** e.g. "#ECAA02" or some other brand color */
@@ -62,6 +63,21 @@ export default function OrderSummary({
 
     // Local spinner states: "idle" | "loading" | "check"
     const [loadingState, setLoadingState] = useState<"idle" | "loading" | "check">("idle");
+
+    // Wrap your click handler in a debounce of (say) 1 second
+    const debouncedCheckoutClick = useMemo(
+        () =>
+            debounce(async () => {
+                if (!canProceed() || loadingState === "loading") return;
+
+                setLoadingState("loading");
+                await handleCheckout();
+                setLoadingState("check");
+
+                setTimeout(() => setLoadingState("idle"), 1000);
+            }, 1000),
+        [handleCheckout, canProceed, loadingState]
+    );
 
     /** 
      * The user clicks “Proceed to Checkout.”
@@ -287,7 +303,7 @@ export default function OrderSummary({
 
                     {/* Local Spinner Button */}
                     <button
-                        onClick={handleCheckoutClick}
+                        onClick={debouncedCheckoutClick}
                         disabled={!canProceed() || loadingState === "loading"}
                         className={`
               w-full mt-2 text-white font-medium py-2 rounded-xl focus:outline-none 
