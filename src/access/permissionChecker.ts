@@ -16,45 +16,24 @@ interface Role {
     collections: CollectionPermission[]
 }
 
-async function getRoleFromPayload(req: PayloadRequest): Promise<Role | null> {
-    try {
-        if (!req.user?.roles?.[0]) return null
-        const role = req.user.roles[0]
-      
-
-        return role as Role
-    } catch (error) {
-        console.error('Error fetching role:', error)
-        return null
-    }
-}
-
 export async function checkPermission(
     collectionName: string,
     action: PermissionAction,
     req: PayloadRequest
 ): Promise<boolean> {
+    const roles = req.user?.roles as Role[]
     try {
-        // Super admin bypass
-        if (req.user?.roles?.includes('super-admin')) {
-            return true
-        }
-
-        const role = await getRoleFromPayload(req)
-
-        if (!role) {
+        if (!req.user?.roles?.length) {
             return false
         }
 
-        const collectionPermission = role.collections.find(
-            (permission) => permission.collectionName === collectionName
-        )
-
-        if (!collectionPermission) {
-            return false
-        }
-
-        return collectionPermission[action] || false
+        // Check if any role has the required permission
+        return roles.some((role: Role) => {
+            const collectionPermission = role.collections.find(
+                permission => permission.collectionName === collectionName
+            )
+            return collectionPermission?.[action] || false
+        })
 
     } catch (error) {
         console.error('Error checking permissions:', error)
