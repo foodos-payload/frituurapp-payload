@@ -36,58 +36,178 @@ export const Orders: CollectionConfig = {
     beforeChange: [
       async ({ data, req, operation }) => {
         // Only run this logic when creating a new order
-        if (operation === 'create') {
+        if (operation !== 'create') {
+          return;
+        }
 
-          // 1) If kiosk => override the fulfillment_time & sub_method_label
-          if (data.order_type === 'kiosk') {
-            const now = new Date();
-            data.fulfillment_time = now.toTimeString().slice(0, 5);
-            if (data.payments && data.payments.length > 0) {
-              data.payments[0].sub_method_label = 'terminal';
+        // 1) If kiosk => override the fulfillment_time & sub_method_label
+        if (data.order_type === 'kiosk') {
+          const now = new Date();
+          data.fulfillment_time = now.toTimeString().slice(0, 5);
+          if (data.payments && data.payments.length > 0) {
+            data.payments[0].sub_method_label = 'terminal';
+          }
+        }
+
+        // 2) Timeslot concurrency check => ensure date/time not fully booked
+        const methodType = data.fulfillment_method;         // e.g. 'delivery'
+        const dateStr = data.fulfillment_date;              // e.g. '2025-01-10'
+        const timeStr = data.fulfillment_time;              // e.g. '09:15'
+
+        if (methodType && dateStr && timeStr) {
+          // (A) Find the relevant fulfillment-method doc => check shared_booked_slots
+          const methodDoc = await req.payload.find({
+            collection: 'fulfillment-methods',
+            where: {
+              method_type: { equals: methodType },
+              shops: { in: data.shops },
+            },
+            limit: 1,
+          });
+          const foundMethod = methodDoc.docs[0];
+          if (!foundMethod) {
+            throw new Error(`Fulfillment method ${methodType} not found for this shop`);
+          }
+
+          const isShared = foundMethod.settings?.shared_booked_slots === true;
+
+          // (B) Convert dateStr => dayOfWeek => find timeslot range => get max_orders
+          const [yyyy, mm, dd] = dateStr.split('-').map(Number);
+          const dt = new Date(Date.UTC(yyyy, mm - 1, dd, 12));
+          const dayNumber = dt.getUTCDay() === 0 ? 7 : dt.getUTCDay(); // 1..7
+
+          const dayIndexMap: Record<string, string> = {
+            '1': 'monday',
+            '2': 'tuesday',
+            '3': 'wednesday',
+            '4': 'thursday',
+            '5': 'friday',
+            '6': 'saturday',
+            '7': 'sunday',
+          };
+          const dayKey = dayIndexMap[String(dayNumber)];
+
+          // Find timeslot doc => see if the chosen time is in a [start..end] range
+          const timeslotsResult = await req.payload.find({
+            collection: 'timeslots',
+            where: {
+              shops: { in: data.shops },
+              method_id: { equals: foundMethod.id },
+            },
+            limit: 50,
+            depth: 0,
+          });
+
+          function toMinutes(hhmm: string) {
+            const [h, m] = hhmm.split(':').map(Number);
+            return (h || 0) * 60 + (m || 0);
+          }
+          const requestedMinutes = toMinutes(timeStr);
+
+          let matchedMaxOrders: number | null = null;
+
+          for (const doc of timeslotsResult.docs) {
+            const ranges = (doc as any).week?.[dayKey];
+            if (!ranges) continue;
+
+            for (const tr of ranges) {
+              if (!tr.status) continue; // skip disabled
+              const startMins = toMinutes(tr.start_time);
+              const endMins = toMinutes(tr.end_time);
+
+              if (requestedMinutes >= startMins && requestedMinutes < endMins) {
+                matchedMaxOrders = tr.max_orders || 5;
+                break;
+              }
+            }
+            if (matchedMaxOrders !== null) break;
+          }
+
+          if (matchedMaxOrders === null) {
+            throw new Error(
+              `No matching timeslot range found for method=${methodType} at ${dateStr} ${timeStr}. Possibly closed?`
+            );
+          }
+
+          // (C) If shared => also check usage from other shared methods
+          const methodTypesToCheck: string[] = [methodType];
+          if (isShared) {
+            const sharedOnes = await req.payload.find({
+              collection: 'fulfillment-methods',
+              where: {
+                shops: { in: data.shops },
+                'settings.shared_booked_slots': { equals: true },
+              },
+              limit: 50,
+            });
+            const sharedTypes = sharedOnes.docs.map((m) => m.method_type);
+            for (const st of sharedTypes) {
+              if (!methodTypesToCheck.includes(st)) {
+                methodTypesToCheck.push(st);
+              }
             }
           }
 
-          // 2) Auto-increment: daily `tempOrdNr` + global `id`
-          const today = new Date().toISOString().split('T')[0];
-
-          // (A) Find last order *today* => set tempOrdNr
-          const lastOrderToday = await req.payload.find({
+          // (D) Count existing orders with same date/time + method(s) => exclude cancelled
+          const usageCheck = await req.payload.find({
             collection: 'orders',
             where: {
               tenant: { equals: data.tenant },
               shops: { in: data.shops },
-              createdAt: { greater_than: `${today}T00:00:00` },
+              fulfillment_date: { equals: dateStr },
+              fulfillment_time: { equals: timeStr },
+              fulfillment_method: { in: methodTypesToCheck },
+              status: { not_equals: 'cancelled' },
             },
-            sort: '-tempOrdNr',
+            limit: 200,
+          });
+
+          if (usageCheck.docs.length >= matchedMaxOrders) {
+            throw new Error(`Sorry, that timeslot is fully booked! Please pick another time.`);
+          }
+        }
+        // End concurrency check
+
+        // 3) Auto-increment: daily `tempOrdNr` + global `id`
+        const today = new Date().toISOString().split('T')[0];
+
+        // (A) Find last order *today* => set tempOrdNr
+        const lastOrderToday = await req.payload.find({
+          collection: 'orders',
+          where: {
+            tenant: { equals: data.tenant },
+            shops: { in: data.shops },
+            createdAt: { greater_than: `${today}T00:00:00` },
+          },
+          sort: '-tempOrdNr',
+          limit: 1,
+        });
+        const lastTempOrdNr = lastOrderToday.docs[0]?.tempOrdNr || 0;
+        data.tempOrdNr = lastTempOrdNr + 1;
+
+        // (B) Find last order overall => set global `id`
+        const lastFullOrder = await req.payload.find({
+          collection: 'orders',
+          where: {
+            tenant: { equals: data.tenant },
+            shops: { in: data.shops },
+          },
+          sort: '-id',
+          limit: 1,
+        });
+        const lastId = lastFullOrder.docs[0]?.id ?? 0;
+        data.id = lastId + 1;
+
+        // (C) If `customerBarcode` => find that customer doc => set data.customer
+        if (data.customerBarcode) {
+          const matchingCust = await req.payload.find({
+            collection: 'customers',
+            where: { barcode: { equals: data.customerBarcode } },
             limit: 1,
           });
-          const lastTempOrdNr = lastOrderToday.docs[0]?.tempOrdNr || 0;
-          data.tempOrdNr = lastTempOrdNr + 1;
-
-          // (B) Find last order overall => set global `id`
-          const lastFullOrder = await req.payload.find({
-            collection: 'orders',
-            where: {
-              tenant: { equals: data.tenant },
-              shops: { in: data.shops },
-            },
-            sort: '-id',
-            limit: 1,
-          });
-          const lastId = lastFullOrder.docs[0]?.id ?? 0;
-          data.id = lastId + 1;
-
-          // 3) If `customerBarcode` => find that customer doc => set data.customer
-          if (data.customerBarcode) {
-            const matchingCust = await req.payload.find({
-              collection: 'customers',
-              where: { barcode: { equals: data.customerBarcode } },
-              limit: 1,
-            });
-            const custDoc = matchingCust.docs[0];
-            if (custDoc) {
-              data.customer = custDoc.id;
-            }
+          const custDoc = matchingCust.docs[0];
+          if (custDoc) {
+            data.customer = custDoc.id;
           }
         }
 
@@ -100,9 +220,10 @@ export const Orders: CollectionConfig = {
                 id: od.product,
               });
               if (productDoc) {
+                // Compare with official product price
                 const officialPrice = productDoc.price_unified
                   ? productDoc.price
-                  : productDoc.price;
+                  : productDoc.price; // Simplified logic
                 if (typeof od.price === 'number' && od.price !== officialPrice) {
                   throw new Error(
                     `Price mismatch for product ${productDoc.name_nl}. ` +
@@ -163,9 +284,8 @@ export const Orders: CollectionConfig = {
             giftVoucherUsed,
           } = data.promotionsUsed;
 
-          // (A) membership points => 1 point => 0.01
+          // (A) membership points => 1 point => €0.01
           if (pointsUsed && pointsUsed > 0) {
-            // If we already found or had a data.customer => confirm & deduct
             if (data.customer) {
               const custDoc = await req.payload.findByID({
                 collection: 'customers',
@@ -174,13 +294,11 @@ export const Orders: CollectionConfig = {
               const membership = custDoc?.memberships?.[0];
               if (!membership || (membership.points ?? 0) < pointsUsed) {
                 throw new Error(
-                  `Not enough points. You have ${membership?.points ?? 0}` +
-                  ` but tried to use ${pointsUsed}.`
+                  `Not enough points. You have ${membership?.points ?? 0} but tried to use ${pointsUsed}.`
                 );
               }
-              // We'll deduct them later below, after we've confirmed discount
+              // We'll deduct them below (once discount is final).
             }
-            // Add to discount
             discount += pointsUsed * 0.01;
           }
 
@@ -199,7 +317,6 @@ export const Orders: CollectionConfig = {
                   } but tried to use ${creditsUsed}.`
                 );
               }
-              // We'll update it below
             }
             discount += creditsUsed;
           }
@@ -222,7 +339,7 @@ export const Orders: CollectionConfig = {
 
               // Apply discount
               if (couponUsed.value_type === 'fixed') {
-                discount += (couponUsed.value || 0);
+                discount += couponUsed.value || 0;
               } else if (couponUsed.value_type === 'percentage') {
                 discount += gross * ((couponUsed.value || 0) / 100);
               }
@@ -282,7 +399,7 @@ export const Orders: CollectionConfig = {
               );
             }
 
-            discount += (giftVoucherUsed.value || 0);
+            discount += giftVoucherUsed.value || 0;
 
             // Mark voucher used
             await req.payload.update({
@@ -311,7 +428,7 @@ export const Orders: CollectionConfig = {
         }
 
         // 10) Now that discount is final => actually deduct from membership or store credits
-        if (operation === 'create' && data.promotionsUsed) {
+        if (data.promotionsUsed) {
           const { pointsUsed, creditsUsed } = data.promotionsUsed;
 
           // (A) membership points => if data.customer
@@ -320,12 +437,9 @@ export const Orders: CollectionConfig = {
               collection: 'customers',
               id: data.customer,
             });
-            // Safely handle .memberships possibly undefined
             const membershipsArray = custDoc?.memberships ?? [];
 
-            // Only if membership exists
             if (membershipsArray.length > 0) {
-              const membership = membershipsArray[0];
               // Subtract used points from the first membership
               const updatedMemberships = membershipsArray.map((m: any, idx: number) => {
                 if (idx === 0) {
@@ -336,7 +450,6 @@ export const Orders: CollectionConfig = {
                 }
                 return m;
               });
-              // Update the customer doc
               await req.payload.update({
                 collection: 'customers',
                 id: data.customer,
@@ -370,6 +483,7 @@ export const Orders: CollectionConfig = {
       },
     ],
   },
+
 
   fields: [
     // (A) Tenant + Shop scoping

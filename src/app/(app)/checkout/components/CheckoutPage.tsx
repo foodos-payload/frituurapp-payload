@@ -90,6 +90,8 @@ export default function CheckoutPage({
     // 1) Check if user was redirected with ?cancelled=true
     const cancelledParam = searchParams.get("cancelled") === "true";
     const [isPaymentCancelled, setIsPaymentCancelled] = useState(false);
+    // Local state for concurrency or other server errors
+    const [serverErrorMsg, setServerErrorMsg] = useState("");
 
     useEffect(() => {
         if (cancelledParam) {
@@ -511,10 +513,17 @@ export default function CheckoutPage({
             });
             const json = await res.json();
 
+            // If server says success === false => show an error
             if (!json.success) {
-                alert("Order creation failed: " + json.message);
-                return null;
+                // Possibly check if it's specifically about timeslot concurrency
+                if (json.message?.toLowerCase().includes("timeslot is fully booked")) {
+                    setServerErrorMsg("Sorry, that timeslot is fully booked! Please pick another.");
+                } else {
+                    setServerErrorMsg(json.message);
+                }
+                return null; // return early
             }
+
             localOrderId = json.order.id;
             console.log("Local order created. ID =", localOrderId);
         } catch (err) {
@@ -651,9 +660,17 @@ export default function CheckoutPage({
                     <div className="checkout-form container mx-auto my-16 flex flex-wrap items-start gap-8 justify-evenly lg:gap-20">
                         {/* Left column */}
                         <div className="w-full max-w-2xl grid gap-8 md:flex-1">
+
                             {isPaymentCancelled && (
                                 <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
                                     Payment was cancelled. Please try again or choose another method.
+                                </div>
+                            )}
+
+                            {/* 2) Timeslot concurrency (serverErrorMsg) */}
+                            {serverErrorMsg && (
+                                <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
+                                    {serverErrorMsg}
                                 </div>
                             )}
 
@@ -786,6 +803,18 @@ export default function CheckoutPage({
                                 discountedSubtotal={discountedSubtotal}
                                 isKiosk={isKiosk}
                             />
+                            {isPaymentCancelled && (
+                                <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
+                                    Payment was cancelled. Please try again or choose another method.
+                                </div>
+                            )}
+
+                            {/* 2) Timeslot concurrency (serverErrorMsg) */}
+                            {serverErrorMsg && (
+                                <div className="text-md text-red-700 bg-red-50 border-l-4 border-red-300 p-2 my-2 rounded">
+                                    {serverErrorMsg}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </>
