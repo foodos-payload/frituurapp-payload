@@ -12,7 +12,7 @@ import { FiTrash2 } from "react-icons/fi";
 import { useShopBranding } from "@/context/ShopBrandingContext";
 
 type ModalStep = "codeInput" | "customerOptions";
-type Membership = { points: number; };
+type Membership = { points: number };
 type CustomerInfo = {
     firstname: string;
     lastname: string;
@@ -34,7 +34,6 @@ type PromoCodeModalProps = {
     onRemoveCoupon?: () => void;
     currentlyUsedPoints?: number;
     currentlyUsedCredits?: number;
-    pointsUsed?: number;
 };
 
 export default function PromoCodeModal({
@@ -74,7 +73,12 @@ export default function PromoCodeModal({
     const [creditsToUse, setCreditsToUse] = useState<number>(0);
     const [extraCode, setExtraCode] = useState("");
 
-    // Handle clicks on the dark overlay => close
+    // -- NEW: local spinner states for each “apply” action --
+    const [promoLoading, setPromoLoading] = useState<"idle" | "loading">("idle");
+    const [pointsLoading, setPointsLoading] = useState<"idle" | "loading">("idle");
+    const [creditsLoading, setCreditsLoading] = useState<"idle" | "loading">("idle");
+
+    // Overlay click => close
     function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
         if (e.target === e.currentTarget) {
             handleClose();
@@ -91,20 +95,39 @@ export default function PromoCodeModal({
         setPointsToUse(0);
         setCreditsToUse(0);
         setExtraCode("");
+        setPromoLoading("idle");
+        setPointsLoading("idle");
+        setCreditsLoading("idle");
     }
 
     // Step=codeInput => user enters code
     async function handleSubmitCode(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        if (!code.trim()) return;
-        if (onSubmitCode) await onSubmitCode(code.trim());
+        if (!code.trim() || !onSubmitCode) return;
+
+        // 1) Start spinner
+        setPromoLoading("loading");
+
+        // 2) Await onSubmitCode
+        await onSubmitCode(code.trim());
+
+        // 3) Stop spinner
+        setPromoLoading("idle");
     }
 
     // Points logic
-    function handleApplyPoints(e: FormEvent<HTMLFormElement>) {
+    async function handleApplyPointsForm(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         if (!onApplyPoints) return;
-        onApplyPoints(pointsToUse);
+
+        setPointsLoading("loading");
+        try {
+            // If onApplyPoints is synchronous, you might not need 'await'.
+            // If you had an async call to the server, you'd do: await onApplyPoints(pointsToUse)
+            onApplyPoints(pointsToUse);
+        } finally {
+            setPointsLoading("idle");
+        }
         setPointsToUse(0);
     }
     function handleRemovePointsClick() {
@@ -112,10 +135,16 @@ export default function PromoCodeModal({
     }
 
     // Credits logic
-    function handleApplyCredits(e: FormEvent<HTMLFormElement>) {
+    async function handleApplyCreditsForm(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         if (!onApplyCredits) return;
-        onApplyCredits(creditsToUse);
+
+        setCreditsLoading("loading");
+        try {
+            onApplyCredits(creditsToUse);
+        } finally {
+            setCreditsLoading("idle");
+        }
         setCreditsToUse(0);
     }
     function handleRemoveCreditsClick() {
@@ -126,13 +155,19 @@ export default function PromoCodeModal({
     async function handleExtraCodeApply(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         if (!extraCode.trim() || !onSubmitCode) return;
-        await onSubmitCode(extraCode.trim());
+
+        setPromoLoading("loading");
+        try {
+            await onSubmitCode(extraCode.trim());
+        } finally {
+            setPromoLoading("idle");
+        }
         setExtraCode("");
     }
 
-    // Info from membership
+    // membershipPoints => from user membership
     const membershipPoints = customer?.memberships?.[0]?.points ?? 0;
-    const redeemRatio = 100; // Example: increment in steps of 100
+    const redeemRatio = 100; // Example: 100 points = 1 EUR
 
     return (
         <>
@@ -162,40 +197,37 @@ export default function PromoCodeModal({
                 <div
                     ref={modalRef}
                     className="
-                      fixed inset-0 z-[9999]
-                      overflow-y-auto  /* Make it scrollable */
-                    "
+            fixed inset-0 z-[9999]
+            overflow-y-auto 
+          "
                 >
-                    {/* This inner wrapper centers the content on large screens, 
-                        but on mobile it can fill the screen */}
                     <div
                         className="
-                          flex min-h-full
-                          items-center justify-center
-                          px-0 py-0 sm:px-4 sm:py-6
-                        "
+              flex min-h-full
+              items-center justify-center
+              px-0 py-0 sm:px-4 sm:py-6
+            "
                     >
-                        {/* White box => on larger screens, max-w-md; on mobile, full width */}
                         <div
                             className="
-                              relative w-full
-                              max-w-md
-                              bg-white rounded-xl shadow-lg
-                              p-5
-                            "
+                relative w-full
+                max-w-md
+                bg-white rounded-xl shadow-lg
+                p-5
+              "
                         >
-                            {/* Close button (top-right) */}
+                            {/* Close button */}
                             <button
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="
-                                  absolute top-2 right-2
-                                  bg-red-600 text-white
-                                  rounded-full p-2
-                                  shadow
-                                  hover:bg-red-700
-                                  transition-colors
-                                  z-50
-                                "
+                  absolute top-2 right-2
+                  bg-red-600 text-white
+                  rounded-full p-2
+                  shadow
+                  hover:bg-red-700
+                  transition-colors
+                  z-50
+                "
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -217,7 +249,7 @@ export default function PromoCodeModal({
                             {step === "codeInput" && (
                                 <>
                                     <h2 className="text-xl font-semibold mb-4 text-center pt-6">
-                                        Enter / Scan Promo code or your customer code
+                                        Enter / Scan Promo code
                                     </h2>
                                     <form
                                         onSubmit={handleSubmitCode}
@@ -234,14 +266,20 @@ export default function PromoCodeModal({
 
                                         <button
                                             type="submit"
+                                            disabled={promoLoading === "loading"}
                                             style={{ backgroundColor: branding.primaryColorCTA }}
                                             className="
-                                                bg-green-600 hover:bg-green-700 
-                                                text-white font-semibold
-                                                p-2 rounded transition-colors
-                                            "
+                        bg-green-600 hover:bg-green-700
+                        text-white font-semibold
+                        p-2 rounded transition-colors
+                        disabled:opacity-50
+                      "
                                         >
-                                            Apply
+                                            {promoLoading === "loading" ? (
+                                                <SpinnerIcon />
+                                            ) : (
+                                                "Apply"
+                                            )}
                                         </button>
                                     </form>
                                 </>
@@ -255,7 +293,7 @@ export default function PromoCodeModal({
                                             Welcome, {customer?.firstname} {customer?.lastname}!
                                         </h2>
                                         <p className="text-base text-gray-600">
-                                            You have {membershipPoints} points and more possible rewards below.
+                                            You have {membershipPoints} points.
                                         </p>
                                     </div>
 
@@ -272,19 +310,19 @@ export default function PromoCodeModal({
                                                         You’re currently using {currentlyUsedPoints} EUR from points.
                                                     </span>
                                                     <button
-                                                        onClick={handleRemovePointsClick}
+                                                        onClick={onRemovePoints}
                                                         className="
-                                                            bg-red-500 text-white 
-                                                            px-4 py-2 rounded
-                                                            hover:bg-red-600
-                                                        "
+                              bg-red-500 text-white
+                              px-4 py-2 rounded
+                              hover:bg-red-600
+                            "
                                                     >
                                                         Remove Points
                                                     </button>
                                                 </div>
                                             ) : (
                                                 <form
-                                                    onSubmit={handleApplyPoints}
+                                                    onSubmit={handleApplyPointsForm}
                                                     className="flex flex-col gap-3"
                                                 >
                                                     <label
@@ -295,88 +333,90 @@ export default function PromoCodeModal({
                                                     </label>
 
                                                     <div className="flex items-center gap-3 flex-wrap justify-center">
-                                                        {/* Trash icon => reset to 0 */}
                                                         <button
                                                             type="button"
                                                             onClick={() => setPointsToUse(0)}
                                                             className="
-                                                                text-gray-400 hover:text-red-500 
-                                                                transition-colors p-2
-                                                            "
+                                text-gray-400 hover:text-red-500
+                                transition-colors p-2
+                              "
                                                             title="Clear Points"
                                                         >
                                                             <FiTrash2 className="w-6 h-6" />
                                                         </button>
 
-                                                        {/* Quantity changer with redeemRatio steps */}
-                                                        <div className="flex rounded bg-white text-base leading-none shadow-sm">
+                                                        <div
+                                                            className="
+                                flex rounded bg-white text-base leading-none shadow-sm
+                              "
+                                                        >
                                                             <button
                                                                 type="button"
                                                                 className="
-                                                                    focus:outline-none border-r border 
-                                                                    rounded-l border-gray-300 hover:bg-gray-50
-                                                                    w-10 h-10 flex items-center justify-center
-                                                                "
+                                  focus:outline-none border-r border
+                                  rounded-l border-gray-300 hover:bg-gray-50
+                                  w-10 h-10 flex items-center justify-center
+                                "
                                                                 onClick={() =>
-                                                                    setPointsToUse((prev) =>
-                                                                        Math.max(0, prev - redeemRatio)
-                                                                    )
+                                                                    setPointsToUse((prev) => Math.max(0, prev - redeemRatio))
                                                                 }
                                                             >
                                                                 -
                                                             </button>
                                                             <div
                                                                 className="
-                                                                    flex items-center justify-center 
-                                                                    border-y border-gray-300 text-center px-3
-                                                                    w-14 text-base
-                                                                "
+                                  flex items-center justify-center
+                                  border-y border-gray-300 text-center px-3
+                                  w-14 text-base
+                                "
                                                             >
                                                                 {pointsToUse}
                                                             </div>
                                                             <button
                                                                 type="button"
                                                                 className="
-                                                                    focus:outline-none border-l border 
-                                                                    hover:bg-gray-50 border-gray-300
-                                                                    w-10 h-10 flex items-center justify-center
-                                                                "
+                                  focus:outline-none border-l border
+                                  hover:bg-gray-50 border-gray-300
+                                  w-10 h-10 flex items-center justify-center
+                                "
                                                                 onClick={() =>
-                                                                    setPointsToUse((prev) =>
-                                                                        Math.min(membershipPoints, prev + redeemRatio)
-                                                                    )
+                                                                    setPointsToUse((prev) => prev + redeemRatio)
                                                                 }
                                                             >
                                                                 +
                                                             </button>
                                                         </div>
 
-                                                        {/* 'Max' button => set to membershipPoints */}
                                                         <button
                                                             type="button"
                                                             onClick={() => setPointsToUse(membershipPoints)}
                                                             className="
-                                                                bg-gray-100 hover:bg-gray-200 
-                                                                px-3 py-2 rounded text-base
-                                                            "
+                                bg-gray-100 hover:bg-gray-200
+                                px-3 py-2 rounded text-base
+                              "
                                                         >
                                                             Max
                                                         </button>
 
                                                         <button
                                                             type="submit"
+                                                            disabled={pointsLoading === "loading"}
                                                             style={{ backgroundColor: branding.primaryColorCTA }}
                                                             className="
-                                                                bg-green-600 text-white px-4 py-2 
-                                                                rounded hover:bg-green-700
-                                                            "
+                                bg-green-600 text-white px-4 py-2
+                                rounded hover:bg-green-700
+                                disabled:opacity-50
+                              "
                                                         >
-                                                            Apply
+                                                            {pointsLoading === "loading" ? (
+                                                                <SpinnerIcon />
+                                                            ) : (
+                                                                "Apply"
+                                                            )}
                                                         </button>
                                                     </div>
-
                                                     <small className="text-sm text-gray-400">
-                                                        (You have {membershipPoints} points, {redeemRatio} = 1 EUR)
+                                                        (You have {membershipPoints} points. {redeemRatio} = 1 EUR)
                                                     </small>
                                                 </form>
                                             )}
@@ -397,10 +437,10 @@ export default function PromoCodeModal({
                                                         <button
                                                             onClick={onRemoveCoupon}
                                                             className="
-                                                                bg-red-500 text-white
-                                                                px-4 py-2 rounded
-                                                                hover:bg-red-600
-                                                            "
+                                bg-red-500 text-white
+                                px-4 py-2 rounded
+                                hover:bg-red-600
+                              "
                                                         >
                                                             Remove Coupon
                                                         </button>
@@ -417,7 +457,7 @@ export default function PromoCodeModal({
                                                     >
                                                         Apply Promo Code
                                                     </label>
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-3 flex-wrap justify-center">
                                                         <input
                                                             id="extraCode"
                                                             type="text"
@@ -428,14 +468,20 @@ export default function PromoCodeModal({
                                                         />
                                                         <button
                                                             type="submit"
+                                                            disabled={promoLoading === "loading"}
                                                             style={{ backgroundColor: branding.primaryColorCTA }}
                                                             className="
-                                                                bg-green-600 text-white 
-                                                                px-4 py-2 rounded 
-                                                                hover:bg-green-700
-                                                            "
+                                bg-green-600 text-white
+                                px-4 py-2 rounded
+                                hover:bg-green-700
+                                disabled:opacity-50
+                              "
                                                         >
-                                                            Apply
+                                                            {promoLoading === "loading" ? (
+                                                                <SpinnerIcon />
+                                                            ) : (
+                                                                "Apply"
+                                                            )}
                                                         </button>
                                                     </div>
                                                 </form>
@@ -452,16 +498,19 @@ export default function PromoCodeModal({
                                                     <button
                                                         onClick={handleRemoveCreditsClick}
                                                         className="
-                                                            bg-red-500 text-white
-                                                            px-4 py-2 rounded
-                                                            hover:bg-red-600
-                                                        "
+                              bg-red-500 text-white
+                              px-4 py-2 rounded
+                              hover:bg-red-600
+                            "
                                                     >
                                                         Remove Credits
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <form onSubmit={handleApplyCredits} className="flex flex-col gap-3">
+                                                <form
+                                                    onSubmit={handleApplyCreditsForm}
+                                                    className="flex flex-col gap-3"
+                                                >
                                                     <label
                                                         htmlFor="creditsToUse"
                                                         className="text-gray-600 font-medium"
@@ -469,28 +518,26 @@ export default function PromoCodeModal({
                                                         Redeem Credits
                                                     </label>
                                                     <div className="flex items-center gap-3 flex-wrap justify-center">
-                                                        {/* Trash icon => reset to 0 */}
                                                         <button
                                                             type="button"
                                                             onClick={() => setCreditsToUse(0)}
                                                             className="
-                                                                text-gray-400 hover:text-red-500 
-                                                                transition-colors p-2
-                                                            "
+                                text-gray-400 hover:text-red-500 
+                                transition-colors p-2
+                              "
                                                             title="Clear Credits"
                                                         >
                                                             <FiTrash2 className="w-6 h-6" />
                                                         </button>
 
-                                                        {/* Plus/minus quantity */}
                                                         <div className="flex rounded bg-white text-base leading-none shadow-sm">
                                                             <button
                                                                 type="button"
                                                                 className="
-                                                                    focus:outline-none border-r border 
-                                                                    rounded-l border-gray-300 hover:bg-gray-50
-                                                                    w-10 h-10 flex items-center justify-center 
-                                                                "
+                                  focus:outline-none border-r border
+                                  rounded-l border-gray-300 hover:bg-gray-50
+                                  w-10 h-10 flex items-center justify-center
+                                "
                                                                 onClick={() =>
                                                                     setCreditsToUse((prev) => Math.max(0, prev - 1))
                                                                 }
@@ -499,52 +546,55 @@ export default function PromoCodeModal({
                                                             </button>
                                                             <div
                                                                 className="
-                                                                    flex items-center justify-center 
-                                                                    border-y border-gray-300 text-center px-3
-                                                                    w-10 text-base
-                                                                "
+                                  flex items-center justify-center
+                                  border-y border-gray-300 text-center px-3
+                                  w-10 text-base
+                                "
                                                             >
                                                                 {creditsToUse}
                                                             </div>
                                                             <button
                                                                 type="button"
                                                                 className="
-                                                                    focus:outline-none border-l border 
-                                                                    hover:bg-gray-50 border-gray-300
-                                                                    w-10 h-10 flex items-center justify-center
-                                                                "
+                                  focus:outline-none border-l border
+                                  hover:bg-gray-50 border-gray-300
+                                  w-10 h-10 flex items-center justify-center
+                                "
                                                                 onClick={() =>
-                                                                    setCreditsToUse((prev) =>
-                                                                        Math.min(totalCredits, prev + 1)
-                                                                    )
+                                                                    setCreditsToUse((prev) => Math.min(totalCredits, prev + 1))
                                                                 }
                                                             >
                                                                 +
                                                             </button>
                                                         </div>
 
-                                                        {/* 'Max' button => set to totalCredits */}
                                                         <button
                                                             type="button"
                                                             onClick={() => setCreditsToUse(totalCredits)}
                                                             className="
-                                                                bg-gray-100 hover:bg-gray-200 
-                                                                px-3 py-2 rounded text-base
-                                                            "
+                                bg-gray-100 hover:bg-gray-200 
+                                px-3 py-2 rounded text-base
+                              "
                                                         >
                                                             Max
                                                         </button>
 
                                                         <button
                                                             type="submit"
+                                                            disabled={creditsLoading === "loading"}
                                                             style={{ backgroundColor: branding.primaryColorCTA }}
                                                             className="
-                                                                bg-green-600 text-white 
-                                                                px-4 py-2 rounded
-                                                                hover:bg-green-700
-                                                            "
+                                bg-green-600 text-white
+                                px-4 py-2 rounded
+                                hover:bg-green-700
+                                disabled:opacity-50
+                              "
                                                         >
-                                                            Apply
+                                                            {creditsLoading === "loading" ? (
+                                                                <SpinnerIcon />
+                                                            ) : (
+                                                                "Apply"
+                                                            )}
                                                         </button>
                                                     </div>
                                                     <small className="text-sm text-gray-400">
@@ -561,5 +611,23 @@ export default function PromoCodeModal({
                 </div>
             </CSSTransition>
         </>
+    );
+}
+
+/** A simple spinner icon (SVG) */
+function SpinnerIcon() {
+    return (
+        <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            className="animate-spin mx-auto"
+            strokeWidth="3"
+            fill="none"
+            stroke="currentColor"
+        >
+            <circle cx="12" cy="12" r="10" className="opacity-25" />
+            <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+        </svg>
     );
 }

@@ -1,4 +1,3 @@
-// File: src/app/(app)/checkout/components/CheckoutPage.tsx
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -9,7 +8,7 @@ import FulfillmentMethodSelector from "./FulfillmentMethodSelector";
 import TimeSlotSelector from "./TimeSlotSelector";
 import CustomerDetailsForm from "./CustomerDetailsForm";
 import PaymentMethodSelector from "./PaymentMethodSelector";
-import OrderSummary from "./OrderSummary";
+import OrderSummary from "./OrderSummary"; // <-- updated OrderSummary
 import "../checkout.css";
 import { useShopBranding } from "@/context/ShopBrandingContext";
 import KioskPaymentOptions from "./KioskPaymentOptions";
@@ -309,6 +308,7 @@ export default function CheckoutPage({
                     )}.`
                 );
             } else {
+                // Only clear error if it's not the "too far" message
                 if (deliveryError?.includes("far for delivery") === false) {
                     setDeliveryError(null);
                 }
@@ -640,7 +640,7 @@ export default function CheckoutPage({
                     paymentMethods={paymentMethods}
                     setSelectedPaymentId={setSelectedPaymentId}
                     branding={branding}
-                    shopSlug={hostSlug} // needed if kiosk wants to do local or SSE logic
+                    shopSlug={hostSlug}
                 />
             ) : (
                 <>
