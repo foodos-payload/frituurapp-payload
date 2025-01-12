@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { CSSTransition } from "react-transition-group";
 import { FiX, FiTrash2 } from "react-icons/fi";
 import PromoButton from "@/app/(app)/shared/PromoButton";
+import { LuReceiptEuro } from "react-icons/lu";
+
 
 import {
     useCart,
@@ -193,9 +195,9 @@ export default function CartDrawer({
                     </div>
 
                     {/* Body => Cart Items */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto justify-center">
                         {!hasItems ? (
-                            <div className={`flex items-center justify-center h-full ${kioskEmptyText}`}>
+                            <div className={`flex items-center justify-center h-full ${kioskEmptyText} mt-40`}>
                                 {t("order.cart.empty")}
                             </div>
                         ) : (
@@ -352,7 +354,7 @@ export default function CartDrawer({
 
                     {/* Footer => discount line + apply code + checkout */}
                     {hasItems && (
-                        <div className="px-8 mb-4 pt-3 flex flex-col gap-3">
+                        <div className="px-8 mb-4 pt-3 flex flex-col gap-3 justify-center items-center">
                             {/* If discount is active => show old & new total */}
                             {discountedTotal < originalTotal ? (
                                 <div className={discountContainerClasses}>
@@ -375,47 +377,51 @@ export default function CartDrawer({
                             )}
 
                             {/* Button to open the promo modal => bigger in kiosk mode */}
-                            <PromoButton
-                                label="Apply Promo or Scan QR"
-                                // In kiosk mode => bigger text/padding
-                                buttonClass={isKiosk ? "p-5 text-2xl" : ""}
-                                isKiosk={isKiosk}
-                            />
+                            <div className={`flex ${isKiosk ? "flex-row gap-24" : "flex-col gap-3"} w-full max-w-5xl`}>
+                                <PromoButton
+                                    // In kiosk mode => bigger text/padding
+                                    buttonClass={isKiosk ? "p-5 text-2xl flex-1" : ""}
+                                    isKiosk={isKiosk}
+                                />
 
-                            {/* Checkout button with spinner */}
-                            <button
-                                onClick={handleCheckoutClick}
-                                disabled={checkoutLoadingState === "loading"}
-                                style={{
-                                    borderRadius: "0.5rem",
-                                    backgroundColor: brandCTA,
-                                }}
-                                className={`
-                  text-white
-                  block w-full text-center rounded-lg shadow-md
-                  font-semibold
-                  ${isKiosk ? "p-5 text-2xl" : "p-3 text-lg"}
-                  disabled:opacity-50
-                `}
-                            >
-                                {checkoutLoadingState === "loading" ? (
-                                    <SpinnerIcon />
-                                ) : (
-                                    // Show normal text if not loading
-                                    <>
-                                        {t("order.cart.checkout")}{" "}
-                                        {discountedTotal < originalTotal ? (
-                                            <span className="mx-2">
-                                                €{discountedTotal.toFixed(2)}
-                                            </span>
-                                        ) : (
-                                            <span className="mx-2">
-                                                €{originalTotal.toFixed(2)}
-                                            </span>
-                                        )}
-                                    </>
-                                )}
-                            </button>
+                                {/* Checkout button with spinner */}
+                                <button
+                                    onClick={handleCheckoutClick}
+                                    disabled={checkoutLoadingState === "loading"}
+                                    style={{
+                                        borderRadius: "0.5rem",
+                                        backgroundColor: brandCTA,
+                                    }}
+                                    className={`
+                      text-white
+                      block w-full text-center rounded-lg shadow-md
+                      font-semibold flex items-center justify-center
+                      ${isKiosk ? "p-5 text-2xl flex-1" : "p-3 text-lg"}
+                      disabled:opacity-50
+                    `}
+                                >
+                                    {checkoutLoadingState === "loading" ? (
+                                        <SpinnerIcon />
+                                    ) : (
+                                        // Show normal text if not loading
+                                        <>
+                                            {t("order.cart.checkout")}
+                                            {discountedTotal < originalTotal ? (
+                                                <span className="mx-2">
+                                                    €{discountedTotal.toFixed(2)}
+                                                </span>
+                                            ) : (
+                                                <span className="mx-2">
+                                                    €{originalTotal.toFixed(2)}
+                                                </span>
+                                            )}
+                                            <span className="text-3xl"><LuReceiptEuro /></span>
+
+                                        </>
+                                    )}
+
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>

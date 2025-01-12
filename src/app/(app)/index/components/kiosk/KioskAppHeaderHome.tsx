@@ -19,7 +19,8 @@ export const KioskAppHeaderHome: React.FC<KioskAppHeaderHomeProps> = ({
 }) => {
     const isCustomBG =
         headerBackgroundColor.toLowerCase() !== "#ffffff" &&
-        headerBackgroundColor.toLowerCase() !== "#fff";
+        headerBackgroundColor.toLowerCase() !== "#fff" &&
+        headerBackgroundColor.toLowerCase() !== "";
 
     return (
         <header className="sticky top-0 z-40">
@@ -28,7 +29,7 @@ export const KioskAppHeaderHome: React.FC<KioskAppHeaderHomeProps> = ({
                 <h1
                     className="absolute top-[20%] left-2 text-white text-4xl font-bold p-3 rounded-lg"
                     style={{
-                        backgroundColor: primaryColorCTA,
+                        backgroundColor: primaryColorCTA || "#CE2027",
                         borderRadius: "0.5em",
                     }}
                 >
@@ -45,7 +46,7 @@ export const KioskAppHeaderHome: React.FC<KioskAppHeaderHomeProps> = ({
                         ${isCustomBG ? "text-white" : "text-gray-700"}
                     `}
                     style={{
-                        backgroundColor: headerBackgroundColor,
+                        backgroundColor: headerBackgroundColor || "#ffffff",
                     }}
                 >
                     {/* Logo */}

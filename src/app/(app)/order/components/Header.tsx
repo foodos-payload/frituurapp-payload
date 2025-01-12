@@ -13,6 +13,7 @@ interface BrandingProps {
     siteTitle?: string;
     siteHeaderImg?: string;
     primaryColorCTA?: string;
+    categoryCardColor?: string;
 }
 
 interface HeaderProps {
@@ -77,6 +78,8 @@ export default function Header({
     const isCustomBG =
         bgColor.toLowerCase() !== "#ffffff" && bgColor.toLowerCase() !== "#fff";
     const brandCTA = branding?.primaryColorCTA || "#068b59";
+
+    const categoryCardColor = branding?.categoryCardColor || "#CE2027";
 
     // brand logo if any
     let encodedLogoUrl: string | undefined;
@@ -154,7 +157,7 @@ export default function Header({
               rounded-lg
             "
                         style={{
-                            backgroundColor: brandCTA,
+                            backgroundColor: categoryCardColor || "#CE2027",
                             borderRadius: "0.5em",
                         }}
                     >

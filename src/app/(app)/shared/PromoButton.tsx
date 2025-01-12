@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import PromoCodeModal from "./PromoCodeModal"; // or wherever your modal is
+import { FiX } from "react-icons/fi"; // If you still need FiX
+import { TbQrcode } from "react-icons/tb"; // <-- New QR code icon
 
 type Props = {
     label?: string;
@@ -31,14 +33,13 @@ export default function PromoButton({
         removeCreditsUsage,
         creditsUsed,
         customer,
-
     } = useCart();
 
     // State for the modal
     const [modalOpen, setModalOpen] = useState(false);
     const [modalStep, setModalStep] = useState<"codeInput" | "customerOptions">("codeInput");
 
-    // NEW: Local spinner state for the button
+    // Local spinner state for the button
     const [loadingState, setLoadingState] = useState<"idle" | "loading">("idle");
 
     // If we already have a recognized customer => skip codeInput
@@ -55,7 +56,7 @@ export default function PromoButton({
         if (giftVoucher) removeGiftVoucher();
     }
 
-    // This is called by the PromoCodeModal after user enters code
+    // Called by PromoCodeModal after user enters code
     async function handleApplyCode(code: string) {
         setModalStep("codeInput");
 
@@ -75,8 +76,7 @@ export default function PromoButton({
     async function handleOpenModal() {
         setLoadingState("loading");
         try {
-            // If you had any async logic before opening the modal, do it here:
-            // e.g. await fetchSomething();
+            // If you had any async logic before opening the modal, do it here
             setModalStep(customer ? "customerOptions" : "codeInput");
             setModalOpen(true);
         } finally {
@@ -90,17 +90,19 @@ export default function PromoButton({
                 onClick={handleOpenModal}
                 disabled={loadingState === "loading"}
                 className={`
-          bg-black hover:bg-blue-600 text-white font-semibold 
+          bg-black text-white font-semibold 
           px-4 py-2 rounded-xl shadow-sm focus:outline-none inline-flex
           items-center gap-2 w-full text-center justify-center
-         
           ${buttonClass}
         `}
             >
                 {loadingState === "loading" ? (
                     <SpinnerIcon />
                 ) : (
-                    label
+                    <>
+                        {label}
+                        <span className='text-4xl'><TbQrcode /></span>
+                    </>
                 )}
             </button>
 
@@ -131,7 +133,6 @@ export default function PromoButton({
                 onRemoveCoupon={handleRemoveCoupon}
                 currentlyUsedPoints={pointsUsed}
                 currentlyUsedCredits={creditsUsed}
-
             />
         </>
     );
