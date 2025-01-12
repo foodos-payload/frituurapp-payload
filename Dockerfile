@@ -41,18 +41,15 @@ ENV NODE_ENV production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Install cups-client for lp command
-RUN apk add --no-cache cups-client && which lp
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs \
+    && apk add --no-cache libc6-compat cups-client
 
 # Remove this line if you do not have this folder
 COPY --from=builder /app/public ./public
 
 # Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+RUN mkdir .next && chown nextjs:nodejs .next
 
 # Automatically leverage output traces to reduce image size
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -64,6 +61,5 @@ EXPOSE 3000
 
 ENV PORT 3000
 ENV CUPS_SERVER /var/run/cups/cups.sock
-ENV PATH="/usr/bin:$PATH"
 
 CMD HOSTNAME='0.0.0.0' node server.js
