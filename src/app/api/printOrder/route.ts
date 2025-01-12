@@ -3,11 +3,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPayload } from 'payload';
 import config from '@payload-config';
-import { exec } from 'child_process';
-import { mkdtemp, writeFile } from 'fs/promises';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { printBuffer } from 'node-cups'; // <-- Import from node-cups
 
+////////////////////////////////////////////////////////////////////////////////
 // 1) A helper to remove accents or special chars, if needed
 function simplifyText(text: string) {
     return (text || '')
@@ -15,6 +13,7 @@ function simplifyText(text: string) {
         .replace(/[\u0300-\u036f]/g, '');
 }
 
+////////////////////////////////////////////////////////////////////////////////
 // 2) Build ESC/POS for Kitchen
 function buildEscposForKitchen(order: any) {
     let esc = '\x1B\x40'; // ESC @ (initialize)
@@ -38,13 +37,13 @@ function buildEscposForKitchen(order: any) {
     }
 
     esc += `\nFulfillment Method: ${order.fulfillment_method || ''}\n`;
-    esc += '\x1B\x61\x00'; // left align
 
     // Cut command
     esc += '\x1D\x56\x42\x00'; // Full cut
     return esc;
 }
 
+////////////////////////////////////////////////////////////////////////////////
 // 3) Build ESC/POS for Customer
 function buildEscposForCustomer(order: any) {
     let esc = '\x1B\x40'; // ESC @ (initialize)
@@ -63,11 +62,14 @@ function buildEscposForCustomer(order: any) {
     }
 
     esc += '\nThank you for your order!\n';
+
+    // Cut command
     esc += '\x1D\x56\x42\x00'; // Full cut
     return esc;
 }
 
-// 4) Our main POST route
+////////////////////////////////////////////////////////////////////////////////
+// 4) POST route, printing via node-cups
 export async function POST(request: NextRequest) {
     try {
         const payload = await getPayload({ config });
@@ -102,26 +104,17 @@ export async function POST(request: NextRequest) {
                 continue;
             }
 
-            // 4A) Write ESC/POS data to a temporary file as raw bytes
-            //     This avoids passing the control characters via shell.
-            const tempDir = await mkdtemp(join(tmpdir(), 'escpos-'));
-            const filePath = join(tempDir, `ticket-${t}.bin`);
-            await writeFile(filePath, escpos, 'binary');
-            // or 'utf8', but 'binary' is safer for control codes
+            // Convert ESC/POS string to a binary buffer
+            const dataBuffer = Buffer.from(escpos, 'binary');
 
-            // 4B) Use `lp` to print the file as raw
-            const cmd = `lp -d ${safePrinter} -o raw "${filePath}"`;
-
-            const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-                exec(cmd, (error, stdout, stderr) => {
-                    if (error) {
-                        return reject({ error, stderr });
-                    }
-                    resolve({ stdout, stderr });
-                });
+            // Use node-cups to print in raw mode
+            // "printerOptions" can include additional CUPS options if needed
+            const result = await printBuffer(dataBuffer, {
+                printer: safePrinter,
+                printerOptions: { raw: 'true' },
             });
 
-            console.log(`Printed ${t} ticket on ${safePrinter}. Output:`, result.stdout, result.stderr);
+            console.log(`Printed ${t} ticket on ${safePrinter}. Output: ${result.stdout || ''}`);
         }
 
         return NextResponse.json({ success: true });
