@@ -7,7 +7,7 @@ import { baseListFilter } from './access/baseListFilter';
 import { canMutatePrinter } from './access/byTenant';
 import { readAccess } from './access/readAccess';
 
-// import { ensureUniquePrinterNamePerShop } from './hooks/ensureUniquePrinterNamePerShop';
+import { ensureUniquePrinterNamePerShop } from './hooks/ensureUniquePrinterNamePerShop';
 // import { automatePrinterSetup } from './hooks/automatePrinterSetup';
 // import { removePrinterOnDelete } from './hooks/removePrinterOnDelete';
 
@@ -39,68 +39,71 @@ export const Printers: CollectionConfig = {
         },
     },
     hooks: {
-        // beforeValidate: [
-        //     // Step 1) Generate printer_name automatically if we have all data
-        //     async ({ data, siblingData, req, operation, originalDoc }) => {
-        //         if (operation !== 'create' && operation !== 'update') {
-        //             return data;
-        //         }
+        beforeValidate: [
+            async ({ data, siblingData, req, operation, originalDoc }) => {
+                // We only do this on create or update
+                if (operation !== 'create' && operation !== 'update') {
+                    return data;
+                }
 
-        //         // Merge values from siblingData (unsaved in-form), data, or originalDoc
-        //         // This ensures we see the latest typed values
-        //         const shops = siblingData?.shops ?? data?.shops ?? originalDoc?.shops;
-        //         const printerType = siblingData?.printer_type ?? data?.printer_type ?? originalDoc?.printer_type;
-        //         const uniqueID = siblingData?.unique_id ?? data?.unique_id ?? originalDoc?.unique_id;
+                // 1) Merge relevant fields from input or original doc
+                const shops = siblingData?.shops ?? data?.shops ?? originalDoc?.shops;
+                const printerType =
+                    siblingData?.printer_type ??
+                    data?.printer_type ??
+                    originalDoc?.printer_type;
+                const uniqueID =
+                    siblingData?.unique_id ?? data?.unique_id ?? originalDoc?.unique_id;
 
-        //         // If these are missing, do nothing—let Payload's "required" validations handle it
-        //         if (!shops || shops.length === 0 || !printerType || !uniqueID) {
-        //             return data; // Return so we don't block the form; user might fill them next
-        //         }
+                // If any are missing, we can skip, letting normal validations happen
+                if (!shops || shops.length === 0 || !printerType || !uniqueID) {
+                    return data; // user might still fill them next
+                }
 
-        //         // Fetch the first shop's slug for building printer_name
-        //         let shopSlug = '';
-        //         const firstShopID = Array.isArray(shops) ? shops[0] : shops;
+                // 2) Fetch the first shop’s slug to build the name
+                const firstShopID = Array.isArray(shops) ? shops[0] : shops;
+                if (firstShopID) {
+                    const shopDoc = await req.payload.findByID({
+                        collection: 'shops',
+                        id: firstShopID,
+                    });
+                    if (shopDoc?.slug) {
+                        // 3) Build our <shop_slug>-<printer_type>-<unique_id>
+                        const computedName = `${shopDoc.slug}-${printerType}-${uniqueID}`;
+                        data.printer_name = computedName;
+                    }
+                }
 
-        //         if (firstShopID) {
-        //             const shopDoc = await req.payload.findByID({
-        //                 collection: 'shops',
-        //                 id: firstShopID,
-        //             });
-        //             if (shopDoc?.slug) {
-        //                 shopSlug = shopDoc.slug;
-        //             }
-        //         }
+                return data;
+            },
+            /**
+             * 4) If `printer_name` is set, run the uniqueness hook logic
+             */
+            async (args) => {
+                const { data, siblingData, originalDoc, operation } = args;
 
-        //         // If we found a slug, construct the computed printer_name
-        //         if (shopSlug) {
-        //             // Apply changes to `data`, which is the doc about to be validated
-        //             data.printer_name = `${shopSlug}-${printerType}-${uniqueID}`;
-        //         }
+                if (operation !== 'create' && operation !== 'update') {
+                    return data;
+                }
 
-        //         return data;
-        //     },
+                // If no printer_name, skip
+                const finalPrinterName = data?.printer_name;
+                if (!finalPrinterName) {
+                    return data;
+                }
 
-        //     // Step 2) Check uniqueness of printer_name (only if it exists)
-        //     ({ data, siblingData, req, operation, originalDoc }) => {
-        //         if (operation !== 'create' && operation !== 'update') {
-        //             return data;
-        //         }
+                // Call your existing ensureUniquePrinterNamePerShop hook
+                await ensureUniquePrinterNamePerShop({
+                    data,
+                    req: args.req,
+                    siblingData,
+                    value: finalPrinterName,
+                    originalDoc,
+                });
 
-        //         // If no printer_name yet, skip uniqueness check
-        //         const finalPrinterName = data?.printer_name;
-        //         if (!finalPrinterName) {
-        //             return data;
-        //         }
-
-        //         return ensureUniquePrinterNamePerShop({
-        //             data,
-        //             req,
-        //             siblingData,
-        //             value: finalPrinterName,
-        //             originalDoc,
-        //         });
-        //     },
-        // ],
+                return data;
+            },
+        ],
         // afterChange: [automatePrinterSetup],
         // afterDelete: [removePrinterOnDelete], # TODO: Implement this hook after staging works
     },

@@ -520,7 +520,7 @@ export const Orders: CollectionConfig = {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    printerName: "frituur-den-overkant-kitchen-main", // e.g. "frituur-den-overkant-kitchen-main"
+                    printerName: p.printer_name,
                     ticketType: 'kitchen',
                     orderData: doc, // The newly created order doc
                   }),
@@ -532,7 +532,7 @@ export const Orders: CollectionConfig = {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      printerName: "frituur-den-overkant-kitchen-main",
+                      printerName: p.printer_name,
                       ticketType: 'customer',
                       orderData: doc,
                     }),
