@@ -1,28 +1,55 @@
-// File: src/app/api/printOrder/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getPayload } from 'payload';
 import config from '@payload-config';
-import { printBuffer } from 'node-cups'; // <-- Import from node-cups
+import { printBuffer } from 'node-cups';
 
-////////////////////////////////////////////////////////////////////////////////
-// 1) A helper to remove accents or special chars, if needed
+/**
+ * Remove accents or special chars if needed.
+ */
 function simplifyText(text: string) {
     return (text || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// 2) Build ESC/POS for Kitchen
+/**
+ * Build a QR code using ESC/POS commands (Epson style).
+ */
+function buildQrCode(data: string): string {
+    let cmd = '';
+
+    // Select model (QR Model 2)
+    cmd += '\x1D\x28\x6B\x04\x00\x31\x41\x32\x00';
+
+    // Set module size to 3
+    cmd += '\x1D\x28\x6B\x03\x00\x31\x43\x03';
+
+    // Set error correction level to 'M' (~15%)
+    cmd += '\x1D\x28\x6B\x03\x00\x31\x45\x31';
+
+    // Store data in the symbol storage area
+    const len = data.length + 3;
+    const pL = len % 256;
+    const pH = Math.floor(len / 256);
+    cmd += '\x1D\x28\x6B' + String.fromCharCode(pL, pH) + '\x31\x50\x30' + data;
+
+    // Print the symbol
+    cmd += '\x1D\x28\x6B\x03\x00\x31\x51\x30';
+
+    return cmd;
+}
+
+/**
+ * Build ESC/POS for Kitchen ticket.
+ */
 function buildEscposForKitchen(order: any) {
-    let esc = '\x1B\x40'; // ESC @ (initialize)
-    esc += '\x1B\x61\x01'; // center align
-    esc += '\x1B\x21\x38'; // double height & width
+    let esc = '\x1B\x40';
+    esc += '\x1B\x61\x01'; // center
+    esc += '\x1B\x21\x38'; // double
     esc += `KITCHEN TICKET\nOrder #${order.id}\n\n`;
 
-    esc += '\x1B\x21\x00'; // normal text
-    esc += '\x1B\x61\x00'; // left align
+    esc += '\x1B\x21\x00'; // normal
+    esc += '\x1B\x61\x00'; // left
 
     if (Array.isArray(order.order_details)) {
         for (const item of order.order_details) {
@@ -37,22 +64,21 @@ function buildEscposForKitchen(order: any) {
     }
 
     esc += `\nFulfillment Method: ${order.fulfillment_method || ''}\n`;
-
-    // Cut command
-    esc += '\x1D\x56\x42\x00'; // Full cut
+    esc += '\x1D\x56\x42\x00'; // cut
     return esc;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// 3) Build ESC/POS for Customer
+/**
+ * Build ESC/POS for Customer ticket, includes a QR code to google.com
+ */
 function buildEscposForCustomer(order: any) {
-    let esc = '\x1B\x40'; // ESC @ (initialize)
-    esc += '\x1B\x61\x01'; // center align
-    esc += '\x1B\x21\x38'; // double height & width
+    let esc = '\x1B\x40';
+    esc += '\x1B\x61\x01'; // center
+    esc += '\x1B\x21\x38'; // double
     esc += `CUSTOMER TICKET\nOrder #${order.id}\n\n`;
 
-    esc += '\x1B\x21\x00'; // normal text
-    esc += '\x1B\x61\x00'; // left align
+    esc += '\x1B\x21\x00'; // normal
+    esc += '\x1B\x61\x00'; // left
 
     if (Array.isArray(order.order_details)) {
         for (const item of order.order_details) {
@@ -63,13 +89,63 @@ function buildEscposForCustomer(order: any) {
 
     esc += '\nThank you for your order!\n';
 
-    // Cut command
-    esc += '\x1D\x56\x42\x00'; // Full cut
+    // Insert the QR Code (centered)
+    esc += '\x1B\x61\x01'; // center
+    esc += buildQrCode('https://google.com');
+    esc += '\x1B\x61\x00'; // left again
+
+    // Cut the paper
+    esc += '\x1D\x56\x42\x00';
     return esc;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// 4) POST route, printing via node-cups
+/**
+ * @openapi
+ * /api/printOrder:
+ *   post:
+ *     summary: Print kitchen/customer tickets for an existing order
+ *     tags:
+ *       - Printing
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               printerName:
+ *                 type: string
+ *                 description: The name of the printer to send output to
+ *               ticketType:
+ *                 type: string
+ *                 enum: [kitchen, customer, both]
+ *                 description: Which ticket style(s) to print
+ *               orderData:
+ *                 type: object
+ *                 description: The entire order object
+ *           example:
+ *             printerName: "frituur-den-overkant-kitchen-main"
+ *             ticketType: "both"
+ *             orderData:
+ *               id: 123
+ *               fulfillment_method: "delivery"
+ *               order_details: []
+ *     responses:
+ *       '200':
+ *         description: Print job completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       '400':
+ *         description: Missing or invalid input
+ *       '500':
+ *         description: Server-side error while printing
+ */
+
 export async function POST(request: NextRequest) {
     try {
         const payload = await getPayload({ config });
@@ -85,12 +161,11 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing orderData' }, { status: 400 });
         }
 
-        // Decide which ESC/POS chunks to build
         const typesToPrint = ticketType === 'both'
             ? ['kitchen', 'customer']
             : [ticketType];
 
-        // Clean up the printer name for safety
+        // Clean printer name
         const safePrinter = printerName.replace(/[^\w\-_]/g, '');
 
         for (const t of typesToPrint) {
@@ -100,15 +175,11 @@ export async function POST(request: NextRequest) {
             } else if (t === 'customer') {
                 escpos = buildEscposForCustomer(orderData);
             } else {
-                // Ignore unknown ticketType
-                continue;
+                continue; // ignore unknown
             }
 
-            // Convert ESC/POS string to a binary buffer
             const dataBuffer = Buffer.from(escpos, 'binary');
 
-            // Use node-cups to print in raw mode
-            // "printerOptions" can include additional CUPS options if needed
             const result = await printBuffer(dataBuffer, {
                 printer: safePrinter,
                 printerOptions: { raw: 'true' },
