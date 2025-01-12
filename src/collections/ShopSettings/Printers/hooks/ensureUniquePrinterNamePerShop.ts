@@ -1,3 +1,4 @@
+// File: src/collections/ShopSettings/Printers/hooks/ensureUniquePrinterNamePerShop.ts
 import type { FieldHook } from 'payload';
 import { ValidationError } from 'payload';
 

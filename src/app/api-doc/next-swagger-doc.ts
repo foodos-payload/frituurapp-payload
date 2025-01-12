@@ -11,6 +11,9 @@ export const swaggerConfig = {
         {
             url: 'http://localhost:3000',
         },
+        {
+            url: 'https://frituurwebshop.be',
+        }
     ],
 }
 
