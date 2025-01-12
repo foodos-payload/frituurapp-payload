@@ -6,7 +6,7 @@ import { CSSTransition } from "react-transition-group";
 import { FiX, FiTrash2 } from "react-icons/fi";
 import PromoButton from "@/app/(app)/shared/PromoButton";
 import { LuReceiptEuro } from "react-icons/lu";
-
+import Image from "next/image";
 
 import {
     useCart,
@@ -116,7 +116,7 @@ export default function CartDrawer({
     const kioskEmptyText = isKiosk ? "text-xl" : "text-gray-500";
     const kioskItemSpacing = isKiosk ? "gap-6" : "gap-4";
     const kioskItemPadding = isKiosk ? "p-6 text-xl" : "p-4 md:p-6";
-    const kioskQuantityBtnSize = isKiosk ? "w-12 h-12 text-lg" : "w-10 h-10 text-sm";
+    const kioskQuantityBtnSize = isKiosk ? "w-14 h-14 text-2xl" : "w-10 h-10 text-sm";
 
     // Font sizes for discount lines
     const discountContainerClasses = isKiosk
@@ -216,11 +216,13 @@ export default function CartDrawer({
                                             >
                                                 {/* Thumbnail */}
                                                 {item.image?.url ? (
-                                                    <img
+                                                    <Image
                                                         src={item.image.url}
                                                         alt={item.image.alt ?? item.productName}
                                                         className={`rounded-md object-cover ${isKiosk ? "w-20 h-20" : "w-16 h-16"
                                                             }`}
+                                                        width={isKiosk ? 80 : 64}
+                                                        height={isKiosk ? 80 : 64}
                                                     />
                                                 ) : (
                                                     <div className="w-16 h-16 bg-gray-100" />
@@ -323,7 +325,7 @@ export default function CartDrawer({
                                                     >
                                                         {item.hasPopups && onEditItem && (
                                                             <button
-                                                                className={`text-blue-500 hover:underline ${isKiosk ? "text-lg" : "text-xs"
+                                                                className={`text-blue-500 hover:underline ${isKiosk ? "text-2xl text-white bg-blue-500 px-3 py-1 rounded-xl" : "text-xs"
                                                                     }`}
                                                                 onClick={() => onEditItem(item)}
                                                             >

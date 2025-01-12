@@ -3,6 +3,7 @@
 
 import React from "react"
 import { useTranslation } from "@/context/TranslationsContext"
+import Image from "next/image"
 
 // 1) We'll define an interface for subproducts that includes multiple language fields
 interface SubproductEntry {
@@ -163,10 +164,12 @@ export function OrderDetailsList({
 
                             {/* Optional item image */}
                             {detail.image?.src && (
-                                <img
+                                <Image
                                     src={detail.image.src}
                                     alt="Product"
-                                    className="w-12 h-12 object-cover rounded-md"
+                                    width={48}
+                                    height={48}
+                                    className="object-cover rounded-md"
                                 />
                             )}
                         </div>

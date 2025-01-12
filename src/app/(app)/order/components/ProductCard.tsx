@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 
 /** Minimal shape for what the card displays. */
 type ProductCardProps = {
@@ -215,10 +216,12 @@ export default function ProductCard({
                 // Non-kiosk => original horizontal layout
                 <div className="w-2/5 h-full flex items-center justify-center bg-gray-50">
                     {product.image?.url ? (
-                        <img
+                        <Image
                             src={product.image.url}
                             alt={product.image.alt || product.displayName}
                             className="product-img w-full h-full object-cover mix-blend-multiply"
+                            layout="fill"
+                            objectFit="cover"
                         />
                     ) : (
                         <div className="text-gray-300 text-md p-4">No Image</div>
@@ -228,11 +231,15 @@ export default function ProductCard({
                 // Kiosk => bigger, top-centered image
                 <div className="w-full flex items-center justify-center bg-gray-50 mb-2 h-[190px]">
                     {product.image?.url ? (
-                        <img
-                            src={product.image.url}
-                            alt={product.image.alt || product.displayName}
-                            className="product-img w-auto h-full object-contain mix-blend-multiply"
-                        />
+                        <div className="relative w-auto h-full">
+                            <Image
+                                src={product.image.url}
+                                alt={product.image.alt || product.displayName}
+                                className="product-img object-contain mix-blend-multiply"
+                                layout="fill"
+                                objectFit="contain"
+                            />
+                        </div>
                     ) : (
                         <div className="text-gray-300 text-md p-4">No Image</div>
                     )}

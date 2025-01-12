@@ -11,6 +11,7 @@ import { CountdownTimer } from "./CountdownTimer";
 import "./ordersummary.css";
 import { useShopBranding } from "@/context/ShopBrandingContext";
 import { useTranslation } from "@/context/TranslationsContext";
+import Image from "next/image";
 
 /** 
  * HELPER TYPES 
@@ -446,10 +447,12 @@ export function OrderSummaryPage({
                     >
                         {/* Branding Logo if any */}
                         {branding?.logoUrl && (
-                            <img
+                            <Image
                                 src={branding.logoUrl}
                                 alt="Site Logo"
                                 className="mr-2 max-h-40 w-auto object-contain"
+                                width={160}
+                                height={160}
                             />
                         )}
                         {/* Order ID/time */}
@@ -703,10 +706,12 @@ export function OrderSummaryPage({
                         style={{ backgroundColor: branding?.headerBackgroundColor || "#dc2626" }}
                     >
                         {branding?.logoUrl && (
-                            <img
+                            <Image
                                 src={branding.logoUrl}
                                 alt="Site Logo"
                                 className="mr-2 max-h-16 w-auto object-contain"
+                                width={64}
+                                height={64}
                             />
                         )}
                         <div className="font-bold text-lg uppercase tracking-wider">
@@ -973,10 +978,12 @@ export function OrderSummaryPage({
                         transition
                       "
                                         >
-                                            <img
+                                            <Image
                                                 src="https://lh3.googleusercontent.com/COxitqgJr1sJnIDe8-jiKhxDx1FrYbtRHKJ9z_hELisAlapwE9LUPh6fcXIfb5vwpbMl4xl9H9TRFPc5NOO8Sb3VSgIBrfRYvW6cUA"
                                                 alt="Google"
                                                 className="h-5 w-auto object-contain mr-2"
+                                                width={20}
+                                                height={20}
                                             />
                                             <span className="font-medium">
                                                 Leave a Google Review
@@ -998,10 +1005,12 @@ export function OrderSummaryPage({
                         transition
                       "
                                         >
-                                            <img
+                                            <Image
                                                 src="https://static.tacdn.com/img2/brand_refresh/Tripadvisor_lockup_horizontal_secondary_registered.svg"
                                                 alt="TripAdvisor"
                                                 className="h-5 w-auto object-contain mr-2"
+                                                width={100}
+                                                height={20}
                                             />
                                             <span className="font-medium">
                                                 Review on TripAdvisor

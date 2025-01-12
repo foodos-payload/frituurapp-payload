@@ -5,7 +5,7 @@ import { useCart, CartItem } from "../../../../context/CartContext";
 import { FiCheckCircle } from "react-icons/fi";
 import { useTranslation } from "@/context/TranslationsContext";
 import { FiX } from "react-icons/fi";
-
+import Image from "next/image";
 
 /**
  * Minimal subproduct/link types
@@ -137,7 +137,7 @@ function pickProductName(
     }
 }
 
-/** Animate a cloned <img> from the popup to the cart. (unused by default) */
+/** Animate a cloned img from the popup to the cart. (unused by default) */
 function flyToCart(
     cartRef: React.RefObject<HTMLDivElement>,
     sourceImg: HTMLImageElement | null
@@ -530,7 +530,7 @@ export default function ProductPopupFlow({
         `}
             >
                 {product.image?.url && (
-                    <img
+                    <Image
                         src={encodeURI(product.image.url)}
                         alt={product.image.alt || product.name_nl}
                         className="popup-fly-img"
@@ -540,6 +540,7 @@ export default function ProductPopupFlow({
                             height: 0,
                             position: "absolute",
                         }}
+                        layout="fill"
                     />
                 )}
 
@@ -618,10 +619,12 @@ export default function ProductPopupFlow({
                                 >
                                     <div className="w-20 h-20 flex items-center justify-center bg-gray-200 rounded-full">
                                         {item.image?.url ? (
-                                            <img
+                                            <Image
                                                 src={item.image.url}
                                                 alt={item.image.alt || item.name_nl}
                                                 className="object-cover w-full h-full rounded-full"
+                                                width={80}
+                                                height={80}
                                             />
                                         ) : (
                                             <span className="text-xs text-center px-2">
@@ -734,14 +737,12 @@ export default function ProductPopupFlow({
                                     {/* Possibly an image */}
                                     <div className="flex-grow flex items-center justify-center mb-4">
                                         {displayImage?.url && (
-                                            <img
+                                            <Image
                                                 src={displayImage.url}
                                                 alt={displayImage.alt || displayName}
-                                                className={
-                                                    isKiosk
-                                                        ? "w-auto max-h-[80px]"
-                                                        : "w-auto max-h-[60px]"
-                                                }
+                                                width={isKiosk ? 80 : 60}
+                                                height={isKiosk ? 80 : 60}
+                                                className="object-contain"
                                             />
                                         )}
                                     </div>

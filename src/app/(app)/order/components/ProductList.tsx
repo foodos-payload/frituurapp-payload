@@ -199,7 +199,7 @@ export default function ProductList({
     }, [cartRef]);
 
     /**
- * Animate a cloned <img> from the product card to the cart icon center.
+ * Animate a cloned img from the product card to the cart icon center.
  * We'll call this from the "product-added" event or a direct click event.
  */
     function flyFromCardToCart(cardEl: HTMLDivElement, cartContainerEl: HTMLDivElement) {

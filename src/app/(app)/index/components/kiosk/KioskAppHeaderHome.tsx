@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 interface KioskAppHeaderHomeProps {
     siteTitle: string;
@@ -51,10 +52,12 @@ export const KioskAppHeaderHome: React.FC<KioskAppHeaderHomeProps> = ({
                 >
                     {/* Logo */}
                     {logoUrl ? (
-                        <img
+                        <Image
                             src={logoUrl}
                             alt="Site Logo"
                             className="object-contain h-14"
+                            width={56}
+                            height={56}
                         />
                     ) : (
                         <div className="font-bold text-lg">[Your Logo]</div>

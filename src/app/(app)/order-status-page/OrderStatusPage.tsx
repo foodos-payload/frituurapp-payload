@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState, useRef } from "react"
+import Image from "next/image"
 
 type IntervalID = ReturnType<typeof setInterval>
 
@@ -187,10 +188,11 @@ export function OrderStatusPage({ hostSlug }: OrderStatusPageProps) {
             {/* Optional Ad Panel */}
             {hasAd && (
                 <div className="w-1/3 bg-gray-100 flex items-center justify-center p-0">
-                    <img
+                    <Image
                         src={adImage || ""}
                         alt="Advertisement"
-                        className="w-full h-full object-contain"
+                        layout="fill"
+                        objectFit="contain"
                     />
                 </div>
             )}

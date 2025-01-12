@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, memo } from "react";
+import Image from "next/image";
 
 /**
  * A separate, memoized component for playing kiosk idle videos
@@ -112,10 +113,12 @@ function IdleVideoBackgroundComponent({
 
   if (hasImage) {
     return (
-      <img
+      <Image
         src={imageUrl}
         alt="Kiosk Idle"
-        className="absolute inset-0 w-full h-full object-cover"
+        layout="fill"
+        objectFit="cover"
+        className="absolute inset-0"
       />
     );
   }

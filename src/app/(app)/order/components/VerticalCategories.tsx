@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, MouseEvent } from "react";
+import Image from "next/image";
 
 interface Category {
   id: string;
@@ -102,10 +103,12 @@ export default function VerticalCategories({
             {isKiosk && (
               <div className="mb-2 flex justify-center">
                 {cat.image?.url ? (
-                  <img
+                  <Image
                     src={cat.image.url}
                     alt={cat.image.alt || cat.label}
-                    className="w-16 h-16 object-cover rounded"
+                    width={64}
+                    height={64}
+                    className="object-cover rounded"
                   />
                 ) : (
                   // Render a placeholder if no image, 

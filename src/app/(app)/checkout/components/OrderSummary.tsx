@@ -5,6 +5,7 @@ import { FiTrash2 } from "react-icons/fi";
 import { useCart, getLineItemSignature } from "@/context/CartContext";
 import PromoButton from "../../shared/PromoButton";
 import debounce from "lodash.debounce";
+import Image from "next/image";
 
 type Branding = {
     /** e.g. "#ECAA02" or some other brand color */
@@ -197,9 +198,11 @@ export default function OrderSummary({
                                         >
                                             {/* Thumbnail */}
                                             {item.image?.url ? (
-                                                <img
+                                                <Image
                                                     src={item.image.url}
                                                     alt={item.image.alt || displayName}
+                                                    width={64}
+                                                    height={64}
                                                     className="hidden sm:block w-16 h-16 rounded-xl object-cover"
                                                 />
                                             ) : (

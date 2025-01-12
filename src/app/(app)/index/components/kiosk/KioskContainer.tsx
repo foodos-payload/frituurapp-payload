@@ -7,6 +7,7 @@ import { useTranslation } from "@/context/TranslationsContext";
 import { KioskAppHeaderHome } from "./KioskAppHeaderHome";
 import { useCart } from "@/context/CartContext";
 import { useShopBranding } from "@/context/ShopBrandingContext";
+import Image from "next/image";
 
 interface FulfillmentMethod {
     key: "dine-in" | "takeaway" | "delivery";
@@ -90,7 +91,7 @@ export const KioskContainer: React.FC<KioskContainerProps> = ({
                 ${loadingMethod ? "pointer-events-none" : ""}
               `}
                         >
-                            <img
+                            <Image
                                 src={
                                     f.key === "dine-in"
                                         ? "/images/DineInIcon.png"
@@ -99,6 +100,8 @@ export const KioskContainer: React.FC<KioskContainerProps> = ({
                                             : "/images/DeliveryIcon.png"
                                 }
                                 alt={f.label}
+                                width={400}
+                                height={192}
                                 className="w-full h-48 object-contain"
                             />
                             <h2 className="mt-4 text-4xl font-semibold">
