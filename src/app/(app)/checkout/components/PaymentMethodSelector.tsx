@@ -79,7 +79,7 @@ export default function PaymentMethodSelector({
 
     return (
         <div className="mb-4">
-            <h2 className="text-xl font-bold mb-2">Payment Method</h2>
+            <h2 className="text-xl font-bold mb-2"><span className="text-2xl">3️⃣</span> Payment Method</h2>
 
             <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
                 {displayItems.map((item) => {

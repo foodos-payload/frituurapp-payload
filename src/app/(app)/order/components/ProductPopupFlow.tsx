@@ -4,6 +4,8 @@ import React, { useState, useEffect, MouseEvent } from "react";
 import { useCart, CartItem } from "../../../../context/CartContext";
 import { FiCheckCircle } from "react-icons/fi";
 import { useTranslation } from "@/context/TranslationsContext";
+import { FiX } from "react-icons/fi";
+
 
 /**
  * Minimal subproduct/link types
@@ -488,7 +490,7 @@ export default function ProductPopupFlow({
     );
 
     // brandCTA color
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const brandCTA = branding?.primaryColorCTA || "#068b59";
 
     // Check if user is over the max => if totalSoFar > maximum_option => highlight
     const totalSoFar = getTotalQuantityForPopup(popup.id);
@@ -563,31 +565,21 @@ export default function ProductPopupFlow({
                     <div className="relative flex flex-col items-center justify-end h-full pb-4">
                         <button
                             onClick={onClose}
+                            title="Close Modal"
                             className="
-                absolute
-                top-4 right-4
-                bg-red-600 text-white
-                rounded-full p-2
-                shadow
-                hover:bg-red-700
-                transition-colors
-                z-50
-              "
+                                    absolute
+                                    top-4 right-4
+                                    bg-red-500 text-white
+                                    rounded-xl
+                                    shadow-xl
+                                    p-3
+                                    hover:bg-red-600
+                                    transition-colors
+                                    z-50
+                                "
+                            style={{ minWidth: "44px", minHeight: "44px" }}
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-6 w-6"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
+                            <FiX className="w-6 h-6" />
                         </button>
 
                         <div className="text-center text-white flex gap-2">

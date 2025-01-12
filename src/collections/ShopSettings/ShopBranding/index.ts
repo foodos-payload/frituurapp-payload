@@ -170,6 +170,7 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Couleur d’arrière-plan pour les cartes de catégories du kiosque.',
                 },
             },
+            defaultValue: '#CE2027',
             validate: (val: string | string[] | null | undefined) => {
                 if (typeof val !== 'string') return true;
                 // Empty is OK if not required
@@ -196,6 +197,7 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Utilisé pour les boutons “Ajouter au panier” / “Payer” etc.',
                 },
             },
+            defaultValue: '#068b59',
             validate: (val: string | string[] | null | undefined) => {
                 if (typeof val !== 'string') return true;
                 // Empty is OK if not required

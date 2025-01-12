@@ -80,7 +80,7 @@ export default function TimeSlotSelector({
 
     return (
         <div className="mb-4">
-            <h2 className="text-xl font-bold mb-3">When</h2>
+            {/* <h2 className="text-xl font-bold mb-3">When</h2> */}
 
             {/* Put the two selectors in a responsive grid (1 col on small screens, 2 cols on md+) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

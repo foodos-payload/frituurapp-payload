@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import Image from "next/image";
 import { FiMenu, FiSearch, FiX } from "react-icons/fi";
 import { MdOutlineNoFood } from "react-icons/md";
 import { useTranslation } from "@/context/TranslationsContext";
@@ -23,6 +24,7 @@ interface HeaderProps {
     setMobileSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isKiosk?: boolean;
     branding?: BrandingProps;
+    onCategoryClick?: (slug: string) => void;
 }
 
 export default function Header({
@@ -74,7 +76,7 @@ export default function Header({
     const bgColor = branding?.headerBackgroundColor?.trim() || "#ffffff";
     const isCustomBG =
         bgColor.toLowerCase() !== "#ffffff" && bgColor.toLowerCase() !== "#fff";
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const brandCTA = branding?.primaryColorCTA || "#068b59";
 
     // brand logo if any
     let encodedLogoUrl: string | undefined;
@@ -187,10 +189,12 @@ export default function Header({
                     {/* LEFT: brand / logo */}
                     <div className="flex items-center space-x-5">
                         {encodedLogoUrl ? (
-                            <img
+                            <Image
                                 src={encodedLogoUrl}
                                 alt="Site Logo"
                                 className={isKiosk ? "object-contain h-14" : "object-contain h-8"}
+                                width={isKiosk ? 56 : 32} // Adjust width and height as needed
+                                height={isKiosk ? 56 : 32}
                             />
                         ) : (
                             <div className="font-bold text-sm md:text-lg">[Your Logo]</div>

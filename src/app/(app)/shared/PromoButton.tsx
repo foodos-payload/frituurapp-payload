@@ -90,10 +90,10 @@ export default function PromoButton({
                 onClick={handleOpenModal}
                 disabled={loadingState === "loading"}
                 className={`
-          bg-blue-500 hover:bg-blue-600 text-white font-semibold 
+          bg-black hover:bg-blue-600 text-white font-semibold 
           px-4 py-2 rounded-xl shadow-sm focus:outline-none inline-flex
           items-center gap-2 w-full text-center justify-center
-          disabled:opacity-50
+         
           ${buttonClass}
         `}
             >

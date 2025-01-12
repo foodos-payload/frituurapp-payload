@@ -58,7 +58,7 @@ export default function FulfillmentMethodSelector({
 
     return (
         <div className="mb-4">
-            <h2 className="text-xl font-bold mb-2">Fulfillment Method</h2>
+            <h2 className="text-xl font-bold mb-2"><span className="text-2xl">1️⃣</span> Fulfillment Method</h2>
 
             <div className="grid gap-3 sm:grid-flow-col">
                 {possibleMethods.map((method) => {

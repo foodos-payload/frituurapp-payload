@@ -83,7 +83,7 @@ export default function CustomerDetailsForm({
 
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-bold mb-2">Your Details</h2>
+            <h2 className="text-xl font-bold mb-2"><span className="text-2xl">2️⃣</span> Your Details</h2>
 
             {/* Common fields (Surname + Email) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">

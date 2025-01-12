@@ -59,6 +59,12 @@ export default function OrderSummary({
     const discount = rawSubtotal - discountedSubtotal;
     const hasDiscount = discount > 0;
 
+    const [showItems, setShowItems] = useState(false);
+
+    function toggleItems() {
+        setShowItems((prev) => !prev);
+    }
+
     // Use brand color or fallback
     const brandColor = branding.primaryColorCTA || "#22c55e";
 
@@ -142,139 +148,155 @@ export default function OrderSummary({
             <div className="bg-white p-4 space-y-1">
                 {/* Header */}
                 <div>
-                    <h2 className="text-2xl font-bold mb-1">Order Summary</h2>
-                    <p className="text-gray-500 text-sm">Review your items and confirm below.</p>
+                    <h2 className="text-2xl font-bold mb-1">4️⃣ Order Summary</h2>
+                    {/* <p className="text-gray-500 text-sm">Review your items and confirm below.</p> */}
                 </div>
 
                 {/* Cart Items */}
                 {cartItems.length === 0 ? (
                     <p className="text-gray-500">No items in cart.</p>
                 ) : (
-                    <ul className="flex flex-col gap-4">
-                        {cartItems.map((item, idx) => {
-                            const displayName = item.productName || "Untitled Product";
+                    <div>
+                        {/* Collapsible toggle button (only visible on mobile) */}
+                        <div className="sm:hidden mb-2">
+                            <button
+                                type="button"
+                                onClick={toggleItems}
+                                className="text-blue-600 underline"
+                            >
+                                {showItems ? "Hide products ⬆️" : "See products ⬇️"}
+                            </button>
+                        </div>
+                        <ul className={`
+                flex flex-col gap-4
+                ${showItems ? "block" : "hidden"}
+                sm:block
+              `}>
+                            {cartItems.map((item, idx) => {
+                                const displayName = item.productName || "Untitled Product";
 
-                            // Sum the subproduct lines
-                            // (If each subproduct has subPrice & subQuantity, we sum them here)
-                            const subLineTotal = item.subproducts?.reduce(
-                                (acc, sp) => acc + sp.price * (sp.quantity || 1),
-                                0
-                            ) || 0;
+                                // Sum the subproduct lines
+                                // (If each subproduct has subPrice & subQuantity, we sum them here)
+                                const subLineTotal = item.subproducts?.reduce(
+                                    (acc, sp) => acc + sp.price * (sp.quantity || 1),
+                                    0
+                                ) || 0;
 
-                            // The total line price => item price + subLineTotal, all × item.quantity
-                            const linePrice = (item.price + subLineTotal) * item.quantity;
+                                // The total line price => item price + subLineTotal, all × item.quantity
+                                const linePrice = (item.price + subLineTotal) * item.quantity;
 
-                            return (
-                                <li key={`${item.productId}-${idx}`}>
-                                    <div
-                                        className="
+                                return (
+                                    <li key={`${item.productId}-${idx}`}>
+                                        <div
+                                            className="
                                             rounded-xl flex w-full overflow-hidden relative
                                             items-center bg-white shadow-sm
                                             p-3
                                         "
-                                        style={{ minHeight: "80px" }}
-                                    >
-                                        {/* Thumbnail */}
-                                        {item.image?.url ? (
-                                            <img
-                                                src={item.image.url}
-                                                alt={item.image.alt || displayName}
-                                                className="hidden sm:block w-16 h-16 rounded-xl object-cover"
-                                            />
-                                        ) : (
-                                            <div className="hidden sm:block w-16 h-16 bg-gray-100 rounded-xl" />
-                                        )}
-
-                                        {/* Middle: product name + subproducts + line total */}
-                                        <div className="flex-1 min-h-[60px] ml-3">
-                                            <h3 className="font-semibold text-sm sm:text-base text-gray-800 line-clamp-2 mr-2">
-                                                {displayName}
-                                            </h3>
-
-                                            {/* Subproducts */}
-                                            {item.subproducts && item.subproducts.length > 0 && (
-                                                <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
-                                                    {item.subproducts.map((sp, sIdx) => {
-                                                        // Combine name + quantity + total sub-line price
-                                                        return (
-                                                            <li key={`${sp.subproductId}-${sIdx}`}>
-                                                                {getSubLine(
-                                                                    sp.name_nl,
-                                                                    sp.price,
-                                                                    sp.quantity
-                                                                )}
-                                                            </li>
-                                                        );
-                                                    })}
-                                                </ul>
+                                            style={{ minHeight: "80px" }}
+                                        >
+                                            {/* Thumbnail */}
+                                            {item.image?.url ? (
+                                                <img
+                                                    src={item.image.url}
+                                                    alt={item.image.alt || displayName}
+                                                    className="hidden sm:block w-16 h-16 rounded-xl object-cover"
+                                                />
+                                            ) : (
+                                                <div className="hidden sm:block w-16 h-16 bg-gray-100 rounded-xl" />
                                             )}
 
-                                            {/* Price */}
-                                            <div className="text-sm mt-2 font-semibold text-gray-800">
-                                                €{linePrice.toFixed(2)}
-                                            </div>
-                                        </div>
+                                            {/* Middle: product name + subproducts + line total */}
+                                            <div className="flex-1 min-h-[60px] ml-3">
+                                                <h3 className="font-semibold text-sm sm:text-base text-gray-800 line-clamp-2 mr-2">
+                                                    {displayName}
+                                                </h3>
 
-                                        {/* Quantity + Remove */}
-                                        <div className="inline-flex flex-col items-center justify-center ml-3 gap-2">
-                                            <div className="flex rounded bg-white text-sm leading-none shadow-sm">
-                                                <button
-                                                    title="Decrease Quantity"
-                                                    aria-label="Decrease Quantity"
-                                                    type="button"
-                                                    className="
+                                                {/* Subproducts */}
+                                                {item.subproducts && item.subproducts.length > 0 && (
+                                                    <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
+                                                        {item.subproducts.map((sp, sIdx) => {
+                                                            // Combine name + quantity + total sub-line price
+                                                            return (
+                                                                <li key={`${sp.subproductId}-${sIdx}`}>
+                                                                    {getSubLine(
+                                                                        sp.name_nl,
+                                                                        sp.price,
+                                                                        sp.quantity
+                                                                    )}
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                )}
+
+                                                {/* Price */}
+                                                <div className="text-sm mt-2 font-semibold text-gray-800">
+                                                    €{linePrice.toFixed(2)}
+                                                </div>
+                                            </div>
+
+                                            {/* Quantity + Remove */}
+                                            <div className="inline-flex flex-col items-center justify-center ml-3 gap-2">
+                                                <div className="flex rounded bg-white text-sm leading-none shadow-sm">
+                                                    <button
+                                                        title="Decrease Quantity"
+                                                        aria-label="Decrease Quantity"
+                                                        type="button"
+                                                        className="
                                                         focus:outline-none border-r border
                                                         rounded-l border-gray-300 hover:bg-gray-50
                                                         w-8 h-8 flex items-center justify-center
                                                     "
-                                                    onClick={() => handleDecrease(item.productId)}
-                                                >
-                                                    -
-                                                </button>
-                                                <div
-                                                    className="
+                                                        onClick={() => handleDecrease(item.productId)}
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <div
+                                                        className="
                                                         flex items-center justify-center
                                                         border-y border-gray-300 text-center px-2
                                                         w-8 text-sm
                                                     "
-                                                >
-                                                    {item.quantity}
-                                                </div>
-                                                <button
-                                                    title="Increase Quantity"
-                                                    aria-label="Increase Quantity"
-                                                    type="button"
-                                                    className="
+                                                    >
+                                                        {item.quantity}
+                                                    </div>
+                                                    <button
+                                                        title="Increase Quantity"
+                                                        aria-label="Increase Quantity"
+                                                        type="button"
+                                                        className="
                                                         focus:outline-none border-l border
                                                         rounded-r hover:bg-gray-50 border-gray-300
                                                         w-8 h-8 flex items-center justify-center
                                                     "
-                                                    onClick={() => handleIncrease(item.productId)}
+                                                        onClick={() => handleIncrease(item.productId)}
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => handleRemoveItem(item.productId)}
+                                                    title="Remove"
+                                                    className="text-gray-400 hover:text-red-500 transition-colors"
                                                 >
-                                                    +
+                                                    <FiTrash2 className="w-5 h-5" />
                                                 </button>
                                             </div>
-
-                                            <button
-                                                onClick={() => handleRemoveItem(item.productId)}
-                                                title="Remove"
-                                                className="text-gray-400 hover:text-red-500 transition-colors"
-                                            >
-                                                <FiTrash2 className="w-5 h-5" />
-                                            </button>
                                         </div>
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
                 )}
 
                 {/* “Apply Promo or Scan QR” button */}
                 <PromoButton
                     isKiosk={isKiosk}
                     label="Apply Promo or Scan QR"
-                    buttonClass="bg-blue-100 ..."
+                    buttonClass="..."
                 />
 
                 {/* Totals + Checkout */}
@@ -378,6 +400,6 @@ export default function OrderSummary({
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

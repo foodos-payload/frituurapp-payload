@@ -218,7 +218,7 @@ export function OrderSummaryPage({
 
     // Grab branding
     const branding = useShopBranding();
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6"; // fallback bluish
+    const brandCTA = branding?.primaryColorCTA || "#068b59"; // fallback bluish
 
     // Local state
     const [userLocale, setUserLocale] = useState("nl");
@@ -392,28 +392,28 @@ export function OrderSummaryPage({
 
         switch (status) {
             case "awaiting_preparation":
-                label = "Awaiting Prep";
-                colorClasses = "bg-orange-100 text-orange-800";
+                label = "Awaiting Prep ⏳";
+                colorClasses = "bg-orange-100 text-orange-800 text-xl";
                 break;
             case "in_preparation":
-                label = "In Prep";
-                colorClasses = "bg-blue-100 text-blue-800";
+                label = "In Prep 🧾";
+                colorClasses = "bg-blue-100 text-blue-800 text-xl";
                 break;
             case "ready_for_pickup":
-                label = "Ready for Pickup";
-                colorClasses = "bg-purple-100 text-purple-800";
+                label = "Ready for Pickup 🏪";
+                colorClasses = "bg-purple-100 text-purple-800 text-xl";
                 break;
             case "in_delivery":
-                label = "In Delivery";
-                colorClasses = "bg-purple-100 text-purple-800";
+                label = "In Delivery 🛵";
+                colorClasses = "bg-purple-100 text-purple-800 text-xl";
                 break;
             case "complete":
-                label = "Completed";
-                colorClasses = "bg-green-200 text-green-800";
+                label = "Completed 🎉";
+                colorClasses = "bg-green-200 text-green-800 text-xl";
                 break;
             case "cancelled":
-                label = "Cancelled";
-                colorClasses = "bg-red-100 text-red-800";
+                label = "Cancelled ❌";
+                colorClasses = "bg-red-100 text-red-800 text-xl";
                 break;
             default:
                 // fallback

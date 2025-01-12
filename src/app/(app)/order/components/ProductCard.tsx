@@ -152,7 +152,7 @@ export default function ProductCard({
     }
 
     // 1) Gather brand color or fallback
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const brandCTA = branding?.primaryColorCTA || "#068b59";
     // 2) Border color for the plus button on hover
     const plusButtonBorder = hoverPlus ? brandCTA : "transparent";
 

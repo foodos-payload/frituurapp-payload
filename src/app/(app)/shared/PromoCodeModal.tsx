@@ -10,6 +10,7 @@ import React, {
 import { CSSTransition } from "react-transition-group";
 import { FiTrash2 } from "react-icons/fi";
 import { useShopBranding } from "@/context/ShopBrandingContext";
+import { FiX } from "react-icons/fi";
 
 type ModalStep = "codeInput" | "customerOptions";
 type Membership = { points: number };
@@ -236,30 +237,22 @@ export default function PromoCodeModal({
                             {/* Close button */}
                             <button
                                 onClick={handleClose}
+                                title="Close Modal"
                                 className="
-                  absolute top-2 right-2
-                  bg-red-600 text-white
-                  rounded-full p-2
-                  shadow
-                  hover:bg-red-700
-                  transition-colors
-                  z-50
-                "
+    absolute
+    top-2 right-2
+    bg-red-500
+    text-white
+    rounded-xl
+    shadow-xl
+    p-3
+    hover:bg-red-600
+    transition-colors
+    z-50
+  "
+                                style={{ minWidth: "44px", minHeight: "44px" }}
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className={`${kioskTrashClass}`}
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
+                                <FiX className="w-6 h-6" />
                             </button>
 
                             {/* STEP 1 => codeInput */}
@@ -285,7 +278,7 @@ export default function PromoCodeModal({
                                         <button
                                             type="submit"
                                             disabled={promoLoading === "loading"}
-                                            style={{ backgroundColor: branding.primaryColorCTA }}
+                                            style={{ backgroundColor: branding.primaryColorCTA || "#068b59" }}
                                             className={`
                         ${kioskActionButtonClass}
                         w-full
@@ -313,133 +306,7 @@ export default function PromoCodeModal({
                                     </div>
 
                                     <div className="space-y-6">
-                                        {/* Points tile */}
-                                        <div
-                                            className={`
-                        p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-200
-                        text-center w-full
-                        ${kioskTextClass}
-                      `}
-                                        >
-                                            {hasCouponApplied ? (
-                                                <p className={kioskSubTitleClass}>
-                                                    You can’t combine membership points with a
-                                                    coupon/gift code in one order.
-                                                </p>
-                                            ) : currentlyUsedPoints > 0 ? (
-                                                <div className="flex flex-col gap-3">
-                                                    <span className={`${kioskTextClass} text-gray-700`}>
-                                                        You’re currently using {currentlyUsedPoints} EUR from points.
-                                                    </span>
-                                                    <button
-                                                        onClick={handleRemovePointsClick}
-                                                        className={`
-                              ${kioskActionButtonClass}
-                              bg-red-500 text-white
-                              rounded hover:bg-red-600
-                            `}
-                                                    >
-                                                        Remove Points
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <form onSubmit={handleApplyPointsForm} className="flex flex-col gap-3">
-                                                    <label
-                                                        htmlFor="pointsToUse"
-                                                        className={`${kioskLabelClass} text-gray-600`}
-                                                    >
-                                                        Redeem Points
-                                                    </label>
 
-                                                    <div className="flex items-center gap-3 flex-wrap justify-center">
-                                                        {/* Trash icon to reset points */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setPointsToUse(0)}
-                                                            className="
-                                                    text-gray-400 hover:text-red-500
-                                                    transition-colors p-2
-                                                  "
-                                                            title="Clear Points"
-                                                        >
-                                                            <FiTrash2 className={`${kioskTrashClass}`} />
-                                                        </button>
-
-                                                        {/* minus/plus */}
-                                                        <div
-                                                            className={`
-                                                    flex rounded bg-white leading-none shadow-sm
-                                                  `}
-                                                        >
-                                                            <button
-                                                                type="button"
-                                                                className={`
-                                                      focus:outline-none border-r border
-                                                      rounded-l border-gray-300 hover:bg-gray-50
-                                                      ${kioskQtyBtnClass}
-                                                      flex items-center justify-center
-                                                    `}
-                                                                onClick={() => setPointsToUse((prev) => Math.max(0, prev - redeemRatio))}
-                                                            >
-                                                                -
-                                                            </button>
-                                                            <div
-                                                                className="
-                                                      flex items-center justify-center
-                                                      border-y border-gray-300 text-center px-3
-                                                    "
-                                                            >
-                                                                <span className={`${kioskTextClass}`}>{pointsToUse}</span>
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                className={`
-                                                      focus:outline-none border-l border
-                                                      hover:bg-gray-50 border-gray-300
-                                                      ${kioskQtyBtnClass}
-                                                      flex items-center justify-center
-                                                    `}
-                                                                onClick={() => setPointsToUse((prev) => prev + redeemRatio)}
-                                                            >
-                                                                +
-                                                            </button>
-                                                        </div>
-
-                                                        {/* Max button */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setPointsToUse(membershipPoints)}
-                                                            className={`
-                                                    bg-gray-100 hover:bg-gray-200
-                                                    rounded
-                                                    ${kioskMaxBtnClass}
-                                                  `}
-                                                        >
-                                                            Max
-                                                        </button>
-
-                                                        {/* Apply button */}
-                                                        <button
-                                                            type="submit"
-                                                            disabled={pointsLoading === "loading"}
-                                                            style={{ backgroundColor: branding.primaryColorCTA }}
-                                                            className={`
-                                                    ${kioskActionButtonClass}
-                                                    bg-green-600 text-white
-                                                    rounded hover:opacity-90
-                                                    disabled:opacity-50
-                                                  `}
-                                                        >
-                                                            {pointsLoading === "loading" ? <SpinnerIcon /> : "Apply"}
-                                                        </button>
-                                                    </div>
-                                                    <small className={`${kioskSmallTextClass} text-gray-400`}>
-                                                        (You have {membershipPoints} points. {redeemRatio} = 1 EUR)
-                                                    </small>
-                                                </form>
-
-                                            )}
-                                        </div>
 
                                         {/* Additional coupon tile */}
                                         <div
@@ -495,7 +362,7 @@ export default function PromoCodeModal({
                                                         <button
                                                             type="submit"
                                                             disabled={promoLoading === "loading"}
-                                                            style={{ backgroundColor: branding.primaryColorCTA }}
+                                                            style={{ backgroundColor: branding.primaryColorCTA || "#068b59" }}
                                                             className={`
                                 ${kioskActionButtonClass}
                                 text-white rounded
@@ -616,7 +483,7 @@ export default function PromoCodeModal({
                                                         <button
                                                             type="submit"
                                                             disabled={creditsLoading === "loading"}
-                                                            style={{ backgroundColor: branding.primaryColorCTA }}
+                                                            style={{ backgroundColor: branding.primaryColorCTA || "#068b59" }}
                                                             className={`
                                 ${kioskActionButtonClass}
                                 text-white rounded

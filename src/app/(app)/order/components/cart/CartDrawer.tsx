@@ -57,7 +57,7 @@ export default function CartDrawer({
     const drawerRef = useRef<HTMLDivElement>(null);
 
     // Branding color for the checkout button
-    const brandCTA = branding?.primaryColorCTA || "#3b82f6";
+    const brandCTA = branding?.primaryColorCTA || "#068b59";
 
     // Original vs discounted
     const originalTotal = getCartTotal();
@@ -338,7 +338,7 @@ export default function CartDrawer({
                                                             onClick={() => handleRemoveItem(item)}
                                                             title="Remove this item"
                                                         >
-                                                            <FiTrash2 size={isKiosk ? 20 : 16} />
+                                                            <FiTrash2 size={isKiosk ? 26 : 22} />
                                                         </button>
                                                     </div>
                                                 </div>
