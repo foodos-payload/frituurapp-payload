@@ -707,7 +707,7 @@ export default function CheckoutPage({
                             </div>
 
                             {/* Hello user / login */}
-                            <div className="user-greeting">
+                            <div className="user-greeting hidden">
                                 {loggedInUser ? (
                                     <div className="mb-3">
                                         <h2 className="text-xl font-semibold">
@@ -723,14 +723,14 @@ export default function CheckoutPage({
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span>No account?</span>
+                                    <div className="flex items-center gap-0 mb-0 hidden">
+                                        {/* <span>No account?</span>
                                         <button
                                             onClick={handleLoginClick}
                                             className="text-blue-600 font-medium hover:underline"
                                         >
                                             Login / Register
-                                        </button>
+                                        </button> */}
                                     </div>
                                 )}
                             </div>

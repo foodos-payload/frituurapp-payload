@@ -93,7 +93,7 @@ export default function PromoButton({
           bg-black hover:bg-blue-600 text-white font-semibold 
           px-4 py-2 rounded-xl shadow-sm focus:outline-none inline-flex
           items-center gap-2 w-full text-center justify-center
-          disabled:opacity-50
+         
           ${buttonClass}
         `}
             >
