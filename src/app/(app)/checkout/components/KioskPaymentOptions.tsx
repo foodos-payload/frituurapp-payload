@@ -95,7 +95,7 @@ export default function KioskPaymentOptions({
                 const localStatus = orderDoc.status?.toLowerCase() || "";
                 console.log(`[Polling local order] #${orderId}, status=${localStatus}`);
 
-                if (["complete", "in_preparation", "ready_for_pickup"].includes(localStatus)) {
+                if (["complete", "in_preparation", "awaiting_preparation", "ready_for_pickup"].includes(localStatus)) {
                     // Done => show the summary
                     clearInterval(intervalId);
                     pollingIntervalRef.current = null;
