@@ -16,3 +16,6 @@ pnpm payload migrate up && pnpm build
 
 [start]
 cmd = "pnpm start"
+
+[environment.system_packages]
+packages = ["cups-client"]
