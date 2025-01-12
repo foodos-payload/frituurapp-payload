@@ -489,6 +489,65 @@ export const Orders: CollectionConfig = {
     ],
     afterChange: [
       async ({ doc, operation, req }) => {
+        // Only when creating a new order AND the status is not 'pending_payment'
+        if (operation === 'create' && doc.status !== 'pending_payment') {
+          try {
+            // 1) Find relevant printers for this shop (kitchen-type, enabled, etc.)
+            //    doc.shops is an array - we take the first to illustrate, or handle multiple
+            const shopIDs = Array.isArray(doc.shops) ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s)) : [doc.shops];
+            if (!shopIDs.length) {
+              console.warn('No shops found on this order; skipping print logic.');
+              return;
+            }
+
+            const printers = await req.payload.find({
+              collection: 'printers',
+              where: {
+                and: [
+                  { shops: { in: shopIDs } },
+                  { printer_type: { equals: 'kitchen' } },
+                  { print_enabled: { equals: true } },
+                ],
+              },
+              limit: 50,
+            });
+
+            // 2) For each printer, call /api/printOrder
+            for (const p of printers.docs) {
+              try {
+                // Always print the "kitchen" ticket
+                await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    printerName: "frituur-den-overkant-kitchen-main", // e.g. "frituur-den-overkant-kitchen-main"
+                    ticketType: 'kitchen',
+                    orderData: doc, // The newly created order doc
+                  }),
+                });
+
+                // If that printer also prints a customer copy
+                if (p?.customer_enabled === true) {
+                  await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      printerName: "frituur-den-overkant-kitchen-main",
+                      ticketType: 'customer',
+                      orderData: doc,
+                    }),
+                  });
+                }
+              } catch (printErr) {
+                console.error(`Error printing to printer ${p.printer_name}:`, printErr);
+              }
+            }
+          } catch (err) {
+            console.error('Error in order afterChange print hook:', err);
+          }
+        }
+      },
+      async ({ doc, operation, req }) => {
         if (operation === 'create') {
           try {
             let branding: any = {}
