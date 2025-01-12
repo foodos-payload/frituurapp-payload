@@ -1,18 +1,21 @@
-// File: src/collections/ShopSettings/Printers/hooks/ensureUniquePrinterNamePerShop.ts
-import type { FieldHook } from 'payload';
+// File: src/collections/ShopSettings/Printers/hooks/checkPrinterNameUniqueness.ts
+import { PayloadRequest } from 'payload';
 import { ValidationError } from 'payload';
 
-export const ensureUniquePrinterNamePerShop: FieldHook = async ({
+export async function checkPrinterNameUniqueness({
     data,
     req,
-    siblingData,
     value,
     originalDoc,
-}) => {
-    // "shops" is an array of Shop IDs
-    const shops = data?.shops || siblingData?.shops || originalDoc?.shops;
+}: {
+    data: Record<string, any>;
+    req: PayloadRequest;
+    value: string;
+    originalDoc?: any;
+}) {
+    // 1) Get shops array
+    const shops = data.shops ?? originalDoc?.shops;
     const shopIDs = Array.isArray(shops) ? shops : [];
-
     if (shopIDs.length === 0) {
         throw new ValidationError({
             errors: [
@@ -24,12 +27,10 @@ export const ensureUniquePrinterNamePerShop: FieldHook = async ({
         });
     }
 
-    // If there's no computed printer_name yet, skip
-    if (!value) {
-        return value;
-    }
+    // 2) If no printer_name, skip
+    if (!value) return;
 
-    // Check if there's an existing printer with the same "printer_name" among these shops
+    // 3) Check if a printer with the same name already exists
     const existingPrinters = await req.payload.find({
         collection: 'printers',
         where: {
@@ -38,10 +39,12 @@ export const ensureUniquePrinterNamePerShop: FieldHook = async ({
         },
     });
 
+    // 4) Compare IDs to ignore the current doc
     const isDuplicate = existingPrinters.docs.some(
         (printer) => printer.id !== originalDoc?.id
     );
 
+    // 5) Only throw if a duplicate actually exists
     if (isDuplicate) {
         throw new ValidationError({
             errors: [
@@ -53,5 +56,6 @@ export const ensureUniquePrinterNamePerShop: FieldHook = async ({
         });
     }
 
-    return value;
-};
+    // No duplicates => no error thrown
+    return;
+}

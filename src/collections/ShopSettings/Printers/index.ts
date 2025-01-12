@@ -7,7 +7,7 @@ import { baseListFilter } from './access/baseListFilter';
 import { canMutatePrinter } from './access/byTenant';
 import { readAccess } from './access/readAccess';
 
-import { ensureUniquePrinterNamePerShop } from './hooks/ensureUniquePrinterNamePerShop';
+import { checkPrinterNameUniqueness } from './hooks/checkPrinterNameUniqueness';
 // import { automatePrinterSetup } from './hooks/automatePrinterSetup';
 // import { removePrinterOnDelete } from './hooks/removePrinterOnDelete';
 
@@ -40,24 +40,21 @@ export const Printers: CollectionConfig = {
     },
     hooks: {
         beforeValidate: [
-            async ({ data, siblingData, req, operation, originalDoc }) => {
-                // We only do this on create or update
+            async ({ data, req, operation, originalDoc }) => {
+                // Only run on create or update
                 if (operation !== 'create' && operation !== 'update') {
                     return data;
                 }
 
-                // 1) Merge relevant fields from input or original doc
-                const shops = siblingData?.shops ?? data?.shops ?? originalDoc?.shops;
-                const printerType =
-                    siblingData?.printer_type ??
-                    data?.printer_type ??
-                    originalDoc?.printer_type;
-                const uniqueID =
-                    siblingData?.unique_id ?? data?.unique_id ?? originalDoc?.unique_id;
+                // 1) Merge relevant fields from `data` or `originalDoc`
+                //    (the user might not have specified some fields yet)
+                const shops = data?.shops ?? originalDoc?.shops;
+                const printerType = data?.printer_type ?? originalDoc?.printer_type;
+                const uniqueID = data?.unique_id ?? originalDoc?.unique_id;
 
-                // If any are missing, we can skip, letting normal validations happen
+                // If any are missing, just return—let normal validations handle it
                 if (!shops || shops.length === 0 || !printerType || !uniqueID) {
-                    return data; // user might still fill them next
+                    return data;
                 }
 
                 // 2) Fetch the first shop’s slug to build the name
@@ -68,20 +65,20 @@ export const Printers: CollectionConfig = {
                         id: firstShopID,
                     });
                     if (shopDoc?.slug) {
-                        // 3) Build our <shop_slug>-<printer_type>-<unique_id>
+                        // 3) Build <shop_slug>-<printer_type>-<unique_id>
                         const computedName = `${shopDoc.slug}-${printerType}-${uniqueID}`;
-                        data.printer_name = computedName;
+                        if (data) {
+                            data.printer_name = computedName;
+                        }
                     }
                 }
 
                 return data;
             },
             /**
-             * 4) If `printer_name` is set, run the uniqueness hook logic
+             * Step 4) If `printer_name` is set, run the uniqueness logic
              */
-            async (args) => {
-                const { data, siblingData, originalDoc, operation } = args;
-
+            async ({ data, req, operation, originalDoc }) => {
                 if (operation !== 'create' && operation !== 'update') {
                     return data;
                 }
@@ -92,11 +89,10 @@ export const Printers: CollectionConfig = {
                     return data;
                 }
 
-                // Call your existing ensureUniquePrinterNamePerShop hook
-                await ensureUniquePrinterNamePerShop({
+                // Call your existing uniqueness hook
+                await checkPrinterNameUniqueness({
                     data,
-                    req: args.req,
-                    siblingData,
+                    req,
                     value: finalPrinterName,
                     originalDoc,
                 });
