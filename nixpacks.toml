@@ -17,5 +17,8 @@ pnpm payload migrate up && pnpm build
 [start]
 cmd = "pnpm start"
 
+[environment]
+CUPS_SERVER = "/var/run/cups/cups.sock"
+
 [environment.system_packages]
 packages = ["cups-client"]
