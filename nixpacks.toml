@@ -15,4 +15,4 @@ pnpm payload migrate up && pnpm build
 """
 
 [start]
-cmd = "apt-get update && apt-get install -y cups && pnpm start"
+cmd = "apt-get update && apt-get install libc6 && apt-get install -y cups && pnpm start"
