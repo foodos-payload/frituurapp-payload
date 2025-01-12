@@ -85,7 +85,7 @@ const MSP_GATEWAY_MAP: Record<string, string> = {
     Fietsenbon: 'FIETSENBON',
     Gelrepas: 'GELREPAS',
     Gezondheidsbon: 'GEZONDHEID',
-    Good4fun: 'GOOD4FUN',
+    Good4fun: 'GOODFUN',
     'Horses & Gifts': 'HORSESGIFT',
     'Monizze eco voucher': 'MONIECO',
     'Monizze gift voucher': 'MONIGIFT',
