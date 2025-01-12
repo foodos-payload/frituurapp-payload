@@ -1,21 +1,22 @@
 // File: src/app/api/printOrder/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import { exec } from 'child_process';
+import { mkdtemp, writeFile } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
-// 1) Example: If you want advanced ticket formatting, replicate from your printnode.js
-
+// 1) A helper to remove accents or special chars, if needed
 function simplifyText(text: string) {
-    // Remove or replace special chars...
-    return (text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    // Or your accentMap approach if you prefer.
+    return (text || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
 }
 
+// 2) Build ESC/POS for Kitchen
 function buildEscposForKitchen(order: any) {
-    // This is a simplified example. Copy in your logic from "printnode.js"
-    // or "generateEscPosCommands(...)"
-
     let esc = '\x1B\x40'; // ESC @ (initialize)
     esc += '\x1B\x61\x01'; // center align
     esc += '\x1B\x21\x38'; // double height & width
@@ -24,7 +25,6 @@ function buildEscposForKitchen(order: any) {
     esc += '\x1B\x21\x00'; // normal text
     esc += '\x1B\x61\x00'; // left align
 
-    // Items
     if (Array.isArray(order.order_details)) {
         for (const item of order.order_details) {
             const name = simplifyText(item.name_nl || item.name_en || 'Unnamed');
@@ -45,6 +45,7 @@ function buildEscposForKitchen(order: any) {
     return esc;
 }
 
+// 3) Build ESC/POS for Customer
 function buildEscposForCustomer(order: any) {
     let esc = '\x1B\x40'; // ESC @ (initialize)
     esc += '\x1B\x61\x01'; // center align
@@ -54,7 +55,6 @@ function buildEscposForCustomer(order: any) {
     esc += '\x1B\x21\x00'; // normal text
     esc += '\x1B\x61\x00'; // left align
 
-    // Items
     if (Array.isArray(order.order_details)) {
         for (const item of order.order_details) {
             const name = simplifyText(item.name_nl || item.name_en || 'Unnamed');
@@ -67,39 +67,29 @@ function buildEscposForCustomer(order: any) {
     return esc;
 }
 
-// 2) The main POST route logic
+// 4) Our main POST route
 export async function POST(request: NextRequest) {
     try {
-        // If you need Payload for DB lookups:
         const payload = await getPayload({ config });
-
-        // Parse JSON from body
         const { printerName, ticketType, orderData } = await request.json();
 
-
         if (!printerName) {
-            return NextResponse.json(
-                { error: 'Missing printerName' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Missing printerName' }, { status: 400 });
         }
         if (!ticketType) {
-            return NextResponse.json(
-                { error: 'Missing ticketType (kitchen, customer, or both)' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Missing ticketType (kitchen, customer, or both)' }, { status: 400 });
         }
         if (!orderData) {
-            return NextResponse.json(
-                { error: 'Missing orderData' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Missing orderData' }, { status: 400 });
         }
 
-        // Decide which ESC/POS to build
+        // Decide which ESC/POS chunks to build
         const typesToPrint = ticketType === 'both'
             ? ['kitchen', 'customer']
             : [ticketType];
+
+        // Clean up the printer name for safety
+        const safePrinter = printerName.replace(/[^\w\-_]/g, '');
 
         for (const t of typesToPrint) {
             let escpos = '';
@@ -108,17 +98,20 @@ export async function POST(request: NextRequest) {
             } else if (t === 'customer') {
                 escpos = buildEscposForCustomer(orderData);
             } else {
+                // Ignore unknown ticketType
                 continue;
             }
 
-            // Escape double-quotes for our shell command
-            const safeContent = escpos.replace(/"/g, '\\"');
+            // 4A) Write ESC/POS data to a temporary file as raw bytes
+            //     This avoids passing the control characters via shell.
+            const tempDir = await mkdtemp(join(tmpdir(), 'escpos-'));
+            const filePath = join(tempDir, `ticket-${t}.bin`);
+            await writeFile(filePath, escpos, 'binary');
+            // or 'utf8', but 'binary' is safer for control codes
 
-            // Construct the command for CUPS + raw
-            const safePrinter = printerName.replace(/[^\w\-_]/g, '');
-            const cmd = `echo "${safeContent}" | lp -d ${safePrinter} -o raw`;
-            console.log(cmd)
-            // Execute
+            // 4B) Use `lp` to print the file as raw
+            const cmd = `lp -d ${safePrinter} -o raw "${filePath}"`;
+
             const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
                 exec(cmd, (error, stdout, stderr) => {
                     if (error) {
@@ -128,7 +121,7 @@ export async function POST(request: NextRequest) {
                 });
             });
 
-            console.log(`Printed ${t} ticket to ${safePrinter}. lp output:`, result.stdout, result.stderr);
+            console.log(`Printed ${t} ticket on ${safePrinter}. Output:`, result.stdout, result.stderr);
         }
 
         return NextResponse.json({ success: true });
