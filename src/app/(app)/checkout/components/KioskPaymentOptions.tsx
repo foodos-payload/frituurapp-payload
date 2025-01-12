@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { FaLongArrowAltDown } from "react-icons/fa";
 
 interface PaymentMethod {
     id: string;
@@ -43,10 +44,7 @@ export default function KioskPaymentOptions({
 }: KioskPaymentOptionsProps) {
     const router = useRouter();
 
-    // Overlay states:
-    // null => no overlay
-    // "terminal" => waiting for card payment
-    // "cash" => waiting for cash payment
+    // Overlay states: null => no overlay, "terminal" => waiting for card, "cash" => waiting for cash
     const [loadingState, setLoadingState] = useState<null | "terminal" | "cash">(null);
 
     // Display an error message if payment fails or is canceled
@@ -68,7 +66,7 @@ export default function KioskPaymentOptions({
     /**
      * startPollingLocalOrder:
      *  - Poll the local "orders" doc every 4s
-     *  - If status is complete/in_preparation/ready_for_pickup => go to summary
+     *  - If status is complete/in_preparation/awaiting_preparation/ready_for_pickup => go to summary
      *  - If status is cancelled => show error & remove overlay
      */
     const startPollingLocalOrder = (orderId: number) => {
@@ -95,7 +93,11 @@ export default function KioskPaymentOptions({
                 const localStatus = orderDoc.status?.toLowerCase() || "";
                 console.log(`[Polling local order] #${orderId}, status=${localStatus}`);
 
-                if (["complete", "in_preparation", "awaiting_preparation", "ready_for_pickup"].includes(localStatus)) {
+                if (
+                    ["complete", "in_preparation", "awaiting_preparation", "ready_for_pickup"].includes(
+                        localStatus
+                    )
+                ) {
                     // Done => show the summary
                     clearInterval(intervalId);
                     pollingIntervalRef.current = null;
@@ -197,26 +199,44 @@ export default function KioskPaymentOptions({
                             <Image
                                 src="/images/PaymentTerminal.gif"
                                 alt="Waiting for terminal payment"
-                                className="mb-8 w-64"
-                                width={256}
-                                height={256}
+                                className="mb-8 w-full"
+                                width={512}
+                                height={512}
                             />
                             <h2 className="text-4xl mb-8">Waiting for terminal payment...</h2>
+                            <h1 className="text-5xl font-bold mb-4">Dont forget to take your ticket after payment</h1>
+
+                            {/* Large arrow down */}
+                            <FaLongArrowAltDown className="text-6xl text-red-600 mb-8" />
+
+                            <button
+                                onClick={() => {
+                                    setPaymentErrorMessage("");
+                                    setLoadingState(null);
+                                }}
+                                className="mt-8 px-6 py-3 text-xl bg-red-500 text-white rounded-xl shadow-md"
+                            >
+                                Payment failed? Press here to try again
+                            </button>
                         </>
                     )}
+
                     {loadingState === "cash" && (
                         <>
                             <Image
                                 src="/images/CashIcon.png"
                                 alt="Waiting for cash payment"
                                 className="mb-8 w-64"
-                                width={256}
-                                height={256}
+                                width={512}
+                                height={512}
                             />
                             <h2 className="text-4xl mb-8">Please pay with cash at counter...</h2>
+                            <h1 className="text-5xl font-bold mb-4">Dont forget to take your ticket...</h1>
+
+                            {/* Large arrow down */}
+                            <FaLongArrowAltDown className="text-8xl text-red-600 mb-8" />
                         </>
                     )}
-                    <h1 className="text-5xl font-bold mb-8">Printing ticket...</h1>
                 </div>
             )}
 
