@@ -488,18 +488,24 @@ export const Orders: CollectionConfig = {
       },
     ],
     afterChange: [
-      async ({ doc, operation, req }) => {
-        // Only when creating a new order AND the status is not 'pending_payment'
+      // 1) Print Logic: New vs Update
+      async ({ doc, previousDoc, operation, req }) => {
+        // ───────────────────────────────────────────────────
+        // A) NEW order with a non-pending status
+        // ───────────────────────────────────────────────────
         if (operation === 'create' && doc.status !== 'pending_payment') {
           try {
-            // 1) Find relevant printers for this shop (kitchen-type, enabled, etc.)
-            //    doc.shops is an array - we take the first to illustrate, or handle multiple
-            const shopIDs = Array.isArray(doc.shops) ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s)) : [doc.shops];
+            // 1) Gather shop IDs
+            const shopIDs = Array.isArray(doc.shops)
+              ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
+              : [doc.shops];
+
             if (!shopIDs.length) {
               console.warn('No shops found on this order; skipping print logic.');
               return;
             }
 
+            // 2) Find all kitchen printers for these shops
             const printers = await req.payload.find({
               collection: 'printers',
               where: {
@@ -512,7 +518,7 @@ export const Orders: CollectionConfig = {
               limit: 50,
             });
 
-            // 2) For each printer, call /api/printOrder
+            // 3) For each printer, call /api/printOrder
             for (const p of printers.docs) {
               try {
                 // Always print the "kitchen" ticket
@@ -522,7 +528,7 @@ export const Orders: CollectionConfig = {
                   body: JSON.stringify({
                     printerName: p.printer_name,
                     ticketType: 'kitchen',
-                    orderData: doc, // The newly created order doc
+                    orderData: doc,
                   }),
                 });
 
@@ -543,24 +549,95 @@ export const Orders: CollectionConfig = {
               }
             }
           } catch (err) {
-            console.error('Error in order afterChange print hook:', err);
+            console.error('Error in order afterChange print hook (create):', err);
+          }
+          return; // Stop here for the create case
+        }
+
+        // ───────────────────────────────────────────────────
+        // B) EXISTING order updated: from pending_payment → something else
+        // ───────────────────────────────────────────────────
+        if (operation === 'update') {
+          const oldStatus = previousDoc?.status;
+          const newStatus = doc.status;
+
+          if (oldStatus === 'pending_payment' && newStatus !== 'pending_payment') {
+            try {
+              // 1) Gather shop IDs
+              const shopIDs = Array.isArray(doc.shops)
+                ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
+                : [doc.shops];
+
+              if (!shopIDs.length) {
+                console.warn('No shops found on this order; skipping print logic.');
+                return;
+              }
+
+              // 2) Find all kitchen printers for these shops
+              const printers = await req.payload.find({
+                collection: 'printers',
+                where: {
+                  and: [
+                    { shops: { in: shopIDs } },
+                    { printer_type: { equals: 'kitchen' } },
+                    { print_enabled: { equals: true } },
+                  ],
+                },
+                limit: 50,
+              });
+
+              // 3) Print just like above
+              for (const p of printers.docs) {
+                try {
+                  // Always print the "kitchen" ticket
+                  await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      printerName: p.printer_name,
+                      ticketType: 'kitchen',
+                      orderData: doc,
+                    }),
+                  });
+
+                  // If that printer also prints a customer copy
+                  if (p?.customer_enabled === true) {
+                    await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        printerName: p.printer_name,
+                        ticketType: 'customer',
+                        orderData: doc,
+                      }),
+                    });
+                  }
+                } catch (printErr) {
+                  console.error(`Error printing to printer ${p.printer_name}:`, printErr);
+                }
+              }
+            } catch (err) {
+              console.error('Error in order afterChange print hook (update):', err);
+            }
           }
         }
       },
+
+      // 2) Email Logic: unchanged from your existing code
       async ({ doc, operation, req }) => {
         if (operation === 'create') {
           try {
-            let branding: any = {}
+            let branding: any = {};
 
             // 1) If there's at least one shop attached, use the first
             if (doc.shops && doc.shops.length > 0) {
-              const firstShopId = doc.shops[0]?.id ?? doc.shops[0]
+              const firstShopId = doc.shops[0]?.id ?? doc.shops[0];
               if (firstShopId) {
                 // (A) Fetch the Shop doc
                 const shopDoc = await req.payload.findByID({
                   collection: 'shops',
                   id: firstShopId,
-                })
+                });
                 if (shopDoc) {
                   // (B) Find the ShopBranding doc referencing this shop
                   const brandingRes = await req.payload.find({
@@ -568,11 +645,10 @@ export const Orders: CollectionConfig = {
                     where: { shops: { in: [shopDoc.id] } },
                     depth: 2,
                     limit: 1,
-                  })
-                  const brandingDoc = brandingRes.docs[0] || null
+                  });
+                  const brandingDoc = brandingRes.docs[0] || null;
 
                   // Convert the returned doc into a simpler object if needed:
-                  // e.g. { logoUrl, headerBackgroundColor, primaryColorCTA, siteTitle, etc. }
                   branding = {
                     siteTitle: brandingDoc?.siteTitle || shopDoc.name,
                     logoUrl: brandingDoc?.siteLogo,
@@ -580,26 +656,26 @@ export const Orders: CollectionConfig = {
                     primaryColorCTA: brandingDoc?.primaryColorCTA,
                     googleReviewUrl: brandingDoc?.googleReviewUrl,
                     tripAdvisorUrl: brandingDoc?.tripAdvisorUrl,
-                    // ... add any other fields from brandingDoc that you want
-                  }
+                    // ... add other fields if desired
+                  };
                 }
               }
             }
 
-            // 2) Build your "itemLines" array (same as before)
-            const orderDetails = doc.order_details || []
+            // 2) Build your "itemLines" array
+            const orderDetails = doc.order_details || [];
             const itemLines = orderDetails.map((detail: any) => {
               const subprods = (detail.subproducts || []).map((sp: any) => ({
                 name: sp.name_nl || 'Unnamed subproduct',
                 price: sp.price ?? 0,
-              }))
+              }));
               return {
                 name: detail.name_nl || detail.product?.name_nl || 'Unnamed product',
                 quantity: detail.quantity ?? 1,
                 price: detail.price ?? 0,
                 subproducts: subprods,
-              }
-            })
+              };
+            });
 
             // 3) Generate email HTML
             const html = await generateOrderSummaryEmail({
@@ -609,8 +685,8 @@ export const Orders: CollectionConfig = {
               shippingCost: doc.shipping_cost?.toFixed(2) || '0.00',
               fulfillmentMethod: doc.fulfillment_method,
               customerDetails: doc.customer_details || {},
-              branding, // pass along our branding object
-            })
+              branding,
+            });
 
             // 4) Send the email
             await req.payload.sendEmail({
@@ -618,9 +694,9 @@ export const Orders: CollectionConfig = {
               from: 'info@frituurapp.be',
               subject: `Your Order #${doc.id}`,
               html,
-            })
+            });
           } catch (err) {
-            console.error('Error sending order summary email:', err)
+            console.error('Error sending order summary email:', err);
           }
         }
       },
