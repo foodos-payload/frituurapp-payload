@@ -106,8 +106,8 @@ export default function VerticalCategories({
                   <Image
                     src={cat.image.url}
                     alt={cat.image.alt || cat.label}
-                    width={64}
-                    height={64}
+                    width={90}
+                    height={90}
                     className="object-cover rounded"
                   />
                 ) : (

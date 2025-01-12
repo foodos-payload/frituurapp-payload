@@ -214,128 +214,49 @@ export default function ProductCard({
             {/* ========== Image Area ========== */}
             {!isKiosk ? (
                 // Non-kiosk => original horizontal layout
-                <div className="w-2/5 h-full flex items-center justify-center bg-gray-50">
+                <div className="relative w-2/5 h-full flex items-center justify-center bg-gray-50">
                     {product.image?.url ? (
-                        <Image
-                            src={product.image.url}
-                            alt={product.image.alt || product.displayName}
-                            className="product-img w-full h-full object-cover mix-blend-multiply"
-                            layout="fill"
-                            objectFit="cover"
-                        />
-                    ) : (
-                        <div className="text-gray-300 text-md p-4">No Image</div>
-                    )}
-                </div>
-            ) : (
-                // Kiosk => bigger, top-centered image
-                <div className="w-full flex items-center justify-center bg-gray-50 mb-2 h-[190px]">
-                    {product.image?.url ? (
-                        <div className="relative w-auto h-full">
+                        <div className="relative w-full h-full">
                             <Image
                                 src={product.image.url}
                                 alt={product.image.alt || product.displayName}
-                                className="product-img object-contain mix-blend-multiply"
-                                layout="fill"
-                                objectFit="contain"
+                                fill // <-- replaces layout="fill"
+                                className="product-img mix-blend-multiply object-cover" // <-- objectFit="cover" => object-cover class
                             />
                         </div>
                     ) : (
                         <div className="text-gray-300 text-md p-4">No Image</div>
                     )}
                 </div>
-            )}
+
+            ) : (
+                // Kiosk => bigger, top-centered image
+                <div className="relative w-full flex items-center justify-center bg-gray-50 mb-2 h-[190px]">
+                    {product.image?.url ? (
+                        <div className="relative w-full h-full">
+                            <Image
+                                src={encodeURI(product.image.url)}
+                                alt={product.image.alt || product.displayName}
+                                fill // same approach
+                                className="product-img mix-blend-multiply object-contain"
+                            />
+                        </div>
+                    ) : (
+                        <div className="text-gray-300 text-md p-4">No Image</div>
+                    )}
+                </div>
+            )
+            }
 
             {/* ========== Text + Price + Plus Button ========== */}
-            {!isKiosk ? (
-                // Non-kiosk => original styling
-                <div className="w-3/5 p-4 flex flex-col justify-between relative">
-                    <div>
-                        <h2 className="text-lg font-bold mb-1 line-clamp-2">{product.displayName}</h2>
-                        {product.displayDesc && (
-                            <p className="text-md text-gray-600 line-clamp-3 mb-2">{product.displayDesc}</p>
-                        )}
-                    </div>
-
-                    {/* Price row */}
-                    <div className="mt-2">
-                        {typeof product.price === "number" ? (
-                            <>
-                                {product.isPromotion && product.old_price && (
-                                    <span className="text-sm text-gray-500 line-through mr-2">
-                                        €{product.old_price.toFixed(2)}
-                                    </span>
-                                )}
-                                <span className="text-lg font-semibold text-gray-800">
-                                    €{product.price.toFixed(2)}
-                                </span>
-                            </>
-                        ) : (
-                            <span className="text-md text-gray-500">Price on request</span>
-                        )}
-                    </div>
-
-                    {/* The plus button in bottom-right */}
-                    <div
-                        onClick={handlePlusClick}
-                        onMouseEnter={() => setHoverPlus(true)}
-                        onMouseLeave={() => setHoverPlus(false)}
-                        className="
-              absolute bottom-0 right-[-1px]
-              bg-[#e6e6e7] text-gray-700
-              rounded-tl-lg
-              px-6 py-3
-              transition
-              border-t-[2px] border-l-[2px]
-              border-transparent
-            "
-                        style={{
-                            borderTopLeftRadius: "0.5rem",
-                            borderTopColor: plusButtonBorder,
-                            borderLeftColor: plusButtonBorder,
-                        }}
-                    >
-                        {loadingState === "loading" ? (
-                            /* Minimal spinner */
-                            <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                className="animate-spin"
-                                strokeWidth="3"
-                                fill="none"
-                                style={{ color: brandCTA }}
-                                stroke="currentColor"
-                            >
-                                <circle cx="12" cy="12" r="10" className="opacity-20" />
-                                <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
-                            </svg>
-                        ) : loadingState === "check" ? (
-                            /* Check icon => stroke brandCTA */
-                            <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="3">
-                                <path d="M2 8l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                        ) : (
-                            /* The plus icon => stroke brandCTA */
-                            <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="2">
-                                <path d="M8 3v10M3 8h10" strokeLinecap="round" />
-                            </svg>
-                        )}
-                    </div>
-                </div>
-            ) : (
-                // Kiosk => vertical layout
-                <div className="flex flex-col flex-1">
-                    {/* Extra wrapper for spacing */}
-                    <div className="flex-1 p-2 flex flex-col justify-between">
+            {
+                !isKiosk ? (
+                    // Non-kiosk => original styling
+                    <div className="w-3/5 p-4 flex flex-col justify-between relative">
                         <div>
-                            <h2 className="text-2xl pl-2 font-bold mb-3 line-clamp-2">
-                                {product.displayName}
-                            </h2>
+                            <h2 className="text-lg font-bold mb-1 line-clamp-2">{product.displayName}</h2>
                             {product.displayDesc && (
-                                <p className="text-lg pl-2 text-gray-600 line-clamp-4 mb-2 min-h-[60px]">
-                                    {product.displayDesc}
-                                </p>
+                                <p className="text-md text-gray-600 line-clamp-3 mb-2">{product.displayDesc}</p>
                             )}
                         </div>
 
@@ -348,7 +269,7 @@ export default function ProductCard({
                                             €{product.old_price.toFixed(2)}
                                         </span>
                                     )}
-                                    <span className="text-2xl pl-2 font-semibold text-gray-800">
+                                    <span className="text-lg font-semibold text-gray-800">
                                         €{product.price.toFixed(2)}
                                     </span>
                                 </>
@@ -356,14 +277,96 @@ export default function ProductCard({
                                 <span className="text-md text-gray-500">Price on request</span>
                             )}
                         </div>
-                    </div>
 
-                    {/* The plus button at bottom */}
-                    <div
-                        onClick={handlePlusClick}
-                        onMouseEnter={() => setHoverPlus(true)}
-                        onMouseLeave={() => setHoverPlus(false)}
-                        className="
+                        {/* The plus button in bottom-right */}
+                        <div
+                            onClick={handlePlusClick}
+                            onMouseEnter={() => setHoverPlus(true)}
+                            onMouseLeave={() => setHoverPlus(false)}
+                            className="
+              absolute bottom-0 right-[-1px]
+              bg-[#e6e6e7] text-gray-700
+              rounded-tl-lg
+              px-6 py-3
+              transition
+              border-t-[2px] border-l-[2px]
+              border-transparent
+            "
+                            style={{
+                                borderTopLeftRadius: "0.5rem",
+                                borderTopColor: plusButtonBorder,
+                                borderLeftColor: plusButtonBorder,
+                            }}
+                        >
+                            {loadingState === "loading" ? (
+                                /* Minimal spinner */
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    className="animate-spin"
+                                    strokeWidth="3"
+                                    fill="none"
+                                    style={{ color: brandCTA }}
+                                    stroke="currentColor"
+                                >
+                                    <circle cx="12" cy="12" r="10" className="opacity-20" />
+                                    <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                                </svg>
+                            ) : loadingState === "check" ? (
+                                /* Check icon => stroke brandCTA */
+                                <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="3">
+                                    <path d="M2 8l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            ) : (
+                                /* The plus icon => stroke brandCTA */
+                                <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="2">
+                                    <path d="M8 3v10M3 8h10" strokeLinecap="round" />
+                                </svg>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    // Kiosk => vertical layout
+                    <div className="flex flex-col flex-1">
+                        {/* Extra wrapper for spacing */}
+                        <div className="flex-1 p-2 flex flex-col justify-between">
+                            <div>
+                                <h2 className="text-2xl pl-2 font-bold mb-3 line-clamp-2">
+                                    {product.displayName}
+                                </h2>
+                                {product.displayDesc && (
+                                    <p className="text-lg pl-2 text-gray-600 line-clamp-4 mb-2 min-h-[60px]">
+                                        {product.displayDesc}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Price row */}
+                            <div className="mt-2">
+                                {typeof product.price === "number" ? (
+                                    <>
+                                        {product.isPromotion && product.old_price && (
+                                            <span className="text-sm text-gray-500 line-through mr-2">
+                                                €{product.old_price.toFixed(2)}
+                                            </span>
+                                        )}
+                                        <span className="text-2xl pl-2 font-semibold text-gray-800">
+                                            €{product.price.toFixed(2)}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="text-md text-gray-500">Price on request</span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* The plus button at bottom */}
+                        <div
+                            onClick={handlePlusClick}
+                            onMouseEnter={() => setHoverPlus(true)}
+                            onMouseLeave={() => setHoverPlus(false)}
+                            className="
               mt-4 self-end
               bg-[#e6e6e7]
               text-gray-700
@@ -374,38 +377,39 @@ export default function ProductCard({
               border-l-[2px]
               border-transparent
             "
-                        style={{
-                            borderTopLeftRadius: "0.5rem",
-                            borderTopColor: plusButtonBorder,
-                            borderLeftColor: plusButtonBorder,
-                        }}
-                    >
-                        {loadingState === "loading" ? (
-                            <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                className="animate-spin"
-                                strokeWidth="3"
-                                fill="none"
-                                style={{ color: brandCTA }}
-                                stroke="currentColor"
-                            >
-                                <circle cx="12" cy="12" r="10" className="opacity-20" />
-                                <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
-                            </svg>
-                        ) : loadingState === "check" ? (
-                            <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="3">
-                                <path d="M2 8l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                        ) : (
-                            <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="2">
-                                <path d="M8 3v10M3 8h10" strokeLinecap="round" />
-                            </svg>
-                        )}
+                            style={{
+                                borderTopLeftRadius: "0.5rem",
+                                borderTopColor: plusButtonBorder,
+                                borderLeftColor: plusButtonBorder,
+                            }}
+                        >
+                            {loadingState === "loading" ? (
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    className="animate-spin"
+                                    strokeWidth="3"
+                                    fill="none"
+                                    style={{ color: brandCTA }}
+                                    stroke="currentColor"
+                                >
+                                    <circle cx="12" cy="12" r="10" className="opacity-20" />
+                                    <path d="M12 2 A10 10 0 0 1 22 12" className="opacity-75" />
+                                </svg>
+                            ) : loadingState === "check" ? (
+                                <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="3">
+                                    <path d="M2 8l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            ) : (
+                                <svg width="16" height="16" fill="none" stroke={brandCTA} strokeWidth="2">
+                                    <path d="M8 3v10M3 8h10" strokeLinecap="round" />
+                                </svg>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
