@@ -25,16 +25,20 @@ export function CountdownTimer({ targetDate }: { targetDate: Date }) {
 
     // Helper: Format seconds as HH:MM:SS or MM:SS
     function formatTime(sec: number) {
-        if (sec <= 0) return "00:00"
+        // If time is up (<= 0), return "Almost time!"
+        if (sec <= 0) return "Almost time!"
+
         const h = Math.floor(sec / 3600)
         const m = Math.floor((sec % 3600) / 60)
         const s = Math.floor(sec % 60)
 
+        // If > 1 hour remaining, show "HH:MM:SS"
         if (h > 0) {
             return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
-        } else {
-            return `${m}:${String(s).padStart(2, "0")}`
         }
+
+        // Otherwise, show "MM:SS"
+        return `${m}:${String(s).padStart(2, "0")}`
     }
 
     return (
