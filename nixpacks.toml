@@ -15,4 +15,4 @@ pnpm payload migrate up && pnpm build
 """
 
 [start]
-cmd = "pnpm start"
+cmd = "apt-get -y install cups && pnpm start"
