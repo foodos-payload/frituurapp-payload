@@ -338,7 +338,7 @@ export default function CartDrawer({
                                                             onClick={() => handleRemoveItem(item)}
                                                             title="Remove this item"
                                                         >
-                                                            <FiTrash2 size={isKiosk ? 20 : 16} />
+                                                            <FiTrash2 size={isKiosk ? 26 : 22} />
                                                         </button>
                                                     </div>
                                                 </div>
