@@ -166,6 +166,10 @@ export default function KioskPaymentOptions({
      */
     const startWebSocketConnection = (orderId: number) => {
         const token = localStorage.getItem("mspEventsToken");
+        if (!token) {
+            setPaymentErrorMessage("Missing token for WebSocket connection.");
+            return;
+        }
         const wsUrl = `wss://events.multisafepay.com/events/?token=${encodeURIComponent(token)}&orderId=${orderId}`;
 
         console.log("[WebSocket] Opening connection to:", wsUrl);
