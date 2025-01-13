@@ -163,6 +163,155 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
     },
   });
 
+  // 2.1. Create Fulfillment Methods for Shop 1 (frituur-den-overkant)
+  const fmDelivery = await payload.create({
+    collection: 'fulfillment-methods',
+    data: {
+      tenant: tenant1.id,
+      shops: [shop1.id],
+      method_type: 'delivery',
+      enabled: true,
+      delivery_fee: 2.0,             // Example: €2 base fee
+      extra_cost_per_km: 0.50,       // Example: €0.50/km
+      minimum_order: 15,             // Example: €15 minimum order
+      settings: {
+        delivery_radius: 5,          // Example: 5 km radius
+        checkout_phone_required: true, // Phone mandatory for delivery
+        shared_booked_slots: true,   // This method’s orders block timeslots for others that share slots
+        pickup_instructions: 'Please be home to receive delivery.',
+        kiosk_pickup_instructions: 'N/A for delivery.',
+      },
+    },
+  });
+
+  const fmTakeaway = await payload.create({
+    collection: 'fulfillment-methods',
+    data: {
+      tenant: tenant1.id,
+      shops: [shop1.id],
+      method_type: 'takeaway',
+      enabled: true,
+      // No delivery_fee or extra_cost_per_km needed for takeaway
+      settings: {
+        shared_booked_slots: true,         // Share time slots for takeaway as well
+        pickup_instructions: 'Pick up at the front counter.',
+        kiosk_pickup_instructions: 'Check kiosk screen for your order number.',
+      },
+    },
+  });
+
+  const fmDineIn = await payload.create({
+    collection: 'fulfillment-methods',
+    data: {
+      tenant: tenant1.id,
+      shops: [shop1.id],
+      method_type: 'dine_in',
+      enabled: true,
+      // Typically no fees or radius for dine-in
+      settings: {
+        pickup_instructions: 'Take a seat; your order will be served.',
+        kiosk_pickup_instructions: 'Order at the kiosk and take your table number.',
+      },
+    },
+  });
+
+  // 2.2. Create Payment Methods for Shop 1 (frituur-den-overkant)
+  await payload.create({
+    collection: 'payment-methods',
+    data: {
+      tenant: tenant1.id,
+      shops: [shop1.id],
+      provider: 'multisafepay',       // We choose MultiSafePay
+      enabled: true,
+      multisafepay_settings: {
+        enable_test_mode: true,
+        live_api_key: '6790f4fbed7442516125bdf0239f4bdde83b28f6', // Placeholder, replace with your real key
+        test_api_key: '6790f4fbed7442516125bdf0239f4bdde83b28f6', // Provided test key
+        methods: [
+          'MSP_Bancontact',
+          'MSP_Visa',
+          'MSP_Mastercard',
+          'MSP_iDeal',
+        ],
+      },
+      terminal_ids: [
+        {
+          kiosk: 1,
+          terminal_id: '000001EL', // As requested
+        },
+      ],
+    },
+  });
+
+  // Add a second payment method (cash) for the same shop
+  await payload.create({
+    collection: 'payment-methods',
+    data: {
+      tenant: tenant1.id,
+      shops: [shop1.id],
+      provider: 'cash_on_delivery',
+      enabled: true,
+    },
+  });
+
+  // 2.3. Create Timeslots for Shop 1 (frituur-den-overkant)
+
+  const allDayTimeslotArray = [
+    {
+      start_time: '08:00',
+      end_time: '23:50',
+      interval_minutes: 15, // e.g., every 15 mins a new slot
+      max_orders: 0,        // 0 = no limit
+      status: true,
+    },
+  ];
+
+  // Reusable "week" data: same timeslots for every day of the week
+  const weekData = {
+    monday: allDayTimeslotArray,
+    tuesday: allDayTimeslotArray,
+    wednesday: allDayTimeslotArray,
+    thursday: allDayTimeslotArray,
+    friday: allDayTimeslotArray,
+    saturday: allDayTimeslotArray,
+    sunday: allDayTimeslotArray,
+  };
+
+  // Create Timeslots for Delivery
+  await payload.create({
+    collection: 'timeslots',
+    data: {
+      tenant: tenant1.id,
+      shops: [shop1.id],
+      method_id: fmDelivery.id, // reference the Delivery method
+      week: weekData,
+    },
+  });
+
+  // Create Timeslots for Takeaway
+  await payload.create({
+    collection: 'timeslots',
+    data: {
+      tenant: tenant1.id,
+      shops: [shop1.id],
+      method_id: fmTakeaway.id, // reference the Takeaway method
+      week: weekData,
+    },
+  });
+
+  // Create Timeslots for Dine-in
+  await payload.create({
+    collection: 'timeslots',
+    data: {
+      tenant: tenant1.id,
+      shops: [shop1.id],
+      method_id: fmDineIn.id, // reference the Dine-in method
+      week: weekData,
+    },
+  });
+
+
+
   //
   // 3. Create some Product Popups (Tenant 1, Shop 1)
   //

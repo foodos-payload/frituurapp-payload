@@ -11,7 +11,7 @@ if pnpm payload migrate:status | grep -q 'No schema changes detected'; then
 else
   pnpm payload migrate:create --force;
 fi
-pnpm payload migrate up && pnpm build
+pnpm build
 """
 
 [start]
