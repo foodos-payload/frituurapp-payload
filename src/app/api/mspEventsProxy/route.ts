@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
     // 2) Return a "readable" response => we must use the new Web Streams in Next 13
     //    We'll do a manual transform that calls MSP => "events/stream" and relays data.
-    const eventsStreamUrl = "https://api.multisafepay.com/events/stream/";
+    const eventsStreamUrl = "wss://api.multisafepay.com/events/stream/";
 
     // Construct a ReadableStream we can write to
     const stream = new ReadableStream({

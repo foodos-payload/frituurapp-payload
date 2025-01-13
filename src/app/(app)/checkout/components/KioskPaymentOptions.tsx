@@ -80,7 +80,7 @@ export default function KioskPaymentOptions({
     /**
      * SSE EventSource reference (so we can close it on unmount or on certain events).
      */
-    const sseRef = useRef<EventSource | null>(null);
+    const wsRef = useRef<WebSocket | null>(null);
 
     // On unmount, clear any polling intervals + close SSE
     useEffect(() => {
@@ -88,8 +88,8 @@ export default function KioskPaymentOptions({
             if (pollingIntervalRef.current) {
                 clearInterval(pollingIntervalRef.current);
             }
-            if (sseRef.current) {
-                sseRef.current.close();
+            if (wsRef.current) {
+                wsRef.current.close();
             }
         };
     }, []);
@@ -135,16 +135,16 @@ export default function KioskPaymentOptions({
                     clearInterval(intervalId);
                     pollingIntervalRef.current = null;
                     // Also close SSE if open
-                    if (sseRef.current) {
-                        sseRef.current.close();
+                    if (wsRef.current) {
+                        wsRef.current.close();
                     }
                     router.push(`/order-summary?orderId=${orderId}&kiosk=true`);
                 } else if (localStatus === "cancelled") {
                     // Payment canceled => show error, hide overlay
                     clearInterval(intervalId);
                     pollingIntervalRef.current = null;
-                    if (sseRef.current) {
-                        sseRef.current.close();
+                    if (wsRef.current) {
+                        wsRef.current.close();
                     }
                     setPaymentErrorMessage("Payment was cancelled. Please try again.");
                     setLoadingState(null);
@@ -159,55 +159,84 @@ export default function KioskPaymentOptions({
     };
 
     /**
-     * startSSEConnection:
+     * startWebSocketConnection:
      *  - Uses the eventsToken + eventsStreamUrl from localStorage
      *  - Listens for real-time "cancelled" or other events
      *  - If "cancelled", we stop polling & show the error
      */
-    const startSSEConnection = (orderId: number) => {
+    const startWebSocketConnection = (orderId: number) => {
         const token = localStorage.getItem("mspEventsToken");
-        const streamUrl = localStorage.getItem("mspEventsStreamUrl");
+        const wsUrl = `wss://events.multisafepay.com/events/?token=${encodeURIComponent(token)}&orderId=${orderId}`;
 
-        // If we don't have SSE details, skip SSE
-        if (!token || !streamUrl) {
-            console.log("No SSE token/streamUrl found => skipping SSE");
-            return;
-        }
+        console.log("[WebSocket] Opening connection to:", wsUrl);
 
-        const sseUrl = `${streamUrl}?token=${encodeURIComponent(token)}&orderId=${orderId}`;
-        console.log("[SSE] Opening connection to:", sseUrl);
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
 
-        const eventSource = new EventSource(sseUrl);
-        sseRef.current = eventSource;
+        ws.onopen = () => {
+            console.log("[WebSocket] Connection established.");
+        };
 
-        eventSource.onmessage = (evt) => {
+        ws.onmessage = (event) => {
             try {
-                const data = JSON.parse(evt.data);
-                const sseStatus = data.status?.toLowerCase();
-                console.log("[SSE] onmessage =>", data);
+                const data = JSON.parse(event.data);
+                const status = data.status?.toLowerCase();
+                console.log("[WebSocket] Message received:", data);
 
-                if (sseStatus === "cancelled") {
-                    console.log("[SSE] Payment cancelled via terminal stop!");
+                if (status === "cancelled") {
+                    console.log("[WebSocket] Payment cancelled via terminal.");
                     if (pollingIntervalRef.current) {
                         clearInterval(pollingIntervalRef.current);
                         pollingIntervalRef.current = null;
                     }
-                    eventSource.close();
-                    sseRef.current = null;
+                    ws.close();
+                    wsRef.current = null;
 
-                    setPaymentErrorMessage("Payment was cancelled at terminal. Please try again.");
+                    setPaymentErrorMessage("Payment was cancelled. Please try again.");
                     setLoadingState(null);
                 }
-                // optionally handle "completed" or other events
+                // Optionally handle other statuses like "completed"
             } catch (error) {
-                console.error("[SSE] parse error:", evt.data, error);
+                console.error("[WebSocket] Error processing message:", error);
             }
         };
 
-        eventSource.onerror = (err) => {
-            console.error("[SSE] Connection error:", err);
+        ws.onerror = (err) => {
+            console.error("[WebSocket] Connection error:", err);
+        };
+
+        ws.onclose = () => {
+            console.log("[WebSocket] Connection closed.");
         };
     };
+
+    const retryWebSocket = (orderId: number, retries = 3) => {
+        let attempts = 0;
+
+        const connect = () => {
+            if (attempts >= retries) {
+                console.error("[WebSocket] Max retries reached. Could not reconnect.");
+                setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
+                return;
+            }
+
+            attempts++;
+            console.log(`[WebSocket] Attempting to reconnect... (${attempts}/${retries})`);
+            startWebSocketConnection(orderId);
+        };
+
+        if (wsRef.current) {
+            wsRef.current.onclose = () => {
+                console.log("[WebSocket] Connection closed. Retrying...");
+                setTimeout(connect, 2000);
+            };
+        } else {
+            connect();
+        }
+    };
+
+
+
 
     /**
      * handlePayWithCard:
@@ -243,7 +272,7 @@ export default function KioskPaymentOptions({
             return;
         }
 
-        startSSEConnection(localOrderId);
+        startWebSocketConnection(localOrderId);
         startPollingLocalOrder(localOrderId);
     };
 
@@ -286,11 +315,11 @@ export default function KioskPaymentOptions({
                 setTimeLeft((prev) => prev - 1);
             }, 1000);
         } else if (loadingState === "terminal" && timeLeft === 0) {
-            setPaymentErrorMessage("Payment was failed, try again.");
+            setPaymentErrorMessage("Payment failed. Please try again.");
             setLoadingState(null);
 
-            if (sseRef.current) {
-                sseRef.current.close();
+            if (wsRef.current) {
+                wsRef.current.close();
             }
             if (pollingIntervalRef.current) {
                 clearInterval(pollingIntervalRef.current);
@@ -302,6 +331,7 @@ export default function KioskPaymentOptions({
             if (timer) clearInterval(timer);
         };
     }, [loadingState, timeLeft]);
+
 
     const showOverlay = !!loadingState;
 

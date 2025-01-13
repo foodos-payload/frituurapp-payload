@@ -155,7 +155,6 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
 
             customer: {
                 locale: 'nl_NL',
-                ip_address: localOrderDoc?.ipAddress || '0.0.0.0',
                 first_name: localOrderDoc?.customer_details?.firstName || '',
                 last_name: localOrderDoc?.customer_details?.lastName || '',
                 address1: localOrderDoc?.customer_details?.address || '',
