@@ -148,64 +148,62 @@ export default function KioskPaymentOptions({
      *  - Listens for real-time "cancelled" or other events
      *  - If "cancelled", we stop polling & show the error
      */
-    const startSSEConnection = (orderId: number, retries = 3) => {
+    const startHTTPStreamConnection = async (orderId: number) => {
         const token = localStorage.getItem("mspEventsToken");
         if (!token) {
-            setPaymentErrorMessage("Missing token for SSE connection.");
+            setPaymentErrorMessage("Missing token for stream connection.");
             return;
         }
 
-        const sseUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}&orderId=${orderId}`;
-        console.log("[SSE] Connecting to:", sseUrl);
+        const streamUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}&orderId=${orderId}`;
+        console.log("[Stream] Connecting to:", streamUrl);
 
-        const eventSource = new EventSource(sseUrl);
-        sseRef.current = eventSource;
+        try {
+            const response = await fetch(streamUrl, {
+                method: "GET",
+            });
 
-        let attempts = 0;
+            if (!response.body) {
+                console.error("[Stream] No response body available.");
+                setPaymentErrorMessage("Failed to connect to payment stream.");
+                return;
+            }
 
-        eventSource.onopen = () => {
-            console.log("[SSE] Connection established.");
-        };
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
 
-        eventSource.onmessage = (event) => {
-            console.log("[SSE] Raw message received:", event.data);
-            try {
-                const data = JSON.parse(event.data);
-                const status = data.status?.toLowerCase();
-                console.log("[SSE] Parsed message:", data);
-
-                if (status === "cancelled") {
-                    console.log("[SSE] Payment cancelled.");
-                    clearPolling();
-                    eventSource.close();
-                    setPaymentErrorMessage("Payment was cancelled. Please try again.");
-                    setLoadingState(null);
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    console.log("[Stream] Connection closed.");
+                    break;
                 }
-                // Handle other statuses like "completed"
-            } catch (error) {
-                console.error("[SSE] Error processing message:", error);
-            }
-        };
 
-        eventSource.onerror = (err) => {
-            console.error("[SSE] Connection error:", err);
-            eventSource.close();
+                if (value) {
+                    const chunk = decoder.decode(value, { stream: true });
+                    console.log("[Stream] Chunk received:", chunk);
 
-            if (attempts < retries) {
-                attempts++;
-                console.log(`[SSE] Retrying connection... (${attempts}/${retries})`);
-                setTimeout(() => startSSEConnection(orderId, retries), 2000);
-            } else {
-                setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
+                    try {
+                        const data = JSON.parse(chunk);
+                        handleStreamEvent(data);
+                    } catch (err) {
+                        console.error("[Stream] Error parsing chunk:", err);
+                    }
+                }
             }
-        };
+        } catch (err) {
+            console.error("[Stream] Connection error:", err);
+            setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
+        }
     };
+
 
     const clearPolling = () => {
         if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
         }
+
         if (sseRef.current) {
             sseRef.current.close();
             sseRef.current = null;
@@ -213,34 +211,60 @@ export default function KioskPaymentOptions({
     };
 
 
-    const retrySSEConnection = (orderId: number, retries = 3) => {
+    const retryHTTPStreamConnection = (orderId: number, retries = 3) => {
         let attempts = 0;
 
         const connect = () => {
             if (attempts >= retries) {
-                console.error("[SSE] Max retries reached. Could not reconnect.");
+                console.error("[Stream] Max retries reached. Could not reconnect.");
                 setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
                 return;
             }
 
             attempts++;
-            console.log(`[SSE] Attempting to reconnect... (${attempts}/${retries})`);
-            startSSEConnection(orderId, retries);
+            console.log(`[Stream] Attempting to reconnect... (${attempts}/${retries})`);
+            startHTTPStreamConnection(orderId);
         };
 
-        if (sseRef.current) {
-            sseRef.current.close = () => {
-                console.log("[SSE] Connection closed. Retrying...");
-                setTimeout(connect, 2000);
-            };
-        } else {
-            connect();
+        if (pollingIntervalRef.current) {
+            clearPolling();
         }
+        setTimeout(connect, 2000);
     };
 
 
+    const handleStreamEvent = (data: any) => {
+        const status = data.status?.toLowerCase();
 
+        switch (status) {
+            case "completed":
+                console.log("[Stream] Payment completed.");
+                clearPolling();
+                setPaymentErrorMessage(""); // Clear any previous errors
+                setLoadingState(null); // Reset the loading state
+                // Navigate to the summary page or perform other success actions
+                router.push(`/order-summary?orderId=${data.orderId}&kiosk=true`);
+                break;
 
+            case "cancelled":
+                console.log("[Stream] Payment cancelled.");
+                clearPolling();
+                setPaymentErrorMessage("Payment was cancelled. Please try again.");
+                setLoadingState(null);
+                break;
+
+            case "declined":
+                console.log("[Stream] Payment declined.");
+                clearPolling();
+                setPaymentErrorMessage("Your card was declined. Please try a different card or payment method.");
+                setLoadingState(null);
+                break;
+
+            default:
+                console.warn("[Stream] Unhandled status:", status, data);
+                break;
+        }
+    };
 
     /**
      * handlePayWithCard:
@@ -276,7 +300,7 @@ export default function KioskPaymentOptions({
             return;
         }
 
-        startSSEConnection(localOrderId);
+        startHTTPStreamConnection(localOrderId);
         startPollingLocalOrder(localOrderId);
     };
 
