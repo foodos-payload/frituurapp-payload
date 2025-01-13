@@ -160,6 +160,7 @@ export interface User {
    * The username of the user.
    */
   username?: string | null;
+  password: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -169,7 +170,6 @@ export interface User {
   hash?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
-  password?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1796,6 +1796,7 @@ export interface UsersSelect<T extends boolean = true> {
       };
   shops?: T;
   username?: T;
+  password?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
