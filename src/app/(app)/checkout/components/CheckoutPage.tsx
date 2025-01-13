@@ -130,9 +130,9 @@ function useLocalIdleWatcher(
             clearTimers();
             setShowIdleModal(false);
             // e.g. redirect or do something else
-            window.location.href = "/index"; // or /kiosk-idle, etc.
+            window.location.href = isKiosk ? "/index?kiosk=true" : "/index";
         }
-    }, [countdown, showIdleModal, clearTimers]);
+    }, [countdown, showIdleModal, clearTimers, isKiosk]);
 
     /** Attach mouse/keyboard/touch listeners => reset idle timer on activity */
     useEffect(() => {
