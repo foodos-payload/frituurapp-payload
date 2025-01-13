@@ -537,15 +537,34 @@ export const Orders: CollectionConfig = {
                   const lastPart = nameParts[nameParts.length - 1];
 
                   if (String(lastPart) === String(doc.kioskNumber)) {
-                    await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        printerName: p.printer_name,
-                        ticketType: 'customer',
-                        orderData: doc,
-                      }),
-                    });
+                    // Retry logic (5 attempts, 15s wait in between)
+                    for (let attempt = 1; attempt <= 5; attempt++) {
+                      try {
+                        await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            printerName: p.printer_name,
+                            ticketType: 'customer',
+                            orderData: doc,
+                          }),
+                        });
+                        // If successful, break out of the retry loop
+                        break;
+                      } catch (err) {
+                        console.error(
+                          `Error printing kiosk ticket to printer ${p.printer_name}, attempt ${attempt}/5:`,
+                          err
+                        );
+                        if (attempt === 5) {
+                          // If final attempt fails, rethrow to log it outside
+                          throw err;
+                        } else {
+                          // Wait 15 seconds, then retry
+                          await new Promise((resolve) => setTimeout(resolve, 15000));
+                        }
+                      }
+                    }
                   }
                 } catch (kioskErr) {
                   console.error(`Error printing kiosk ticket to printer ${p.printer_name}:`, kioskErr);
@@ -580,27 +599,57 @@ export const Orders: CollectionConfig = {
             for (const p of kitchenPrinters.docs) {
               try {
                 // Always print the "kitchen" ticket
-                await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    printerName: p.printer_name,
-                    ticketType: 'kitchen',
-                    orderData: doc,
-                  }),
-                });
+                for (let attempt = 1; attempt <= 5; attempt++) {
+                  try {
+                    await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        printerName: p.printer_name,
+                        ticketType: 'kitchen',
+                        orderData: doc,
+                      }),
+                    });
+                    break; // success
+                  } catch (err) {
+                    console.error(
+                      `Error printing kitchen ticket to printer ${p.printer_name}, attempt ${attempt}/5:`,
+                      err
+                    );
+                    if (attempt === 5) {
+                      throw err;
+                    } else {
+                      await new Promise((resolve) => setTimeout(resolve, 15000));
+                    }
+                  }
+                }
 
                 // If that printer also prints a customer copy
                 if (p?.customer_enabled === true) {
-                  await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      printerName: p.printer_name,
-                      ticketType: 'customer',
-                      orderData: doc,
-                    }),
-                  });
+                  for (let attempt = 1; attempt <= 5; attempt++) {
+                    try {
+                      await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          printerName: p.printer_name,
+                          ticketType: 'customer',
+                          orderData: doc,
+                        }),
+                      });
+                      break; // success
+                    } catch (err) {
+                      console.error(
+                        `Error printing customer copy to printer ${p.printer_name}, attempt ${attempt}/5:`,
+                        err
+                      );
+                      if (attempt === 5) {
+                        throw err;
+                      } else {
+                        await new Promise((resolve) => setTimeout(resolve, 15000));
+                      }
+                    }
+                  }
                 }
               } catch (printErr) {
                 console.error(`Error printing to printer ${p.printer_name}:`, printErr);
@@ -659,15 +708,30 @@ export const Orders: CollectionConfig = {
                     const nameParts = p.printer_name?.split('-') || [];
                     const lastPart = nameParts[nameParts.length - 1];
                     if (String(lastPart) === String(doc.kioskNumber)) {
-                      await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          printerName: p.printer_name,
-                          ticketType: 'customer', // kiosk only prints a customer ticket
-                          orderData: doc,
-                        }),
-                      });
+                      for (let attempt = 1; attempt <= 5; attempt++) {
+                        try {
+                          await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              printerName: p.printer_name,
+                              ticketType: 'customer', // kiosk only prints a customer ticket
+                              orderData: doc,
+                            }),
+                          });
+                          break; // success
+                        } catch (err) {
+                          console.error(
+                            `Error printing kiosk ticket to printer ${p.printer_name}, attempt ${attempt}/5:`,
+                            err
+                          );
+                          if (attempt === 5) {
+                            throw err;
+                          } else {
+                            await new Promise((resolve) => setTimeout(resolve, 15000));
+                          }
+                        }
+                      }
                     }
                   } catch (kioskErr) {
                     console.error(`Error printing kiosk ticket to printer ${p.printer_name}:`, kioskErr);
@@ -706,27 +770,57 @@ export const Orders: CollectionConfig = {
                 for (const p of printers.docs) {
                   try {
                     // Always print the "kitchen" ticket
-                    await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        printerName: p.printer_name,
-                        ticketType: 'kitchen',
-                        orderData: doc,
-                      }),
-                    });
+                    for (let attempt = 1; attempt <= 5; attempt++) {
+                      try {
+                        await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            printerName: p.printer_name,
+                            ticketType: 'kitchen',
+                            orderData: doc,
+                          }),
+                        });
+                        break; // success
+                      } catch (err) {
+                        console.error(
+                          `Error printing kitchen ticket to printer ${p.printer_name}, attempt ${attempt}/5:`,
+                          err
+                        );
+                        if (attempt === 5) {
+                          throw err;
+                        } else {
+                          await new Promise((resolve) => setTimeout(resolve, 15000));
+                        }
+                      }
+                    }
 
                     // If that printer also prints a customer copy
                     if (p?.customer_enabled === true) {
-                      await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          printerName: p.printer_name,
-                          ticketType: 'customer',
-                          orderData: doc,
-                        }),
-                      });
+                      for (let attempt = 1; attempt <= 5; attempt++) {
+                        try {
+                          await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              printerName: p.printer_name,
+                              ticketType: 'customer',
+                              orderData: doc,
+                            }),
+                          });
+                          break; // success
+                        } catch (err) {
+                          console.error(
+                            `Error printing customer copy to printer ${p.printer_name}, attempt ${attempt}/5:`,
+                            err
+                          );
+                          if (attempt === 5) {
+                            throw err;
+                          } else {
+                            await new Promise((resolve) => setTimeout(resolve, 15000));
+                          }
+                        }
+                      }
                     }
                   } catch (printErr) {
                     console.error(`Error printing to printer ${p.printer_name}:`, printErr);
