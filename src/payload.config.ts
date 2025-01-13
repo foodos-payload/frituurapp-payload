@@ -1,4 +1,4 @@
-import { postgresAdapter } from '@payloadcms/db-postgres';
+import { mongooseAdapter } from '@payloadcms/db-mongodb';
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import path from 'path';
@@ -286,10 +286,8 @@ export default buildConfig({
     'https://frituurapp.ngrok.dev',
     'http://frituurapp.ngrok.dev',
   ],
-  db: postgresAdapter({
-    pool: { connectionString: process.env.DATABASE_URI as string },
-    idType: 'uuid',
-    prodMigrations: migrations
+  db: mongooseAdapter({
+    url: process.env.DATABASE_URI || '',
   }),
   editor: lexicalEditor({}),
   email: nodemailerAdapter({
