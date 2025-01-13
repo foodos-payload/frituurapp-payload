@@ -8,7 +8,7 @@
     "_dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "migrate": "npm run payload migrate up",
     "build": "npm run migrate && cross-env NODE_OPTIONS=--no-deprecation next build",
-    "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
+    "dev": "npm run migrate && cross-env NODE_OPTIONS=--no-deprecation next dev",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:schema": "payload-graphql generate:schema",
     "generate:types": "payload generate:types",
