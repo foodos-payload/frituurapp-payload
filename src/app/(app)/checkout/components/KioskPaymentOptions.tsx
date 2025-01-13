@@ -155,15 +155,13 @@ export default function KioskPaymentOptions({
             return;
         }
 
-        const streamUrl = `https://api.multisafepay.com/events/stream/`;
+        // Use the proxy endpoint
+        const streamUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}&orderId=${orderId}`;
         console.log("[Stream] Connecting to:", streamUrl);
 
         try {
             const response = await fetch(streamUrl, {
                 method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`, // Ensure the token is passed correctly
-                },
             });
 
             if (!response.body) {
@@ -202,6 +200,7 @@ export default function KioskPaymentOptions({
 
 
 
+
     const clearPolling = () => {
         if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
@@ -213,6 +212,7 @@ export default function KioskPaymentOptions({
             sseRef.current = null;
         }
     };
+
 
 
     const retryHTTPStreamConnection = (orderId: number, retries = 3) => {
@@ -247,7 +247,6 @@ export default function KioskPaymentOptions({
                 clearPolling();
                 setPaymentErrorMessage(""); // Clear any previous errors
                 setLoadingState(null); // Reset the loading state
-                // Navigate to the summary page or perform other success actions
                 router.push(`/order-summary?orderId=${data.orderId}&kiosk=true`);
                 break;
 
@@ -270,6 +269,7 @@ export default function KioskPaymentOptions({
                 break;
         }
     };
+
 
 
     /**

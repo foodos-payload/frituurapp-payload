@@ -9,12 +9,13 @@ export async function GET(req: NextRequest) {
         return new Response("Missing eventsToken", { status: 400 });
     }
 
-    const streamUrl = `https://api.multisafepay.com/events/stream/?token=${encodeURIComponent(eventsToken)}`;
+    const streamUrl = `https://api.multisafepay.com/events/stream/`;
 
+    // Make the request to MultiSafePay with only the Authorization header
     const response = await fetch(streamUrl, {
         method: "GET",
         headers: {
-            Authorization: `Bearer ${eventsToken}`,
+            Authorization: `Bearer ${eventsToken}`, // Include only the token
         },
     });
 
@@ -22,13 +23,12 @@ export async function GET(req: NextRequest) {
         return new Response("Failed to connect to MultiSafePay", { status: 500 });
     }
 
+    // Return the response body as-is
     return new Response(response.body, {
         status: response.status,
         headers: {
-            "Content-Type": response.headers.get("Content-Type") || "application/json",
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
         },
     });
-
 }
