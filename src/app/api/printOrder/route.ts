@@ -70,40 +70,54 @@ function buildEscposForKitchen(order: any): string {
     const shopName = shop?.name || '';
     const shopAddress = shop?.address || '';
 
-    // Payment logic
-    const paymentLine = (() => {
-        // If there's at least one payment
-        if (Array.isArray(order.payments) && order.payments.length > 0) {
-            const pm = order.payments[0];
-            // If it’s "cash_on_delivery", call it "Not Paid" for the kitchen
-            if (pm.payment_method?.provider === 'cash_on_delivery') {
-                return 'Payment: Not Paid (cash_on_delivery)';
-            }
-            // Otherwise, e.g. "mollie" or "multisafepay" or anything => assume "Paid Online"
-            return `Payment: ${pm.payment_method?.provider || 'Unknown'} (Paid)`;
+    // Payment logic (check if it’s cash_on_delivery)
+    let isCashOnDelivery = false;
+    if (Array.isArray(order.payments) && order.payments.length > 0) {
+        const pm = order.payments[0];
+        if (pm.payment_method?.provider === 'cash_on_delivery') {
+            isCashOnDelivery = true;
         }
-        return 'Payment: Unknown';
-    })();
+    }
 
     // Begin ESC/POS
-    let esc = '\x1B\x40';      // Init
-    esc += '\x1B\x61\x01';     // Center
-    esc += '\x1B\x21\x01';     // Font scaling up slightly (you can tweak \x38 for double)
+    let esc = '\x1B\x40';  // Init
+    esc += '\x1B\x61\x01'; // Center
+    esc += '\x1B\x21\x01'; // Slightly bigger font
     esc += simplifyText(shopName) + '\n';
     esc += simplifyText(shopAddress) + '\n';
     esc += '------------------------------\n';
 
-    esc += '\x1B\x21\x38';     // Double font
+    // If NOT paid => put "CASH - NOT PAID" in big, bold text at top
+    if (isCashOnDelivery) {
+        esc += '\x1B\x21\x38'; // Double or triple size
+        esc += '\x1B\x45\x01'; // Bold ON
+        esc += 'CASH - NOT PAID\n\n';
+        esc += '\x1B\x45\x00'; // Bold OFF
+        esc += '\x1B\x21\x00'; // back to normal
+    }
+
+    // Print main heading: Kitchen Ticket
+    esc += '\x1B\x21\x38'; // Double-size font
     esc += 'KITCHEN TICKET\n';
     esc += `Order #${order.id}\n\n`;
 
-    esc += '\x1B\x21\x00';     // normal font
-    esc += '\x1B\x61\x00';     // left justification
+    // Now go back to normal for the info lines
+    esc += '\x1B\x21\x00';
+    esc += '\x1B\x61\x00'; // left justification
 
     // Fulfillment date/time/method
     esc += `Fulfillment: ${order.fulfillment_date || ''} ${order.fulfillment_time || ''}\n`;
     esc += `Method: ${order.fulfillment_method || ''} | Type: ${order.order_type || ''}\n`;
-    esc += `${paymentLine}\n`;
+
+    // Payment line
+    // If isCashOnDelivery => Payment: Not Paid
+    if (isCashOnDelivery) {
+        esc += 'Payment: Not Paid (cash_on_delivery)\n';
+    } else {
+        // Otherwise, e.g. "mollie" => "Paid"
+        const pm = order.payments?.[0]?.payment_method?.provider || 'Unknown';
+        esc += `Payment: ${pm} (Paid)\n`;
+    }
 
     // If there's customer info, show it
     if (order.customer_details?.firstName || order.customer_details?.lastName) {
@@ -116,6 +130,8 @@ function buildEscposForKitchen(order: any): string {
 
     esc += '\n'; // blank line
 
+    // Make the line items "WAY bigger"
+    esc += '\x1B\x21\x38'; // Double-size font again
     // List out items (no line-item prices on kitchen ticket)
     if (Array.isArray(order.order_details)) {
         for (const item of order.order_details) {
@@ -137,10 +153,14 @@ function buildEscposForKitchen(order: any): string {
         }
     }
 
-    // Show total + whether paid
+    // Revert back to normal size after line items
+    esc += '\x1B\x21\x00';
+
+    // Show total
     esc += '\n';
     esc += `TOTAL: ${order.total?.toFixed(2) || '0.00'}\n`;
 
+    // Final cut
     esc += '\x1D\x56\x42\x00'; // Cut
     return esc;
 }
@@ -203,7 +223,7 @@ function buildEscposForCustomer(order: any): string {
     }
 
     esc += '\n';
-
+    esc += '------------------------------\n';
     // List items with pricing
     let subtotalCalc = 0;
     if (Array.isArray(order.order_details)) {
@@ -212,7 +232,7 @@ function buildEscposForCustomer(order: any): string {
             const linePrice = (item.price ?? 0) * (item.quantity ?? 1);
             subtotalCalc += linePrice;
 
-            esc += `${item.quantity}x ${prodName} @ ${item.price?.toFixed(2) || '0.00'} = ${linePrice.toFixed(2)}\n`;
+            esc += `${item.quantity}x ${prodName} ${item.price?.toFixed(2) || '0.00'} ${linePrice.toFixed(2)}\n\n`;
 
             // Subproducts
             if (Array.isArray(item.subproducts)) {
@@ -226,7 +246,7 @@ function buildEscposForCustomer(order: any): string {
                     if (subQty > 1) {
                         esc += ` x ${subQty}`;
                     }
-                    esc += ` @ ${sub.price?.toFixed(2) || '0.00'} = ${subLinePrice.toFixed(2)}\n`;
+                    esc += ` ${subLinePrice.toFixed(2)}\n`;
                 }
             }
         }
@@ -234,6 +254,7 @@ function buildEscposForCustomer(order: any): string {
 
     // Now show discount, shipping, tax, total, etc.
     // We'll rely on the data from order to ensure correct final amounts
+    esc += '------------------------------\n';
     esc += '\n';
 
     const shipping = order.shipping_cost ?? 0;
@@ -256,7 +277,9 @@ function buildEscposForCustomer(order: any): string {
 
     // Insert a bigger QR Code at the bottom
     esc += '\x1B\x61\x01'; // center
-    esc += buildQrCode('https://google.com', 6); // bigger size
+    const shopDomain = shop?.domain || 'https://example.com';
+    const qrURL = `${shopDomain}/order-summary?orderId=${order.id}`;
+    esc += buildQrCode(qrURL, 6);
     esc += '\x1B\x61\x00'; // left
 
     // Cut the paper
