@@ -232,7 +232,7 @@ function buildEscposForCustomer(order: any): string {
             const linePrice = (item.price ?? 0) * (item.quantity ?? 1);
             subtotalCalc += linePrice;
 
-            esc += `${item.quantity}x ${prodName} ${item.price?.toFixed(2) || '0.00'} ${linePrice.toFixed(2)}\n\n`;
+            esc += `${item.quantity}x ${prodName} ${linePrice.toFixed(2)}\n\n`;
 
             // Subproducts
             if (Array.isArray(item.subproducts)) {
