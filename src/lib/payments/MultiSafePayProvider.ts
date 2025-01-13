@@ -230,7 +230,7 @@ export class MultiSafePayProvider extends AbstractPaymentProvider {
         const json = await response.json();
 
         const eventsToken = json.data?.events_token || null;
-        const eventsStreamUrl = json.data?.events_url || null;
+        const eventsStreamUrl = json.data?.events_stream_url || null;
 
         console.log('=== MultiSafePay createPayment - Response JSON ===');
         console.log(JSON.stringify(json, null, 2));

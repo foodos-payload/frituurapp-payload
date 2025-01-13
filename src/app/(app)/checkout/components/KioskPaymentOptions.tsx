@@ -307,7 +307,7 @@ export default function KioskPaymentOptions({
         }
 
         startHTTPStreamConnection(localOrderId);
-        startPollingLocalOrder(localOrderId);
+        // startPollingLocalOrder(localOrderId);
     };
 
     /**
