@@ -155,12 +155,15 @@ export default function KioskPaymentOptions({
             return;
         }
 
-        const streamUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}&orderId=${orderId}`;
+        const streamUrl = `https://api.multisafepay.com/events/stream/?token=${encodeURIComponent(token)}&orderId=${orderId}`;
         console.log("[Stream] Connecting to:", streamUrl);
 
         try {
             const response = await fetch(streamUrl, {
                 method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`, // Ensure the token is passed correctly
+                },
             });
 
             if (!response.body) {
@@ -196,6 +199,7 @@ export default function KioskPaymentOptions({
             setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
         }
     };
+
 
 
     const clearPolling = () => {
@@ -235,6 +239,7 @@ export default function KioskPaymentOptions({
 
     const handleStreamEvent = (data: any) => {
         const status = data.status?.toLowerCase();
+        console.log("[Stream] Handling event with status:", status);
 
         switch (status) {
             case "completed":
@@ -265,6 +270,7 @@ export default function KioskPaymentOptions({
                 break;
         }
     };
+
 
     /**
      * handlePayWithCard:
