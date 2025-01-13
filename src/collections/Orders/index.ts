@@ -659,7 +659,7 @@ export const Orders: CollectionConfig = {
                 // 3) Print only the "customer" ticket on the matching kiosk printer
                 for (const p of kioskPrinters.docs) {
                   try {
-                    const nameParts = p.printer_name.split('-');
+                    const nameParts = p.printer_name?.split('-') || [];
                     const lastPart = nameParts[nameParts.length - 1];
                     if (String(lastPart) === String(doc.kioskNumber)) {
                       await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
