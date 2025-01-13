@@ -458,6 +458,8 @@ export default function CheckoutPage({
             }
         }
 
+        const storedLocale = localStorage.getItem('userLocale') || 'nl';
+
         // 6) Build payload
         const payloadData = {
             tenant: hostSlug,
@@ -510,6 +512,7 @@ export default function CheckoutPage({
             shippingCost,
             distanceKm: deliveryDistance,
             promotionsUsed,
+            userLocale: storedLocale,
             kioskNumber: kioskNumber || undefined,
         };
 

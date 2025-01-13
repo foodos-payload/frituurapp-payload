@@ -42,6 +42,10 @@ export const Orders: CollectionConfig = {
           return;
         }
 
+        if (!data.userLocale) {
+          data.userLocale = 'nl';
+        }
+
         // 1) If kiosk => override the fulfillment_time & sub_method_label
         if (data.order_type === 'kiosk') {
           const now = new Date();
@@ -1146,7 +1150,15 @@ export const Orders: CollectionConfig = {
         },
       ],
     },
-
+    {
+      name: 'userLocale',
+      type: 'text',
+      label: 'User Locale',
+      required: false,
+      admin: {
+        description: 'The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.',
+      },
+    },
     {
       name: 'kioskNumber',
       type: 'number',
