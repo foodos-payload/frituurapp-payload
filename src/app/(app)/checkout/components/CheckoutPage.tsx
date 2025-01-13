@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 
@@ -75,6 +75,84 @@ interface CheckoutPageProps {
     isKiosk?: boolean;
 }
 
+/** A small "local" idle watcher that:
+ *  - Ignores watchers if KioskPaymentOptions overlay is open
+ *  - After X seconds, shows "Are you still here?" modal
+ *  - If user doesn't confirm => redirect or do something
+ */
+function useLocalIdleWatcher(
+    isKiosk: boolean,
+    kioskOverlayOpen: boolean // <-- if kiosk overlay is open
+) {
+    const IDLE_DELAY = isKiosk ? 60 : 600; // 60s kiosk, 600s non-kiosk
+    const [showIdleModal, setShowIdleModal] = useState(false);
+    const [countdown, setCountdown] = useState(15);
+
+    const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+    /** Clears all timers */
+    const clearTimers = useCallback(() => {
+        if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
+        if (countdownRef.current) clearInterval(countdownRef.current);
+    }, []);
+
+    /** Start or reset the idle timer */
+    const resetIdleTimer = useCallback(() => {
+        if (kioskOverlayOpen) return; // if kiosk overlay is open => ignore watchers
+
+        clearTimers();
+
+        // After X seconds of no activity => show modal
+        idleTimeoutRef.current = setTimeout(() => {
+            setShowIdleModal(true);
+            setCountdown(15);
+
+            // Start a 1s countdown
+            countdownRef.current = setInterval(() => {
+                setCountdown((prev) => prev - 1);
+            }, 1000);
+        }, IDLE_DELAY * 1000);
+    }, [kioskOverlayOpen, IDLE_DELAY, clearTimers]);
+
+    /** If user clicks "Yes, I'm here" => hide modal, reset timer */
+    const confirmStay = useCallback(() => {
+        setShowIdleModal(false);
+        clearTimers();
+        resetIdleTimer();
+    }, [resetIdleTimer, clearTimers]);
+
+    /** If countdown hits 0 => user is idle => do something, e.g. redirect */
+    useEffect(() => {
+        if (countdown <= 0 && showIdleModal) {
+            // user didn't confirm => treat as idle
+            clearTimers();
+            setShowIdleModal(false);
+            // e.g. redirect or do something else
+            window.location.href = "/index"; // or /kiosk-idle, etc.
+        }
+    }, [countdown, showIdleModal, clearTimers]);
+
+    /** Attach mouse/keyboard/touch listeners => reset idle timer on activity */
+    useEffect(() => {
+        // If kiosk overlay is open => skip watchers entirely
+        if (kioskOverlayOpen) return;
+
+        const events = ["mousemove", "keydown", "click", "touchstart"];
+        events.forEach((evt) => window.addEventListener(evt, resetIdleTimer, { passive: true }));
+
+        // immediately set an idle timer
+        resetIdleTimer();
+
+        return () => {
+            clearTimers();
+            events.forEach((evt) => window.removeEventListener(evt, resetIdleTimer));
+        };
+    }, [resetIdleTimer, clearTimers, kioskOverlayOpen]);
+
+    return { showIdleModal, countdown, confirmStay };
+}
+
 export default function CheckoutPage({
     hostSlug,
     initialPaymentMethods,
@@ -86,6 +164,12 @@ export default function CheckoutPage({
     const searchParams = useSearchParams();
     const kioskMode = searchParams.get("kiosk") === "true";
     const isKiosk = kioskMode;
+
+    // For example, we can pass a callback to KioskPaymentOptions
+    const [kioskOverlayOpen, setKioskOverlayOpen] = useState(false);
+
+    /** A local idle watcher hook */
+    const { showIdleModal, countdown, confirmStay } = useLocalIdleWatcher(isKiosk, kioskOverlayOpen);
 
     // Manage local back-button loading state:
     const [backBtnLoading, setBackBtnLoading] = useState(false);
@@ -112,7 +196,10 @@ export default function CheckoutPage({
         }
     }, [cancelledParam]);
 
+    // Branding from context
     const branding = useShopBranding();
+    const primaryCTA = branding.primaryColorCTA || "#007bff"; // fallback
+    const secondaryColor = "#CE2027"; // Hard-coded secondary
 
     // (A) Distance loading, user data
     const [distanceLoading, setDistanceLoading] = useState(false);
@@ -660,6 +747,7 @@ export default function CheckoutPage({
                     paymentMethods={paymentMethods}
                     branding={branding}
                     shopSlug={hostSlug}
+                    onOverlayChange={(state) => setKioskOverlayOpen(state !== null)}
                 />
             ) : (
                 <>
@@ -840,6 +928,27 @@ export default function CheckoutPage({
                         </div>
                     </div>
                 </>
+
+
+            )}
+            {/* (C) Local Idle Modal => uses brand primary color for "Yes, I'm here" */}
+            {showIdleModal && (
+                <div
+                    className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999]"
+                    style={{ backdropFilter: "blur(3px)" }}
+                >
+                    <div className="bg-white p-6 rounded-xl shadow-md max-w-sm mx-auto text-center">
+                        <h2 className="text-2xl font-bold mb-4">Are you still there?</h2>
+                        <p>You will be redirected in {countdown} seconds if no activity.</p>
+                        <button
+                            onClick={confirmStay}
+                            style={{ backgroundColor: primaryCTA }}
+                            className="mt-4 px-6 py-3 text-xl text-white font-semibold rounded"
+                        >
+                            Yes, I'm here
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

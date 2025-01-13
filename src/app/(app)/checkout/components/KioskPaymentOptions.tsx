@@ -28,16 +28,26 @@ interface KioskPaymentOptionsProps {
     paymentMethods: PaymentMethod[];
     branding: any;
     shopSlug: string;
+
+    /**
+     * Optional callback to inform the parent component whenever the overlay
+     * state changes (null => none, "terminal" => card overlay, "cash" => cash overlay).
+     * This is used so the parent can disable its own idle watchers, etc.
+     */
+    onOverlayChange?: (overlayState: null | "terminal" | "cash") => void;
 }
 
 /**
  * KioskPaymentOptions:
  *  - "Card Payment" => show "terminal" overlay, create order => poll until done or cancelled.
  *  - "Cash Payment" => show "cash" overlay, create order => typically no need to poll.
- * 
+ *
  * This version also uses SSE in parallel with polling:
- *  - If SSE detects "cancelled", we stop polling immediately & show the error.
- *  - If SSE detects "completed" (optional), we could also jump right to summary if desired.
+ *  - If SSE detects "cancelled", we stop polling & show the error.
+ *  - If SSE detects "completed" (optional), we could also jump to summary if desired.
+ *
+ * Additionally, it provides `onOverlayChange` to the parent so that the parent
+ * can perform any special logic (like pausing idle watchers) when the kiosk overlay is active.
  */
 export default function KioskPaymentOptions({
     handleBackClick,
@@ -45,6 +55,7 @@ export default function KioskPaymentOptions({
     paymentMethods,
     branding,
     shopSlug,
+    onOverlayChange,
 }: KioskPaymentOptionsProps) {
     const router = useRouter();
 
@@ -60,7 +71,7 @@ export default function KioskPaymentOptions({
 
     /**
      * Keep track of how many seconds are left before we automatically exit the overlay
-     * if no payment is completed in time.
+     * if no payment is completed in time (for "terminal").
      */
     const [timeLeft, setTimeLeft] = useState<number>(0);
 
@@ -81,10 +92,17 @@ export default function KioskPaymentOptions({
         };
     }, []);
 
+    // Whenever loadingState changes => inform the parent so it can disable local watchers, etc.
+    useEffect(() => {
+        if (onOverlayChange) {
+            onOverlayChange(loadingState);
+        }
+    }, [loadingState, onOverlayChange]);
+
     /**
      * startPollingLocalOrder:
      *  - Poll the local "orders" doc every 4s
-     *  - If status is complete/in_preparation/awaiting_preparation/ready_for_pickup => go to summary
+     *  - If status is complete / in_preparation / etc. => go to summary
      *  - If status is cancelled => show error & remove overlay
      */
     const startPollingLocalOrder = (orderId: number) => {
@@ -97,7 +115,6 @@ export default function KioskPaymentOptions({
 
         const intervalId = setInterval(async () => {
             try {
-                // Adjust /api/orders route if your actual endpoint differs
                 const url = `/api/orders?host=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`;
                 const resp = await fetch(url);
                 if (!resp.ok) {
@@ -143,19 +160,18 @@ export default function KioskPaymentOptions({
      * startSSEConnection:
      *  - Uses the eventsToken + eventsStreamUrl from localStorage
      *  - Listens for real-time "cancelled" or other events
-     *  - If "cancelled", we stop polling immediately & show the error
+     *  - If "cancelled", we stop polling & show the error
      */
     const startSSEConnection = (orderId: number) => {
         const token = localStorage.getItem("mspEventsToken");
         const streamUrl = localStorage.getItem("mspEventsStreamUrl");
 
-        // If we don't have SSE details in localStorage, skip SSE
+        // If we don't have SSE details, skip SSE
         if (!token || !streamUrl) {
             console.log("No SSE token/streamUrl found => skipping SSE");
             return;
         }
 
-        // Construct the SSE URL. Adapt query params to match your backend’s SSE endpoint requirements.
         const sseUrl = `${streamUrl}?token=${encodeURIComponent(token)}&orderId=${orderId}`;
         console.log("[SSE] Opening connection to:", sseUrl);
 
@@ -163,14 +179,12 @@ export default function KioskPaymentOptions({
         sseRef.current = eventSource;
 
         eventSource.onmessage = (evt) => {
-            // SSE might send JSON or plain text. Let's assume JSON with { status: "...", ... }
             try {
                 const data = JSON.parse(evt.data);
                 const sseStatus = data.status?.toLowerCase();
                 console.log("[SSE] onmessage =>", data);
 
                 if (sseStatus === "cancelled") {
-                    // If user pressed 'stop' on terminal => immediate cancellation
                     console.log("[SSE] Payment cancelled via terminal stop!");
                     if (pollingIntervalRef.current) {
                         clearInterval(pollingIntervalRef.current);
@@ -182,32 +196,26 @@ export default function KioskPaymentOptions({
                     setPaymentErrorMessage("Payment was cancelled at terminal. Please try again.");
                     setLoadingState(null);
                 }
-                // Optionally, if the SSE signals "completed", you could also skip directly to summary.
-                // if (sseStatus === "completed") {
-                //   console.log("[SSE] Payment completed via SSE!");
-                //   // close polling, SSE, navigate to summary, etc.
-                // }
+                // optionally handle "completed" or other events
             } catch (error) {
-                console.error("[SSE] Failed to parse message:", evt.data, error);
+                console.error("[SSE] parse error:", evt.data, error);
             }
         };
 
         eventSource.onerror = (err) => {
-            console.error("[SSE] Error event:", err);
-            // Could handle SSE connection drops or server errors here
+            console.error("[SSE] Connection error:", err);
         };
     };
 
     /**
      * handlePayWithCard:
      *  - Finds an MSP/MultisafePay payment method
-     *  - Creates the order via handleCheckout
-     *  - Then sets up SSE + starts polling
-     *  - Also start a 65s countdown
+     *  - Creates the order
+     *  - Then SSE + polling
+     *  - Also 65s countdown
      */
     const handlePayWithCard = async () => {
         if (loadingState) return; // Prevent double-click
-
         setPaymentErrorMessage("");
 
         // Identify a "card" or MSP payment method
@@ -228,26 +236,23 @@ export default function KioskPaymentOptions({
         // Create the order
         const localOrderId = await handleCheckout(cardMethod.id);
         if (!localOrderId) {
-            // Something went wrong => revert
             setLoadingState(null);
             setPaymentErrorMessage("Could not create order for card payment. Please try again.");
             return;
         }
 
-        // Start SSE (if token/URL exist) and Polling in parallel
         startSSEConnection(localOrderId);
         startPollingLocalOrder(localOrderId);
     };
 
     /**
      * handlePayWithCash:
-     *  - Finds a "cash" payment method
+     *  - Finds "cash" payment method
      *  - Creates the order
-     *  - Typically no polling, as "cash" finishes immediately
+     *  - Typically no polling for cash
      */
     const handlePayWithCash = async () => {
         if (loadingState) return;
-
         setPaymentErrorMessage("");
 
         const cashMethod = paymentMethods.find((pm) => pm.label.toLowerCase().includes("cash"));
@@ -264,31 +269,27 @@ export default function KioskPaymentOptions({
             setPaymentErrorMessage("Could not create cash order. Please try again.");
             return;
         }
-        // For cash, we typically do not poll => user pays at counter.
+        // No polling => user pays at counter
     };
 
     /**
-     * Countdown effect for card terminal payment
-     *  - If user doesn't complete the payment in 65s => show error & close overlay
+     * Countdown effect for "terminal"
+     * If 65s pass => show error & revert overlay
      */
     useEffect(() => {
         let timer: NodeJS.Timeout | null = null;
 
         if (loadingState === "terminal" && timeLeft > 0) {
-            // Decrement countdown
             timer = setInterval(() => {
                 setTimeLeft((prev) => prev - 1);
             }, 1000);
         } else if (loadingState === "terminal" && timeLeft === 0) {
-            // Timed out => show error & return to main screen
             setPaymentErrorMessage("Payment was failed, try again.");
             setLoadingState(null);
 
-            // Also close SSE if open
             if (sseRef.current) {
                 sseRef.current.close();
             }
-            // Also stop any polling
             if (pollingIntervalRef.current) {
                 clearInterval(pollingIntervalRef.current);
                 pollingIntervalRef.current = null;
@@ -300,7 +301,6 @@ export default function KioskPaymentOptions({
         };
     }, [loadingState, timeLeft]);
 
-    // Derived boolean for showing the overlay
     const showOverlay = !!loadingState;
 
     return (
@@ -308,7 +308,6 @@ export default function KioskPaymentOptions({
             {/* (A) LOADING OVERLAY */}
             {showOverlay && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-50 py-8 mt-40">
-                    {/* Terminal Overlay */}
                     {loadingState === "terminal" && (
                         <>
                             <Image
@@ -320,7 +319,7 @@ export default function KioskPaymentOptions({
                             />
                             <h2 className="text-4xl mb-4">Waiting for terminal payment...</h2>
 
-                            {/* Progress bar + countdown text */}
+                            {/* Progress bar + countdown */}
                             <div className="w-full max-w-md bg-gray-200 h-4 rounded mb-2">
                                 <div
                                     className="bg-green-500 h-4 rounded-l transition-all duration-500"
@@ -332,13 +331,10 @@ export default function KioskPaymentOptions({
                             </p>
 
                             <h1 className="text-9xl font-bold mb-4 mt-60">🧾</h1>
-
-                            {/* Large arrow down */}
                             <FaLongArrowAltDown className="text-9xl text-red-600 mb-8 ml-2" />
                         </>
                     )}
 
-                    {/* Cash Overlay */}
                     {loadingState === "cash" && (
                         <>
                             <Image
@@ -350,8 +346,6 @@ export default function KioskPaymentOptions({
                             />
                             <h2 className="text-4xl mb-8">Please pay with cash at counter...</h2>
                             <h1 className="text-9xl font-bold mb-4">🧾</h1>
-
-                            {/* Large arrow down */}
                             <FaLongArrowAltDown className="text-9xl text-red-600 mb-8 ml-2" />
                         </>
                     )}

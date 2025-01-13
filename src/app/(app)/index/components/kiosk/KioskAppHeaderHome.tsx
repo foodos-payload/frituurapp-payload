@@ -9,12 +9,14 @@ interface KioskAppHeaderHomeProps {
     primaryColorCTA?: string;
     logoUrl?: string;
     headerBackgroundColor?: string;
+    categoryCardBgColor?: string;
 }
 
 export const KioskAppHeaderHome: React.FC<KioskAppHeaderHomeProps> = ({
     siteTitle,
     siteHeaderImg,
     primaryColorCTA = "#3b82f6", // Default CTA color
+    categoryCardBgColor = "#CE2027", // Default category card color
     logoUrl,
     headerBackgroundColor = "#ffffff", // Default to white background
 }) => {
@@ -30,7 +32,7 @@ export const KioskAppHeaderHome: React.FC<KioskAppHeaderHomeProps> = ({
                 <h1
                     className="absolute top-[20%] left-2 text-white text-4xl font-bold p-3 rounded-lg"
                     style={{
-                        backgroundColor: primaryColorCTA || "#CE2027",
+                        backgroundColor: categoryCardBgColor || "#CE2027",
                         borderRadius: "0.5em",
                     }}
                 >

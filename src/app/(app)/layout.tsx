@@ -7,6 +7,7 @@ import { TranslationProvider } from '@/context/TranslationsContext';
 import { CartProvider } from '@/context/CartContext';
 import { ShopBrandingProvider } from '@/context/ShopBrandingContext';
 import { KioskIdleWatcher } from "@/components/kiosk/KioskIdleWatcher"
+import { IdleWatcherProvider } from '@/components/kiosk/IdleWatcherContext';
 
 import './globals.css';
 
@@ -120,8 +121,10 @@ export default async function RootLayout({
         <TranslationProvider>
           <CartProvider>
             <ShopBrandingProvider branding={branding}>
-              <KioskIdleWatcher />
-              {children}
+              <IdleWatcherProvider>
+                <KioskIdleWatcher branding={branding} />
+                {children}
+              </IdleWatcherProvider>
             </ShopBrandingProvider>
           </CartProvider>
         </TranslationProvider>
