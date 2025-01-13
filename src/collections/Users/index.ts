@@ -179,6 +179,7 @@ const Users: CollectionConfig = {
     {
       name: 'password',
       type: 'text',
+      defaultValue: '',
       required: true,
       label: {
         en: 'Password',
