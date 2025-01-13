@@ -86,6 +86,32 @@ export const Pages: CollectionConfig = {
         },
       },
     },
+    {
+      name: 'slug2',
+      type: 'text',
+      defaultValue: 'home2',
+      label: {
+        en: 'Slug',
+        nl: 'Slug',
+        de: 'Slug',
+        fr: 'Slug',
+      },
+      index: true,
+      admin: {
+        description: {
+          en: 'Used for URL paths, e.g., /page-slug.',
+          nl: 'Gebruikt voor URL-paden, bijv. /pagina-slug.',
+          de: 'Wird für URL-Pfade verwendet, z. B. /seiten-slug.',
+          fr: 'Utilisé pour les chemins URL, p.ex., /slug-de-page.',
+        },
+        placeholder: {
+          en: 'e.g., about-us',
+          nl: 'bijv., over-ons',
+          de: 'z. B., ueber-uns',
+          fr: 'p.ex., a-propos',
+        },
+      },
+    },
     tenantField, // Scopes pages by tenant
   ],
 };

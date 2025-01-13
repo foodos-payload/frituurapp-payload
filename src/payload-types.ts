@@ -1215,6 +1215,10 @@ export interface Page {
    * Used for URL paths, e.g., /page-slug.
    */
   slug?: string | null;
+  /**
+   * Used for URL paths, e.g., /page-slug.
+   */
+  slug2?: string | null;
   tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
@@ -2158,6 +2162,7 @@ export interface PosSelect<T extends boolean = true> {
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
+  slug2?: T;
   tenant?: T;
   updatedAt?: T;
   createdAt?: T;
