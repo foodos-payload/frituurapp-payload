@@ -56,120 +56,125 @@ export const Orders: CollectionConfig = {
         }
 
         // 2) Timeslot concurrency check => ensure date/time not fully booked
-        const methodType = data.fulfillment_method;         // e.g. 'delivery'
-        const dateStr = data.fulfillment_date;              // e.g. '2025-01-10'
-        const timeStr = data.fulfillment_time;              // e.g. '09:15'
+        // 2) Timeslot concurrency check => skip if kiosk
+        if (data.order_type === 'kiosk') {
+          console.log('[orders.beforeChange] kiosk => skipping concurrency checks.');
+        } else {
+          const methodType = data.fulfillment_method;         // e.g. 'delivery'
+          const dateStr = data.fulfillment_date;              // e.g. '2025-01-10'
+          const timeStr = data.fulfillment_time;              // e.g. '09:15'
 
-        if (methodType && dateStr && timeStr) {
-          // (A) Find the relevant fulfillment-method doc => check shared_booked_slots
-          const methodDoc = await req.payload.find({
-            collection: 'fulfillment-methods',
-            where: {
-              method_type: { equals: methodType },
-              shops: { in: data.shops },
-            },
-            limit: 1,
-          });
-          const foundMethod = methodDoc.docs[0];
-          if (!foundMethod) {
-            throw new Error(`Fulfillment method ${methodType} not found for this shop`);
-          }
-
-          const isShared = foundMethod.settings?.shared_booked_slots === true;
-
-          // (B) Convert dateStr => dayOfWeek => find timeslot range => get max_orders
-          const [yyyy, mm, dd] = dateStr.split('-').map(Number);
-          const dt = new Date(Date.UTC(yyyy, mm - 1, dd, 12));
-          const dayNumber = dt.getUTCDay() === 0 ? 7 : dt.getUTCDay(); // 1..7
-
-          const dayIndexMap: Record<string, string> = {
-            '1': 'monday',
-            '2': 'tuesday',
-            '3': 'wednesday',
-            '4': 'thursday',
-            '5': 'friday',
-            '6': 'saturday',
-            '7': 'sunday',
-          };
-          const dayKey = dayIndexMap[String(dayNumber)];
-
-          // Find timeslot doc => see if the chosen time is in a [start..end] range
-          const timeslotsResult = await req.payload.find({
-            collection: 'timeslots',
-            where: {
-              shops: { in: data.shops },
-              method_id: { equals: foundMethod.id },
-            },
-            limit: 50,
-            depth: 0,
-          });
-
-          function toMinutes(hhmm: string) {
-            const [h, m] = hhmm.split(':').map(Number);
-            return (h || 0) * 60 + (m || 0);
-          }
-          const requestedMinutes = toMinutes(timeStr);
-
-          let matchedMaxOrders: number | null = null;
-
-          for (const doc of timeslotsResult.docs) {
-            const ranges = (doc as any).week?.[dayKey];
-            if (!ranges) continue;
-
-            for (const tr of ranges) {
-              if (!tr.status) continue; // skip disabled
-              const startMins = toMinutes(tr.start_time);
-              const endMins = toMinutes(tr.end_time);
-
-              if (requestedMinutes >= startMins && requestedMinutes < endMins) {
-                matchedMaxOrders = tr.max_orders || 5;
-                break;
-              }
-            }
-            if (matchedMaxOrders !== null) break;
-          }
-
-          if (matchedMaxOrders === null) {
-            throw new Error(
-              `No matching timeslot range found for method=${methodType} at ${dateStr} ${timeStr}. Possibly closed?`
-            );
-          }
-
-          // (C) If shared => also check usage from other shared methods
-          const methodTypesToCheck: string[] = [methodType];
-          if (isShared) {
-            const sharedOnes = await req.payload.find({
+          if (methodType && dateStr && timeStr) {
+            // (A) Find the relevant fulfillment-method doc => check shared_booked_slots
+            const methodDoc = await req.payload.find({
               collection: 'fulfillment-methods',
               where: {
+                method_type: { equals: methodType },
                 shops: { in: data.shops },
-                'settings.shared_booked_slots': { equals: true },
+              },
+              limit: 1,
+            });
+            const foundMethod = methodDoc.docs[0];
+            if (!foundMethod) {
+              throw new Error(`Fulfillment method ${methodType} not found for this shop`);
+            }
+
+            const isShared = foundMethod.settings?.shared_booked_slots === true;
+
+            // (B) Convert dateStr => dayOfWeek => find timeslot range => get max_orders
+            const [yyyy, mm, dd] = dateStr.split('-').map(Number);
+            const dt = new Date(Date.UTC(yyyy, mm - 1, dd, 12));
+            const dayNumber = dt.getUTCDay() === 0 ? 7 : dt.getUTCDay(); // 1..7
+
+            const dayIndexMap: Record<string, string> = {
+              '1': 'monday',
+              '2': 'tuesday',
+              '3': 'wednesday',
+              '4': 'thursday',
+              '5': 'friday',
+              '6': 'saturday',
+              '7': 'sunday',
+            };
+            const dayKey = dayIndexMap[String(dayNumber)];
+
+            // Find timeslot doc => see if the chosen time is in a [start..end] range
+            const timeslotsResult = await req.payload.find({
+              collection: 'timeslots',
+              where: {
+                shops: { in: data.shops },
+                method_id: { equals: foundMethod.id },
               },
               limit: 50,
+              depth: 0,
             });
-            const sharedTypes = sharedOnes.docs.map((m) => m.method_type);
-            for (const st of sharedTypes) {
-              if (!methodTypesToCheck.includes(st)) {
-                methodTypesToCheck.push(st);
+
+            function toMinutes(hhmm: string) {
+              const [h, m] = hhmm.split(':').map(Number);
+              return (h || 0) * 60 + (m || 0);
+            }
+            const requestedMinutes = toMinutes(timeStr);
+
+            let matchedMaxOrders: number | null = null;
+
+            for (const doc of timeslotsResult.docs) {
+              const ranges = (doc as any).week?.[dayKey];
+              if (!ranges) continue;
+
+              for (const tr of ranges) {
+                if (!tr.status) continue; // skip disabled
+                const startMins = toMinutes(tr.start_time);
+                const endMins = toMinutes(tr.end_time);
+
+                if (requestedMinutes >= startMins && requestedMinutes < endMins) {
+                  matchedMaxOrders = tr.max_orders || 5;
+                  break;
+                }
+              }
+              if (matchedMaxOrders !== null) break;
+            }
+
+            if (matchedMaxOrders === null) {
+              throw new Error(
+                `No matching timeslot range found for method=${methodType} at ${dateStr} ${timeStr}. Possibly closed?`
+              );
+            }
+
+            // (C) If shared => also check usage from other shared methods
+            const methodTypesToCheck: string[] = [methodType];
+            if (isShared) {
+              const sharedOnes = await req.payload.find({
+                collection: 'fulfillment-methods',
+                where: {
+                  shops: { in: data.shops },
+                  'settings.shared_booked_slots': { equals: true },
+                },
+                limit: 50,
+              });
+              const sharedTypes = sharedOnes.docs.map((m) => m.method_type);
+              for (const st of sharedTypes) {
+                if (!methodTypesToCheck.includes(st)) {
+                  methodTypesToCheck.push(st);
+                }
               }
             }
-          }
 
-          // (D) Count existing orders with same date/time + method(s) => exclude cancelled
-          const usageCheck = await req.payload.find({
-            collection: 'orders',
-            where: {
-              tenant: { equals: data.tenant },
-              shops: { in: data.shops },
-              fulfillment_date: { equals: dateStr },
-              fulfillment_time: { equals: timeStr },
-              fulfillment_method: { in: methodTypesToCheck },
-              status: { not_equals: 'cancelled' },
-            },
-            limit: 200,
-          });
+            // (D) Count existing orders with same date/time + method(s) => exclude cancelled
+            const usageCheck = await req.payload.find({
+              collection: 'orders',
+              where: {
+                tenant: { equals: data.tenant },
+                shops: { in: data.shops },
+                fulfillment_date: { equals: dateStr },
+                fulfillment_time: { equals: timeStr },
+                fulfillment_method: { in: methodTypesToCheck },
+                status: { not_equals: 'cancelled' },
+              },
+              limit: 200,
+            });
 
-          if (usageCheck.docs.length >= matchedMaxOrders) {
-            throw new Error(`Sorry, that timeslot is fully booked! Please pick another time.`);
+            if (usageCheck.docs.length >= matchedMaxOrders) {
+              throw new Error(`Sorry, that timeslot is fully booked! Please pick another time.`);
+            }
           }
         }
         // End concurrency check
