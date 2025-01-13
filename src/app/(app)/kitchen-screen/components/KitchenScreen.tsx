@@ -147,8 +147,63 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
     // H) printOrder => console or real print call
     async function printOrder(orderId: number, type: "kitchen" | "customer" | "both") {
         try {
-            console.log(`Printing order #${orderId} as ${type}...`)
-            // call your real print logic
+            // 1) Find the order in our local array
+            const orderData = orders.find(o => o.id === orderId)
+            if (!orderData) {
+                console.warn(`No local order found with ID=${orderId}`)
+                return
+            }
+
+            console.log(`Attempting to print order #${orderId} as [${type}] on kitchen printers...`)
+
+            // 2) Figure out the shop IDs from the order
+            //    If your 'order.shops' can be array of objects or strings, unify them:
+            const shopIDs = Array.isArray(orderData.shops)
+                ? orderData.shops.map((s: any) =>
+                    typeof s === "object" ? s.id : s
+                )
+                : [orderData.shops]
+
+            if (!shopIDs?.length) {
+                console.warn("No shops found on this order; skipping print.")
+                return
+            }
+
+            // 3) Fetch printers with printer_type = kitchen that match these shops
+            const printersRes = await fetch(
+                `/api/printers?host=${encodeURIComponent(hostSlug)}&type=kitchen&shops=${shopIDs.join(",")}`
+            )
+            if (!printersRes.ok) {
+                throw new Error(`Failed to fetch kitchen printers, status ${printersRes.status}`)
+            }
+            const printersData = await printersRes.json()
+            const printers = printersData.docs || []
+
+            if (!printers.length) {
+                console.warn("No kitchen printers found for these shops.")
+                return
+            }
+
+            // 4) For each kitchen printer, call /api/printOrder
+            for (const p of printers) {
+                try {
+                    console.log(`Printing to kitchen printer ${p.printer_name} for order #${orderId}, type=[${type}]`)
+                    await fetch("/api/printOrder", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            printerName: p.printer_name,
+                            ticketType: type,
+                            orderData,
+                        }),
+                    })
+                } catch (err) {
+                    console.error(
+                        `Error printing [${type}] ticket to printer ${p.printer_name}:`,
+                        err
+                    )
+                }
+            }
         } catch (err) {
             console.error("Print error:", err)
         }

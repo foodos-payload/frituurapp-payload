@@ -77,4 +77,8 @@ export interface Order {
     order_details: OrderDetail[]
     payments?: PaymentEntry[]
     customer_note?: string
+
+    shops?: Array<string | {
+        id: string; domain?: string;
+    }>
 }
