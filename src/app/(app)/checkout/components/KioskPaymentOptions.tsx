@@ -155,7 +155,7 @@ export default function KioskPaymentOptions({
             return;
         }
 
-        const streamUrl = `https://api.multisafepay.com/events/stream/?token=${encodeURIComponent(token)}&orderId=${orderId}`;
+        const streamUrl = `https://api.multisafepay.com/events/stream/`;
         console.log("[Stream] Connecting to:", streamUrl);
 
         try {
