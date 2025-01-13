@@ -59,6 +59,7 @@ function buildQrCode(data: string, moduleSize: number = 3): string {
 /**
  * Build ESC/POS for the Kitchen ticket.
  */
+
 function buildEscposForKitchen(order: any): string {
     // We can check for userLocale here (if present). Fallback to 'nl' if missing.
     const locale = order.userLocale || 'nl';
@@ -96,7 +97,17 @@ function buildEscposForKitchen(order: any): string {
         esc += '\x1B\x21\x00'; // back to normal
     }
 
-    // Print main heading: Kitchen Ticket
+    // ─────────────────────────────────────────────────────
+    // 1) Print fulfillment method + date/time in big text
+    // ─────────────────────────────────────────────────────
+    esc += '\x1B\x21\x38'; // Double font
+    const methodLabel = order.fulfillment_method?.toUpperCase() || 'UNKNOWN_METHOD';
+    const dateStr = order.fulfillment_date || '';
+    const timeStr = order.fulfillment_time || '';
+    esc += `${methodLabel} ${dateStr} ${timeStr}\n\n`;
+    esc += '\x1B\x21\x00'; // back to normal
+
+    // 2) Print the main heading: KITCHEN TICKET
     esc += '\x1B\x21\x38'; // Double-size font
     esc += 'KITCHEN TICKET\n';
     esc += `Order #${order.id}\n\n`;
@@ -105,16 +116,10 @@ function buildEscposForKitchen(order: any): string {
     esc += '\x1B\x21\x00';
     esc += '\x1B\x61\x00'; // left justification
 
-    // Fulfillment date/time/method
-    esc += `Fulfillment: ${order.fulfillment_date || ''} ${order.fulfillment_time || ''}\n`;
-    esc += `Method: ${order.fulfillment_method || ''} | Type: ${order.order_type || ''}\n`;
-
     // Payment line
-    // If isCashOnDelivery => Payment: Not Paid
     if (isCashOnDelivery) {
         esc += 'Payment: Not Paid (cash_on_delivery)\n';
     } else {
-        // Otherwise, e.g. "mollie" => "Paid"
         const pm = order.payments?.[0]?.payment_method?.provider || 'Unknown';
         esc += `Payment: ${pm} (Paid)\n`;
     }
@@ -150,6 +155,11 @@ function buildEscposForKitchen(order: any): string {
                     esc += '\n';
                 }
             }
+
+            // ───────────────────────────────────────────────────
+            // Add a blank line after each product + subproducts
+            // ───────────────────────────────────────────────────
+            esc += '\n';
         }
     }
 
@@ -157,7 +167,6 @@ function buildEscposForKitchen(order: any): string {
     esc += '\x1B\x21\x00';
 
     // Show total
-    esc += '\n';
     esc += `TOTAL: ${order.total?.toFixed(2) || '0.00'}\n`;
 
     // Final cut
@@ -232,7 +241,7 @@ function buildEscposForCustomer(order: any): string {
             const linePrice = (item.price ?? 0) * (item.quantity ?? 1);
             subtotalCalc += linePrice;
 
-            esc += `${item.quantity}x ${prodName} ${linePrice.toFixed(2)}\n\n`;
+            esc += `${item.quantity}x ${prodName} ${linePrice.toFixed(2)}\n`;
 
             // Subproducts
             if (Array.isArray(item.subproducts)) {

@@ -19,7 +19,7 @@ import {
     getWorkflow,
 } from "./utils"
 import { OrderDetailsList } from "./OrderDetailsList"
-import { PrintPopover } from "./PrintPopover"
+import { PrintPortal } from "./PrintPortal"
 import { useTranslation } from "@/context/TranslationsContext"
 
 import type { OrderStatus } from "../../types/Order"
@@ -326,11 +326,9 @@ export function OrderCard({
                         </span>
                     )}
                 </div>
-                <PrintPopover
-                    isOpen={showPrintOptions}
-                    onToggle={togglePrintPopover}
-                    onPrintKitchen={handlePrintKitchen}
-                    onPrintCustomer={handlePrintCustomer}
+                <PrintPortal
+                    onPrintKitchen={() => printOrder(order.id, "kitchen")}
+                    onPrintCustomer={() => printOrder(order.id, "customer")}
                 />
             </div>
 
