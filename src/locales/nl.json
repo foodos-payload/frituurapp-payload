@@ -1,5 +1,5 @@
 {
-  "general": { "tapToOrder": "TIK OM TE BESTELLEN" },
+  "general": { "tapToOrder": "TIK OM TE BESTELLEN", "forgot_something": "Iets vergeten?" },
   "chooseMode": {
     "title": "Bestel hier",
     "dineIn": {
@@ -24,9 +24,40 @@
       "title": "Winkelmand",
       "empty": "Uw winkelmand is leeg",
       "edit_product": "Bewerken",
+      "promo_code": "Voer Promotiecode in / Scan QR",
       "checkout": "Afrekenen"
     },
     "popup": { "next": "Volgende", "back": "Terug", "confirm": "Bevestig" }
+  },
+  "promotion": {
+    "title": "Voer in / Scan Promotiecode",
+    "apply": "Toepassen"
+  },
+  "checkout": {
+    "fulfillment_method": {
+      "title": "Verzendmethode",
+      "select_date": "Selecteer Datum",
+      "select_time": "Selecteer Tijd"
+    },
+    "your_details": {
+      "title": "Uw Gegevens",
+      "surname": "Voornaam",
+      "lastname": "Achternaam",
+      "email": "E-mail",
+      "optional": "optioneel",
+      "phone": "Telefoon"
+    },
+    "payment_method": {
+      "title": "Betaalmethode"
+    },
+    "order_summary": {
+      "title": "Besteloverzicht",
+      "subtotal": "Subtotaal",
+      "shipping": "Verzending",
+      "total": "Totaal",
+      "proceed_to_checkout": "Ga Verder naar Betalen",
+      "check_info": "Controleer of alle informatie is ingevuld"
+    }
   },
   "kitchen": {
     "topBar": {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import React from "react";
 import AddressAutocomplete from "./AddressAutocomplete";
+import { useTranslation } from "@/context/TranslationsContext";
 
 type Branding = {
     /** e.g. "#ECAA02" or some other brand color */
@@ -66,6 +67,7 @@ export default function CustomerDetailsForm({
     branding,
 
 }: CustomerDetailsFormProps) {
+    const { t } = useTranslation();
     function handleAddressSelected(info: {
         fullAddress: string;
         lat?: number;
@@ -83,13 +85,13 @@ export default function CustomerDetailsForm({
 
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-bold mb-2"><span className="text-2xl">2️⃣</span> Your Details</h2>
+            <h2 className="text-xl font-bold mb-2"><span className="text-2xl">2️⃣</span> {t("checkout.your_details.title")}</h2>
 
             {/* Common fields (Surname + Email) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                 <div>
                     <label className="block mb-1 text-sm font-semibold text-gray-700">
-                        Surname
+                        {t("checkout.your_details.surname")}
                         <span className="text-red-600 ml-1">*</span>
                     </label>
                     <input
@@ -111,10 +113,10 @@ export default function CustomerDetailsForm({
 
                 <div>
                     <label className="block mb-1 text-sm font-semibold text-gray-700">
-                        Email
+                        {t("checkout.your_details.email")}
                         {emailRequired
                             ? <span className="text-red-600 ml-1">*</span>
-                            : " (optional)"}
+                            : ` (${t("checkout.your_details.optional")})`}
                     </label>
                     <input
                         type="email"
@@ -141,7 +143,7 @@ export default function CustomerDetailsForm({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                         <div>
                             <label className="block mb-1 text-sm font-semibold text-gray-700">
-                                Last Name
+                                {t("checkout.your_details.lastname")}
                                 {lastNameRequired && <span className="text-red-600 ml-1">*</span>}
                             </label>
                             <input
@@ -161,7 +163,7 @@ export default function CustomerDetailsForm({
                         </div>
                         <div>
                             <label className="block mb-1 text-sm font-semibold text-gray-700">
-                                Phone
+                                {t("checkout.your_details.phone")}
                                 {phoneRequired && <span className="text-red-600 ml-1">*</span>}
                             </label>
                             <input

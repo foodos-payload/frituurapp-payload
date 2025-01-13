@@ -1,5 +1,8 @@
 {
-  "general": { "tapToOrder": "APPUYER POUR COMMANDER" },
+  "general": {
+    "tapToOrder": "APPUYER POUR COMMANDER",
+    "forgot_something": "Oublié quelque chose ?"
+  },
   "chooseMode": {
     "title": "Commander ici",
     "dineIn": {
@@ -24,9 +27,40 @@
       "title": "Panier",
       "empty": "Votre panier est vide",
       "edit_product": "Modifier",
+      "promo_code": "Appliquer le code promo / Scanner le QR",
       "checkout": "Passer à la caisse"
     },
     "popup": { "next": "Suivant", "back": "Retour", "confirm": "Confirmer" }
+  },
+  "promotion": {
+    "title": "Entrer / Scanner le code promo",
+    "apply": "Appliquer"
+  },
+  "checkout": {
+    "fulfillment_method": {
+      "title": "Méthode de réalisation",
+      "select_date": "Sélectionner la date",
+      "select_time": "Sélectionner l'heure"
+    },
+    "your_details": {
+      "title": "Vos détails",
+      "surname": "Prénom",
+      "lastname": "Nom de famille",
+      "email": "E-mail",
+      "optional": "optionnel",
+      "phone": "Téléphone"
+    },
+    "payment_method": {
+      "title": "Méthode de paiement"
+    },
+    "order_summary": {
+      "title": "Résumé de la commande",
+      "subtotal": "Sous-total",
+      "shipping": "Expédition",
+      "total": "Total",
+      "proceed_to_checkout": "Passer à la caisse",
+      "check_info": "Veuillez vérifier si toutes les informations sont remplies"
+    }
   },
   "kitchen": {
     "topBar": {

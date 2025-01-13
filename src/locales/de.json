@@ -1,5 +1,5 @@
 {
-  "general": { "tapToOrder": "TIPPEN ZUM BESTELLEN" },
+  "general": { "tapToOrder": "ZUM BESTELLEN TIPPPEN", "forgot_something": "Etwas vergessen?" },
   "chooseMode": {
     "title": "Hier order",
     "dineIn": {
@@ -24,9 +24,39 @@
       "title": "Warenkorb",
       "empty": "Ihr Warenkorb ist leer",
       "edit_product": "Bearbeiten",
+      "promo_code": "Promo-Code anwenden / QR-Code scannen",
       "checkout": "Zur Kasse"
     },
     "popup": { "next": "Weiter", "back": "Zurück", "confirm": "Bestätigen" }
+  },
+  "promotion": {
+    "title": "Promo-Code eingeben / scannen",
+    "apply": "Anwenden"
+  },
+  "checkout": {
+    "fulfillment_method": {
+      "title": "Erfüllungsmethode",
+      "select_date": "Datum auswählen",
+      "select_time": "Uhrzeit auswählen"
+    },
+    "your_details": {
+      "title": "Ihre Details",
+      "surname": "Vorname",
+      "lastname": "Nachname",
+      "email": "E-Mail (optional)",
+      "phone": "Telefon"
+    },
+    "payment_method": {
+      "title": "Zahlungsmethode"
+    },
+    "order_summary": {
+      "title": "Bestellübersicht",
+      "subtotal": "Zwischensumme",
+      "shipping": "Versand",
+      "total": "Gesamt",
+      "proceed_to_checkout": "Zur Kasse gehen",
+      "check_info": "Bitte überprüfen Sie, ob alle Informationen ausgefüllt sind"
+    }
   },
   "kitchen": {
     "topBar": {

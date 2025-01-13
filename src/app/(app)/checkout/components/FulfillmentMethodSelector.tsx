@@ -4,6 +4,7 @@
 import React, { Dispatch, SetStateAction, useMemo } from "react";
 import { Timeslot } from "./CheckoutPage";
 import { FiCheckCircle } from "react-icons/fi";
+import { useTranslation } from "@/context/TranslationsContext";
 
 type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "";
 
@@ -29,6 +30,7 @@ export default function FulfillmentMethodSelector({
     deliveryRadius = 0,
     branding,
 }: FulfillmentMethodSelectorProps) {
+    const { t } = useTranslation();
     // 1) Determine which timeslots are valid
     const finalTimeslots = allTimeslots;
 
@@ -45,7 +47,7 @@ export default function FulfillmentMethodSelector({
     if (possibleMethods.length === 0) {
         return (
             <div>
-                <h2 className="text-xl font-bold mb-2">Fulfillment Method</h2>
+                <h2 className="text-xl font-bold mb-2">{t("checkout.fulfillment_method.title")}</h2>
                 <p className="text-red-600">
                     No timeslots defined, so no fulfillment methods to choose from.
                 </p>
@@ -58,7 +60,7 @@ export default function FulfillmentMethodSelector({
 
     return (
         <div className="mb-4">
-            <h2 className="text-xl font-bold mb-2"><span className="text-2xl">1️⃣</span> Fulfillment Method</h2>
+            <h2 className="text-xl font-bold mb-2"><span className="text-2xl">1️⃣</span> {t("checkout.fulfillment_method.title")}</h2>
 
             <div className="grid gap-3 sm:grid-flow-col">
                 {possibleMethods.map((method) => {
