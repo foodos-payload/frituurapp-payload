@@ -176,6 +176,25 @@ const Users: CollectionConfig = {
       },
       index: true,
     },
+    {
+      name: 'password',
+      type: 'text',
+      required: true,
+      label: {
+        en: 'Password',
+        nl: 'Wachtwoord',
+        de: 'Passwort',
+        fr: 'Mot de passe',
+      },
+      admin: {
+        description: {
+          en: 'The password of the user.',
+          nl: 'Het wachtwoord van de gebruiker.',
+          de: 'Das Passwort des Benutzers.',
+          fr: 'Le mot de passe de l\'utilisateur.',
+        },
+      },
+    },
   ],
 };
 
