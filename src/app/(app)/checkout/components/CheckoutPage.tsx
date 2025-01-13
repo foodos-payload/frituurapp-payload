@@ -84,7 +84,7 @@ function useLocalIdleWatcher(
     isKiosk: boolean,
     kioskOverlayOpen: boolean // <-- if kiosk overlay is open
 ) {
-    const IDLE_DELAY = isKiosk ? 60 : 600; // 60s kiosk, 600s non-kiosk
+    const IDLE_DELAY = isKiosk ? 10 : 600; // 60s kiosk, 600s non-kiosk
     const [showIdleModal, setShowIdleModal] = useState(false);
     const [countdown, setCountdown] = useState(15);
 
