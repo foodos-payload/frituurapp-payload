@@ -14,7 +14,7 @@ type Props = {
 };
 
 export default function PromoButton({
-    label = "Apply Promo Code / Scan QR",
+    label,
     buttonClass = "",
     isKiosk = false,
 }: Props) {

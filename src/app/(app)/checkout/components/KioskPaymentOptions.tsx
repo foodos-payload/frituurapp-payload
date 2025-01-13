@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FaLongArrowAltDown } from "react-icons/fa";
+import { useTranslation } from "@/context/TranslationsContext";
 
 interface PaymentMethod {
     id: string;
@@ -57,6 +58,7 @@ export default function KioskPaymentOptions({
     shopSlug,
     onOverlayChange,
 }: KioskPaymentOptionsProps) {
+    const { t } = useTranslation();
     const router = useRouter();
 
     // Overlay states: null => no overlay, "terminal" => waiting for card, "cash" => waiting for cash
@@ -420,7 +422,7 @@ export default function KioskPaymentOptions({
                         onClick={handleBackClick}
                         className="mt-16 p-4 text-xl bg-gray-500 text-white rounded-xl shadow-md w-80"
                     >
-                        Forgot Something?
+                        {t("general.forgot_something")}
                     </button>
                 </div>
             )}

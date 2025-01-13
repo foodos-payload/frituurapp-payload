@@ -12,6 +12,7 @@ import OrderSummary from "./OrderSummary"; // <-- updated OrderSummary
 import "../checkout.css";
 import { useShopBranding } from "@/context/ShopBrandingContext";
 import KioskPaymentOptions from "./KioskPaymentOptions";
+import { useTranslation } from "@/context/TranslationsContext";
 
 // A) Types
 interface MultiSafePaySettings {
@@ -160,6 +161,7 @@ export default function CheckoutPage({
     shopInfo,
     fulfillmentMethods,
 }: CheckoutPageProps) {
+    const { t } = useTranslation();
     const router = useRouter();
     const searchParams = useSearchParams();
     const kioskMode = searchParams.get("kiosk") === "true";
@@ -545,6 +547,8 @@ export default function CheckoutPage({
             }
         }
 
+        const storedLocale = localStorage.getItem('userLocale') || 'nl';
+
         // 6) Build payload
         const payloadData = {
             tenant: hostSlug,
@@ -597,6 +601,7 @@ export default function CheckoutPage({
             shippingCost,
             distanceKm: deliveryDistance,
             promotionsUsed,
+            userLocale: storedLocale,
             kioskNumber: kioskNumber || undefined,
         };
 
@@ -790,7 +795,7 @@ export default function CheckoutPage({
                                     ) : (
                                         <span className="font-bold text-lg">←</span>
                                     )}
-                                    <span>Forgot something?</span>
+                                    <span>{t("general.forgot_something")}</span>
                                 </button>
                             </div>
 

@@ -1,5 +1,8 @@
 {
-  "general": { "tapToOrder": "SİPARİŞ VERMEK İÇİN DOKUNUN" },
+  "general": {
+    "tapToOrder": "Sipariş vermek için dokunun",
+    "forgot_something": "Bir şey mi unuttunuz?"
+  },
   "chooseMode": {
     "title": "Buradan sipariş verin",
     "dineIn": {
@@ -24,9 +27,40 @@
       "title": "Sepet",
       "empty": "Sepetiniz boş",
       "edit_product": "Düzenle",
+      "promo_code": "Promosyon Kodunu Uygula / QR Kodunu Tara",
       "checkout": "Ödeme"
     },
     "popup": { "next": "Sonraki", "back": "Geri", "confirm": "Onayla" }
+  },
+  "promotion": {
+    "title": "Promosyon Kodunu Gir / Tara",
+    "apply": "Uygula"
+  },
+  "checkout": {
+    "fulfillment_method": {
+      "title": "Teslimat Yöntemi",
+      "select_date": "Tarih Seç",
+      "select_time": "Saat Seç"
+    },
+    "your_details": {
+      "title": "Bilgileriniz",
+      "surname": "Soyadı",
+      "lastname": "Ad",
+      "email": "E-posta",
+      "optional": "isteğe bağlı",
+      "phone": "Telefon"
+    },
+    "payment_method": {
+      "title": "Ödeme Yöntemi"
+    },
+    "order_summary": {
+      "title": "Sipariş Özeti",
+      "subtotal": "Ara Toplam",
+      "shipping": "Kargo",
+      "total": "Toplam",
+      "proceed_to_checkout": "Ödemeye Devam Et",
+      "check_info": "Lütfen tüm bilgilerin doldurulduğunu kontrol edin"
+    }
   },
   "kitchen": {
     "topBar": {

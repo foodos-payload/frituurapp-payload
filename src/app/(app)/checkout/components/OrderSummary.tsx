@@ -6,6 +6,7 @@ import { useCart, getLineItemSignature } from "@/context/CartContext";
 import PromoButton from "../../shared/PromoButton";
 import debounce from "lodash.debounce";
 import Image from "next/image";
+import { useTranslation } from "@/context/TranslationsContext";
 
 type Branding = {
     /** e.g. "#ECAA02" or some other brand color */
@@ -51,6 +52,7 @@ export default function OrderSummary({
     handleApplyCoupon,
     isKiosk,
 }: OrderSummaryProps) {
+    const { t } = useTranslation();
     const {
         items: cartItems,
         updateItemQuantity,
@@ -149,7 +151,7 @@ export default function OrderSummary({
             <div className="bg-white p-4 space-y-1">
                 {/* Header */}
                 <div>
-                    <h2 className="text-2xl font-bold mb-1">4️⃣ Order Summary</h2>
+                    <h2 className="text-2xl font-bold mb-1">4️⃣ {t("checkout.order_summary.title")}</h2>
                     {/* <p className="text-gray-500 text-sm">Review your items and confirm below.</p> */}
                 </div>
 
@@ -298,7 +300,7 @@ export default function OrderSummary({
                 {/* “Apply Promo or Scan QR” button */}
                 <PromoButton
                     isKiosk={isKiosk}
-                    label="Apply Promo or Scan QR"
+                    label={t("order.cart.promo_code")}
                     buttonClass="..."
                 />
 
@@ -321,7 +323,7 @@ export default function OrderSummary({
                     ) : (
                         // If no discount, just show discountedSubtotal as "Subtotal"
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-700 font-medium">Subtotal</span>
+                            <span className="text-gray-700 font-medium">{t("checkout.order_summary.subtotal")}</span>
                             <span className="text-gray-900 font-semibold">
                                 €{discountedSubtotal.toFixed(2)}
                             </span>
@@ -331,7 +333,7 @@ export default function OrderSummary({
                     {/* If "delivery" => show shipping */}
                     {fulfillmentMethod === "delivery" && (
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-700 font-medium">Shipping</span>
+                            <span className="text-gray-700 font-medium">{t("checkout.order_summary.Shipping")}</span>
                             <span className="text-gray-900 font-semibold">
                                 €{shippingCost.toFixed(2)}
                             </span>
@@ -340,7 +342,7 @@ export default function OrderSummary({
 
                     {/* Final total */}
                     <div className="flex justify-between items-center border-t border-gray-200 pt-2">
-                        <span className="text-gray-900 font-bold">Total</span>
+                        <span className="text-gray-900 font-bold">{t("checkout.order_summary.total")}</span>
                         <span className="text-gray-900 font-bold text-xl">
                             €{finalTotal.toFixed(2)}
                         </span>
@@ -349,7 +351,7 @@ export default function OrderSummary({
                     {/* If disabled => short warning */}
                     {!canProceed() && (
                         <div className="p-2 text-red-600 text-sm bg-red-50 border-l-4 border-red-300 rounded-md">
-                            Please check if all info is filled
+                            {t("checkout.order_summary.check_info")}
                         </div>
                     )}
 
@@ -398,7 +400,7 @@ export default function OrderSummary({
                             </svg>
                         ) : (
                             // Default text
-                            "Proceed to Checkout"
+                            t("checkout.order_summary.proceed_to_checkout")
                         )}
                     </button>
                 </div>

@@ -11,6 +11,7 @@ import { CSSTransition } from "react-transition-group";
 import { FiTrash2 } from "react-icons/fi";
 import { useShopBranding } from "@/context/ShopBrandingContext";
 import { FiX } from "react-icons/fi";
+import { useTranslation } from "@/context/TranslationsContext";
 
 type ModalStep = "codeInput" | "customerOptions";
 type Membership = { points: number };
@@ -56,6 +57,7 @@ export default function PromoCodeModal({
     currentlyUsedPoints = 0,
     currentlyUsedCredits = 0,
 }: PromoCodeModalProps) {
+    const { t } = useTranslation();
     // Refs for fade transitions
     const overlayRef = useRef<HTMLDivElement>(null);
     const modalRef = useRef<HTMLDivElement>(null);
@@ -259,7 +261,7 @@ export default function PromoCodeModal({
                             {step === "codeInput" && (
                                 <>
                                     <h2 className={`${kioskTitleClass} font-semibold mb-4 text-center pt-6`}>
-                                        Enter / Scan Promo code
+                                        {t("promotion.title")}
                                     </h2>
                                     <form onSubmit={handleSubmitCode} className="flex flex-col gap-4">
                                         <input
@@ -287,7 +289,7 @@ export default function PromoCodeModal({
                         disabled:opacity-50
                       `}
                                         >
-                                            {promoLoading === "loading" ? <SpinnerIcon /> : "Apply"}
+                                            {promoLoading === "loading" ? <SpinnerIcon /> : t("promotion.apply")}
                                         </button>
                                     </form>
                                 </>
@@ -344,7 +346,7 @@ export default function PromoCodeModal({
                                                         htmlFor="extraCode"
                                                         className={`${kioskLabelClass} text-gray-600`}
                                                     >
-                                                        Apply Promo Code
+                                                        {t("order.cart.promo_code")}
                                                     </label>
                                                     <div className="flex items-center gap-3 flex-wrap justify-center">
                                                         <input
@@ -370,7 +372,7 @@ export default function PromoCodeModal({
                                 disabled:opacity-50
                               `}
                                                         >
-                                                            {promoLoading === "loading" ? <SpinnerIcon /> : "Apply"}
+                                                            {promoLoading === "loading" ? <SpinnerIcon /> : t("promotion.apply")}
                                                         </button>
                                                     </div>
                                                 </form>
@@ -491,7 +493,7 @@ export default function PromoCodeModal({
                                 disabled:opacity-50
                               `}
                                                         >
-                                                            {creditsLoading === "loading" ? <SpinnerIcon /> : "Apply"}
+                                                            {creditsLoading === "loading" ? <SpinnerIcon /> : t("promotion.apply")}
                                                         </button>
                                                     </div>
                                                     <small className={`${kioskSmallTextClass} text-gray-400`}>

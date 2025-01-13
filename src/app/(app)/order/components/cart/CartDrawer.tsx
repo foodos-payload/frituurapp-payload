@@ -382,6 +382,7 @@ export default function CartDrawer({
                             <div className={`flex ${isKiosk ? "flex-row gap-24" : "flex-col gap-3"} w-full max-w-5xl`}>
                                 <PromoButton
                                     // In kiosk mode => bigger text/padding
+                                    label={t("order.cart.promo_code")}
                                     buttonClass={isKiosk ? "p-5 text-2xl flex-1" : ""}
                                     isKiosk={isKiosk}
                                 />

@@ -1601,6 +1601,10 @@ export interface Order {
     };
   };
   /**
+   * The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.
+   */
+  userLocale?: string | null;
+  /**
    * If the order was placed from a kiosk, store the kiosk ID here.
    */
   kioskNumber?: number | null;
@@ -2422,6 +2426,7 @@ export interface OrdersSelect<T extends boolean = true> {
               used?: T;
             };
       };
+  userLocale?: T;
   kioskNumber?: T;
   updatedAt?: T;
   createdAt?: T;

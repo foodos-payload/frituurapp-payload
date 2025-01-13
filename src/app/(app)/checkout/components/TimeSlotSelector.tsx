@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo } from "react";
 import { Timeslot } from "./CheckoutPage";
+import { useTranslation } from "@/context/TranslationsContext";
 
 type FulfillmentMethod = "delivery" | "takeaway" | "dine_in" | "";
 
@@ -40,6 +41,7 @@ export default function TimeSlotSelector({
     setSelectedTime,
     closedDateReasons,
 }: TimeSlotSelectorProps) {
+    const { t } = useTranslation();
     const closedMap = closedDateReasons || new Map<string, string>();
 
     // 1) Filter timeslots that match the chosen fulfillment method
@@ -86,7 +88,7 @@ export default function TimeSlotSelector({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Date Select */}
                 <div>
-                    <label className="block text-sm font-semibold mb-1">Select Date</label>
+                    <label className="block text-sm font-semibold mb-1">{t("checkout.fulfillment_method.select_date")}</label>
                     <select
                         className="border rounded-xl w-full py-2 px-4"
                         value={selectedDate}
@@ -113,7 +115,7 @@ export default function TimeSlotSelector({
 
                 {/* Time Select */}
                 <div>
-                    <label className="block text-sm font-semibold mb-1">Select Time</label>
+                    <label className="block text-sm font-semibold mb-1">{t("checkout.fulfillment_method.select_time")}</label>
                     <select
                         className="border rounded-xl w-full py-2 px-4"
                         value={selectedTime}

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { FiCheckCircle } from "react-icons/fi";
 import { IoCashOutline } from "react-icons/io5";
 import { PaymentMethod } from "./CheckoutPage";
+import { useTranslation } from "@/context/TranslationsContext";
 
 /** 
  * The partial shape of your branding object.
@@ -29,6 +30,7 @@ export default function PaymentMethodSelector({
     setSelectedPaymentId,
     branding,
 }: PaymentMethodSelectorProps) {
+    const { t } = useTranslation();
     /**
      * Flatten or expand sub-methods for MultiSafePay.
      */
@@ -79,7 +81,7 @@ export default function PaymentMethodSelector({
 
     return (
         <div className="mb-4">
-            <h2 className="text-xl font-bold mb-2"><span className="text-2xl">3️⃣</span> Payment Method</h2>
+            <h2 className="text-xl font-bold mb-2"><span className="text-2xl">3️⃣</span> {t("checkout.payment_method.title")}</h2>
 
             <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
                 {displayItems.map((item) => {

@@ -1,5 +1,5 @@
 {
-  "general": { "tapToOrder": "TAP TO ORDER" },
+  "general": { "tapToOrder": "TAP TO ORDER", "forgot_something": "Forgot something?" },
   "chooseMode": {
     "title": "Order here",
     "dineIn": {
@@ -24,9 +24,40 @@
       "title": "Cart",
       "empty": "Your cart is empty",
       "edit_product": "Edit",
+      "promo_code": "Apply Promo Code / Scan QR",
       "checkout": "Checkout"
     },
     "popup": { "next": "Next", "back": "Back", "confirm": "Confirm" }
+  },
+  "promotion": {
+    "title": "Enter / Scan Promo code",
+    "apply": "Apply"
+  },
+  "checkout": {
+    "fulfillment_method": {
+      "title": "Fulfillment Method",
+      "select_date": "Select Date",
+      "select_time": "Select Time"
+    },
+    "your_details": {
+      "title": "Your Details",
+      "surname": "Surname",
+      "lastname": "Last Name",
+      "email": "Email",
+      "optional": "optional",
+      "phone": "Phone"
+    },
+    "payment_method": {
+      "title": "Payment Method"
+    },
+    "order_summary": {
+      "title": "Order Summary",
+      "subtotal": "Subtotal",
+      "shipping": "Shipping",
+      "total": "Total",
+      "proceed_to_checkout": "Proceed to Checkout",
+      "check_info": "Please check if all info is filled"
+    }
   },
   "kitchen": {
     "topBar": {
