@@ -147,7 +147,6 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
     // H) printOrder => console or real print call
     async function printOrder(orderId: number, type: "kitchen" | "customer" | "both") {
         try {
-            // 1) Find the order in our local array
             const orderData = orders.find(o => o.id === orderId)
             if (!orderData) {
                 console.warn(`No local order found with ID=${orderId}`)
@@ -156,22 +155,8 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
 
             console.log(`Attempting to print order #${orderId} as [${type}] on kitchen printers...`)
 
-            // 2) Figure out the shop IDs from the order
-            //    If your 'order.shops' can be array of objects or strings, unify them:
-            const shopIDs = Array.isArray(orderData.shops)
-                ? orderData.shops.map((s: any) =>
-                    typeof s === "object" ? s.id : s
-                )
-                : [orderData.shops]
-
-            if (!shopIDs?.length) {
-                console.warn("No shops found on this order; skipping print.")
-                return
-            }
-
-            // 3) Fetch printers with printer_type = kitchen that match these shops
             const printersRes = await fetch(
-                `/api/printers?host=${encodeURIComponent(hostSlug)}&type=kitchen&shops=${shopIDs.join(",")}`
+                `/api/printers?host=${encodeURIComponent(hostSlug)}&type=kitchen`
             )
             if (!printersRes.ok) {
                 throw new Error(`Failed to fetch kitchen printers, status ${printersRes.status}`)
@@ -184,7 +169,6 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
                 return
             }
 
-            // 4) For each kitchen printer, call /api/printOrder
             for (const p of printers) {
                 try {
                     console.log(`Printing to kitchen printer ${p.printer_name} for order #${orderId}, type=[${type}]`)
