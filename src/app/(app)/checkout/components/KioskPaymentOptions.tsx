@@ -198,6 +198,7 @@ export default function KioskPaymentOptions({
 
                     setPaymentErrorMessage("Payment was cancelled. Please try again.");
                     setLoadingState(null);
+                    return;
                 }
                 // Optionally handle other statuses like "completed"
             } catch (error) {
