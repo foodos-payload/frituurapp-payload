@@ -495,81 +495,73 @@ export const Orders: CollectionConfig = {
         // ───────────────────────────────────────────────────
         if (operation === 'create' && doc.status !== 'pending_payment') {
           try {
-            // 1) Gather shop IDs
-            const shopIDs = Array.isArray(doc.shops)
-              ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
-              : [doc.shops];
-
-            if (!shopIDs.length) {
-              console.warn('No shops found on this order; skipping print logic.');
-              return;
-            }
-
-            // 2) Find all kitchen printers for these shops
-            const printers = await req.payload.find({
-              collection: 'printers',
-              where: {
-                and: [
-                  { shops: { in: shopIDs } },
-                  { printer_type: { equals: 'kitchen' } },
-                  { print_enabled: { equals: true } },
-                ],
-              },
-              limit: 50,
-            });
-
-            // 3) For each printer, call /api/printOrder
-            for (const p of printers.docs) {
-              try {
-                // Always print the "kitchen" ticket
-                await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    printerName: p.printer_name,
-                    ticketType: 'kitchen',
-                    orderData: doc,
-                  }),
-                });
-
-                // If that printer also prints a customer copy
-                if (p?.customer_enabled === true) {
-                  await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      printerName: p.printer_name,
-                      ticketType: 'customer',
-                      orderData: doc,
-                    }),
-                  });
-                }
-              } catch (printErr) {
-                console.error(`Error printing to printer ${p.printer_name}:`, printErr);
+            if (doc.order_type === 'kiosk') {
+              // ───────────────────────────────────────────────────
+              // KIOSK LOGIC (create)
+              // ───────────────────────────────────────────────────
+              if (!doc.kioskNumber) {
+                console.warn('Order is kiosk-type, but no kioskNumber found; skipping kiosk print.');
+                return;
               }
-            }
-          } catch (err) {
-            console.error('Error in order afterChange print hook (create):', err);
-          }
-          return; // Stop here for the create case
-        }
 
-        // ───────────────────────────────────────────────────
-        // B) EXISTING order updated: from pending_payment → something else
-        // ───────────────────────────────────────────────────
-        if (operation === 'update') {
-          const oldStatus = previousDoc?.status;
-          const newStatus = doc.status;
-
-          if (oldStatus === 'pending_payment' && newStatus !== 'pending_payment') {
-            try {
               // 1) Gather shop IDs
               const shopIDs = Array.isArray(doc.shops)
                 ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
                 : [doc.shops];
 
               if (!shopIDs.length) {
-                console.warn('No shops found on this order; skipping print logic.');
+                console.warn('No shops found on this kiosk order; skipping kiosk print.');
+                return;
+              }
+
+              // 2) Find kiosk printers for these shops
+              const kioskPrinters = await req.payload.find({
+                collection: 'printers',
+                where: {
+                  and: [
+                    { shops: { in: shopIDs } },
+                    { printer_type: { equals: 'kiosk' } },
+                    { print_enabled: { equals: true } },
+                  ],
+                },
+                limit: 50,
+              });
+
+              // 3) Print only the "customer" ticket on the matching kiosk printer
+              for (const p of kioskPrinters.docs) {
+                try {
+                  const nameParts = p.printer_name?.split('-') || [];
+                  const lastPart = nameParts[nameParts.length - 1];
+
+                  // If last part matches doc.kioskNumber => print
+                  if (String(lastPart) === String(doc.kioskNumber)) {
+                    await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        printerName: p.printer_name,
+                        ticketType: 'customer', // kiosk only prints a customer ticket
+                        orderData: doc,
+                      }),
+                    });
+                  }
+                } catch (kioskErr) {
+                  console.error(`Error printing kiosk ticket to printer ${p.printer_name}:`, kioskErr);
+                }
+              }
+
+              // ───────────────────────────────────────────────────
+            } else {
+              // ───────────────────────────────────────────────────
+              // KITCHEN LOGIC (create)
+              // ───────────────────────────────────────────────────
+              // 1) Gather shop IDs
+              const shopIDs = Array.isArray(doc.shops)
+                ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
+                : [doc.shops];
+
+              if (!shopIDs.length) {
+                console.warn('No shops found on this order; skipping kitchen print.');
                 return;
               }
 
@@ -586,7 +578,7 @@ export const Orders: CollectionConfig = {
                 limit: 50,
               });
 
-              // 3) Print just like above
+              // 3) Print the "kitchen" ticket, and optionally customer
               for (const p of printers.docs) {
                 try {
                   // Always print the "kitchen" ticket
@@ -614,6 +606,134 @@ export const Orders: CollectionConfig = {
                   }
                 } catch (printErr) {
                   console.error(`Error printing to printer ${p.printer_name}:`, printErr);
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Error in order afterChange print hook (create):', err);
+          }
+          return; // Stop here for the create case
+        }
+
+        // ───────────────────────────────────────────────────
+        // B) EXISTING order updated: from pending_payment → something else
+        // ───────────────────────────────────────────────────
+        if (operation === 'update') {
+          const oldStatus = previousDoc?.status;
+          const newStatus = doc.status;
+
+          if (oldStatus === 'pending_payment' && newStatus !== 'pending_payment') {
+            try {
+              if (doc.order_type === 'kiosk') {
+                // ───────────────────────────────────────────────────
+                // KIOSK LOGIC (update)
+                // ───────────────────────────────────────────────────
+                if (!doc.kioskNumber) {
+                  console.warn('Order is kiosk-type, but no kioskNumber found; skipping kiosk print.');
+                  return;
+                }
+
+                // 1) Gather shop IDs
+                const shopIDs = Array.isArray(doc.shops)
+                  ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
+                  : [doc.shops];
+
+                if (!shopIDs.length) {
+                  console.warn('No shops found on this kiosk order; skipping kiosk print.');
+                  return;
+                }
+
+                // 2) Find kiosk printers
+                const kioskPrinters = await req.payload.find({
+                  collection: 'printers',
+                  where: {
+                    and: [
+                      { shops: { in: shopIDs } },
+                      { printer_type: { equals: 'kiosk' } },
+                      { print_enabled: { equals: true } },
+                    ],
+                  },
+                  limit: 50,
+                });
+
+                // 3) Print only the "customer" ticket on the matching kiosk printer
+                for (const p of kioskPrinters.docs) {
+                  try {
+                    const nameParts = p.printer_name.split('-');
+                    const lastPart = nameParts[nameParts.length - 1];
+                    if (String(lastPart) === String(doc.kioskNumber)) {
+                      await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          printerName: p.printer_name,
+                          ticketType: 'customer', // kiosk only prints a customer ticket
+                          orderData: doc,
+                        }),
+                      });
+                    }
+                  } catch (kioskErr) {
+                    console.error(`Error printing kiosk ticket to printer ${p.printer_name}:`, kioskErr);
+                  }
+                }
+
+                // ───────────────────────────────────────────────────
+              } else {
+                // ───────────────────────────────────────────────────
+                // KITCHEN LOGIC (update)
+                // ───────────────────────────────────────────────────
+                // 1) Gather shop IDs
+                const shopIDs = Array.isArray(doc.shops)
+                  ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
+                  : [doc.shops];
+
+                if (!shopIDs.length) {
+                  console.warn('No shops found on this order; skipping print logic.');
+                  return;
+                }
+
+                // 2) Find all kitchen printers for these shops
+                const printers = await req.payload.find({
+                  collection: 'printers',
+                  where: {
+                    and: [
+                      { shops: { in: shopIDs } },
+                      { printer_type: { equals: 'kitchen' } },
+                      { print_enabled: { equals: true } },
+                    ],
+                  },
+                  limit: 50,
+                });
+
+                // 3) Print "kitchen" + optional "customer"
+                for (const p of printers.docs) {
+                  try {
+                    // Always print the "kitchen" ticket
+                    await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        printerName: p.printer_name,
+                        ticketType: 'kitchen',
+                        orderData: doc,
+                      }),
+                    });
+
+                    // If that printer also prints a customer copy
+                    if (p?.customer_enabled === true) {
+                      await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          printerName: p.printer_name,
+                          ticketType: 'customer',
+                          orderData: doc,
+                        }),
+                      });
+                    }
+                  } catch (printErr) {
+                    console.error(`Error printing to printer ${p.printer_name}:`, printErr);
+                  }
                 }
               }
             } catch (err) {

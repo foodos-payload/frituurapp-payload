@@ -161,6 +161,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing orderData' }, { status: 400 });
         }
 
+        console.log(orderData)
         const typesToPrint = ticketType === 'both'
             ? ['kitchen', 'customer']
             : [ticketType];
