@@ -305,7 +305,7 @@ export default buildConfig({
     'http://frituurapp.ngrok.dev',
   ],
   db: mongooseAdapter({
-    url: 'mongodb://root:VKTW8TWzwfczQdWZoPla0ZW7F8C59GnwRE3kIWVmkcuYSHfAQv9fn9lLxxlEbXOQ@46.202.159.85:5432/?directConnection=true',
+    url: process.env.DATABASE_URI || '',
   }),
   editor: lexicalEditor({}),
   email: nodemailerAdapter({
