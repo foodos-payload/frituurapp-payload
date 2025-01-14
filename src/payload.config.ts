@@ -26,6 +26,7 @@ import { DigitalMenus } from './collections/DigitalMenus'
 import { Customers } from './collections/Customers';
 import { CustomerCredits } from './collections/CustomerCredits';
 import { CustomerLoyalty } from './collections/CustomerLoyalty';
+import { Tipping } from './collections/Tipping';
 import { MembershipRoles } from './collections/MembershipRoles';
 import { Coupons } from './collections/Coupons';
 import { GiftVouchers } from './collections/GiftVouchers';
@@ -149,7 +150,9 @@ export default buildConfig({
         group: '🛠️'
       }
     },
-
+    {
+      ...Tipping, admin: { ...Tipping.admin, group: '🛠️' }
+    },
     {
       ...Pages,
       admin: {
@@ -286,7 +289,7 @@ export default buildConfig({
     'http://frituurapp.ngrok.dev',
   ],
   db: mongooseAdapter({
-    url: process.env.DATABASE_URI || '',
+    url: 'mongodb://root:VKTW8TWzwfczQdWZoPla0ZW7F8C59GnwRE3kIWVmkcuYSHfAQv9fn9lLxxlEbXOQ@46.202.159.85:5432/?directConnection=true',
   }),
   editor: lexicalEditor({}),
   email: nodemailerAdapter({

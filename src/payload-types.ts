@@ -24,6 +24,7 @@ export interface Config {
     tables: Table;
     printers: Printer;
     pos: Po;
+    tipping: Tipping;
     pages: Page;
     media: Media;
     customers: Customer;
@@ -56,6 +57,7 @@ export interface Config {
     tables: TablesSelect<false> | TablesSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
     pos: PosSelect<false> | PosSelect<true>;
+    tipping: TippingSelect<false> | TippingSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     customers: CustomersSelect<false> | CustomersSelect<true>;
@@ -1203,6 +1205,39 @@ export interface Po {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tipping".
+ */
+export interface Tipping {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  title: string;
+  /**
+   * Toggle to enable or disable tip functionality for this shop.
+   */
+  enabled?: boolean | null;
+  /**
+   * If enabled, a "round up" option will be shown to the customer.
+   */
+  enableRoundUp?: boolean | null;
+  /**
+   * Define quick-select tip amounts (percentage or fixed).
+   */
+  tipOptions?:
+    | {
+        type: 'percentage' | 'fixed';
+        /**
+         * E.g. 5 => 5% if type=percentage, or €5 if type=fixed.
+         */
+        value: number;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */
 export interface Page {
@@ -1604,6 +1639,16 @@ export interface Order {
       used?: boolean | null;
     };
   };
+  tippingUsed?: {
+    /**
+     * Specifies whether the tip is a fixed amount, a percentage, a round-up, or none.
+     */
+    type?: ('none' | 'fixed' | 'percentage' | 'round_up') | null;
+    /**
+     * The numeric tip value (e.g. 2.50 for €2.50, or 10 for 10%).
+     */
+    amount?: number | null;
+  };
   /**
    * The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.
    */
@@ -1673,6 +1718,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pos';
         value: string | Po;
+      } | null)
+    | ({
+        relationTo: 'tipping';
+        value: string | Tipping;
       } | null)
     | ({
         relationTo: 'pages';
@@ -2157,6 +2206,26 @@ export interface PosSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tipping_select".
+ */
+export interface TippingSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  title?: T;
+  enabled?: T;
+  enableRoundUp?: T;
+  tipOptions?:
+    | T
+    | {
+        type?: T;
+        value?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages_select".
  */
 export interface PagesSelect<T extends boolean = true> {
@@ -2431,6 +2500,12 @@ export interface OrdersSelect<T extends boolean = true> {
               valid_until?: T;
               used?: T;
             };
+      };
+  tippingUsed?:
+    | T
+    | {
+        type?: T;
+        amount?: T;
       };
   userLocale?: T;
   kioskNumber?: T;
