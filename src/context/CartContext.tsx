@@ -9,6 +9,8 @@ import React, {
     ReactNode,
 } from "react";
 
+import { usePathname } from "next/navigation";
+
 /* ─────────────────────────────────────────────────────────────────────
    1) Types for subproducts, cart items, etc.
    ───────────────────────────────────────────────────────────────────── */
@@ -179,6 +181,13 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
+// 1) Utility hook to get the first path segment as shopSlug
+function useShopSlug() {
+    const pathname = usePathname();
+    const segments = pathname.split("/").filter(Boolean);
+    return segments[0] || "";
+}
+
 export function useCart() {
     const context = useContext(CartContext);
     if (!context) {
@@ -205,6 +214,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
     const [selectedShippingMethod, setSelectedShippingMethod] =
         useState<"dine-in" | "takeaway" | "delivery" | null>(null);
+
+    const shopSlug = useShopSlug();
 
     // Discounts / loyalty
     const [coupon, setCoupon] = useState<CouponInfo | null>(null);
@@ -393,9 +404,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     }
 
-
     async function fetchCouponsAndGiftVouchers() {
-        const shopSlug = "frituur-den-overkant";
         try {
             const res = await fetch(
                 `/api/getCouponsAndGiftVouchers?shop=${encodeURIComponent(shopSlug)}`
@@ -411,17 +420,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     async function applyCoupon(code: string) {
-        const shopSlug = "frituur-den-overkant";
         try {
-            const res = await fetch(`/api/getCouponsAndGiftVouchers?shop=${shopSlug}`);
+            const res = await fetch(
+                `/api/getCouponsAndGiftVouchers?shop=${encodeURIComponent(shopSlug)}`
+            );
             if (!res.ok) {
                 return;
             }
             const data = await res.json();
             const match = data.coupons.find((c: any) => c.barcode === code);
-            if (!match) {
-                return;
-            }
+            if (!match) return;
+
             setCoupon({
                 id: match.id,
                 barcode: match.barcode,
@@ -443,17 +452,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     async function applyGiftVoucher(code: string) {
-        const shopSlug = "frituur-den-overkant";
         try {
-            const res = await fetch(`/api/getCouponsAndGiftVouchers?shop=${shopSlug}`);
-            if (!res.ok) {
-                return;
-            }
+            const res = await fetch(
+                `/api/getCouponsAndGiftVouchers?shop=${encodeURIComponent(shopSlug)}`
+            );
+            if (!res.ok) return;
+
             const data = await res.json();
             const match = data.giftVouchers.find((gv: any) => gv.barcode === code);
-            if (!match) {
-                return;
-            }
+            if (!match) return;
+
             setGiftVoucher({
                 id: match.id,
                 barcode: match.barcode,
