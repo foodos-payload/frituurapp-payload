@@ -1,68 +1,76 @@
 /**
  * @openapi
  * /api/mspWebhook:
- *   post:
+ *   get:
  *     summary: MultiSafePay Webhook Endpoint
  *     description: >
- *       MSP sends POST notifications to this endpoint with `orderId` and `transactionid`.  
- *       The webhook updates the local order's status based on the notification.
+ *       MSP sends GET notifications to this endpoint with `orderId` and `transactionid`.  
+ *       We directly call our `checkPaymentStatus` utility to confirm the status in MSP,
+ *       then we can update the local order doc accordingly.
  *     tags:
  *       - MSP Webhooks
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               orderId:
- *                 type: string
- *                 description: The local order ID (numeric, stored as string in request body)
- *               transactionid:
- *                 type: string
- *                 description: MSP's transaction reference (optional for logging)
+ *     parameters:
+ *       - in: query
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The local order ID (numeric, stored as string in query)
+ *       - in: query
+ *         name: transactionid
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: MSP's transaction reference (optional for logging)
+ *       - in: query
+ *         name: timestamp
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: A timestamp
  *     responses:
  *       200:
  *         description: Webhook processed successfully
  *       400:
- *         description: Missing or invalid request body
+ *         description: Missing or invalid query params
  *       500:
  *         description: Server error
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { checkPaymentStatus } from '@/lib/payments/checkPaymentStatus';
-import { getPayload } from 'payload';
-import config from '@payload-config';
+import { NextRequest, NextResponse } from 'next/server'
+import { checkPaymentStatus } from '@/lib/payments/checkPaymentStatus'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
     try {
-        const body = await req.json();
-        const orderIdParam = body.orderId;
-        const transactionId = body.transactionid;
+        const { searchParams } = req.nextUrl
+        const orderIdParam = searchParams.get('orderId')
+        const transactionId = searchParams.get('transactionid') // optional
 
         if (!orderIdParam) {
             return NextResponse.json(
-                { error: 'Missing orderId in request body' },
-                { status: 400 }
-            );
+                { error: 'Missing orderId in query params' },
+                { status: 400 },
+            )
         }
 
-        const orderId = Number(orderIdParam);
+        const orderId = Number(orderIdParam)
         if (Number.isNaN(orderId)) {
             return NextResponse.json(
-                { error: `Invalid orderId: "${orderIdParam}"` },
-                { status: 400 }
-            );
+                { error: `orderId must be a valid number, got "${orderIdParam}"` },
+                { status: 400 },
+            )
         }
 
-        // Fetch the current status from MultiSafePay
-        const { orderDoc, providerResult } = await checkPaymentStatus(orderId);
+        // 1) Use our local function to check the payment status
+        const { orderDoc, providerResult } = await checkPaymentStatus(orderId)
 
-        // Map MultiSafePay statuses to local order statuses
-        let localOrderStatus = orderDoc.status;
+        // 2) Convert MSP status to local status (if needed)
+        let localOrderStatus = orderDoc.status
         if (providerResult.status === 'completed') {
-            localOrderStatus = 'in_preparation'; // Update to "in_preparation" upon notification
+            // Instead of "complete", move to "awaiting_preparation"
+            localOrderStatus = 'awaiting_preparation';
         } else if (providerResult.status === 'cancelled') {
             localOrderStatus = 'cancelled';
         } else if (
@@ -72,28 +80,28 @@ export async function POST(req: NextRequest) {
             localOrderStatus = 'pending_payment';
         }
 
-        // Update the local order status if it has changed
+        // 3) If the status changed, update the local DB
         if (localOrderStatus !== orderDoc.status) {
-            const payload = await getPayload({ config });
+            const payload = await getPayload({ config })
             await payload.update({
                 collection: 'orders',
                 id: String(orderDoc.id),
                 data: {
                     status: localOrderStatus,
                 },
-            });
+            })
         }
 
-        // Acknowledge the webhook
+        // 4) Return success to MSP
         return NextResponse.json({
-            message: 'Webhook processed successfully',
+            message: 'Webhook processed successfully (direct local call)',
             orderId,
             transactionId,
             providerStatus: providerResult.status,
             localStatus: localOrderStatus,
-        });
+        })
     } catch (err: any) {
-        console.error('Error in mspWebhook route:', err.message, err.stack);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        console.error('Error in mspWebhook route:', err)
+        return NextResponse.json({ error: err.message }, { status: 500 })
     }
 }
