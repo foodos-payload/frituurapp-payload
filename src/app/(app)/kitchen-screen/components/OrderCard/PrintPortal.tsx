@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useLayoutEffect } from "react";
+import React, {
+    useState,
+    useRef,
+    useLayoutEffect,
+    useEffect,
+    MouseEvent,
+    RefObject,
+} from "react";
 import { createPortal } from "react-dom";
 import { FaPrint } from "react-icons/fa";
 
@@ -9,32 +16,87 @@ interface PrintPortalProps {
     onPrintCustomer(): void;
 }
 
+/**
+ * This component:
+ *  - Places a trigger button in-line (using buttonRef).
+ *  - Portals the popover into <body> with absolute positioning
+ *    near the button's boundingClientRect.
+ *  - Re-positions on window scroll/resize for a better chance
+ *    of staying aligned on tablets, etc.
+ *  - Closes when user clicks outside the popover or the button.
+ */
 export function PrintPortal({ onPrintKitchen, onPrintCustomer }: PrintPortalProps) {
-    // We'll store the popover's "open" state and position here
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState({ x: 0, y: 0 });
-
-    // The button ref => to measure bounding box
     const btnRef = useRef<HTMLButtonElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
 
-    // When user clicks the trigger button => toggle
+    // 1) Toggles the popover open/closed
     function handleToggle(e: React.MouseEvent) {
         e.stopPropagation();
-        // If we are opening => measure the button's bounding box
-        if (!isOpen && btnRef.current) {
-            const rect = btnRef.current.getBoundingClientRect();
-            // We'll position the popover just below & aligned to the right edge
-            setCoords({
-                x: rect.right - 110, // 110 is the popover width
-                y: rect.bottom,
-            });
-        }
-        setIsOpen((prev) => !prev);
+        setIsOpen((prev) => {
+            // If we’re about to open, measure position
+            if (!prev) measurePosition();
+            return !prev;
+        });
     }
 
-    // The popover menu node that will be portaled into <body>
+    // 2) Measure the button => set popover coords
+    function measurePosition() {
+        if (!btnRef.current) return;
+        const rect = btnRef.current.getBoundingClientRect();
+
+        // Example logic: popover is 110px wide => align right edges
+        const popoverWidth = 110;
+        const x = rect.right - popoverWidth;
+        const y = rect.bottom;
+
+        setCoords({ x, y });
+    }
+
+    // 3) Re-measure on scroll/resize if open
+    useEffect(() => {
+        if (!isOpen) return;
+
+        function handleReposition() {
+            measurePosition();
+        }
+
+        window.addEventListener("scroll", handleReposition, true);
+        window.addEventListener("resize", handleReposition, true);
+
+        return () => {
+            window.removeEventListener("scroll", handleReposition, true);
+            window.removeEventListener("resize", handleReposition, true);
+        };
+    }, [isOpen]);
+
+    // 4) Close if user clicks outside
+    useEffect(() => {
+        if (!isOpen) return;
+
+        function handleDocClick(e: Event) {
+            if (
+                !popoverRef.current?.contains(e.target as Node) &&
+                !btnRef.current?.contains(e.target as Node)
+            ) {
+                setIsOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleDocClick, true);
+        document.addEventListener("touchstart", handleDocClick, true);
+
+        return () => {
+            document.removeEventListener("mousedown", handleDocClick, true);
+            document.removeEventListener("touchstart", handleDocClick, true);
+        };
+    }, [isOpen]);
+
+    // 5) The popover menu
     const popoverMenu = (
         <div
+            ref={popoverRef}
             style={{
                 position: "absolute",
                 top: coords.y,
@@ -42,11 +104,10 @@ export function PrintPortal({ onPrintKitchen, onPrintCustomer }: PrintPortalProp
                 width: "110px",
             }}
             className={`
-        bg-white border border-gray-200 shadow-lg rounded-2xl p-2 z-[9999] 
-        origin-top-right transition transform
-        ${isOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}
+        bg-white border border-gray-200 shadow-lg rounded-2xl p-2 z-[9999]
+        origin-top-right transition-transform
+        ${isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}
       `}
-            onClick={(e) => e.stopPropagation()} // so click inside doesn't close it
         >
             <button
                 onClick={() => {
@@ -71,7 +132,7 @@ export function PrintPortal({ onPrintKitchen, onPrintCustomer }: PrintPortalProp
 
     return (
         <div className="inline-block">
-            {/* The trigger button: same styling as before, but with ref */}
+            {/* The trigger button in the card */}
             <button
                 ref={btnRef}
                 onClick={handleToggle}
@@ -80,7 +141,7 @@ export function PrintPortal({ onPrintKitchen, onPrintCustomer }: PrintPortalProp
                 <FaPrint size={14} />
             </button>
 
-            {/* If open => portal the popover */}
+            {/* Render the popover in <body> if open */}
             {isOpen && createPortal(popoverMenu, document.body)}
         </div>
     );
