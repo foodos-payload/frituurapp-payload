@@ -156,7 +156,7 @@ export default function KioskPaymentOptions({
         }
 
         // Use the proxy endpoint
-        const streamUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}`;
+        const streamUrl = `https://frituur-den-overkant.frituurwebshop.be/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}`;
         console.log("[Stream] Connecting to:", streamUrl);
 
         try {
