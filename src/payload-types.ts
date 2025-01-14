@@ -119,11 +119,11 @@ export interface Tenant {
   id: string;
   name: string;
   domains?:
-  | {
-    domain: string;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        domain: string;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Used for URL paths, example: /tenant-slug/page-slug.
    */
@@ -146,18 +146,18 @@ export interface User {
    */
   roles?: (string | Role)[] | null;
   tenants?:
-  | {
-    /**
-     * Assign tenants to the user.
-     */
-    tenant: string | Tenant;
-    /**
-     * Assign roles specific to the tenant.
-     */
-    roles: ('tenant-admin' | 'tenant-viewer')[];
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        /**
+         * Assign tenants to the user.
+         */
+        tenant: string | Tenant;
+        /**
+         * Assign roles specific to the tenant.
+         */
+        roles: ('tenant-admin' | 'tenant-viewer')[];
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Assign shops to the user.
    */
@@ -166,7 +166,24 @@ export interface User {
    * The username of the user.
    */
   username?: string | null;
-  password: string | null;
+  transactions?:
+    | {
+        service?: (string | null) | Service;
+        status?: ('success' | 'failed') | null;
+        date?: string | null;
+        amount?: number | null;
+        currency?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  service?: (string | null) | Service;
+  status?: ('active' | 'inactive') | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  subscription_amount?: number | null;
+  subscription_currency?: string | null;
+  subscription_id?: string | null;
+  stripe_customer_id?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -176,6 +193,27 @@ export interface User {
   hash?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
+  password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "roles".
+ */
+export interface Role {
+  id: string;
+  name?: string | null;
+  collections?:
+    | {
+        collectionName?: string | null;
+        read?: boolean | null;
+        create?: boolean | null;
+        update?: boolean | null;
+        delete?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -239,18 +277,18 @@ export interface Shop {
    * List of dates when the shop is exceptionally closed.
    */
   exceptionally_closed_days?:
-  | {
-    /**
-     * The date when the shop is closed.
-     */
-    date: string;
-    /**
-     * The reason for the closure.
-     */
-    reason?: string | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        /**
+         * The date when the shop is closed.
+         */
+        date: string;
+        /**
+         * The reason for the closure.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -313,11 +351,11 @@ export interface Media {
    * Optional tags to organize media files.
    */
   tags?:
-  | {
-    tag?: string | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Blurhash representation of the image for quick previews.
    */
@@ -398,18 +436,18 @@ export interface PaymentMethod {
    */
   enabled?: boolean | null;
   terminal_ids?:
-  | {
-    /**
-     * Name of the kiosk.
-     */
-    kiosk: number;
-    /**
-     * Terminal ID for the kiosk.
-     */
-    terminal_id: string;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        /**
+         * Name of the kiosk.
+         */
+        kiosk: number;
+        /**
+         * Terminal ID for the kiosk.
+         */
+        terminal_id: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -494,75 +532,75 @@ export interface Timeslot {
    */
   week?: {
     monday?:
-    | {
-      start_time: string;
-      end_time: string;
-      interval_minutes?: number | null;
-      max_orders?: number | null;
-      status?: boolean | null;
-      id?: string | null;
-    }[]
-    | null;
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
     tuesday?:
-    | {
-      start_time: string;
-      end_time: string;
-      interval_minutes?: number | null;
-      max_orders?: number | null;
-      status?: boolean | null;
-      id?: string | null;
-    }[]
-    | null;
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
     wednesday?:
-    | {
-      start_time: string;
-      end_time: string;
-      interval_minutes?: number | null;
-      max_orders?: number | null;
-      status?: boolean | null;
-      id?: string | null;
-    }[]
-    | null;
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
     thursday?:
-    | {
-      start_time: string;
-      end_time: string;
-      interval_minutes?: number | null;
-      max_orders?: number | null;
-      status?: boolean | null;
-      id?: string | null;
-    }[]
-    | null;
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
     friday?:
-    | {
-      start_time: string;
-      end_time: string;
-      interval_minutes?: number | null;
-      max_orders?: number | null;
-      status?: boolean | null;
-      id?: string | null;
-    }[]
-    | null;
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
     saturday?:
-    | {
-      start_time: string;
-      end_time: string;
-      interval_minutes?: number | null;
-      max_orders?: number | null;
-      status?: boolean | null;
-      id?: string | null;
-    }[]
-    | null;
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
     sunday?:
-    | {
-      start_time: string;
-      end_time: string;
-      interval_minutes?: number | null;
-      max_orders?: number | null;
-      status?: boolean | null;
-      id?: string | null;
-    }[]
-    | null;
+      | {
+          start_time: string;
+          end_time: string;
+          interval_minutes?: number | null;
+          max_orders?: number | null;
+          status?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -623,71 +661,13 @@ export interface ShopBranding {
    * Multiple videos to loop endlessly if provided.
    */
   kioskIdleVideos?:
-  | {
-    video: string | Media;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        video: string | Media;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  tenant: string | Tenant;
-  /**
-   * Optional tags to organize media files.
-   */
-  tags?:
-  | {
-    tag?: string | null;
-    id?: string | null;
-  }[]
-  | null;
-  /**
-   * Blurhash representation of the image for quick previews.
-   */
-  blurhash?: string | null;
-  /**
-   * URL of the original image in S3.
-   */
-  s3_url?: string | null;
-  /**
-   * Alternative text for the media file to improve accessibility.
-   */
-  alt_text?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    medium?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -701,13 +681,13 @@ export interface DigitalMenu {
   shopBranding?: (string | null) | ShopBranding;
   maxRows?: number | null;
   categoryOverrides?:
-  | {
-    category: string | Category;
-    displayName?: string | null;
-    columnsForProducts?: number | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        category: string | Category;
+        displayName?: string | null;
+        columnsForProducts?: number | null;
+        id?: string | null;
+      }[]
+    | null;
   products?: (string | Product)[] | null;
   autoRotateInterval?: number | null;
   updatedAt: string;
@@ -761,15 +741,15 @@ export interface Category {
    * Assign product popups to this category. These popups will apply to all products in the category.
    */
   productpopups?:
-  | {
-    popup: string | Productpopup;
-    /**
-     * The order in which this popup will appear.
-     */
-    order?: number | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        popup: string | Productpopup;
+        /**
+         * The order in which this popup will appear.
+         */
+        order?: number | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -956,22 +936,22 @@ export interface Product {
    * Select all allergens that apply to this product.
    */
   allergens?:
-  | (
-    | 'gluten'
-    | 'eggs'
-    | 'fish'
-    | 'peanuts'
-    | 'soybeans'
-    | 'milk'
-    | 'nuts'
-    | 'celery'
-    | 'mustard'
-    | 'sesame'
-    | 'sulphites'
-    | 'lupin'
-    | 'molluscs'
-  )[]
-  | null;
+    | (
+        | 'gluten'
+        | 'eggs'
+        | 'fish'
+        | 'peanuts'
+        | 'soybeans'
+        | 'milk'
+        | 'nuts'
+        | 'celery'
+        | 'mustard'
+        | 'sesame'
+        | 'sulphites'
+        | 'lupin'
+        | 'molluscs'
+      )[]
+    | null;
   /**
    * Use a unified sale price for all fulfillment methods.
    */
@@ -1072,18 +1052,18 @@ export interface Product {
    * Assign popups to this product and define their order.
    */
   productpopups?:
-  | {
-    /**
-     * Select a popup to assign to this product.
-     */
-    popup: string | Productpopup;
-    /**
-     * Order in which this popup appears in the product workflow.
-     */
-    order: number;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        /**
+         * Select a popup to assign to this product.
+         */
+        popup: string | Productpopup;
+        /**
+         * Order in which this popup appears in the product workflow.
+         */
+        order: number;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1181,54 +1161,54 @@ export interface ReservationSetting {
    * Define multiple reservation periods.
    */
   reservation_periods?:
-  | {
-    start_date: string;
-    end_date: string;
-    start_time: string;
-    end_time: string;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        start_date: string;
+        end_date: string;
+        start_time: string;
+        end_time: string;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Define holidays when reservations are not allowed.
    */
   holidays?:
-  | {
-    start_date: string;
-    end_date: string;
-    /**
-     * Optional reason for the holiday period.
-     */
-    reason?: string | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        start_date: string;
+        end_date: string;
+        /**
+         * Optional reason for the holiday period.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * List of fully booked days.
    */
   fully_booked_days?:
-  | {
-    date: string;
-    /**
-     * Optional reason for marking the day as fully booked.
-     */
-    reason?: string | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        date: string;
+        /**
+         * Optional reason for marking the day as fully booked.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * List of exceptions when reservations are not allowed.
    */
   exceptions?:
-  | {
-    exception_date: string;
-    /**
-     * Reason for the exception (optional).
-     */
-    reason?: string | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        exception_date: string;
+        /**
+         * Reason for the exception (optional).
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1334,15 +1314,15 @@ export interface Tipping {
    * Define quick-select tip amounts (percentage or fixed).
    */
   tipOptions?:
-  | {
-    type: 'percentage' | 'fixed';
-    /**
-     * E.g. 5 => 5% if type=percentage, or €5 if type=fixed.
-     */
-    value: number;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        type: 'percentage' | 'fixed';
+        /**
+         * E.g. 5 => 5% if type=percentage, or €5 if type=fixed.
+         */
+        value: number;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1401,27 +1381,27 @@ export interface Customer {
    */
   phone?: string | null;
   tags?:
-  | {
-    /**
-     * Tag ID associated with the customer.
-     */
-    tag_id?: string | null;
-    /**
-     * Type of tag (e.g., loyalty, preference).
-     */
-    tag_type?: string | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        /**
+         * Tag ID associated with the customer.
+         */
+        tag_id?: string | null;
+        /**
+         * Type of tag (e.g., loyalty, preference).
+         */
+        tag_type?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   memberships?:
-  | {
-    role: string | MembershipRole;
-    points?: number | null;
-    status?: ('active' | 'disabled') | null;
-    dateJoined?: string | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        role: string | MembershipRole;
+        points?: number | null;
+        status?: ('active' | 'disabled') | null;
+        dateJoined?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   barcode?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1632,13 +1612,13 @@ export interface Order {
    * Current status of the order.
    */
   status:
-  | 'pending_payment'
-  | 'awaiting_preparation'
-  | 'in_preparation'
-  | 'ready_for_pickup'
-  | 'in_delivery'
-  | 'complete'
-  | 'cancelled';
+    | 'pending_payment'
+    | 'awaiting_preparation'
+    | 'in_preparation'
+    | 'ready_for_pickup'
+    | 'in_delivery'
+    | 'complete'
+    | 'cancelled';
   /**
    * Type of order (POS, Web, or Kiosk).
    */
@@ -1647,47 +1627,47 @@ export interface Order {
    * List of products in the order (line items).
    */
   order_details?:
-  | {
-    product: string | Product;
-    quantity: number;
-    price: number;
-    tax?: number | null;
-    tax_dinein?: number | null;
-    name_nl?: string | null;
-    name_en?: string | null;
-    name_de?: string | null;
-    name_fr?: string | null;
-    subproducts?:
     | {
-      subproductId?: string | null;
-      name_nl?: string | null;
-      name_en?: string | null;
-      name_de?: string | null;
-      name_fr?: string | null;
-      price?: number | null;
-      tax?: number | null;
-      tax_dinein?: number | null;
-      /**
-       * If subproduct can have multiple units.
-       */
-      quantity?: number | null;
-      id?: string | null;
-    }[]
+        product: string | Product;
+        quantity: number;
+        price: number;
+        tax?: number | null;
+        tax_dinein?: number | null;
+        name_nl?: string | null;
+        name_en?: string | null;
+        name_de?: string | null;
+        name_fr?: string | null;
+        subproducts?:
+          | {
+              subproductId?: string | null;
+              name_nl?: string | null;
+              name_en?: string | null;
+              name_de?: string | null;
+              name_fr?: string | null;
+              price?: number | null;
+              tax?: number | null;
+              tax_dinein?: number | null;
+              /**
+               * If subproduct can have multiple units.
+               */
+              quantity?: number | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
     | null;
-    id?: string | null;
-  }[]
-  | null;
   /**
    * Payment details for the order.
    */
   payments?:
-  | {
-    payment_method: string | PaymentMethod;
-    sub_method_label?: string | null;
-    amount?: number | null;
-    id?: string | null;
-  }[]
-  | null;
+    | {
+        payment_method: string | PaymentMethod;
+        sub_method_label?: string | null;
+        amount?: number | null;
+        id?: string | null;
+      }[]
+    | null;
   fulfillment_method?: ('delivery' | 'takeaway' | 'dine_in') | null;
   fulfillment_date?: string | null;
   fulfillment_time?: string | null;
@@ -1777,122 +1757,122 @@ export interface Order {
 export interface PayloadLockedDocument {
   id: string;
   document?:
-  | ({
-    relationTo: 'tenants';
-    value: string | Tenant;
-  } | null)
-  | ({
-    relationTo: 'users';
-    value: string | User;
-  } | null)
-  | ({
-    relationTo: 'roles';
-    value: string | Role;
-  } | null)
-  | ({
-    relationTo: 'shops';
-    value: string | Shop;
-  } | null)
-  | ({
-    relationTo: 'payment-methods';
-    value: string | PaymentMethod;
-  } | null)
-  | ({
-    relationTo: 'fulfillment-methods';
-    value: string | FulfillmentMethod;
-  } | null)
-  | ({
-    relationTo: 'timeslots';
-    value: string | Timeslot;
-  } | null)
-  | ({
-    relationTo: 'shop-branding';
-    value: string | ShopBranding;
-  } | null)
-  | ({
-    relationTo: 'digital-menus';
-    value: string | DigitalMenu;
-  } | null)
-  | ({
-    relationTo: 'reservation-entries';
-    value: string | ReservationEntry;
-  } | null)
-  | ({
-    relationTo: 'reservation-settings';
-    value: string | ReservationSetting;
-  } | null)
-  | ({
-    relationTo: 'tables';
-    value: string | Table;
-  } | null)
-  | ({
-    relationTo: 'printers';
-    value: string | Printer;
-  } | null)
-  | ({
-    relationTo: 'pos';
-    value: string | Po;
-  } | null)
-  | ({
-    relationTo: 'tipping';
-    value: string | Tipping;
-  } | null)
-  | ({
-    relationTo: 'pages';
-    value: string | Page;
-  } | null)
-  | ({
-    relationTo: 'media';
-    value: string | Media;
-  } | null)
-  | ({
-    relationTo: 'customers';
-    value: string | Customer;
-  } | null)
-  | ({
-    relationTo: 'customer-credits';
-    value: string | CustomerCredit;
-  } | null)
-  | ({
-    relationTo: 'customer-loyalty';
-    value: string | CustomerLoyalty;
-  } | null)
-  | ({
-    relationTo: 'coupons';
-    value: string | Coupon;
-  } | null)
-  | ({
-    relationTo: 'gift-vouchers';
-    value: string | GiftVoucher;
-  } | null)
-  | ({
-    relationTo: 'membership-roles';
-    value: string | MembershipRole;
-  } | null)
-  | ({
-    relationTo: 'orders';
-    value: number | Order;
-  } | null)
-  | ({
-    relationTo: 'categories';
-    value: string | Category;
-  } | null)
-  | ({
-    relationTo: 'products';
-    value: string | Product;
-  } | null)
-  | ({
-    relationTo: 'subproducts';
-    value: string | Subproduct;
-  } | null)
-  | ({
-    relationTo: 'productpopups';
-    value: string | Productpopup;
-  } | null)
-  | ({
-    relationTo: 'services';
-    value: string | Service;
-  } | null);
+    | ({
+        relationTo: 'tenants';
+        value: string | Tenant;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: string | User;
+      } | null)
+    | ({
+        relationTo: 'roles';
+        value: string | Role;
+      } | null)
+    | ({
+        relationTo: 'shops';
+        value: string | Shop;
+      } | null)
+    | ({
+        relationTo: 'payment-methods';
+        value: string | PaymentMethod;
+      } | null)
+    | ({
+        relationTo: 'fulfillment-methods';
+        value: string | FulfillmentMethod;
+      } | null)
+    | ({
+        relationTo: 'timeslots';
+        value: string | Timeslot;
+      } | null)
+    | ({
+        relationTo: 'shop-branding';
+        value: string | ShopBranding;
+      } | null)
+    | ({
+        relationTo: 'digital-menus';
+        value: string | DigitalMenu;
+      } | null)
+    | ({
+        relationTo: 'reservation-entries';
+        value: string | ReservationEntry;
+      } | null)
+    | ({
+        relationTo: 'reservation-settings';
+        value: string | ReservationSetting;
+      } | null)
+    | ({
+        relationTo: 'tables';
+        value: string | Table;
+      } | null)
+    | ({
+        relationTo: 'printers';
+        value: string | Printer;
+      } | null)
+    | ({
+        relationTo: 'pos';
+        value: string | Po;
+      } | null)
+    | ({
+        relationTo: 'tipping';
+        value: string | Tipping;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: string | Page;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: string | Customer;
+      } | null)
+    | ({
+        relationTo: 'customer-credits';
+        value: string | CustomerCredit;
+      } | null)
+    | ({
+        relationTo: 'customer-loyalty';
+        value: string | CustomerLoyalty;
+      } | null)
+    | ({
+        relationTo: 'coupons';
+        value: string | Coupon;
+      } | null)
+    | ({
+        relationTo: 'gift-vouchers';
+        value: string | GiftVoucher;
+      } | null)
+    | ({
+        relationTo: 'membership-roles';
+        value: string | MembershipRole;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: string | Category;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: string | Product;
+      } | null)
+    | ({
+        relationTo: 'subproducts';
+        value: string | Subproduct;
+      } | null)
+    | ({
+        relationTo: 'productpopups';
+        value: string | Productpopup;
+      } | null)
+    | ({
+        relationTo: 'services';
+        value: string | Service;
+      } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
@@ -1913,14 +1893,14 @@ export interface PayloadPreference {
   };
   key?: string | null;
   value?:
-  | {
-    [k: string]: unknown;
-  }
-  | unknown[]
-  | string
-  | number
-  | boolean
-  | null;
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1942,11 +1922,11 @@ export interface PayloadMigration {
 export interface TenantsSelect<T extends boolean = true> {
   name?: T;
   domains?:
-  | T
-  | {
-    domain?: T;
-    id?: T;
-  };
+    | T
+    | {
+        domain?: T;
+        id?: T;
+      };
   slug?: T;
   public?: T;
   updatedAt?: T;
@@ -1959,15 +1939,32 @@ export interface TenantsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   roles?: T;
   tenants?:
-  | T
-  | {
-    tenant?: T;
-    roles?: T;
-    id?: T;
-  };
+    | T
+    | {
+        tenant?: T;
+        roles?: T;
+        id?: T;
+      };
   shops?: T;
   username?: T;
-  password?: T;
+  transactions?:
+    | T
+    | {
+        service?: T;
+        status?: T;
+        date?: T;
+        amount?: T;
+        currency?: T;
+        id?: T;
+      };
+  service?: T;
+  status?: T;
+  start_date?: T;
+  end_date?: T;
+  subscription_amount?: T;
+  subscription_currency?: T;
+  subscription_id?: T;
+  stripe_customer_id?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1985,15 +1982,15 @@ export interface UsersSelect<T extends boolean = true> {
 export interface RolesSelect<T extends boolean = true> {
   name?: T;
   collections?:
-  | T
-  | {
-    collectionName?: T;
-    read?: T;
-    create?: T;
-    update?: T;
-    delete?: T;
-    id?: T;
-  };
+    | T
+    | {
+        collectionName?: T;
+        read?: T;
+        create?: T;
+        update?: T;
+        delete?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2008,30 +2005,30 @@ export interface ShopsSelect<T extends boolean = true> {
   slug?: T;
   address?: T;
   location?:
-  | T
-  | {
-    lat?: T;
-    lng?: T;
-  };
+    | T
+    | {
+        lat?: T;
+        lng?: T;
+      };
   phone?: T;
   company_details?:
-  | T
-  | {
-    company_name?: T;
-    street?: T;
-    house_number?: T;
-    city?: T;
-    postal?: T;
-    vat_nr?: T;
-    website_url?: T;
-  };
+    | T
+    | {
+        company_name?: T;
+        street?: T;
+        house_number?: T;
+        city?: T;
+        postal?: T;
+        vat_nr?: T;
+        website_url?: T;
+      };
   exceptionally_closed_days?:
-  | T
-  | {
-    date?: T;
-    reason?: T;
-    id?: T;
-  };
+    | T
+    | {
+        date?: T;
+        reason?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2044,21 +2041,21 @@ export interface PaymentMethodsSelect<T extends boolean = true> {
   shops?: T;
   provider?: T;
   multisafepay_settings?:
-  | T
-  | {
-    enable_test_mode?: T;
-    live_api_key?: T;
-    test_api_key?: T;
-    methods?: T;
-  };
+    | T
+    | {
+        enable_test_mode?: T;
+        live_api_key?: T;
+        test_api_key?: T;
+        methods?: T;
+      };
   enabled?: T;
   terminal_ids?:
-  | T
-  | {
-    kiosk?: T;
-    terminal_id?: T;
-    id?: T;
-  };
+    | T
+    | {
+        kiosk?: T;
+        terminal_id?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2075,16 +2072,16 @@ export interface FulfillmentMethodsSelect<T extends boolean = true> {
   extra_cost_per_km?: T;
   enabled?: T;
   settings?:
-  | T
-  | {
-    delivery_radius?: T;
-    pickup_instructions?: T;
-    kiosk_pickup_instructions?: T;
-    shared_booked_slots?: T;
-    checkout_email_required?: T;
-    checkout_phone_required?: T;
-    checkout_lastname_required?: T;
-  };
+    | T
+    | {
+        delivery_radius?: T;
+        pickup_instructions?: T;
+        kiosk_pickup_instructions?: T;
+        shared_booked_slots?: T;
+        checkout_email_required?: T;
+        checkout_phone_required?: T;
+        checkout_lastname_required?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2097,79 +2094,79 @@ export interface TimeslotsSelect<T extends boolean = true> {
   shops?: T;
   method_id?: T;
   week?:
-  | T
-  | {
-    monday?:
     | T
     | {
-      start_time?: T;
-      end_time?: T;
-      interval_minutes?: T;
-      max_orders?: T;
-      status?: T;
-      id?: T;
-    };
-    tuesday?:
-    | T
-    | {
-      start_time?: T;
-      end_time?: T;
-      interval_minutes?: T;
-      max_orders?: T;
-      status?: T;
-      id?: T;
-    };
-    wednesday?:
-    | T
-    | {
-      start_time?: T;
-      end_time?: T;
-      interval_minutes?: T;
-      max_orders?: T;
-      status?: T;
-      id?: T;
-    };
-    thursday?:
-    | T
-    | {
-      start_time?: T;
-      end_time?: T;
-      interval_minutes?: T;
-      max_orders?: T;
-      status?: T;
-      id?: T;
-    };
-    friday?:
-    | T
-    | {
-      start_time?: T;
-      end_time?: T;
-      interval_minutes?: T;
-      max_orders?: T;
-      status?: T;
-      id?: T;
-    };
-    saturday?:
-    | T
-    | {
-      start_time?: T;
-      end_time?: T;
-      interval_minutes?: T;
-      max_orders?: T;
-      status?: T;
-      id?: T;
-    };
-    sunday?:
-    | T
-    | {
-      start_time?: T;
-      end_time?: T;
-      interval_minutes?: T;
-      max_orders?: T;
-      status?: T;
-      id?: T;
-    };
-  };
+        monday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        tuesday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        wednesday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        thursday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        friday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        saturday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+        sunday?:
+          | T
+          | {
+              start_time?: T;
+              end_time?: T;
+              interval_minutes?: T;
+              max_orders?: T;
+              status?: T;
+              id?: T;
+            };
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2192,11 +2189,11 @@ export interface ShopBrandingSelect<T extends boolean = true> {
   kiosk_idle_screen_enabled?: T;
   kioskIdleImage?: T;
   kioskIdleVideos?:
-  | T
-  | {
-    video?: T;
-    id?: T;
-  };
+    | T
+    | {
+        video?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2211,13 +2208,13 @@ export interface DigitalMenusSelect<T extends boolean = true> {
   shopBranding?: T;
   maxRows?: T;
   categoryOverrides?:
-  | T
-  | {
-    category?: T;
-    displayName?: T;
-    columnsForProducts?: T;
-    id?: T;
-  };
+    | T
+    | {
+        category?: T;
+        displayName?: T;
+        columnsForProducts?: T;
+        id?: T;
+      };
   products?: T;
   autoRotateInterval?: T;
   updatedAt?: T;
@@ -2250,47 +2247,47 @@ export interface ReservationSettingsSelect<T extends boolean = true> {
   shops?: T;
   reservation_name?: T;
   active_days?:
-  | T
-  | {
-    monday?: T;
-    tuesday?: T;
-    wednesday?: T;
-    thursday?: T;
-    friday?: T;
-    saturday?: T;
-    sunday?: T;
-  };
+    | T
+    | {
+        monday?: T;
+        tuesday?: T;
+        wednesday?: T;
+        thursday?: T;
+        friday?: T;
+        saturday?: T;
+        sunday?: T;
+      };
   reservation_periods?:
-  | T
-  | {
-    start_date?: T;
-    end_date?: T;
-    start_time?: T;
-    end_time?: T;
-    id?: T;
-  };
+    | T
+    | {
+        start_date?: T;
+        end_date?: T;
+        start_time?: T;
+        end_time?: T;
+        id?: T;
+      };
   holidays?:
-  | T
-  | {
-    start_date?: T;
-    end_date?: T;
-    reason?: T;
-    id?: T;
-  };
+    | T
+    | {
+        start_date?: T;
+        end_date?: T;
+        reason?: T;
+        id?: T;
+      };
   fully_booked_days?:
-  | T
-  | {
-    date?: T;
-    reason?: T;
-    id?: T;
-  };
+    | T
+    | {
+        date?: T;
+        reason?: T;
+        id?: T;
+      };
   exceptions?:
-  | T
-  | {
-    exception_date?: T;
-    reason?: T;
-    id?: T;
-  };
+    | T
+    | {
+        exception_date?: T;
+        reason?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2352,12 +2349,12 @@ export interface TippingSelect<T extends boolean = true> {
   enabled?: T;
   enableRoundUp?: T;
   tipOptions?:
-  | T
-  | {
-    type?: T;
-    value?: T;
-    id?: T;
-  };
+    | T
+    | {
+        type?: T;
+        value?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2380,11 +2377,11 @@ export interface PagesSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   tags?:
-  | T
-  | {
-    tag?: T;
-    id?: T;
-  };
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
   blurhash?: T;
   s3_url?: T;
   alt_text?: T;
@@ -2400,29 +2397,29 @@ export interface MediaSelect<T extends boolean = true> {
   focalX?: T;
   focalY?: T;
   sizes?:
-  | T
-  | {
-    thumbnail?:
     | T
     | {
-      url?: T;
-      width?: T;
-      height?: T;
-      mimeType?: T;
-      filesize?: T;
-      filename?: T;
-    };
-    medium?:
-    | T
-    | {
-      url?: T;
-      width?: T;
-      height?: T;
-      mimeType?: T;
-      filesize?: T;
-      filename?: T;
-    };
-  };
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        medium?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2438,21 +2435,21 @@ export interface CustomersSelect<T extends boolean = true> {
   email?: T;
   phone?: T;
   tags?:
-  | T
-  | {
-    tag_id?: T;
-    tag_type?: T;
-    id?: T;
-  };
+    | T
+    | {
+        tag_id?: T;
+        tag_type?: T;
+        id?: T;
+      };
   memberships?:
-  | T
-  | {
-    role?: T;
-    points?: T;
-    status?: T;
-    dateJoined?: T;
-    id?: T;
-  };
+    | T
+    | {
+        role?: T;
+        points?: T;
+        status?: T;
+        dateJoined?: T;
+        id?: T;
+      };
   barcode?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2552,57 +2549,57 @@ export interface OrdersSelect<T extends boolean = true> {
   status?: T;
   order_type?: T;
   order_details?:
-  | T
-  | {
-    product?: T;
-    quantity?: T;
-    price?: T;
-    tax?: T;
-    tax_dinein?: T;
-    name_nl?: T;
-    name_en?: T;
-    name_de?: T;
-    name_fr?: T;
-    subproducts?:
     | T
     | {
-      subproductId?: T;
-      name_nl?: T;
-      name_en?: T;
-      name_de?: T;
-      name_fr?: T;
-      price?: T;
-      tax?: T;
-      tax_dinein?: T;
-      quantity?: T;
-      id?: T;
-    };
-    id?: T;
-  };
+        product?: T;
+        quantity?: T;
+        price?: T;
+        tax?: T;
+        tax_dinein?: T;
+        name_nl?: T;
+        name_en?: T;
+        name_de?: T;
+        name_fr?: T;
+        subproducts?:
+          | T
+          | {
+              subproductId?: T;
+              name_nl?: T;
+              name_en?: T;
+              name_de?: T;
+              name_fr?: T;
+              price?: T;
+              tax?: T;
+              tax_dinein?: T;
+              quantity?: T;
+              id?: T;
+            };
+        id?: T;
+      };
   payments?:
-  | T
-  | {
-    payment_method?: T;
-    sub_method_label?: T;
-    amount?: T;
-    id?: T;
-  };
+    | T
+    | {
+        payment_method?: T;
+        sub_method_label?: T;
+        amount?: T;
+        id?: T;
+      };
   fulfillment_method?: T;
   fulfillment_date?: T;
   fulfillment_time?: T;
   customer?: T;
   customerBarcode?: T;
   customer_details?:
-  | T
-  | {
-    firstName?: T;
-    lastName?: T;
-    email?: T;
-    phone?: T;
-    address?: T;
-    city?: T;
-    postalCode?: T;
-  };
+    | T
+    | {
+        firstName?: T;
+        lastName?: T;
+        email?: T;
+        phone?: T;
+        address?: T;
+        city?: T;
+        postalCode?: T;
+      };
   shipping_cost?: T;
   subtotalBeforeDiscount?: T;
   discountTotal?: T;
@@ -2611,39 +2608,39 @@ export interface OrdersSelect<T extends boolean = true> {
   subtotal?: T;
   total?: T;
   promotionsUsed?:
-  | T
-  | {
-    pointsUsed?: T;
-    creditsUsed?: T;
-    couponUsed?:
     | T
     | {
-      couponId?: T;
-      barcode?: T;
-      value?: T;
-      value_type?: T;
-      valid_from?: T;
-      valid_until?: T;
-      max_uses?: T;
-      used?: T;
-    };
-    giftVoucherUsed?:
-    | T
-    | {
-      voucherId?: T;
-      barcode?: T;
-      value?: T;
-      valid_from?: T;
-      valid_until?: T;
-      used?: T;
-    };
-  };
+        pointsUsed?: T;
+        creditsUsed?: T;
+        couponUsed?:
+          | T
+          | {
+              couponId?: T;
+              barcode?: T;
+              value?: T;
+              value_type?: T;
+              valid_from?: T;
+              valid_until?: T;
+              max_uses?: T;
+              used?: T;
+            };
+        giftVoucherUsed?:
+          | T
+          | {
+              voucherId?: T;
+              barcode?: T;
+              value?: T;
+              valid_from?: T;
+              valid_until?: T;
+              used?: T;
+            };
+      };
   tippingUsed?:
-  | T
-  | {
-    type?: T;
-    amount?: T;
-  };
+    | T
+    | {
+        type?: T;
+        amount?: T;
+      };
   userLocale?: T;
   kioskNumber?: T;
   updatedAt?: T;
@@ -2666,12 +2663,12 @@ export interface CategoriesSelect<T extends boolean = true> {
   modtime?: T;
   status?: T;
   productpopups?:
-  | T
-  | {
-    popup?: T;
-    order?: T;
-    id?: T;
-  };
+    | T
+    | {
+        popup?: T;
+        order?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2714,12 +2711,12 @@ export interface ProductsSelect<T extends boolean = true> {
   status?: T;
   exclude_category_popups?: T;
   productpopups?:
-  | T
-  | {
-    popup?: T;
-    order?: T;
-    id?: T;
-  };
+    | T
+    | {
+        popup?: T;
+        order?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2849,5 +2846,5 @@ export interface Auth {
 
 
 declare module 'payload' {
-  export interface GeneratedTypes extends Config { }
+  export interface GeneratedTypes extends Config {}
 }
