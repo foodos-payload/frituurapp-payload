@@ -156,7 +156,7 @@ export default function KioskPaymentOptions({
         }
 
         // Use the proxy endpoint
-        const streamUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}&orderId=${orderId}`;
+        const streamUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}`;
         console.log("[Stream] Connecting to:", streamUrl);
 
         try {
