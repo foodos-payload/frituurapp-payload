@@ -29,6 +29,7 @@ export const dynamic = 'force-dynamic'
  *         description: Server error
  */
 
+// /app/api/getBranding/route.ts
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = req.nextUrl
@@ -37,18 +38,46 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'No host param' }, { status: 400 })
         }
 
-        // Load the shop from your Shops collection
         const payload = await getPayload({ config })
-        const shopResult = await payload.find({
-            collection: 'shops',
-            where: { slug: { equals: host } },
-            limit: 1,
-        })
-        const shop = shopResult.docs[0]
+        const splittedHost = host.split('.')
+
+        let shop
+
+        if (splittedHost.length === 2) {
+            // No subdomain, e.g. "frituurmenu.be"
+            // We use splittedHost[0] as the 'customdomain'
+            const customDomain = splittedHost[0]
+            const shopResult = await payload.find({
+                collection: 'shops',
+                where: {
+                    customdomain: {
+                        equals: customDomain,
+                    },
+                },
+                limit: 1,
+            })
+            shop = shopResult.docs[0]
+        } else {
+            // There is a subdomain, e.g. "frituur-den-overkant.frituurwebshop.be"
+            // We use only splittedHost[0] for the 'slug'
+            const subdomainSlug = splittedHost[0]
+            const shopResult = await payload.find({
+                collection: 'shops',
+                where: {
+                    slug: {
+                        equals: subdomainSlug,
+                    },
+                },
+                limit: 1,
+            })
+            shop = shopResult.docs[0]
+        }
+
         if (!shop) {
             return NextResponse.json({ error: `Shop not found for host: ${host}` }, { status: 404 })
         }
 
+        // Find branding data that references this shop
         const brandingRes = await payload.find({
             collection: 'shop-branding',
             where: { shops: { in: [shop.id] } },
@@ -57,10 +86,15 @@ export async function GET(req: NextRequest) {
         })
         const branding = brandingRes.docs[0] || null
 
-        return NextResponse.json({
-            shop,
-            branding,
-        })
+        return NextResponse.json(
+            {
+                shop,
+                branding,
+            },
+            {
+                status: 200,
+            }
+        )
     } catch (err: any) {
         return NextResponse.json({ error: err?.message || 'Unknown error' }, { status: 500 })
     }
