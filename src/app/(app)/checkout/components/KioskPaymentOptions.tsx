@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FaLongArrowAltDown } from "react-icons/fa";
-import { useTranslation } from "@/context/TranslationsContext";
 
 interface PaymentMethod {
     id: string;
@@ -20,35 +19,21 @@ interface KioskPaymentOptionsProps {
     handleBackClick: () => void;
 
     /**
-     * handleCheckout returns a Promise<number | null>,
-     * i.e. the local orderId or null if something failed.
-     * The kiosk does not rely on selectedPaymentId state.
+     * handleCheckout now receives a paymentId argument directly.
+     * No need for selectedPaymentId state in this component.
      */
     handleCheckout: (forcedPaymentId: string) => Promise<number | null>;
 
     paymentMethods: PaymentMethod[];
-    branding: any;
+    branding: any;    // Not used in this snippet, but available if needed
     shopSlug: string;
-
-    /**
-     * Optional callback to inform the parent component whenever the overlay
-     * state changes (null => none, "terminal" => card overlay, "cash" => cash overlay).
-     * This is used so the parent can disable its own idle watchers, etc.
-     */
-    onOverlayChange?: (overlayState: null | "terminal" | "cash") => void;
 }
 
 /**
  * KioskPaymentOptions:
- *  - "Card Payment" => show "terminal" overlay, create order => poll until done or cancelled.
- *  - "Cash Payment" => show "cash" overlay, create order => typically no need to poll.
- *
- * This version also uses SSE in parallel with polling:
- *  - If SSE detects "cancelled", we stop polling & show the error.
- *  - If SSE detects "completed" (optional), we could also jump to summary if desired.
- *
- * Additionally, it provides `onOverlayChange` to the parent so that the parent
- * can perform any special logic (like pausing idle watchers) when the kiosk overlay is active.
+ *  - "Card Payment" => "terminal" overlay, calls handleCheckout => creates order => attempts SSE => fallback to polling
+ *     plus a 65s countdown overlay for the user to complete payment.
+ *  - "Cash Payment" => "cash" overlay, calls handleCheckout => no SSE/polling needed by default.
  */
 export default function KioskPaymentOptions({
     handleBackClick,
@@ -56,15 +41,13 @@ export default function KioskPaymentOptions({
     paymentMethods,
     branding,
     shopSlug,
-    onOverlayChange,
 }: KioskPaymentOptionsProps) {
-    const { t } = useTranslation();
     const router = useRouter();
 
     // Overlay states: null => no overlay, "terminal" => waiting for card, "cash" => waiting for cash
     const [loadingState, setLoadingState] = useState<null | "terminal" | "cash">(null);
 
-    // Display an error message if payment fails or is canceled
+    // Payment error message displayed to the user
     const [paymentErrorMessage, setPaymentErrorMessage] = useState<string>("");
 
     // For polling
@@ -75,289 +58,20 @@ export default function KioskPaymentOptions({
      * Keep track of how many seconds are left before we automatically exit the overlay
      * if no payment is completed in time (for "terminal").
      */
-    const [timeLeft, setTimeLeft] = useState<number>(0);
+    const [timeLeft, setTimeLeft] = useState<number>(65);
 
-    /**
-     * SSE EventSource reference (so we can close it on unmount or on certain events).
-     */
-    const sseRef = useRef<EventSource | null>(null);
-
-    // On unmount, clear any polling intervals + close SSE
+    // On unmount, clear any polling intervals
     useEffect(() => {
         return () => {
             if (pollingIntervalRef.current) {
                 clearInterval(pollingIntervalRef.current);
             }
-            if (sseRef.current) {
-                sseRef.current.close();
-            }
         };
     }, []);
 
-    // Whenever loadingState changes => inform the parent so it can disable local watchers, etc.
-    useEffect(() => {
-        if (onOverlayChange) {
-            onOverlayChange(loadingState);
-        }
-    }, [loadingState, onOverlayChange]);
-
     /**
-     * startPollingLocalOrder:
-     *  - Poll the local "orders" doc every 4s
-     *  - If status is complete / in_preparation / etc. => go to summary
-     *  - If status is cancelled => show error & remove overlay
-     */
-    const startPollingLocalOrder = (orderId: number) => {
-        setPollingOrderId(orderId);
-
-        clearPolling(); // Clear any existing polling interval
-
-        const intervalId = setInterval(async () => {
-            try {
-                const url = `/api/orders?host=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`;
-                console.log(`[Polling] Checking order status for orderId=${orderId}`);
-
-                const resp = await fetch(url);
-
-                if (!resp.ok) {
-                    console.error("[Polling] Error fetching order status:", resp.statusText);
-                    return;
-                }
-
-                const orderDoc = await resp.json();
-                const localStatus = orderDoc.status?.toLowerCase() || "";
-                console.log(`[Polling] Order #${orderId} status: ${localStatus}`);
-
-                if (["complete", "in_preparation", "ready_for_pickup"].includes(localStatus)) {
-                    clearPolling();
-                    router.push(`/order-summary?orderId=${orderId}&kiosk=true`);
-                } else if (localStatus === "cancelled") {
-                    clearPolling();
-                    setPaymentErrorMessage("Payment was cancelled. Please try again.");
-                    setLoadingState(null);
-                }
-            } catch (err) {
-                console.error("[Polling] Error checking order status:", err);
-            }
-        }, 4000);
-
-        pollingIntervalRef.current = intervalId;
-    };
-
-
-
-    /**
-     * startWebSocketConnection:
-     *  - Uses the eventsToken + eventsStreamUrl from localStorage
-     *  - Listens for real-time "cancelled" or other events
-     *  - If "cancelled", we stop polling & show the error
-     */
-    const startHTTPStreamConnection = async (orderId: number) => {
-        const token = localStorage.getItem("mspEventsToken");
-        if (!token) {
-            setPaymentErrorMessage("Missing token for stream connection.");
-            return;
-        }
-
-        // Use the proxy endpoint
-        const streamUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}`;
-        console.log("[Stream] Connecting to:", streamUrl);
-
-        try {
-            const response = await fetch(streamUrl, {
-                method: "GET",
-            });
-
-            if (!response.body) {
-                console.error("[Stream] No response body available.");
-                setPaymentErrorMessage("Failed to connect to payment stream.");
-                return;
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = ""; // Store chunks that span multiple reads
-
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) {
-                    console.log("[Stream] Connection closed.");
-                    break;
-                }
-
-                if (value) {
-                    // Decode the current chunk and append to the buffer
-                    buffer += decoder.decode(value, { stream: true });
-                    console.log("[Stream] Chunk received:", buffer);
-
-                    // Process lines in the buffer
-                    const lines = buffer.split("\n");
-                    buffer = lines.pop() || ""; // Keep incomplete line in the buffer
-
-                    for (const line of lines) {
-                        if (line.startsWith("data:")) {
-                            // Extract JSON from the "data:" prefix
-                            const jsonData = line.replace(/^data:\s*/, ""); // Remove "data: " prefix
-                            try {
-                                const data = JSON.parse(jsonData);
-                                handleStreamEvent(data);
-                            } catch (err) {
-                                console.error("[Stream] Error parsing JSON:", err, jsonData);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (err) {
-            console.error("[Stream] Connection error:", err);
-            setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
-        }
-    };
-
-
-
-
-
-    const clearPolling = () => {
-        if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-        }
-
-        if (sseRef.current) {
-            sseRef.current.close();
-            sseRef.current = null;
-        }
-    };
-
-
-
-    const retryHTTPStreamConnection = (orderId: number, retries = 3) => {
-        let attempts = 0;
-
-        const connect = () => {
-            if (attempts >= retries) {
-                console.error("[Stream] Max retries reached. Could not reconnect.");
-                setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
-                return;
-            }
-
-            attempts++;
-            console.log(`[Stream] Attempting to reconnect... (${attempts}/${retries})`);
-            startHTTPStreamConnection(orderId);
-        };
-
-        if (pollingIntervalRef.current) {
-            clearPolling();
-        }
-        setTimeout(connect, 2000);
-    };
-
-
-    const handleStreamEvent = (data: any) => {
-        const status = data.status?.toLowerCase();
-        console.log("[Stream] Handling event with status:", status);
-
-        switch (status) {
-            case "completed":
-                console.log("[Stream] Payment completed.");
-                clearPolling();
-                setPaymentErrorMessage(""); // Clear any previous errors
-                setLoadingState(null); // Reset the loading state
-                router.push(`/order-summary?orderId=${data.order_id}&kiosk=true`);
-                break;
-
-            case "cancelled":
-                console.log("[Stream] Payment cancelled.");
-                clearPolling();
-                setPaymentErrorMessage("Payment was cancelled. Please try again.");
-                setLoadingState(null);
-                break;
-
-            case "declined":
-                console.log("[Stream] Payment declined.");
-                clearPolling();
-                setPaymentErrorMessage("Your card was declined. Please try a different card or payment method.");
-                setLoadingState(null);
-                break;
-
-            default:
-                console.warn("[Stream] Unhandled status:", status, data);
-                break;
-        }
-    };
-
-
-
-
-    /**
-     * handlePayWithCard:
-     *  - Finds an MSP/MultisafePay payment method
-     *  - Creates the order
-     *  - Then SSE + polling
-     *  - Also 65s countdown
-     */
-    const handlePayWithCard = async () => {
-        if (loadingState) return; // Prevent double-click
-        setPaymentErrorMessage("");
-
-        // Identify a "card" or MSP payment method
-        const cardMethod = paymentMethods.find(
-            (pm) =>
-                pm.label.toLowerCase().includes("msp") ||
-                pm.label.toLowerCase().includes("multisafepay") ||
-                pm.id === "MSP_Bancontact"
-        );
-        if (!cardMethod) {
-            setPaymentErrorMessage("No card payment method is configured for kiosk.");
-            return;
-        }
-
-        setLoadingState("terminal");
-        setTimeLeft(65);
-
-        // Create the order
-        const localOrderId = await handleCheckout(cardMethod.id);
-        if (!localOrderId) {
-            setLoadingState(null);
-            setPaymentErrorMessage("Could not create order for card payment. Please try again.");
-            return;
-        }
-
-        startHTTPStreamConnection(localOrderId);
-        startPollingLocalOrder(localOrderId);
-    };
-
-    /**
-     * handlePayWithCash:
-     *  - Finds "cash" payment method
-     *  - Creates the order
-     *  - Typically no polling for cash
-     */
-    const handlePayWithCash = async () => {
-        if (loadingState) return;
-        setPaymentErrorMessage("");
-
-        const cashMethod = paymentMethods.find((pm) => pm.label.toLowerCase().includes("cash"));
-        if (!cashMethod) {
-            setPaymentErrorMessage("Cash not enabled.");
-            return;
-        }
-
-        setLoadingState("cash");
-
-        const localOrderId = await handleCheckout(cashMethod.id);
-        if (!localOrderId) {
-            setLoadingState(null);
-            setPaymentErrorMessage("Could not create cash order. Please try again.");
-            return;
-        }
-        // No polling => user pays at counter
-    };
-
-    /**
-     * Countdown effect for "terminal"
-     * If 65s pass => show error & revert overlay
+     * If in "terminal" state => countdown effect:
+     * If 65s pass => show error & revert to main screen, clear any SSE/polling.
      */
     useEffect(() => {
         let timer: NodeJS.Timeout | null = null;
@@ -377,6 +91,176 @@ export default function KioskPaymentOptions({
         };
     }, [loadingState, timeLeft]);
 
+    // Helper to stop polling
+    const clearPolling = () => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+    };
+
+    /**
+     * startPollingLocalOrder:
+     *  - Poll the local "orders" doc every 4s
+     *  - If status is complete / in_preparation / ready_for_pickup => go to summary
+     *  - If status is cancelled => show error & remove overlay
+     */
+    const startPollingLocalOrder = (orderId: number) => {
+        setPollingOrderId(orderId);
+
+        // Clear any existing interval
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+        }
+
+        const intervalId = setInterval(async () => {
+            try {
+                const url = `/api/orders?host=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`;
+                const resp = await fetch(url);
+                if (!resp.ok) {
+                    console.error("[Polling] Error fetching order status:", resp.statusText);
+                    return;
+                }
+
+                const orderDoc = await resp.json();
+                const localStatus = orderDoc.status?.toLowerCase() || "";
+
+                console.log(`[Polling] Order #${orderId} => status=${localStatus}`);
+
+                if (["complete", "in_preparation", "ready_for_pickup"].includes(localStatus)) {
+                    clearPolling();
+                    router.push(`/order-summary?orderId=${orderId}&kiosk=true`);
+                } else if (localStatus === "cancelled") {
+                    clearPolling();
+                    setPaymentErrorMessage("Payment was cancelled. Please try again.");
+                    setLoadingState(null);
+                }
+            } catch (err) {
+                console.error("[Polling] Error checking order status:", err);
+            }
+        }, 4000);
+
+        pollingIntervalRef.current = intervalId;
+    };
+
+    /**
+     * Attempt SSE subscription => If no token or connection fails, fallback to polling
+     */
+    const trySubscribeSSE = (orderId: number) => {
+        const eventsToken = localStorage.getItem("mspEventsToken");
+        if (!eventsToken) {
+            console.log("[SSE] Not available (no token), fallback to local doc polling");
+            startPollingLocalOrder(orderId);
+            return;
+        }
+
+        // Attempt SSE via proxy: /api/mspEventsProxy?eventsToken=XYZ
+        const proxyUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(eventsToken)}`;
+        console.log("[SSE] Attempting MSP SSE subscription via:", proxyUrl);
+
+        const es = new EventSource(proxyUrl);
+
+        es.onopen = () => {
+            console.log("[SSE] Connection open for order=", orderId);
+        };
+
+        es.onerror = (err) => {
+            console.error("[SSE] error =>", err);
+            // fallback to polling
+            es.close();
+            startPollingLocalOrder(orderId);
+        };
+
+        es.onmessage = (evt) => {
+            if (!evt.data) return;
+            try {
+                const parsed = JSON.parse(evt.data);
+                const newStatus = parsed.status?.toLowerCase() || "";
+                console.log("[SSE] newStatus=", newStatus);
+
+                if (newStatus === "completed") {
+                    // Payment completed => go to summary
+                    es.close();
+                    router.push(`/order-summary?orderId=${orderId}&kiosk=true`);
+                } else if (["cancelled", "void", "declined"].includes(newStatus)) {
+                    setPaymentErrorMessage("Payment was cancelled or declined.");
+                    setLoadingState(null);
+                    es.close();
+                } else {
+                    console.log(`[SSE] status => ${newStatus}, ignoring...`);
+                }
+            } catch (err) {
+                console.warn("[SSE] Could not parse SSE data =>", err);
+            }
+        };
+    };
+
+    /**
+     * handlePayWithCard:
+     * 1) Find "card" or MSP method
+     * 2) Create order => handleCheckout
+     * 3) SSE => fallback to polling
+     * 4) 65s countdown
+     */
+    const handlePayWithCard = async () => {
+        if (loadingState) return;
+
+        setPaymentErrorMessage("");
+        // Identify a "card" or MSP payment method
+        const cardMethod = paymentMethods.find(
+            (pm) =>
+                pm.label.toLowerCase().includes("msp") ||
+                pm.label.toLowerCase().includes("multisafepay") ||
+                pm.id === "MSP_Bancontact"
+        );
+
+        if (!cardMethod) {
+            setPaymentErrorMessage("No card payment method is configured for kiosk.");
+            return;
+        }
+
+        setLoadingState("terminal");
+        setTimeLeft(65);
+
+        // Create the order
+        const localOrderId = await handleCheckout(cardMethod.id);
+        if (!localOrderId) {
+            setLoadingState(null);
+            setPaymentErrorMessage("Could not create order for card payment. Please try again.");
+            return;
+        }
+
+        trySubscribeSSE(localOrderId);
+        startPollingLocalOrder(localOrderId);
+    };
+
+    /**
+     * handlePayWithCash:
+     *  - find "cash" payment method
+     *  - finalize immediately (no SSE or polling by default)
+     */
+    const handlePayWithCash = async () => {
+        if (loadingState) return;
+        setPaymentErrorMessage("");
+
+        const cashMethod = paymentMethods.find((pm) =>
+            pm.label.toLowerCase().includes("cash")
+        );
+        if (!cashMethod) {
+            setPaymentErrorMessage("Cash not enabled.");
+            return;
+        }
+
+        setLoadingState("cash");
+
+        const localOrderId = await handleCheckout(cashMethod.id);
+        if (!localOrderId) {
+            setLoadingState(null);
+            setPaymentErrorMessage("Could not create cash order. Please try again.");
+            return;
+        }
+        // No SSE/poll => user pays at counter
+    };
 
     const showOverlay = !!loadingState;
 
@@ -407,6 +291,7 @@ export default function KioskPaymentOptions({
                                 You have {timeLeft} second{timeLeft !== 1 ? "s" : ""} to complete the payment.
                             </p>
 
+                            {/* Additional styling/icons */}
                             <h1 className="text-9xl font-bold mb-4 mt-60">🧾</h1>
                             <FaLongArrowAltDown className="text-9xl text-red-600 mb-8 ml-2" />
                         </>
@@ -422,6 +307,7 @@ export default function KioskPaymentOptions({
                                 height={512}
                             />
                             <h2 className="text-4xl mb-8">Please pay with cash at counter...</h2>
+
                             <h1 className="text-9xl font-bold mb-4">🧾</h1>
                             <FaLongArrowAltDown className="text-9xl text-red-600 mb-8 ml-2" />
                         </>
@@ -497,7 +383,7 @@ export default function KioskPaymentOptions({
                         onClick={handleBackClick}
                         className="mt-16 p-4 text-xl bg-gray-500 text-white rounded-xl shadow-md w-80"
                     >
-                        {t("general.forgot_something")}
+                        Forgot Something?
                     </button>
                 </div>
             )}
