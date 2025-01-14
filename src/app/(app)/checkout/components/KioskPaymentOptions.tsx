@@ -138,7 +138,7 @@ export default function KioskPaymentOptions({
                 const localStatus = orderDoc.status?.toLowerCase() || "";
 
                 console.log(`[Polling] #${orderId} => status=${localStatus}`);
-                if (["complete", "in_preparation", "ready_for_pickup"].includes(localStatus)) {
+                if (["complete", "in_preparation", "ready_for_pickup", "awaiting_preparation"].includes(localStatus)) {
                     clearPolling();
                     router.push(`/order-summary?orderId=${orderId}&kiosk=true`);
                 } else if (localStatus === "cancelled") {
