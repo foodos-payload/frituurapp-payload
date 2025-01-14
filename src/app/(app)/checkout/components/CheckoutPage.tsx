@@ -14,6 +14,8 @@ import { useShopBranding } from "@/context/ShopBrandingContext";
 import KioskPaymentOptions from "./KioskPaymentOptions";
 import { useTranslation } from "@/context/TranslationsContext";
 
+import TippingModal from "./TippingModal"; // <--- NEW IMPORT
+
 // A) Types
 interface MultiSafePaySettings {
     enable_test_mode: boolean;
@@ -66,6 +68,17 @@ interface FulfillmentMethodDoc {
     enabled: boolean;
 }
 
+export interface TippingDoc {
+    id: string;
+    enabled: boolean;
+    // ...
+}
+interface TippingResponse {
+    tipping: TippingDoc;
+}
+interface CheckoutPageProps {
+    tippingMethods: TippingResponse;
+}
 // Props from server page
 interface CheckoutPageProps {
     hostSlug: string;
@@ -160,12 +173,14 @@ export default function CheckoutPage({
     initialTimeslots,
     shopInfo,
     fulfillmentMethods,
+    tippingMethods,
+    isKiosk: initialIsKiosk,
 }: CheckoutPageProps) {
     const { t } = useTranslation();
     const router = useRouter();
     const searchParams = useSearchParams();
     const kioskMode = searchParams.get("kiosk") === "true";
-    const isKiosk = kioskMode;
+    const isKiosk = initialIsKiosk || kioskMode;
 
     // For example, we can pass a callback to KioskPaymentOptions
     const [kioskOverlayOpen, setKioskOverlayOpen] = useState(false);
@@ -549,6 +564,17 @@ export default function CheckoutPage({
 
         const storedLocale = localStorage.getItem('userLocale') || 'nl';
 
+        // 5.5) Gather the tippingUsed from localStorage
+        const localTippingUsedStr = localStorage.getItem('tippingUsed');
+        let localTippingUsed: any = { type: 'none', amount: 0 };
+        if (localTippingUsedStr) {
+            try {
+                localTippingUsed = JSON.parse(localTippingUsedStr);
+            } catch (err) {
+                console.warn('Failed to parse tippingUsed from localStorage', err);
+            }
+        }
+
         // 6) Build payload
         const payloadData = {
             tenant: hostSlug,
@@ -601,6 +627,8 @@ export default function CheckoutPage({
             shippingCost,
             distanceKm: deliveryDistance,
             promotionsUsed,
+            // Insert the tip data here
+            tippingUsed: localTippingUsed,
             userLocale: storedLocale,
             kioskNumber: kioskNumber || undefined,
         };
@@ -620,7 +648,7 @@ export default function CheckoutPage({
             // If server says success === false => show an error
             if (!json.success) {
                 // Possibly check if it's specifically about timeslot concurrency
-                if (json.message?.toLowerCase().includes("timeslot is fully booked")) {
+                if (json.message?.toLowerCase()?.includes("timeslot is fully booked")) {
                     setServerErrorMsg("Sorry, that timeslot is fully booked! Please pick another.");
                 } else {
                     setServerErrorMsg(json.message);
@@ -743,6 +771,60 @@ export default function CheckoutPage({
         }
     }, [isKiosk]);
 
+    // ───────────────────────────────────────────────────────────────────
+    // 🔹 TIPPING LOGIC: show modal before final checkout
+    // ───────────────────────────────────────────────────────────────────
+    const [tippingModalOpen, setTippingModalOpen] = useState(false);
+
+
+    const [hasTippingEnabled, setHasTippingEnabled] = useState(false);
+    useEffect(() => {
+        setHasTippingEnabled(Boolean(tippingMethods?.tipping?.enabled));
+    }, [tippingMethods]);
+    console.log(tippingMethods)
+
+    function handleProceedCheckout() {
+        // Only proceed if canProceed is true
+        if (!canProceed()) return;
+        // If tipping is disabled, just do handleCheckout
+        if (!hasTippingEnabled) {
+            handleCheckout();
+            return;
+        }
+        // Otherwise, open the TippingModal
+        setTippingModalOpen(true);
+    }
+
+    // Called by TippingModal => store user’s tip choice => run handleCheckout
+    function handleTipSelected(chosenTip: number, isPct: boolean) {
+        // Store in localStorage so handleCheckout sees it
+        const tipPayload = {
+            type: isPct
+                ? "percentage"
+                : chosenTip === -1
+                    ? "round_up"
+                    : "fixed",
+            amount: chosenTip === -1 ? 0 : chosenTip,
+        };
+        localStorage.setItem("tippingUsed", JSON.stringify(tipPayload));
+
+        setTippingModalOpen(false);
+        // Now do the real checkout
+        handleCheckout();
+    }
+
+    // If user says "No thanks"
+    function handleNoThanks() {
+        localStorage.setItem(
+            "tippingUsed",
+            JSON.stringify({ type: "none", amount: 0 })
+        );
+        setTippingModalOpen(false);
+        handleCheckout();
+    }
+
+    // ───────────────────────────────────────────────────────────────────
+
     return (
         <div className="checkout-page">
             {isKiosk ? (
@@ -753,6 +835,7 @@ export default function CheckoutPage({
                     branding={branding}
                     shopSlug={hostSlug}
                     onOverlayChange={(state) => setKioskOverlayOpen(state !== null)}
+                    hasTippingEnabled={hasTippingEnabled}
                 />
             ) : (
                 <>
@@ -908,7 +991,8 @@ export default function CheckoutPage({
                                 handleScanQR={() => alert("Not implemented.")}
                                 handleApplyCoupon={() => alert("Not implemented.")}
                                 canProceed={canProceed}
-                                handleCheckout={handleCheckout}
+                                /** Instead of calling handleCheckout, we show tipping modal first */
+                                handleProceedClick={handleProceedCheckout}
                                 cartTotal={discountedSubtotal}
                                 shippingCost={shippingCost}
                                 finalTotal={discountedSubtotal + shippingCost}
@@ -933,8 +1017,6 @@ export default function CheckoutPage({
                         </div>
                     </div>
                 </>
-
-
             )}
             {/* (C) Local Idle Modal => uses brand primary color for "Yes, I'm here" */}
             {showIdleModal && (
@@ -954,6 +1036,18 @@ export default function CheckoutPage({
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* TIPPING MODAL (web only) */}
+            {tippingModalOpen && !isKiosk && (
+                <TippingModal
+                    isOpen={tippingModalOpen}
+                    onClose={() => setTippingModalOpen(false)}
+                    hostSlug={hostSlug}
+                    onTipSelected={handleTipSelected}
+                    onNoThanks={handleNoThanks}
+                    currentTotal={discountedSubtotal + shippingCost}
+                />
             )}
         </div>
     );

@@ -436,6 +436,26 @@ export const Orders: CollectionConfig = {
         const shipping = typeof data.shipping_cost === 'number' ? data.shipping_cost : 0;
         data.total = data.totalAfterDiscount + shipping;
 
+        // 8.5) If there is a tip, add it now
+        if (data.tippingUsed && data.tippingUsed.type !== 'none') {
+          let tipValue = 0;
+          const tipType = data.tippingUsed.type;
+          const tipAmount = data.tippingUsed.amount || 0;
+
+          if (tipType === 'fixed') {
+            tipValue = tipAmount;
+          } else if (tipType === 'percentage') {
+            tipValue = data.total * (tipAmount / 100);
+          } else if (tipType === 'round_up') {
+            const currentTotal = data.total;
+            tipValue = Math.ceil(currentTotal) - currentTotal;
+          }
+
+          data.tippingUsed.actualTip = Math.round(tipValue * 100) / 100;
+          data.tippingUsed.amount = data.tippingUsed.actualTip;
+          data.total += data.tippingUsed.actualTip;
+        }
+
         // 9) Reflect final total in the first payment line
         if (data.payments && data.payments.length > 0) {
           data.payments[0].amount = data.total;
@@ -1235,6 +1255,38 @@ export const Orders: CollectionConfig = {
             { name: 'valid_until', type: 'date' },
             { name: 'used', type: 'checkbox' },
           ],
+        },
+      ],
+    },
+    {
+      name: 'tippingUsed',
+      type: 'group',
+      label: { en: 'Tipping' },
+      fields: [
+        {
+          name: 'type',
+          type: 'select',
+          label: { en: 'Tip Type' },
+          required: false,
+          defaultValue: 'none',
+          options: [
+            { label: 'None', value: 'none' },
+            { label: 'Fixed', value: 'fixed' },
+            { label: 'Percentage', value: 'percentage' },
+            { label: 'Round Up', value: 'round_up' },
+          ],
+          admin: {
+            description: 'Specifies whether the tip is a fixed amount, a percentage, a round-up, or none.',
+          },
+        },
+        {
+          name: 'amount',
+          type: 'number',
+          defaultValue: 0,
+          label: { en: 'Tip Amount' },
+          admin: {
+            description: 'The numeric tip value (e.g. 2.50 for €2.50, or 10 for 10%).',
+          },
         },
       ],
     },
