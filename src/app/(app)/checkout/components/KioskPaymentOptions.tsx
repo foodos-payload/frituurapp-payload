@@ -14,26 +14,40 @@ interface PaymentMethod {
 
 interface KioskPaymentOptionsProps {
     /**
-     * Called when user clicks "Forgot Something?" to go back to the previous page.
+     * Called when user clicks "Forgot Something?" to go back to the previous page
+     * or screen. (In typical kiosk flows, it might return them to the cart.)
      */
     handleBackClick: () => void;
 
     /**
-     * handleCheckout now receives a paymentId argument directly.
-     * No need for selectedPaymentId state in this component.
+     * handleCheckout returns a Promise<number | null> => local orderId or null
+     * This triggers creation of the local order and possibly the MSP order,
+     * returning the local order's ID so we can start SSE/polling.
      */
     handleCheckout: (forcedPaymentId: string) => Promise<number | null>;
 
+    /**
+     * Payment methods available (e.g. MSP Bancontact, MSP CreditCard, Cash, etc.).
+     */
     paymentMethods: PaymentMethod[];
-    branding: any;    // Not used in this snippet, but available if needed
+
+    /**
+     * You can pass a branding object if needed. Not used in this snippet, but included
+     * as a prop for future styling or theming.
+     */
+    branding: any;
+
+    /**
+     * The shop slug, used for polling the local order doc at /api/orders?host=slug&orderId=...
+     */
     shopSlug: string;
 }
 
 /**
  * KioskPaymentOptions:
- *  - "Card Payment" => "terminal" overlay, calls handleCheckout => creates order => attempts SSE => fallback to polling
- *     plus a 65s countdown overlay for the user to complete payment.
- *  - "Cash Payment" => "cash" overlay, calls handleCheckout => no SSE/polling needed by default.
+ *  - "Card Payment" => shows "terminal" overlay, calls handleCheckout => tries SSE => fallback to polling,
+ *    plus a 65s countdown overlay for the user to complete payment.
+ *  - "Cash Payment" => shows "cash" overlay, calls handleCheckout => finalizes immediately (no SSE/poll).
  */
 export default function KioskPaymentOptions({
     handleBackClick,
@@ -47,16 +61,16 @@ export default function KioskPaymentOptions({
     // Overlay states: null => no overlay, "terminal" => waiting for card, "cash" => waiting for cash
     const [loadingState, setLoadingState] = useState<null | "terminal" | "cash">(null);
 
-    // Payment error message displayed to the user
+    // Show an error message if payment fails or is canceled
     const [paymentErrorMessage, setPaymentErrorMessage] = useState<string>("");
 
-    // For polling
+    // For local doc polling
     const [pollingOrderId, setPollingOrderId] = useState<number | null>(null);
     const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     /**
-     * Keep track of how many seconds are left before we automatically exit the overlay
-     * if no payment is completed in time (for "terminal").
+     * Keep track of how many seconds remain before we automatically exit the overlay
+     * if no payment is completed in time (for "terminal" => 65s).
      */
     const [timeLeft, setTimeLeft] = useState<number>(65);
 
@@ -70,8 +84,7 @@ export default function KioskPaymentOptions({
     }, []);
 
     /**
-     * If in "terminal" state => countdown effect:
-     * If 65s pass => show error & revert to main screen, clear any SSE/polling.
+     * If in "terminal" mode => countdown for 65s => if it hits 0 => set error + remove overlay
      */
     useEffect(() => {
         let timer: NodeJS.Timeout | null = null;
@@ -91,21 +104,21 @@ export default function KioskPaymentOptions({
         };
     }, [loadingState, timeLeft]);
 
-    // Helper to stop polling
-    const clearPolling = () => {
+    /** Clear any active local doc polling interval. */
+    function clearPolling() {
         if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
         }
-    };
+    }
 
     /**
      * startPollingLocalOrder:
-     *  - Poll the local "orders" doc every 4s
-     *  - If status is complete / in_preparation / ready_for_pickup => go to summary
-     *  - If status is cancelled => show error & remove overlay
+     *  - Poll the local "orders" doc every 4s.
+     *  - If status is 'complete' / 'in_preparation' / 'ready_for_pickup' => go to summary.
+     *  - If status is 'cancelled' => show error & remove overlay.
      */
-    const startPollingLocalOrder = (orderId: number) => {
+    function startPollingLocalOrder(orderId: number) {
         setPollingOrderId(orderId);
 
         // Clear any existing interval
@@ -115,58 +128,61 @@ export default function KioskPaymentOptions({
 
         const intervalId = setInterval(async () => {
             try {
-                const url = `/api/orders?host=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`;
+                const url = `/api/orders?host=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(
+                    orderId
+                )}`;
                 const resp = await fetch(url);
                 if (!resp.ok) {
-                    console.error("[Polling] Error fetching order status:", resp.statusText);
+                    console.error("[Polling] Error - not OK:", resp.statusText);
                     return;
                 }
 
                 const orderDoc = await resp.json();
                 const localStatus = orderDoc.status?.toLowerCase() || "";
 
-                console.log(`[Polling] Order #${orderId} => status=${localStatus}`);
+                console.log(`[Polling] local order #${orderId} => status=${localStatus}`);
 
                 if (["complete", "in_preparation", "ready_for_pickup"].includes(localStatus)) {
-                    clearPolling();
+                    clearInterval(intervalId);
+                    pollingIntervalRef.current = null;
                     router.push(`/order-summary?orderId=${orderId}&kiosk=true`);
                 } else if (localStatus === "cancelled") {
-                    clearPolling();
+                    clearInterval(intervalId);
+                    pollingIntervalRef.current = null;
                     setPaymentErrorMessage("Payment was cancelled. Please try again.");
                     setLoadingState(null);
                 }
             } catch (err) {
-                console.error("[Polling] Error checking order status:", err);
+                console.error("[Polling] Error checking local order status:", err);
             }
         }, 4000);
 
         pollingIntervalRef.current = intervalId;
-    };
+    }
 
     /**
-     * Attempt SSE subscription => If no token or connection fails, fallback to polling
+     * Attempt SSE subscription => If no token or connection fails => fallback to local doc polling
      */
-    const trySubscribeSSE = (orderId: number) => {
+    function trySubscribeSSE(orderId: number) {
         const eventsToken = localStorage.getItem("mspEventsToken");
         if (!eventsToken) {
-            console.log("[SSE] Not available (no token), fallback to local doc polling");
+            console.log("[SSE] Not available => fallback to local doc polling");
             startPollingLocalOrder(orderId);
             return;
         }
 
-        // Attempt SSE via proxy: /api/mspEventsProxy?eventsToken=XYZ
+        // Attempt SSE => /api/mspEventsProxy?eventsToken=XYZ
         const proxyUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(eventsToken)}`;
-        console.log("[SSE] Attempting MSP SSE subscription via:", proxyUrl);
+        console.log("[SSE] Attempting subscription via proxyUrl=", proxyUrl);
 
         const es = new EventSource(proxyUrl);
 
         es.onopen = () => {
-            console.log("[SSE] Connection open for order=", orderId);
+            console.log("[SSE] Connection open => orderId =", orderId);
         };
 
         es.onerror = (err) => {
-            console.error("[SSE] error =>", err);
-            // fallback to polling
+            console.error("[SSE] error => fallback to polling =>", err);
             es.close();
             startPollingLocalOrder(orderId);
         };
@@ -176,10 +192,11 @@ export default function KioskPaymentOptions({
             try {
                 const parsed = JSON.parse(evt.data);
                 const newStatus = parsed.status?.toLowerCase() || "";
+
                 console.log("[SSE] newStatus=", newStatus);
 
                 if (newStatus === "completed") {
-                    // Payment completed => go to summary
+                    // Payment done => navigate to summary
                     es.close();
                     router.push(`/order-summary?orderId=${orderId}&kiosk=true`);
                 } else if (["cancelled", "void", "declined"].includes(newStatus)) {
@@ -190,30 +207,29 @@ export default function KioskPaymentOptions({
                     console.log(`[SSE] status => ${newStatus}, ignoring...`);
                 }
             } catch (err) {
-                console.warn("[SSE] Could not parse SSE data =>", err);
+                console.warn("[SSE] Could not parse evt.data =>", err);
             }
         };
-    };
+    }
 
     /**
      * handlePayWithCard:
-     * 1) Find "card" or MSP method
-     * 2) Create order => handleCheckout
-     * 3) SSE => fallback to polling
-     * 4) 65s countdown
+     *  - Identify a "card"/"MSP" method
+     *  - create the order => handleCheckout(forcedPaymentId)
+     *  - SSE => fallback => local doc polling
+     *  - 65s countdown
      */
-    const handlePayWithCard = async () => {
+    async function handlePayWithCard() {
         if (loadingState) return;
 
         setPaymentErrorMessage("");
-        // Identify a "card" or MSP payment method
+        // Find "msp", "bancontact", etc. method
         const cardMethod = paymentMethods.find(
             (pm) =>
                 pm.label.toLowerCase().includes("msp") ||
                 pm.label.toLowerCase().includes("multisafepay") ||
                 pm.id === "MSP_Bancontact"
         );
-
         if (!cardMethod) {
             setPaymentErrorMessage("No card payment method is configured for kiosk.");
             return;
@@ -222,7 +238,7 @@ export default function KioskPaymentOptions({
         setLoadingState("terminal");
         setTimeLeft(65);
 
-        // Create the order
+        // Create local order
         const localOrderId = await handleCheckout(cardMethod.id);
         if (!localOrderId) {
             setLoadingState(null);
@@ -230,17 +246,19 @@ export default function KioskPaymentOptions({
             return;
         }
 
+        // SSE => fallback to polling
         trySubscribeSSE(localOrderId);
         startPollingLocalOrder(localOrderId);
-    };
+    }
 
     /**
      * handlePayWithCash:
-     *  - find "cash" payment method
-     *  - finalize immediately (no SSE or polling by default)
+     *  - Finds "cash" payment method
+     *  - create order => no SSE/poll => user pays at the counter
      */
-    const handlePayWithCash = async () => {
+    async function handlePayWithCash() {
         if (loadingState) return;
+
         setPaymentErrorMessage("");
 
         const cashMethod = paymentMethods.find((pm) =>
@@ -259,10 +277,10 @@ export default function KioskPaymentOptions({
             setPaymentErrorMessage("Could not create cash order. Please try again.");
             return;
         }
-        // No SSE/poll => user pays at counter
-    };
+        // No SSE => done
+    }
 
-    const showOverlay = !!loadingState;
+    const showOverlay = loadingState !== null;
 
     return (
         <div className="fixed inset-0 z-50 flex flex-col bg-white h-screen shadow-lg">
@@ -291,7 +309,6 @@ export default function KioskPaymentOptions({
                                 You have {timeLeft} second{timeLeft !== 1 ? "s" : ""} to complete the payment.
                             </p>
 
-                            {/* Additional styling/icons */}
                             <h1 className="text-9xl font-bold mb-4 mt-60">🧾</h1>
                             <FaLongArrowAltDown className="text-9xl text-red-600 mb-8 ml-2" />
                         </>
@@ -315,7 +332,7 @@ export default function KioskPaymentOptions({
                 </div>
             )}
 
-            {/* (B) MAIN KIOSK SCREEN (when not loading) */}
+            {/* (B) MAIN KIOSK SCREEN (when no overlay) */}
             {!showOverlay && (
                 <div className="flex flex-col items-center justify-center flex-grow p-8">
                     {/* Error message */}
