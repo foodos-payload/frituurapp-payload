@@ -104,9 +104,9 @@ export const Shops: CollectionConfig = {
       name: 'slug',
       type: 'text',
       unique: true,
-      hooks: {
-        beforeChange: [slugify],
-      },
+      // hooks: {
+      //   beforeChange: [slugify],
+      // },
     },
     {
       name: 'address',
