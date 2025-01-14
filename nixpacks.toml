@@ -1,5 +1,5 @@
 [phases.setup]
-cmd = "corepack enable && corepack prepare pnpm@latest --activate"
+cmd = "corepack enable"
 
 [phases.install]
 cmd = "pnpm install --no-frozen-lockfile"
