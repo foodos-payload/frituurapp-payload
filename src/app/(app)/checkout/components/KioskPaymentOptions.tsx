@@ -144,6 +144,80 @@ export default function KioskPaymentOptions({
         pollingIntervalRef.current = intervalId;
     };
 
+
+
+    /**
+     * startWebSocketConnection:
+     *  - Uses the eventsToken + eventsStreamUrl from localStorage
+     *  - Listens for real-time "cancelled" or other events
+     *  - If "cancelled", we stop polling & show the error
+     */
+    const startHTTPStreamConnection = async (orderId: number) => {
+        const token = localStorage.getItem("mspEventsToken");
+        if (!token) {
+            setPaymentErrorMessage("Missing token for stream connection.");
+            return;
+        }
+
+        // Use the proxy endpoint
+        const streamUrl = `/api/mspEventsProxy?eventsToken=${encodeURIComponent(token)}`;
+        console.log("[Stream] Connecting to:", streamUrl);
+
+        try {
+            const response = await fetch(streamUrl, {
+                method: "GET",
+            });
+
+            if (!response.body) {
+                console.error("[Stream] No response body available.");
+                setPaymentErrorMessage("Failed to connect to payment stream.");
+                return;
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = ""; // Store chunks that span multiple reads
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    console.log("[Stream] Connection closed.");
+                    break;
+                }
+
+                if (value) {
+                    // Decode the current chunk and append to the buffer
+                    buffer += decoder.decode(value, { stream: true });
+                    console.log("[Stream] Chunk received:", buffer);
+
+                    // Process lines in the buffer
+                    const lines = buffer.split("\n");
+                    buffer = lines.pop() || ""; // Keep incomplete line in the buffer
+
+                    for (const line of lines) {
+                        if (line.startsWith("data:")) {
+                            // Extract JSON from the "data:" prefix
+                            const jsonData = line.replace(/^data:\s*/, ""); // Remove "data: " prefix
+                            try {
+                                const data = JSON.parse(jsonData);
+                                handleStreamEvent(data);
+                            } catch (err) {
+                                console.error("[Stream] Error parsing JSON:", err, jsonData);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("[Stream] Connection error:", err);
+            setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
+        }
+    };
+
+
+
+
+
     const clearPolling = () => {
         if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
@@ -156,6 +230,66 @@ export default function KioskPaymentOptions({
         }
     };
 
+
+
+    const retryHTTPStreamConnection = (orderId: number, retries = 3) => {
+        let attempts = 0;
+
+        const connect = () => {
+            if (attempts >= retries) {
+                console.error("[Stream] Max retries reached. Could not reconnect.");
+                setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
+                return;
+            }
+
+            attempts++;
+            console.log(`[Stream] Attempting to reconnect... (${attempts}/${retries})`);
+            startHTTPStreamConnection(orderId);
+        };
+
+        if (pollingIntervalRef.current) {
+            clearPolling();
+        }
+        setTimeout(connect, 2000);
+    };
+
+
+    const handleStreamEvent = (data: any) => {
+        const status = data.status?.toLowerCase();
+        console.log("[Stream] Handling event with status:", status);
+
+        switch (status) {
+            case "completed":
+                console.log("[Stream] Payment completed.");
+                clearPolling();
+                setPaymentErrorMessage(""); // Clear any previous errors
+                setLoadingState(null); // Reset the loading state
+                router.push(`/order-summary?orderId=${data.order_id}&kiosk=true`);
+                break;
+
+            case "cancelled":
+                console.log("[Stream] Payment cancelled.");
+                clearPolling();
+                setPaymentErrorMessage("Payment was cancelled. Please try again.");
+                setLoadingState(null);
+                break;
+
+            case "declined":
+                console.log("[Stream] Payment declined.");
+                clearPolling();
+                setPaymentErrorMessage("Your card was declined. Please try a different card or payment method.");
+                setLoadingState(null);
+                break;
+
+            default:
+                console.warn("[Stream] Unhandled status:", status, data);
+                break;
+        }
+    };
+
+
+
+
     /**
      * handlePayWithCard:
      *  - Finds an MSP/MultisafePay payment method
@@ -164,16 +298,16 @@ export default function KioskPaymentOptions({
      *  - Also 65s countdown
      */
     const handlePayWithCard = async () => {
-        if (loadingState) return;
+        if (loadingState) return; // Prevent double-click
         setPaymentErrorMessage("");
 
+        // Identify a "card" or MSP payment method
         const cardMethod = paymentMethods.find(
             (pm) =>
                 pm.label.toLowerCase().includes("msp") ||
                 pm.label.toLowerCase().includes("multisafepay") ||
                 pm.id === "MSP_Bancontact"
         );
-
         if (!cardMethod) {
             setPaymentErrorMessage("No card payment method is configured for kiosk.");
             return;
@@ -182,6 +316,7 @@ export default function KioskPaymentOptions({
         setLoadingState("terminal");
         setTimeLeft(65);
 
+        // Create the order
         const localOrderId = await handleCheckout(cardMethod.id);
         if (!localOrderId) {
             setLoadingState(null);
@@ -189,9 +324,9 @@ export default function KioskPaymentOptions({
             return;
         }
 
+        startHTTPStreamConnection(localOrderId);
         startPollingLocalOrder(localOrderId);
     };
-
 
     /**
      * handlePayWithCash:

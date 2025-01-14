@@ -45,11 +45,14 @@ export async function GET(req: NextRequest) {
         return new Response(response.body, {
             status: response.status,
             headers: {
-                "Cache-Control": "no-cache",
+                'Content-Type': 'text/event-stream; charset=utf-8',
+                'Cache-Control': 'no-cache, no-transform',
                 "Connection": "keep-alive",
-                "Content-Type": response.headers.get("Content-Type") || "application/json",
+                'X-Accel-Buffering': 'no', // Ensures data is streamed immediately
                 "Access-Control-Allow-Origin": "*", // Allow any origin
                 "Access-Control-Allow-Methods": "GET, OPTIONS",
+                'Access-Control-Allow-Headers': 'Authorization',
+
             },
         });
     } catch (error) {
