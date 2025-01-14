@@ -65,7 +65,13 @@ export const KioskIdleWatcher: React.FC<KioskIdleWatcherProps> = ({ branding }) 
     *    also exclude "/index".
     */
     const excludedPaths = useMemo(() => {
-        const base = ["/checkout", "/kiosk-idle", "kitchen-screen", "digital-menu",];
+        const base = [
+            "/checkout",
+            "/kiosk-idle",
+            "/kitchen-screen",
+            "/digital-menu",
+            "/order-summary"
+        ];
 
         if (isKioskMode && kiosk_idle_screen_enabled === false) {
             base.push("/index");
@@ -76,7 +82,9 @@ export const KioskIdleWatcher: React.FC<KioskIdleWatcherProps> = ({ branding }) 
 
         return base;
     }, [isKioskMode, kiosk_idle_screen_enabled]);
-    const skipIdleLogic = disableIdleWatcher || excludedPaths.includes(pathname);
+    const skipIdleLogic =
+        disableIdleWatcher ||
+        excludedPaths.some((excluded) => pathname?.startsWith(excluded));
 
     // 3) Clear timers on unmount
     const clearTimers = useCallback(() => {
