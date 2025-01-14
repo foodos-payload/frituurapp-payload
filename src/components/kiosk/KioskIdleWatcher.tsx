@@ -70,13 +70,14 @@ export const KioskIdleWatcher: React.FC<KioskIdleWatcherProps> = ({ branding }) 
             "/kiosk-idle",
             "/kitchen-screen",
             "/digital-menu",
-            "/order-summary"
+            "/order-summary",
+            "/index"
         ];
 
-        if (isKioskMode && kiosk_idle_screen_enabled === false) {
-            base.push("/index");
+        if (isKioskMode && kiosk_idle_screen_enabled === true) {
+            base.splice(base.indexOf("/index"), 1);
             console.log(
-                "[KioskIdleWatcher] kiosk_idle_screen_enabled is false => excluding /index"
+                "[KioskIdleWatcher] kiosk_idle_screen_enabled is true and isKioskMode => including /index"
             );
         }
 
