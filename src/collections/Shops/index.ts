@@ -109,25 +109,6 @@ export const Shops: CollectionConfig = {
       },
     },
     {
-      name: 'customdomain',
-      type: 'text',
-      label: {
-        en: 'Custom Domain',
-        nl: 'Aangepast Domein',
-        de: 'Benutzerdefinierte Domain',
-        fr: 'Domaine Personnalisé',
-      },
-      admin: {
-        description: {
-          en: 'The custom domain for the shop, e.g., frituur-esmeralda.be. Please point the A record to 46.202.159.85.',
-          nl: 'Het aangepaste domein voor de winkel, bijv. frituur-esmeralda.be. Wijs het A-record naar 46.202.159.85.',
-          de: 'Die benutzerdefinierte Domain für das Geschäft, z.B. frituur-esmeralda.be. Bitte das A-Record auf 46.202.159.85 zeigen.',
-          fr: 'Le domaine personnalisé pour le magasin, par ex. frituur-esmeralda.be. Veuillez pointer l\'enregistrement A vers 46.202.159.85.',
-        },
-      },
-      unique: true,
-    },
-    {
       name: 'address',
       type: 'text',
       label: {
