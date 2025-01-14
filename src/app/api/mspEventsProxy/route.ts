@@ -23,12 +23,15 @@ export async function GET(req: NextRequest) {
         return new Response("Failed to connect to MultiSafePay", { status: 500 });
     }
 
-    // Return the response body as-is
+    // Return the response body as-is, with appropriate CORS headers
     return new Response(response.body, {
         status: response.status,
         headers: {
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
+            "Content-Type": response.headers.get("Content-Type") || "application/json",
+            "Access-Control-Allow-Origin": "*", // Allow any origin
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
         },
     });
 }

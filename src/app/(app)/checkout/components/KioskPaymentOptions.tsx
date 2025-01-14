@@ -172,6 +172,7 @@ export default function KioskPaymentOptions({
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            let buffer = ""; // Store chunks that span multiple reads
 
             while (true) {
                 const { value, done } = await reader.read();
@@ -181,14 +182,25 @@ export default function KioskPaymentOptions({
                 }
 
                 if (value) {
-                    const chunk = decoder.decode(value, { stream: true });
-                    console.log("[Stream] Chunk received:", chunk);
+                    // Decode the current chunk and append to the buffer
+                    buffer += decoder.decode(value, { stream: true });
+                    console.log("[Stream] Chunk received:", buffer);
 
-                    try {
-                        const data = JSON.parse(chunk);
-                        handleStreamEvent(data);
-                    } catch (err) {
-                        console.error("[Stream] Error parsing chunk:", err);
+                    // Process lines in the buffer
+                    const lines = buffer.split("\n");
+                    buffer = lines.pop() || ""; // Keep incomplete line in the buffer
+
+                    for (const line of lines) {
+                        if (line.startsWith("data:")) {
+                            // Extract JSON from the "data:" prefix
+                            const jsonData = line.replace(/^data:\s*/, ""); // Remove "data: " prefix
+                            try {
+                                const data = JSON.parse(jsonData);
+                                handleStreamEvent(data);
+                            } catch (err) {
+                                console.error("[Stream] Error parsing JSON:", err, jsonData);
+                            }
+                        }
                     }
                 }
             }
@@ -197,6 +209,7 @@ export default function KioskPaymentOptions({
             setPaymentErrorMessage("Unable to connect to payment terminal. Please try again.");
         }
     };
+
 
 
 
@@ -247,7 +260,7 @@ export default function KioskPaymentOptions({
                 clearPolling();
                 setPaymentErrorMessage(""); // Clear any previous errors
                 setLoadingState(null); // Reset the loading state
-                router.push(`/order-summary?orderId=${data.orderId}&kiosk=true`);
+                router.push(`/order-summary?orderId=${data.order_id}&kiosk=true`);
                 break;
 
             case "cancelled":
@@ -269,6 +282,7 @@ export default function KioskPaymentOptions({
                 break;
         }
     };
+
 
 
 
