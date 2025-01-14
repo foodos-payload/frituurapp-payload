@@ -70,6 +70,12 @@ export const Shops: CollectionConfig = {
     {
       name: 'domain',
       type: 'text',
+      label: {
+        en: 'FQDN including https:// needed for payments eg. https://example.com',
+        nl: 'FQDN including https:// needed for payments  eg. https://example.com',
+        de: 'FQDN including https:// needed for payments  eg. https://example.com',
+        fr: 'FQDN including https:// needed for payments  eg. https://example.com',
+      },
       required: true,
     },
     {
@@ -101,6 +107,25 @@ export const Shops: CollectionConfig = {
       hooks: {
         beforeChange: [slugify],
       },
+    },
+    {
+      name: 'customdomain',
+      type: 'text',
+      label: {
+        en: 'Custom Domain',
+        nl: 'Aangepast Domein',
+        de: 'Benutzerdefinierte Domain',
+        fr: 'Domaine Personnalisé',
+      },
+      admin: {
+        description: {
+          en: 'The custom domain for the shop, e.g., frituur-esmeralda.be. Please point the A record to 46.202.159.85.',
+          nl: 'Het aangepaste domein voor de winkel, bijv. frituur-esmeralda.be. Wijs het A-record naar 46.202.159.85.',
+          de: 'Die benutzerdefinierte Domain für das Geschäft, z.B. frituur-esmeralda.be. Bitte das A-Record auf 46.202.159.85 zeigen.',
+          fr: 'Le domaine personnalisé pour le magasin, par ex. frituur-esmeralda.be. Veuillez pointer l\'enregistrement A vers 46.202.159.85.',
+        },
+      },
+      unique: true,
     },
     {
       name: 'address',
