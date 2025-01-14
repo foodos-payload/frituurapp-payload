@@ -185,10 +185,6 @@ export interface Shop {
   name: string;
   slug?: string | null;
   /**
-   * The custom domain for the shop, e.g., frituur-esmeralda.be. Please point the A record to 46.202.159.85.
-   */
-  customdomain?: string | null;
-  /**
    * The address of the shop.
    */
   address?: string | null;
@@ -1824,7 +1820,6 @@ export interface ShopsSelect<T extends boolean = true> {
   domain?: T;
   name?: T;
   slug?: T;
-  customdomain?: T;
   address?: T;
   location?:
     | T
