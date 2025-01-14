@@ -2,17 +2,44 @@
  * @openapi
  * /api/mspWebhook:
  *   get:
- *     summary: MultiSafePay Webhook Endpoint
+ *     summary: MultiSafePay Webhook Endpoint (Local-Only Version)
  *     description: >
- *       MSP can send GET notifications to this endpoint with either:
- *         ?orderId=46
- *       or (sometimes) ?transactionid=frituur-den-overkant-46
- *       so we parse the integer portion and do checkPaymentStatus(orderId).
- *     ...
+ *       In this version, we do **not** call checkPaymentStatus or query MSP at all.
+ *       We only parse the trailing numeric ID from `?orderId=XX` or
+ *       `?transactionid=frituur-den-overkant-XX` and then mark the local order
+ *       with status = 'awaiting_preparation' (or any other status you want).
+ *     tags:
+ *       - MSP Webhooks
+ *     parameters:
+ *       - in: query
+ *         name: orderId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: The local order ID (numeric)
+ *       - in: query
+ *         name: transactionid
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Possibly "frituur-den-overkant-XX"
+ *       - in: query
+ *         name: timestamp
+ *         schema:
+ *           type: string
+ *         description: (Unused) A timestamp from MSP
+ *     responses:
+ *       200:
+ *         description: Webhook processed successfully (local only)
+ *       400:
+ *         description: Missing or invalid query params
+ *       404:
+ *         description: Order not found in local Payload
+ *       500:
+ *         description: Server error
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { checkPaymentStatus } from '@/lib/payments/checkPaymentStatus'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
@@ -22,18 +49,16 @@ export async function GET(req: NextRequest) {
         let orderIdParam = searchParams.get('orderId')   // might be null
         const transactionId = searchParams.get('transactionid') // e.g. "frituur-den-overkant-46"
 
-        // 1) If no orderId param, try extracting from transactionId
+        // 1) If no ?orderId=, try extracting from transactionId's trailing digits
         if (!orderIdParam && transactionId) {
-            // e.g. transactionId = "frituur-den-overkant-46"
-            // We'll parse the trailing number if it exists
             const parts = transactionId.split('-')
-            const lastPart = parts[parts.length - 1]   // "46"
+            const lastPart = parts[parts.length - 1]   // e.g. "46"
             if (lastPart && /^\d+$/.test(lastPart)) {
                 orderIdParam = lastPart  // "46"
             }
         }
 
-        // 2) If still no orderIdParam => 400
+        // 2) If still no numeric ID => return 400
         if (!orderIdParam) {
             return NextResponse.json(
                 { error: 'Missing orderId or numeric transactionid in query params' },
@@ -41,7 +66,6 @@ export async function GET(req: NextRequest) {
             )
         }
 
-        // 3) Convert to number
         const orderId = Number(orderIdParam)
         if (Number.isNaN(orderId)) {
             return NextResponse.json(
@@ -50,45 +74,36 @@ export async function GET(req: NextRequest) {
             )
         }
 
-        // 4) Call checkPaymentStatus
-        const { orderDoc, providerResult } = await checkPaymentStatus(orderId)
+        // 3) Look up the local order doc
+        const payload = await getPayload({ config })
+        const existingOrder = await payload.findByID({
+            collection: 'orders',
+            id: String(orderId),
+        })
 
-        // 5) Map MSP status => local order status
-        let localOrderStatus = orderDoc.status
-        switch (providerResult.status) {
-            case 'completed':
-                // Instead of "complete", use "awaiting_preparation"
-                localOrderStatus = 'awaiting_preparation'
-                break
-            case 'cancelled':
-                localOrderStatus = 'cancelled'
-                break
-            case 'initialized':
-            case 'pending':
-                localOrderStatus = 'pending_payment'
-                break
-            default:
-                // could also handle 'declined', etc. if desired
-                break
+        if (!existingOrder) {
+            return NextResponse.json(
+                { error: `No local order found with id=${orderId}` },
+                { status: 404 },
+            )
         }
 
-        // 6) If status changed => update local DB
-        if (localOrderStatus !== orderDoc.status) {
-            const payload = await getPayload({ config })
-            await payload.update({
-                collection: 'orders',
-                id: String(orderDoc.id),
-                data: { status: localOrderStatus },
-            })
-        }
+        // 4) Immediately update the order to 'awaiting_preparation' (or whichever you prefer)
+        //    (Skipping checkPaymentStatus or MSP queries entirely.)
+        const updatedOrder = await payload.update({
+            collection: 'orders',
+            id: String(orderId),
+            data: {
+                status: 'awaiting_preparation',  // or 'complete', or anything else
+            },
+        })
 
-        // 7) Done
+        // 5) Done
         return NextResponse.json({
-            message: 'Webhook processed successfully',
+            message: 'Webhook processed successfully (local-only version)',
             orderId,
             transactionId,
-            providerStatus: providerResult.status,
-            localStatus: localOrderStatus,
+            newLocalStatus: updatedOrder.status,
         })
     } catch (err: any) {
         console.error('Error in mspWebhook route:', err)
