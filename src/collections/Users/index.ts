@@ -1,18 +1,15 @@
 import type { CollectionConfig } from 'payload';
-
-import { createAccess } from './access/create';
-import { readAccess } from './access/read';
-import { updateAndDeleteAccess } from './access/updateAndDelete';
 import { externalUsersLogin } from './endpoints/externalUsersLogin';
 import { setCookieBasedOnDomain } from './hooks/setCookieBasedOnDomain';
+import { hasPermission } from '@/access/permissionChecker';
 
 const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    create: createAccess,
-    delete: updateAndDeleteAccess,
-    read: readAccess,
-    update: updateAndDeleteAccess,
+    create: hasPermission('users', 'create'),
+    delete: hasPermission('users', 'delete'),
+    read: hasPermission('users', 'read'),
+    update: hasPermission('users', 'update'),
   },
   admin: {
     useAsTitle: 'email',
@@ -41,7 +38,8 @@ const Users: CollectionConfig = {
   fields: [
     {
       name: 'roles',
-      type: 'select',
+      type: 'relationship',
+      relationTo: 'roles',
       label: {
         en: 'Roles',
         nl: 'Rollen',
@@ -58,10 +56,6 @@ const Users: CollectionConfig = {
           fr: 'Attribuez des rôles à l\'utilisateur.',
         },
       },
-      options: [
-        { label: { en: 'Super Admin', nl: 'Superbeheerder', de: 'Superadministrator', fr: 'Super Administrateur' }, value: 'super-admin' },
-        { label: { en: 'User', nl: 'Gebruiker', de: 'Benutzer', fr: 'Utilisateur' }, value: 'user' },
-      ],
     },
     {
       name: 'tenants',
@@ -177,25 +171,72 @@ const Users: CollectionConfig = {
       index: true,
     },
     {
-      name: 'password',
-      type: 'text',
-      defaultValue: '',
-      required: true,
-      label: {
-        en: 'Password',
-        nl: 'Wachtwoord',
-        de: 'Passwort',
-        fr: 'Mot de passe',
-      },
-      admin: {
-        description: {
-          en: 'The password of the user.',
-          nl: 'Het wachtwoord van de gebruiker.',
-          de: 'Das Passwort des Benutzers.',
-          fr: 'Le mot de passe de l\'utilisateur.',
+      name: 'transactions',
+      type: 'array',
+      fields: [
+        {
+          name: 'service',
+          type: 'relationship',
+          relationTo: 'services',
         },
-      },
+        {
+          name: 'status',
+          type: 'select',
+          options: ['success', 'failed'],
+        },
+        {
+          name: 'date',
+          type: 'date',
+        },
+        {
+          name: 'amount',
+          type: 'number',
+        },
+        {
+          name: 'currency',
+          type: 'text',
+        }
+      ]
     },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'service',
+          type: 'relationship',
+          relationTo: 'services',
+        },
+        {
+          name: 'status',
+          type: 'select',
+          options: ['active', 'inactive'],
+        },
+        {
+          name: 'start_date',
+          type: 'date',
+        },
+        {
+          name: 'end_date',
+          type: 'date',
+        },
+        {
+          name: 'subscription_amount',
+          type: 'number',
+        },
+        {
+          name: 'subscription_currency',
+          type: 'text',
+        },
+        {
+          name: 'subscription_id',
+          type: 'text',
+        },
+        {
+          name: 'stripe_customer_id',
+          type: 'text',
+        },
+      ]
+    }
   ],
 };
 

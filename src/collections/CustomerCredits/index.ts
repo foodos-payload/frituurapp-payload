@@ -2,16 +2,15 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { filterByTenantRead, canMutateCustomerCredit } from './access/byTenant';
-import { ensureUniqueCustomerCredit } from './hooks/ensureUniqueCustomerCredit';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const CustomerCredits: CollectionConfig = {
   slug: 'customer-credits',
   access: {
-    create: canMutateCustomerCredit,
-    delete: canMutateCustomerCredit,
-    read: filterByTenantRead,
-    update: canMutateCustomerCredit,
+    create: hasPermission('customer-credits', 'create'),
+    delete: hasPermission('customer-credits', 'delete'),
+    read: hasPermission('customer-credits', 'read'),
+    update: hasPermission('customer-credits', 'update'),
   },
   admin: {
     baseListFilter,

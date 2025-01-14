@@ -2,16 +2,15 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateReservationEntry } from './access/byTenant';
-import { readAccess } from './access/readAccess';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const ReservationEntries: CollectionConfig = {
   slug: 'reservation-entries',
   access: {
-    create: canMutateReservationEntry,
-    delete: canMutateReservationEntry,
-    read: readAccess,
-    update: canMutateReservationEntry,
+    create: hasPermission('reservation-entries', 'create'),
+    delete: hasPermission('reservation-entries', 'delete'),
+    read: hasPermission('reservation-entries', 'read'),
+    update: hasPermission('reservation-entries', 'update'),
   },
   admin: {
     baseListFilter,

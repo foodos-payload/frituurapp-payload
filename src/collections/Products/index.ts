@@ -4,17 +4,16 @@ import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { categoriesField } from '../../fields/CategoriesField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateProduct } from './access/byTenant';
-import { readAccess } from './access/readAccess';
 import { ensureUniqueNamePerShop } from './hooks/ensureUniqueNamePerShop';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const Products: CollectionConfig = {
     slug: 'products',
     access: {
-        create: canMutateProduct,
-        delete: canMutateProduct,
-        read: readAccess, // Use shop and tenant-based filtering
-        update: canMutateProduct,
+        create: hasPermission('products', 'create'),
+        delete: hasPermission('products', 'delete'),
+        read: hasPermission('products', 'read'),
+        update: hasPermission('products', 'update'),
     },
     admin: {
         baseListFilter,

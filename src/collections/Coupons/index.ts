@@ -2,18 +2,16 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateCoupon } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
-import { readAccess } from './access/readAccess';
+import { hasPermission } from '@/access/permissionChecker';
 import { ensureUniqueBarcodePerShop } from './hooks/ensureUniqueBarcodePerShop';
 
 export const Coupons: CollectionConfig = {
   slug: 'coupons',
   access: {
-    create: canMutateCoupon,
-    delete: canMutateCoupon,
-    read: readAccess,
-    update: canMutateCoupon,
+    create: hasPermission('coupons', 'create'),
+    delete: hasPermission('coupons', 'delete'),
+    read: hasPermission('coupons', 'read'),
+    update: hasPermission('coupons', 'update'),
   },
   admin: {
     baseListFilter,

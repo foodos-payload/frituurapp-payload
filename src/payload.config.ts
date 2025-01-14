@@ -7,7 +7,6 @@ import { fileURLToPath } from 'url';
 import { s3Storage } from '@payloadcms/storage-s3';
 import { setupCrons } from './lib/cron/index'
 
-// Import all collections
 import { Pages } from './collections/Pages';
 import { Tenants } from './collections/Tenants';
 import Users from './collections/Users';
@@ -39,6 +38,8 @@ import { nl } from '@payloadcms/translations/languages/nl'
 import { en } from '@payloadcms/translations/languages/en'
 import { de } from '@payloadcms/translations/languages/de'
 import { fr } from '@payloadcms/translations/languages/fr'
+import { Services } from './collections/Services';
+import Roles from './collections/Roles';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -69,6 +70,13 @@ export default buildConfig({
       ...Users,
       admin: {
         ...Users.admin,
+        group: '🏪',
+      },
+    },
+    {
+      ...Roles,
+      admin: {
+        ...Roles.admin,
         group: '🏪',
       },
     },
@@ -244,6 +252,14 @@ export default buildConfig({
         group: '🛒',
       },
     },
+    {
+      ...Services,
+      admin: {
+        ...Services.admin,
+        group: '🛒',
+      },
+    },
+
   ],
   localization: {
     locales: ['nl', 'en', 'de', 'fr'],
