@@ -43,7 +43,7 @@ export default function HorizontalCategories({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // We'll use this color for "active" + "hover" states if provided
-  const brandBgColor = branding?.primaryColorCTA || "#CE2027";
+  const brandBgColor = branding?.categoryCardBgColor || "#CE2027";
 
   function handleMouseEnter(e: MouseEvent<HTMLAnchorElement>, isActive: boolean) {
     if (!isActive) {
