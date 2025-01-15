@@ -85,7 +85,7 @@ export default function OpeningHoursSection({ branding, shopData }: OpeningHours
                but custom={1} => start AFTER the other block. */}
                     <motion.div custom={1} variants={columnVariants}>
                         <div className="flex items-center gap-3 mb-10">
-                            <h2 className="text-2xl font-bold">Openingsuren</h2>
+                            <h2 className="text-2xl font-bold">Openingsuren 🕐</h2>
                             <span
                                 className={`
                   px-2 py-1 text-sm font-semibold rounded-full
@@ -132,7 +132,7 @@ export default function OpeningHoursSection({ branding, shopData }: OpeningHours
                     {/* (B) "Over ons" block in DOM second, 
                but custom={0} => start FIRST (no extra delay). */}
                     <motion.div custom={0} variants={columnVariants}>
-                        <h2 className="text-2xl font-bold mb-10">Over ons</h2>
+                        <h2 className="text-2xl font-bold mb-10">Over ons ℹ️</h2>
                         {branding?.shopIntrotext ? (
                             <p className="text-lg leading-relaxed whitespace-pre-line">
                                 {branding.shopIntrotext}

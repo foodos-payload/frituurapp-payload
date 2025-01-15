@@ -44,7 +44,7 @@ export default function PaymentMethodsSlider({
         return (
             <section id="payment" className="py-20 bg-white">
                 <div className="max-w-[1200px] mx-auto px-4 text-center">
-                    <h2 className="text-3xl font-bold mb-20">Betaalmethodes</h2>
+                    <h2 className="text-3xl font-bold mb-20">Betaalmethodes <span className="text-4xl">💳</span></h2>
                     <p>No payment methods found...</p>
                 </div>
             </section>
@@ -78,7 +78,7 @@ export default function PaymentMethodsSlider({
                     transition={{ duration: 0.5 }}
                     viewport={{ once: true, amount: 0.2 }}
                 >
-                    Betaalmethodes
+                    Betaalmethodes <span className="text-4xl">💳</span>
                 </motion.h2>
 
                 {/* Horizontal list with no scrollbar */}

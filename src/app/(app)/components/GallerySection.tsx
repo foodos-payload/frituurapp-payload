@@ -87,7 +87,7 @@ export default function GallerySection({ branding }: GallerySectionProps) {
                     className="text-2xl font-bold mb-8"
                     variants={headingVariants}
                 >
-                    Gallery
+                    Gallery 📸
                 </motion.h2>
 
                 {/* 2-column grid on md+ screens, 1-column on smaller */}

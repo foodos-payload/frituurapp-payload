@@ -116,7 +116,7 @@ export default function MenuPreviewSection({
                     className="text-3xl font-bold mb-4"
                     variants={textSlideVariants}
                 >
-                    Onze Menu
+                    Onze Menu 😋
                 </motion.h2>
 
                 {/* Description */}

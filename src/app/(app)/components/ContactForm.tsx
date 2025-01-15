@@ -25,7 +25,7 @@ export default function ContactForm({ branding }: ContactFormProps) {
         shadow-sm
         rounded-b-xl">
             <div className="max-w-[1200px] mx-auto px-4">
-                <h2 className="text-2xl font-bold mb-10">Contact</h2>
+                <h2 className="text-2xl font-bold mb-10">Contact ✉️</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* LEFT: form */}
