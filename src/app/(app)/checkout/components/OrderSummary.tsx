@@ -7,6 +7,7 @@ import PromoButton from "../../shared/PromoButton";
 import debounce from "lodash.debounce";
 import Image from "next/image";
 import { useTranslation } from "@/context/TranslationsContext";
+import Link from "next/link";
 
 type Branding = {
     /** e.g. "#ECAA02" or some other brand color */
@@ -288,6 +289,7 @@ export default function OrderSummary({
                                                 >
                                                     <FiTrash2 className="w-5 h-5" />
                                                 </button>
+
                                             </div>
                                         </div>
                                     </li>
@@ -403,6 +405,19 @@ export default function OrderSummary({
                             t("checkout.order_summary.proceed_to_checkout")
                         )}
                     </button>
+
+                    {/* T&C & Privacy disclaimer */}
+                    <p className="pt-5 mt-20 text-center text-xs text-gray-600">
+                        Door af te rekenen, gaat u akkoord met de{" "}
+                        <Link href="/terms-and-conditions" target="_blank" className="text-blue-600 underline">
+                            algemene voorwaarden
+                        </Link>{" "}
+                        en{" "}
+                        <Link href="/privacy-policy" target="_blank" className="text-blue-600 underline">
+                            privacybeleid
+                        </Link>
+                        .
+                    </p>
                 </div>
             </div>
         </div >

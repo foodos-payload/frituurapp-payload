@@ -93,12 +93,12 @@ export default function Footer({ branding, shopData }: FooterProps) {
                         <span className="mr-2">Disclaimer</span>
                         |
                         {/* Privacy Policy link */}
-                        <Link href="/privacy-policy" className="underline hover:opacity-80 ml-2">
+                        <Link href="/privacy-policy" target="_blank" className="underline hover:opacity-80 ml-2">
                             Privacy Policy
                         </Link>
                         {" "}|
                         {/* Terms & Conditions link */}
-                        <Link href="/terms-and-conditions" className="underline hover:opacity-80 ml-2">
+                        <Link href="/terms-and-conditions" target="_blank" className="underline hover:opacity-80 ml-2">
                             Terms & Conditions
                         </Link>
                     </p>
