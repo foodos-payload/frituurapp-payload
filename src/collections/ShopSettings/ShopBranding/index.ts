@@ -4,6 +4,8 @@ import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from '../FulfillmentMethods/access/baseListFilter';
 import { hasPermission } from '@/access/permissionChecker';
+import { colorPickerField } from '@innovixx/payload-color-picker-field'
+
 
 export const ShopBranding: CollectionConfig = {
     slug: 'shop-branding',
@@ -122,13 +124,8 @@ export const ShopBranding: CollectionConfig = {
                 },
             },
         },
-
-        // 6) Plain text color fields with a HEX validation
-        //    They only allow values like "#abc", "#abcd", "#AABBCC", or "AABBCC".
-
-        {
+        colorPickerField({
             name: 'headerBackgroundColor',
-            type: 'text',
             label: {
                 en: 'Header Background Color',
                 nl: 'Achtergrondkleur koptekst',
@@ -143,24 +140,16 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Couleur d’arrière-plan pour l’en-tête (si aucune image).',
                 },
             },
-            validate: (val: string | string[] | null | undefined) => {
-                if (typeof val !== 'string') return true;
-                // Empty is OK if not required
-                if (!val) return true;
-                // Otherwise, must match 3 or 6-digit hex, optional leading "#"
-                const pattern = /^#?([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/;
-                return pattern.test(val.trim()) || 'Must be a valid hex color (e.g. "#FFF" or "#FFEE11")';
-            },
-        },
-        {
+        }),
+        colorPickerField({
             name: 'categoryCardBgColor',
-            type: 'text',
             label: {
                 en: 'Category Card Background',
                 nl: 'Achtergrondcategorielkaart',
                 de: 'Kategorie-Kartenhintergrund',
                 fr: 'Arrière-plan de la carte catégorie',
             },
+            defaultValue: '#CE2027',
             admin: {
                 description: {
                     en: 'Background color for category cards in kiosk.',
@@ -169,19 +158,9 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Couleur d’arrière-plan pour les cartes de catégories du kiosque.',
                 },
             },
-            defaultValue: '#CE2027',
-            validate: (val: string | string[] | null | undefined) => {
-                if (typeof val !== 'string') return true;
-                // Empty is OK if not required
-                if (!val) return true;
-                // Otherwise, must match 3 or 6-digit hex, optional leading "#"
-                const pattern = /^#?([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/;
-                return pattern.test(val.trim()) || 'Must be a valid hex color (e.g. "#FFF" or "#FFEE11")';
-            },
-        },
-        {
+        }),
+        colorPickerField({
             name: 'primaryColorCTA',
-            type: 'text',
             label: {
                 en: 'Primary CTA Color',
                 nl: 'Primaire CTA-kleur',
@@ -197,15 +176,7 @@ export const ShopBranding: CollectionConfig = {
                 },
             },
             defaultValue: '#068b59',
-            validate: (val: string | string[] | null | undefined) => {
-                if (typeof val !== 'string') return true;
-                // Empty is OK if not required
-                if (!val) return true;
-                // Otherwise, must match 3 or 6-digit hex, optional leading "#"
-                const pattern = /^#?([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/;
-                return pattern.test(val.trim()) || 'Must be a valid hex color (e.g. "#FFF" or "#FFEE11")';
-            },
-        },
+        }),
         {
             name: 'googleReviewUrl',
             type: 'text',
