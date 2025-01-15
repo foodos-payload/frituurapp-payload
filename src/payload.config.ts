@@ -40,6 +40,7 @@ import { de } from '@payloadcms/translations/languages/de'
 import { fr } from '@payloadcms/translations/languages/fr'
 import { Services } from './collections/Services';
 import Roles from './collections/Roles';
+import Subscriptions from './collections/Subscriptions'
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -77,6 +78,13 @@ export default buildConfig({
       ...Roles,
       admin: {
         ...Roles.admin,
+        group: '🏪',
+      },
+    },
+    {
+      ...Subscriptions,
+      admin: {
+        ...Subscriptions.admin,
         group: '🏪',
       },
     },
