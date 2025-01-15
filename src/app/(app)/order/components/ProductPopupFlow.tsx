@@ -20,8 +20,16 @@ type LinkedProductData = {
     image?: { url: string; alt?: string } | null;
     tax?: number | null;
     tax_dinein?: number | null;
+
+    /** Additional fields for status/stock, if desired: */
+    status?: string;
+    enable_stock?: boolean;
+    quantity?: number;
 };
 
+/**
+ * If you'd like to track subproduct-level stock & status:
+ */
 type Subproduct = {
     id: string;
     name_nl: string;
@@ -33,12 +41,13 @@ type Subproduct = {
     linkedProduct?: LinkedProductData;
     tax?: number | null;
     tax_dinein?: number | null;
+
+    /** Additional fields if you want to filter out disabled or track out-of-stock, etc. */
+    status?: string;
+    stock_enabled?: boolean;
+    stock_quantity?: number;
 };
 
-/**
- * Extend your PopupDoc to include optional minimum_option, maximum_option, etc.
- * or whichever fields you actually use.
- */
 type PopupDoc = {
     id: string;
     popup_title_nl: string;
@@ -48,9 +57,7 @@ type PopupDoc = {
     multiselect: boolean;
     subproducts: Subproduct[];
 
-    /** If you want to require at least N selections. Make it optional. */
     minimum_option?: number;
-    /** If you also want a maximum_option, do it similarly. */
     maximum_option?: number;
     allowMultipleTimes?: boolean;
 };
@@ -105,7 +112,12 @@ function pickPopupTitle(p: PopupDoc, lang?: string): string {
 
 /** Pick subproduct name in correct language */
 function pickSubproductName(
-    s: { name_nl: string; name_en?: string; name_de?: string; name_fr?: string },
+    s: {
+        name_nl: string;
+        name_en?: string;
+        name_de?: string;
+        name_fr?: string;
+    },
     lang?: string
 ): string {
     switch (lang) {
@@ -122,7 +134,12 @@ function pickSubproductName(
 
 /** Pick main product name in correct language */
 function pickProductName(
-    product: { name_nl: string; name_en?: string; name_de?: string; name_fr?: string },
+    product: {
+        name_nl: string;
+        name_en?: string;
+        name_de?: string;
+        name_fr?: string;
+    },
     lang?: string
 ): string {
     switch (lang) {
@@ -137,47 +154,53 @@ function pickProductName(
     }
 }
 
-/** Animate a cloned img from the popup to the cart. (unused by default) */
-function flyToCart(
-    cartRef: React.RefObject<HTMLDivElement>,
-    sourceImg: HTMLImageElement | null
+/** Gather *all* selected subproducts across all popups. */
+function gatherAllSelectedItems(
+    sortedPopups: PopupItem[],
+    selectedOptions: Record<string, string[]>,
+    subproductQuantities: Record<string, Record<string, number>>
 ) {
-    if (!cartRef.current || !sourceImg) return;
+    const results: Array<{
+        id: string;
+        name_nl: string;
+        image?: { url: string; alt?: string };
+        quantity: number;
+    }> = [];
 
-    const flyingImg = sourceImg.cloneNode(true) as HTMLImageElement;
-    flyingImg.style.position = "absolute";
-    flyingImg.style.zIndex = "9999";
+    for (const popIt of sortedPopups) {
+        if (!popIt.popup) continue;
 
-    const rect = sourceImg.getBoundingClientRect();
-    const scrollX = window.scrollX || 0;
-    const scrollY = window.scrollY || 0;
+        const pId = popIt.popup.id;
+        const { allowMultipleTimes } = popIt.popup;
 
-    flyingImg.style.width = `${rect.width}px`;
-    flyingImg.style.height = `${rect.height}px`;
-    flyingImg.style.left = `${rect.left + scrollX}px`;
-    flyingImg.style.top = `${rect.top + scrollY}px`;
-    flyingImg.style.transition = "transform 1s ease-in-out, opacity 1s ease-in-out";
-    document.body.appendChild(flyingImg);
+        if (allowMultipleTimes) {
+            const qtyMap = subproductQuantities[pId] || {};
+            for (const sub of popIt.popup.subproducts) {
+                const q = qtyMap[sub.id] || 0;
+                if (q <= 0) continue;
 
-    const cartIcon = cartRef.current.querySelector(".cart-icon") as HTMLElement | null;
-    const cartRect = cartIcon
-        ? cartIcon.getBoundingClientRect()
-        : cartRef.current.getBoundingClientRect();
-
-    requestAnimationFrame(() => {
-        const flyingRect = flyingImg.getBoundingClientRect();
-        const deltaX =
-            cartRect.left + cartRect.width / 2 - (flyingRect.left + flyingRect.width / 2);
-        const deltaY =
-            cartRect.top + cartRect.height / 2 - (flyingRect.top + flyingRect.height / 2);
-
-        flyingImg.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.1)`;
-        flyingImg.style.opacity = "0.3";
-    });
-
-    setTimeout(() => {
-        flyingImg.remove();
-    }, 1200);
+                // Push once with quantity
+                results.push({
+                    id: sub.linkedProduct?.id ?? sub.id,
+                    name_nl: sub.linkedProduct?.name_nl ?? sub.name_nl,
+                    image: sub.linkedProduct?.image || sub.image || undefined,
+                    quantity: q, // Attach quantity here
+                });
+            }
+        } else {
+            const chosenIDs = selectedOptions[pId] || [];
+            for (const sub of popIt.popup.subproducts) {
+                if (!chosenIDs.includes(sub.id)) continue;
+                results.push({
+                    id: sub.linkedProduct?.id ?? sub.id,
+                    name_nl: sub.linkedProduct?.name_nl ?? sub.name_nl,
+                    image: sub.linkedProduct?.image || sub.image || undefined,
+                    quantity: 1, // Single selection implies quantity of 1
+                });
+            }
+        }
+    }
+    return results;
 }
 
 export default function ProductPopupFlow({
@@ -193,62 +216,71 @@ export default function ProductPopupFlow({
     const { t } = useTranslation();
     const { addItem, updateItem } = useCart();
 
-    // Sort + filter
+    // 1) Sort popups by .order
     const sortedPopups = (product.productpopups || [])
         .filter((p) => p.popup !== null)
         .sort((a, b) => (a.order || 0) - (b.order || 0));
 
+    // 2) If no popups => we can either return null or handle differently
     if (sortedPopups.length === 0) return null;
 
-    // Step-based
+    // Step-based (wizard-like)
     const [currentIndex, setCurrentIndex] = useState(0);
     const currentPopupItem = sortedPopups[currentIndex];
-
-    // If, for some reason, currentPopupItem.popup is null, we can bail out
     if (!currentPopupItem?.popup) {
-        // Could also return null or handle differently
         return null;
     }
+
     const popup = currentPopupItem.popup;
     const popupTitle = pickPopupTitle(popup, lang);
-    const { multiselect, subproducts } = popup;
 
-    // If you have a "minimum_option" or "maximum_option" in popup
-    // that requires certain picks:
-    // popup.minimum_option => number | undefined
-    // popup.maximum_option => number | undefined
+    // 3) Filter out subproducts if they are *disabled*,
+    //    but keep them if out-of-stock -> show a label
+    const displayedSubproducts = popup.subproducts.filter((sub) => {
+        // skip sub if explicitly disabled
+        if (sub.status === "disabled") return false;
 
-    // Our selected items
+        // skip sub if linked product is disabled
+        if (sub.linkedProduct && sub.linkedProduct.status === "disabled") {
+            return false;
+        }
+
+        // We do NOT skip sub if it's out of stock. We'll show a label instead
+        // So we return true
+        return true;
+    });
+
+    // For "allowMultipleTimes" => store subproductQuantities
+    const [subproductQuantities, setSubproductQuantities] = useState<
+        Record<string, Record<string, number>>
+    >({});
+
+    // If you want to allow multiple selection => see if popup.multiselect
+    // We'll store them in selectedOptions
     const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>(() => {
         // If editing => we might prefill
         if (!editingItem || !editingItem.subproducts) return {};
         return {};
     });
 
-    const popupID = popup.id;
-    const currentSelections = selectedOptions[popupID] || [];
-
-    // New: local error message
+    // Local error message
     const [errorMessage, setErrorMessage] = useState("");
+    // Over-max highlight (optional)
     const [isOverMax, setIsOverMax] = useState(false);
 
-    // Keep track of quantities for popups allowing multiple times
-    const [subproductQuantities, setSubproductQuantities] = useState<
-        Record<string, Record<string, number>>
-    >({});
-
-    /** Sum the total picks for a single popup ID. */
+    // Helper to sum up total picks in a popup (for max checking)
     function getTotalQuantityForPopup(popupId: string): number {
         const map = subproductQuantities[popupId] || {};
         return Object.values(map).reduce((acc, qty) => acc + qty, 0);
     }
+    const totalSoFar = getTotalQuantityForPopup(popup.id);
 
-    /** For multiTimes => increment quantity. (No blocking, just let them exceed max) */
+    /** Increment quantity for a subproduct. If user is at max => block. */
     function incrementQty(popupId: string, subId: string) {
         if (popup.maximum_option && popup.maximum_option > 0 && totalSoFar >= popup.maximum_option) {
             setIsOverMax(true);
-            setTimeout(() => setIsOverMax(false), 1000); // 1 second highlight
-            return; // block increment
+            setTimeout(() => setIsOverMax(false), 1000);
+            return;
         }
         setSubproductQuantities((prev) => {
             const oldMap = prev[popupId] || {};
@@ -263,7 +295,7 @@ export default function ProductPopupFlow({
         });
     }
 
-    /** For multiTimes => decrement quantity. */
+    /** Decrement quantity for a subproduct. */
     function decrementQty(popupId: string, subId: string) {
         setSubproductQuantities((prev) => {
             const oldMap = prev[popupId] || {};
@@ -279,16 +311,16 @@ export default function ProductPopupFlow({
         });
     }
 
-    /** Toggle or single-select for subproduct (no multiple times). */
+    /** Toggle or single-select for subproduct if not allowMultipleTimes. */
     function handleSubproductClick(sub: Subproduct) {
         setErrorMessage("");
         const subID = sub.id;
 
         setSelectedOptions((prev) => {
-            const oldArray = prev[popupID] || [];
+            const oldArray = prev[popup.id] || [];
             let newArray: string[] = [];
 
-            if (multiselect) {
+            if (popup.multiselect) {
                 // multi-select toggle
                 if (oldArray.includes(subID)) {
                     newArray = oldArray.filter((id) => id !== subID);
@@ -306,25 +338,33 @@ export default function ProductPopupFlow({
 
             return {
                 ...prev,
-                [popupID]: newArray,
+                [popup.id]: newArray,
             };
         });
     }
 
-    /** Next/Back buttons */
+    /** Next/Back step navigation */
     function handleNext() {
         setErrorMessage("");
-        // If there's a minimum_option => enforce it
+        // enforce min
         if (popup.minimum_option && popup.minimum_option > 0) {
-            const chosenIDs = selectedOptions[popup.id] || [];
-            if (chosenIDs.length < popup.minimum_option) {
-                setErrorMessage(`Je moet minstens ${popup.minimum_option} optie(s) kiezen!`);
-                return;
+            if (popup.allowMultipleTimes) {
+                const totalQty = getTotalQuantityForPopup(popup.id);
+                if (totalQty < popup.minimum_option) {
+                    setErrorMessage(`Je moet minstens ${popup.minimum_option} optie(s) kiezen!`);
+                    return;
+                }
+            } else {
+                const chosenIDs = selectedOptions[popup.id] || [];
+                if (chosenIDs.length < popup.minimum_option) {
+                    setErrorMessage(`Je moet minstens ${popup.minimum_option} optie(s) kiezen!`);
+                    return;
+                }
             }
         }
 
-        // If final step => finish
         if (currentIndex >= sortedPopups.length - 1) {
+            // final step => finish
             handleFinish();
         } else {
             setCurrentIndex((i) => i + 1);
@@ -339,13 +379,20 @@ export default function ProductPopupFlow({
     /** Finalize => gather all subproducts from all popups + add or update cart */
     function handleFinish() {
         setErrorMessage("");
-
-        // last popup => enforce minimum
+        // enforce min on last popup
         if (popup.minimum_option && popup.minimum_option > 0) {
-            const chosenIDs = selectedOptions[popup.id] || [];
-            if (chosenIDs.length < popup.minimum_option) {
-                setErrorMessage(`Je moet minstens ${popup.minimum_option} optie(s) kiezen!`);
-                return;
+            if (popup.allowMultipleTimes) {
+                const totalQty = getTotalQuantityForPopup(popup.id);
+                if (totalQty < popup.minimum_option) {
+                    setErrorMessage(`Je moet minstens ${popup.minimum_option} optie(s) kiezen!`);
+                    return;
+                }
+            } else {
+                const chosenIDs = selectedOptions[popup.id] || [];
+                if (chosenIDs.length < popup.minimum_option) {
+                    setErrorMessage(`Je moet minstens ${popup.minimum_option} optie(s) kiezen!`);
+                    return;
+                }
             }
         }
 
@@ -367,7 +414,6 @@ export default function ProductPopupFlow({
             if (!popIt.popup) continue;
             const pId = popIt.popup.id;
 
-            // if allowMultipleTimes => read from subproductQuantities
             if (popIt.popup.allowMultipleTimes) {
                 const qtyMap = subproductQuantities[pId] || {};
                 for (const sp of popIt.popup.subproducts) {
@@ -388,50 +434,55 @@ export default function ProductPopupFlow({
                                 typeof sp.linkedProduct?.tax_dinein === "number"
                                     ? sp.linkedProduct!.tax_dinein
                                     : sp.tax_dinein ?? undefined,
-                            image: sp.linkedProduct?.image ?? sp.image
-                                ? {
-                                    url: (sp.linkedProduct?.image ?? sp.image)?.url ?? "",
-                                    alt:
-                                        (sp.linkedProduct?.image ?? sp.image)?.alt ?? sp.name_nl,
-                                }
-                                : undefined,
+                            image:
+                                sp.linkedProduct?.image ?? sp.image
+                                    ? {
+                                        url: (sp.linkedProduct?.image ?? sp.image)?.url ?? "",
+                                        alt: (sp.linkedProduct?.image ?? sp.image)?.alt ?? sp.name_nl,
+                                    }
+                                    : undefined,
                             quantity: q,
                         };
                         chosenSubs.push(subData);
                     }
                 }
             } else {
-                // multi-select or single-select => existing approach
+                // multi/single => selectedOptions
                 const chosenIDs = selectedOptions[pId] || [];
                 for (const sp of popIt.popup.subproducts) {
                     if (!chosenIDs.includes(sp.id)) continue;
                     chosenSubs.push({
                         subproductId: sp.linkedProduct?.id ?? sp.id,
-                        name_nl: sp.name_nl,
-                        name_en: sp.name_en ?? sp.name_nl,
-                        name_de: sp.name_de ?? sp.name_nl,
-                        name_fr: sp.name_fr ?? sp.name_nl,
-                        price: sp.price,
-                        tax: typeof sp.tax === "number" ? sp.tax : undefined,
-                        tax_dinein: typeof sp.tax_dinein === "number" ? sp.tax_dinein : undefined,
-                        image: sp.image
-                            ? {
-                                url: sp.image.url,
-                                alt: sp.image.alt ?? sp.name_nl,
-                            }
-                            : undefined,
+                        name_nl: sp.linkedProduct?.name_nl ?? sp.name_nl,
+                        name_en: sp.linkedProduct?.name_en ?? sp.name_en ?? sp.name_nl,
+                        name_de: sp.linkedProduct?.name_de ?? sp.name_de ?? sp.name_nl,
+                        name_fr: sp.linkedProduct?.name_fr ?? sp.name_fr ?? sp.name_nl,
+                        price: sp.linkedProduct?.price ?? sp.price,
+                        tax:
+                            typeof sp.linkedProduct?.tax === "number"
+                                ? sp.linkedProduct!.tax
+                                : sp.tax ?? undefined,
+                        tax_dinein:
+                            typeof sp.linkedProduct?.tax_dinein === "number"
+                                ? sp.linkedProduct!.tax_dinein
+                                : sp.tax_dinein ?? undefined,
+                        image:
+                            sp.linkedProduct?.image ?? sp.image
+                                ? {
+                                    url: (sp.linkedProduct?.image ?? sp.image)?.url ?? "",
+                                    alt: (sp.linkedProduct?.image ?? sp.image)?.alt ?? sp.name_nl,
+                                }
+                                : undefined,
                         quantity: 1,
                     });
                 }
             }
         }
 
-        // define product's base price + tax
         const basePrice = product.price ?? 0;
         const mainTax = product.tax ?? 0;
         const mainTaxDinein = product.tax_dinein ?? 0;
 
-        // Add or update in cart
         if (editingItem && editingItemSignature) {
             updateItem(editingItemSignature, {
                 price: basePrice,
@@ -463,7 +514,6 @@ export default function ProductPopupFlow({
                 hasPopups: true,
             });
 
-            // dispatch a "product-added" event
             window.dispatchEvent(
                 new CustomEvent("product-added", {
                     detail: {
@@ -477,27 +527,16 @@ export default function ProductPopupFlow({
         onClose();
     }
 
-    /** If user clicks outside the modal => close */
+    /** Close modal when user clicks overlay */
     function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
         if (e.target === e.currentTarget) onClose();
     }
 
-    /** Gather selected items from all steps for top row preview */
-    const selectedItems = gatherAllSelectedItems(
-        sortedPopups,
-        selectedOptions,
-        subproductQuantities
-    );
-
     // brandCTA color
     const brandCTA = branding?.primaryColorCTA || "#068b59";
 
-    // Check if user is over the max => if totalSoFar > maximum_option => highlight
-    const totalSoFar = getTotalQuantityForPopup(popup.id);
-    // const isOverMax =
-    //     popup.maximum_option &&
-    //     popup.maximum_option > 0 &&
-    //     totalSoFar > popup.maximum_option;
+    // Gather selected items from all steps for top row preview
+    const selectedItems = gatherAllSelectedItems(sortedPopups, selectedOptions, subproductQuantities);
 
     return (
         <div
@@ -529,26 +568,14 @@ export default function ProductPopupFlow({
           ${isKiosk ? "p-0" : ""}
         `}
             >
-                {product.image?.url && (
-                    <Image
-                        src={encodeURI(product.image.url)}
-                        alt={product.image.alt || product.name_nl}
-                        className="popup-fly-img"
-                        style={{
-                            visibility: "hidden",
-                            width: 0,
-                            height: 0,
-                            position: "absolute",
-                        }}
-                        layout="fill"
-                    />
-                )}
-
-                {/* Sticky Image Banner */}
+                {/* Sticky Banner */}
                 <div
                     className={`
             relative sticky top-0 z-10 w-full
-            ${isKiosk ? "h-[180px] md:h-[340px] mb-10" : "h-[150px] md:h-[200px]"}
+            ${isKiosk
+                            ? "h-[180px] md:h-[340px] mb-10"
+                            : "h-[150px] md:h-[200px]"
+                        }
           `}
                 >
                     {product.image?.url && (() => {
@@ -568,16 +595,16 @@ export default function ProductPopupFlow({
                             onClick={onClose}
                             title="Close Modal"
                             className="
-                                    absolute
-                                    top-4 right-4
-                                    bg-red-500 text-white
-                                    rounded-xl
-                                    shadow-xl
-                                    p-3
-                                    hover:bg-red-600
-                                    transition-colors
-                                    z-50
-                                "
+                absolute
+                top-4 right-4
+                bg-red-500 text-white
+                rounded-xl
+                shadow-xl
+                p-3
+                hover:bg-red-600
+                transition-colors
+                z-50
+              "
                             style={{ minWidth: "44px", minHeight: "44px" }}
                         >
                             <FiX className="w-6 h-6" />
@@ -601,12 +628,11 @@ export default function ProductPopupFlow({
                     </div>
                 </div>
 
-                {/* Main content area */}
+                {/* Main content */}
                 <div
-                    className={`${isKiosk ? "mb-24 mt-36 px-4" : "mb-14 mt-5"
-                        } w-[95%] mx-auto`}
+                    className={`${isKiosk ? "mb-24 mt-36 px-4" : "mb-14 mt-5"} w-[95%] mx-auto`}
                 >
-                    {/* The selected-items row if any */}
+                    {/* The selected-items row */}
                     {selectedItems.length > 0 && (
                         <div
                             className={`flex flex-row flex-wrap items-center gap-2 mb-6 ${isKiosk ? "justify-center" : ""
@@ -627,9 +653,7 @@ export default function ProductPopupFlow({
                                                 height={80}
                                             />
                                         ) : (
-                                            <span className="text-xs text-center px-2">
-                                                {item.name_nl}
-                                            </span>
+                                            <span className="text-xs text-center px-2">{item.name_nl}</span>
                                         )}
                                     </div>
                                     {item.quantity > 1 && (
@@ -642,14 +666,11 @@ export default function ProductPopupFlow({
                         </div>
                     )}
 
-                    {/* Step label => use popupTitle */}
+                    {/* Popup Title */}
                     <h2
                         className={`
               font-semibold text-center
-              ${isKiosk
-                                ? "text-2xl mb-8 mt-10"
-                                : "text-xl mt-20 mb-10"
-                            }
+              ${isKiosk ? "text-2xl mb-8 mt-10" : "text-xl mt-20 mb-10"}
             `}
                     >
                         {popupTitle}
@@ -680,13 +701,10 @@ export default function ProductPopupFlow({
                         className={`
               mt-4
               grid gap-4
-              ${isKiosk
-                                ? "grid-cols-2 md:grid-cols-3"
-                                : "grid-cols-2 md:grid-cols-3"
-                            }
+              ${isKiosk ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2 md:grid-cols-3"}
             `}
                     >
-                        {subproducts.map((sub) => {
+                        {displayedSubproducts.map((sub) => {
                             const useLinked = !!sub.linkedProduct;
                             const displayName = useLinked
                                 ? pickSubproductName(sub.linkedProduct!, lang)
@@ -698,15 +716,26 @@ export default function ProductPopupFlow({
                                 ? sub.linkedProduct?.image
                                 : sub.image;
 
-                            const chosenThisStep = selectedOptions[popupID] || [];
+                            // Check out-of-stock
+                            // If sub has stock tracking and quantity=0 => out of stock
+                            // Or if linked product is out of stock
+                            const isOutOfStock =
+                                (sub.stock_enabled && sub.stock_quantity === 0) ||
+                                (sub.linkedProduct?.enable_stock && (sub.linkedProduct?.quantity || 0) === 0);
+
+                            const chosenThisStep = selectedOptions[popup.id] || [];
                             const isSelected = chosenThisStep.includes(sub.id);
 
-                            // multipleTimes => track subQty
-                            const qtyMap = subproductQuantities[popupID] || {};
+                            const qtyMap = subproductQuantities[popup.id] || {};
                             const subQty = qtyMap[sub.id] || 0;
 
                             // If allowMultipleTimes => clicking card increments
                             const handleClickCard = () => {
+                                if (isOutOfStock) {
+                                    // do nothing, sub is out of stock
+                                    return;
+                                }
+
                                 if (popup.allowMultipleTimes) {
                                     incrementQty(popup.id, sub.id);
                                 } else {
@@ -721,20 +750,21 @@ export default function ProductPopupFlow({
                                     style={{
                                         borderRadius: "0.5rem",
                                         borderLeftWidth: isSelected ? "4px" : "1px",
-                                        borderLeftColor: isSelected ? brandCTA : "#d1d5db",
+                                        borderLeftColor: isSelected
+                                            ? branding?.primaryColorCTA || "#068b59"
+                                            : "#d1d5db",
                                         borderStyle: "solid",
+                                        // If out of stock => reduce opacity or show different style
+                                        opacity: isOutOfStock ? 0.6 : 1,
+                                        cursor: isOutOfStock ? "not-allowed" : "pointer",
                                     }}
                                     className={`
                     relative
                     flex flex-col justify-between
-                    p-2 rounded-lg text-center cursor-pointer transition
-                    ${isSelected
-                                            ? "bg-gray-100"
-                                            : "border border-gray-300"
-                                        }
+                    p-2 rounded-lg text-center transition
+                    ${isSelected ? "bg-gray-100" : "border border-gray-300"}
                   `}
                                 >
-                                    {/* Possibly an image */}
                                     <div className="flex-grow flex items-center justify-center mb-4">
                                         {displayImage?.url && (
                                             <Image
@@ -747,9 +777,8 @@ export default function ProductPopupFlow({
                                         )}
                                     </div>
 
-                                    {/* Conditionally render plus/minus vs. single-click UI */}
                                     {popup.allowMultipleTimes ? (
-                                        // allowMultipleTimes => plus/minus
+                                        // Show quantity increment UI
                                         <div className="flex flex-col items-center">
                                             <span
                                                 className={`
@@ -770,47 +799,53 @@ export default function ProductPopupFlow({
                                                     : `€${displayPrice.toFixed(2)}`}
                                             </span>
 
-                                            {/* Quantity controls */}
-                                            <div className="flex items-center gap-4 mt-2">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        decrementQty(popupID, sub.id);
-                                                    }}
-                                                    style={{ backgroundColor: brandCTA }}
-                                                    className="
-                            text-white
-                            px-3 py-1
-                            rounded-full
-                            font-bold
-                            text-lg
-                          "
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="font-semibold min-w-[24px] text-lg">
-                                                    {subQty}
+                                            {/* If out of stock => show label */}
+                                            {isOutOfStock ? (
+                                                <span className="text-red-700 font-semibold mt-2">
+                                                    {t("out_of_stock") || "Out of Stock"}
                                                 </span>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        incrementQty(popupID, sub.id);
-                                                    }}
-                                                    style={{ backgroundColor: brandCTA }}
-                                                    className="
-                            text-white
-                            px-3 py-1
-                            rounded-full
-                            font-bold
-                            text-lg
-                          "
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
+                                            ) : (
+                                                <div className="flex items-center gap-4 mt-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            decrementQty(popup.id, sub.id);
+                                                        }}
+                                                        style={{ backgroundColor: brandCTA }}
+                                                        className="
+                              text-white
+                              px-3 py-1
+                              rounded-full
+                              font-bold
+                              text-lg
+                            "
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span className="font-semibold min-w-[24px] text-lg">
+                                                        {subQty}
+                                                    </span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            incrementQty(popup.id, sub.id);
+                                                        }}
+                                                        style={{ backgroundColor: brandCTA }}
+                                                        className="
+                              text-white
+                              px-3 py-1
+                              rounded-full
+                              font-bold
+                              text-lg
+                            "
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
-                                        // allowMultipleTimes = false => single-click toggle UI
+                                        // Single or multi-select toggle
                                         <div className="flex flex-col items-center">
                                             <span
                                                 className={`
@@ -831,14 +866,23 @@ export default function ProductPopupFlow({
                                                     : `€${displayPrice.toFixed(2)}`}
                                             </span>
 
-                                            {/* Checkmark if selected */}
-                                            {isSelected && (
-                                                <div
-                                                    className="absolute bottom-2 right-2"
-                                                    style={{ color: brandCTA }}
-                                                >
-                                                    <FiCheckCircle size={isKiosk ? 28 : 24} />
-                                                </div>
+                                            {/* If out of stock => show label */}
+                                            {isOutOfStock ? (
+                                                <span className="text-red-700 font-semibold mt-2">
+                                                    {t("out_of_stock") || "Out of Stock"}
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    {/* Checkmark if selected */}
+                                                    {isSelected && (
+                                                        <div
+                                                            className="absolute bottom-2 right-2"
+                                                            style={{ color: brandCTA }}
+                                                        >
+                                                            <FiCheckCircle size={isKiosk ? 28 : 24} />
+                                                        </div>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     )}
@@ -848,7 +892,7 @@ export default function ProductPopupFlow({
                     </div>
                 </div>
 
-                {/* Bottom sticky Next/Back */}
+                {/* Bottom sticky Next/Back bar */}
                 <div
                     className={`
             sticky bottom-0 w-full
@@ -892,54 +936,4 @@ export default function ProductPopupFlow({
             </div>
         </div>
     );
-}
-
-/** Gather *all* selected subproducts across all popups. */
-function gatherAllSelectedItems(
-    sortedPopups: PopupItem[],
-    selectedOptions: Record<string, string[]>,
-    subproductQuantities: Record<string, Record<string, number>>
-) {
-    const results: Array<{
-        id: string;
-        name_nl: string;
-        image?: { url: string; alt?: string };
-        quantity: number;
-    }> = [];
-
-    for (const popIt of sortedPopups) {
-        if (!popIt.popup) continue;
-
-        const pId = popIt.popup.id;
-        const { allowMultipleTimes } = popIt.popup;
-
-        if (allowMultipleTimes) {
-            const qtyMap = subproductQuantities[pId] || {};
-            for (const sub of popIt.popup.subproducts) {
-                const q = qtyMap[sub.id] || 0;
-                if (q <= 0) continue;
-
-                // Push once with quantity
-                results.push({
-                    id: sub.linkedProduct?.id ?? sub.id,
-                    name_nl: sub.linkedProduct?.name_nl ?? sub.name_nl,
-                    image: sub.linkedProduct?.image || sub.image || undefined,
-                    quantity: q, // Attach quantity here
-                });
-            }
-        } else {
-            const chosenIDs = selectedOptions[pId] || [];
-            for (const sub of popIt.popup.subproducts) {
-                if (!chosenIDs.includes(sub.id)) continue;
-
-                results.push({
-                    id: sub.linkedProduct?.id ?? sub.id,
-                    name_nl: sub.linkedProduct?.name_nl ?? sub.name_nl,
-                    image: sub.linkedProduct?.image || sub.image || undefined,
-                    quantity: 1, // Single selection implies quantity of 1
-                });
-            }
-        }
-    }
-    return results;
 }

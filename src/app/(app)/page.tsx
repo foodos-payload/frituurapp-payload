@@ -3,8 +3,51 @@ import React from "react";
 import { headers } from "next/headers";
 import LandingLayout from "./components/LandingLayout";
 
+/** 1) A helper to fetch branding for both the page + generateMetadata. */
+async function fetchBranding(hostSlug: string) {
+    const apiBrandingUrl = `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getBranding?host=${hostSlug}`;
+    const brandingRes = await fetch(apiBrandingUrl, { cache: "no-store" });
+    if (!brandingRes.ok) {
+        console.error(
+            `[LandingPage] Could not load branding for host: ${hostSlug} – status ${brandingRes.status}`
+        );
+        return null;
+    }
+    return brandingRes.json();
+}
+
+/** 
+ * 2) Next.js 13 "generateMetadata()" for the Home page.
+ *    We produce e.g. "ShopName - Bestel online via onze webshop".
+ */
+export async function generateMetadata() {
+    // a) Determine host => slug
+    const requestHeaders = await headers();
+    const fullHost = requestHeaders.get("host") || "";
+    const hostSlug = fullHost.split(".")[0] || "defaultShop";
+
+    // b) Fetch minimal branding
+    const brandingData = await fetchBranding(hostSlug);
+    if (!brandingData?.branding) {
+        // fallback
+        return {
+            title: "MyShop - Bestel online via onze webshop",
+        };
+    }
+
+    // c) Use siteTitle, fallback "MyShop"
+    const siteTitle = brandingData.branding.siteTitle || "MyShop";
+    return {
+        title: `${siteTitle} - Bestel online via onze webshop`,
+    };
+}
+
+/** 
+ * 3) Main page component that fetches brandDoc, categories, etc.
+ *    and renders <LandingLayout />.
+ */
 export default async function LandingPage() {
-    // 1) Grab request headers to get the "host"
+    // 1) Determine hostSlug
     const requestHeaders = await headers();
     const fullHost = requestHeaders.get("host") || "";
     const hostSlug = fullHost.split(".")[0] || "defaultShop";
@@ -58,9 +101,9 @@ export default async function LandingPage() {
     }
 
     // 7) Parse JSON
-    const brandingData = await brandingRes.json();  // => { shop: {...}, branding: {...} }
-    const pmData = await pmRes.json();             // => { methods: [ ... ] }
-    const catData = await catRes.json();           // => { shop: {...}, categories: [ ... ] }
+    const brandingData = await brandingRes.json(); // => { shop: {...}, branding: {...} }
+    const pmData = await pmRes.json();            // => { methods: [ ... ] }
+    const catData = await catRes.json();          // => { shop: {...}, categories: [ ... ] }
 
     // 8) Extract relevant pieces
     const shopData = brandingData.shop || null;
@@ -69,27 +112,17 @@ export default async function LandingPage() {
     const categories = catData?.categories || [];
 
     // 9) Transform brandDoc images
-    console.log(`[LandingPage] brandDoc BEFORE transform =>`, brandDoc);
-
-    // If brandDoc has siteHeaderImg.s3_url => store as a direct string
+    //    (Same logic as before)
     if (brandDoc?.siteHeaderImg?.s3_url) {
-        console.log(`[LandingPage] Found siteHeaderImg.s3_url => ${brandDoc.siteHeaderImg.s3_url}`);
         brandDoc.siteHeaderImg = brandDoc.siteHeaderImg.s3_url;
     }
-
-    // If brandDoc has siteLogo with s3_url => put it in brandDoc.logoUrl
     if (brandDoc?.siteLogo?.s3_url) {
-        console.log(`[LandingPage] Found siteLogo.s3_url => ${brandDoc.siteLogo.s3_url}`);
         brandDoc.logoUrl = brandDoc.siteLogo.s3_url;
     }
-
-    // === TRANSFORM GALLERY IMAGES ===
-    // If brandDoc.galleryImages is an array => convert each item
     if (Array.isArray(brandDoc?.galleryImages)) {
         brandDoc.galleryImages.forEach((galleryItem: any) => {
             const img = galleryItem.image;
             if (img?.s3_url) {
-                // Overwrite .url with .s3_url
                 img.url = img.s3_url;
             }
         });

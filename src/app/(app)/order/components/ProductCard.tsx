@@ -12,6 +12,10 @@ type ProductCardProps = {
     image?: { url: string; alt?: string };
     isPromotion?: boolean;
     old_price: number | null;
+
+    /** Add these if you are tracking stock on the product */
+    enable_stock?: boolean;
+    quantity?: number;
 };
 
 type Branding = {
@@ -47,6 +51,10 @@ interface Props {
 /**
  * ProductCard that conditionally uses kiosk vs. classic layout,
  * and optionally shows a spinner / “fly to cart” animation.
+ *
+ * Updated so that "Promotion" is shown at the bottom-right
+ * (instead of top-left), replacing the plus button—similar to
+ * how "Out of Stock" is handled.
  */
 export default function ProductCard({
     product,
@@ -82,11 +90,9 @@ export default function ProductCard({
         flyingImg.style.width = `${imgEl.offsetWidth}px`;
         flyingImg.style.height = `${imgEl.offsetHeight}px`;
 
-        // Use scrollX/scrollY if page is scrolled
         const scrollX = window.scrollX || 0;
         const scrollY = window.scrollY || 0;
 
-        // Position it at the image's current bounding box
         const rect = imgEl.getBoundingClientRect();
         flyingImg.style.left = `${rect.left + scrollX}px`;
         flyingImg.style.top = `${rect.top + scrollY}px`;
@@ -123,12 +129,24 @@ export default function ProductCard({
         }, 1000);
     }
 
+    /**
+     * Check if product is out of stock.
+     * e.g.: if product.enable_stock === true && product.quantity === 0
+     */
+    const isOutOfStock = product.enable_stock && product.quantity === 0;
+
     /** Called when the entire card is clicked. */
     function handleCardClick(e: React.MouseEvent) {
         e.stopPropagation();
+
+        // If out of stock => do nothing
+        if (isOutOfStock) return;
+
+        // If isPromotion => you may also choose to block
+        // For now, let's allow user to click if it's in promotion
         if (!handleAction) return;
 
-        handleAction(product); // e.g. add to cart or open popup
+        handleAction(product);
 
         if (shouldShowSpinner) {
             const cardEl = (e.currentTarget as HTMLElement).closest(".product-card-outer") as HTMLElement;
@@ -141,9 +159,17 @@ export default function ProductCard({
     /** Called when plus button is clicked. */
     function handlePlusClick(e: React.MouseEvent) {
         e.stopPropagation();
+
+        // If out of stock => do nothing
+        if (isOutOfStock) return;
+
+        // If isPromotion => do nothing (since we skip plus button)
+        if (product.isPromotion) return;
+
         if (!handleAction) return;
 
         handleAction(product);
+
         if (shouldShowSpinner) {
             const cardEl = (e.currentTarget as HTMLElement).closest(".product-card-outer") as HTMLElement;
             const imgEl = cardEl?.querySelector(".product-img") as HTMLImageElement | null;
@@ -167,7 +193,6 @@ export default function ProductCard({
     shadow-lg
     flex
     bg-white
-    cursor-pointer
     hover:shadow-xl
     transition-shadow
     w-full
@@ -183,7 +208,6 @@ export default function ProductCard({
     overflow-hidden
     shadow-lg
     bg-white
-    cursor-pointer
     hover:shadow-xl
     transition-shadow
     w-full
@@ -194,41 +218,47 @@ export default function ProductCard({
     min-h-[350px]
   `;
 
+    // If outOfStock => bottom-right label is "Out of Stock"
+    // Else if isPromotion => bottom-right label is "Promotion"
+    // Else => show the plus button
+
+    const bottomRightLabel = isOutOfStock
+        ? "Out of Stock"
+        : product.isPromotion
+            ? "Promotion"
+            : "";
+
+    const showBottomLabel = bottomRightLabel.length > 0; // either out-of-stock or promotion
+
     return (
         <div
             onClick={handleCardClick}
-            style={{ borderRadius: "0.5rem" }}
+            style={{
+                borderRadius: "0.5rem",
+                // If out-of-stock => dim it and disable pointer
+                opacity: isOutOfStock ? 0.6 : 1,
+                cursor: isOutOfStock ? "not-allowed" : "pointer",
+            }}
             ref={productRef}
             className={isKiosk ? kioskContainerClasses : originalContainerClasses}
         >
-            {/* Promotion badge */}
-            {product.isPromotion && (
-                <div
-                    className="absolute top-0 left-0 text-white text-md font-semibold px-2 py-1 rounded z-20"
-                    style={{ backgroundColor: brandCTA || "red" }}
-                >
-                    Promotion
-                </div>
-            )}
-
             {/* ========== Image Area ========== */}
             {!isKiosk ? (
-                // Non-kiosk => original horizontal layout
+                // Non-kiosk => horizontal layout
                 <div className="relative w-2/5 h-full flex items-center justify-center bg-gray-50">
                     {product.image?.url ? (
                         <div className="relative w-full h-full">
                             <Image
                                 src={product.image.url}
                                 alt={product.image.alt || product.displayName}
-                                fill // <-- replaces layout="fill"
-                                className="product-img mix-blend-multiply object-cover" // <-- objectFit="cover" => object-cover class
+                                fill
+                                className="product-img mix-blend-multiply object-cover"
                             />
                         </div>
                     ) : (
                         <div className="text-gray-300 text-md p-4">No Image</div>
                     )}
                 </div>
-
             ) : (
                 // Kiosk => bigger, top-centered image
                 <div className="relative w-full flex items-center justify-center bg-gray-50 mb-2 h-[190px]">
@@ -237,7 +267,7 @@ export default function ProductCard({
                             <Image
                                 src={encodeURI(product.image.url)}
                                 alt={product.image.alt || product.displayName}
-                                fill // same approach
+                                fill
                                 className="product-img mix-blend-multiply object-contain"
                             />
                         </div>
@@ -245,53 +275,69 @@ export default function ProductCard({
                         <div className="text-gray-300 text-md p-4">No Image</div>
                     )}
                 </div>
-            )
-            }
+            )}
 
-            {/* ========== Text + Price + Plus Button ========== */}
-            {
-                !isKiosk ? (
-                    // Non-kiosk => original styling
-                    <div className="w-3/5 p-4 flex flex-col justify-between relative">
-                        <div>
-                            <h2 className="text-lg font-bold mb-1 line-clamp-2">{product.displayName}</h2>
-                            {product.displayDesc && (
-                                <p className="text-md text-gray-600 line-clamp-3 mb-2">{product.displayDesc}</p>
-                            )}
-                        </div>
+            {/* Text + Price + Potential Label/Plus */}
+            {!isKiosk ? (
+                // Non-kiosk => original styling
+                <div className="w-3/5 p-4 flex flex-col justify-between relative">
+                    <div>
+                        <h2 className="text-lg font-bold mb-1 line-clamp-2">{product.displayName}</h2>
+                        {product.displayDesc && (
+                            <p className="text-md text-gray-600 line-clamp-3 mb-2">{product.displayDesc}</p>
+                        )}
+                    </div>
 
-                        {/* Price row */}
-                        <div className="mt-2">
-                            {typeof product.price === "number" ? (
-                                <>
-                                    {product.isPromotion && product.old_price && (
-                                        <span className="text-sm text-gray-500 line-through mr-2">
-                                            €{product.old_price.toFixed(2)}
-                                        </span>
-                                    )}
-                                    <span className="text-lg font-semibold text-gray-800">
-                                        €{product.price.toFixed(2)}
+                    {/* Price row */}
+                    <div className="mt-2 flex flex-col flex-wrap">
+                        {typeof product.price === "number" ? (
+                            <>
+                                {product.isPromotion && product.old_price && (
+                                    <span className="text-sm text-gray-500 line-through mr-2">
+                                        €{product.old_price.toFixed(2)}
                                     </span>
-                                </>
-                            ) : (
-                                <span className="text-md text-gray-500">Price on request</span>
-                            )}
-                        </div>
+                                )}
+                                <span className="text-lg font-semibold text-gray-800">
+                                    €{product.price.toFixed(2)}
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-md text-gray-500">Price on request</span>
+                        )}
+                    </div>
 
-                        {/* The plus button in bottom-right */}
+                    {/* BOTTOM-RIGHT AREA */}
+                    {showBottomLabel ? (
+                        <div
+                            className="
+                absolute bottom-0 right-[-1px]
+                font-bold text-gray-800
+                px-6 py-3
+              "
+                            style={{
+                                borderTopLeftRadius: "0.5rem",
+                                backgroundColor: bottomRightLabel === "Out of Stock" ? "#fee2e2" : "#fdfaea", // light red or light yellow, up to you
+                                color: bottomRightLabel === "Out of Stock" ? "#b91c1c" : "#856404", // red-700 or a brownish for promotion
+                            }}
+                        >
+                            {bottomRightLabel}
+                        </div>
+                    ) : (
+                        // Otherwise show plus button
                         <div
                             onClick={handlePlusClick}
                             onMouseEnter={() => setHoverPlus(true)}
                             onMouseLeave={() => setHoverPlus(false)}
                             className="
-              absolute bottom-0 right-[-1px]
-              bg-[#e6e6e7] text-gray-700
-              rounded-tl-lg
-              px-6 py-3
-              transition
-              border-t-[2px] border-l-[2px]
-              border-transparent
-            "
+                absolute bottom-0 right-[-1px]
+                bg-[#e6e6e7]
+                text-gray-700
+                rounded-tl-lg
+                px-6 py-3
+                transition
+                border-t-[2px] border-l-[2px]
+                border-transparent
+              "
                             style={{
                                 borderTopLeftRadius: "0.5rem",
                                 borderTopColor: plusButtonBorder,
@@ -325,58 +371,76 @@ export default function ProductCard({
                                 </svg>
                             )}
                         </div>
-                    </div>
-                ) : (
-                    // Kiosk => vertical layout
-                    <div className="flex flex-col flex-1">
-                        {/* Extra wrapper for spacing */}
-                        <div className="flex-1 p-2 flex flex-col justify-between">
-                            <div>
-                                <h2 className="text-2xl pl-2 font-bold mb-3 line-clamp-2">
-                                    {product.displayName}
-                                </h2>
-                                {product.displayDesc && (
-                                    <p className="text-lg pl-2 text-gray-600 line-clamp-4 mb-2 min-h-[60px]">
-                                        {product.displayDesc}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Price row */}
-                            <div className="mt-2">
-                                {typeof product.price === "number" ? (
-                                    <>
-                                        {product.isPromotion && product.old_price && (
-                                            <span className="text-sm text-gray-500 line-through mr-2">
-                                                €{product.old_price.toFixed(2)}
-                                            </span>
-                                        )}
-                                        <span className="text-2xl pl-2 font-semibold text-gray-800">
-                                            €{product.price.toFixed(2)}
-                                        </span>
-                                    </>
-                                ) : (
-                                    <span className="text-md text-gray-500">Price on request</span>
-                                )}
-                            </div>
+                    )}
+                </div>
+            ) : (
+                // Kiosk => vertical layout
+                <div className="flex flex-col flex-1">
+                    <div className="flex-1 p-2 flex flex-col justify-between">
+                        <div>
+                            <h2 className="text-2xl pl-2 font-bold mb-3 line-clamp-2">{product.displayName}</h2>
+                            {product.displayDesc && (
+                                <p className="text-lg pl-2 text-gray-600 line-clamp-4 mb-2 min-h-[60px]">
+                                    {product.displayDesc}
+                                </p>
+                            )}
                         </div>
 
-                        {/* The plus button at bottom */}
+                        {/* Price row */}
+                        <div className="mt-2">
+                            {typeof product.price === "number" ? (
+                                <>
+                                    {product.isPromotion && product.old_price && (
+                                        <span className="text-sm text-gray-500 line-through mr-2">
+                                            €{product.old_price.toFixed(2)}
+                                        </span>
+                                    )}
+                                    <span className="text-2xl pl-2 font-semibold text-gray-800">
+                                        €{product.price.toFixed(2)}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-md text-gray-500">Price on request</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* BOTTOM-RIGHT AREA (kiosk) */}
+                    {showBottomLabel ? (
+                        <div
+                            className="
+                mt-4
+                self-end
+                font-bold
+                px-6 py-3
+               
+                rounded-tl-lg
+              "
+                            style={{
+                                backgroundColor: bottomRightLabel === "Out of Stock" ? "#fee2e2" : "#fdfaea",
+                                color: bottomRightLabel === "Out of Stock" ? "#b91c1c" : "#856404",
+                            }}
+                        >
+                            {bottomRightLabel}
+                        </div>
+                    ) : (
                         <div
                             onClick={handlePlusClick}
                             onMouseEnter={() => setHoverPlus(true)}
                             onMouseLeave={() => setHoverPlus(false)}
                             className="
-              mt-4 self-end
-              bg-[#e6e6e7]
-              text-gray-700
-              rounded-tl-lg
-              px-6 py-3
-              transition
-              border-t-[2px]
-              border-l-[2px]
-              border-transparent
-            "
+                mt-4
+                self-end
+                bg-[#e6e6e7]
+                text-gray-700
+                rounded-tl-lg
+                px-6 py-3
+                transition
+                border-t-[2px]
+                border-l-[2px]
+                border-transparent
+                
+              "
                             style={{
                                 borderTopLeftRadius: "0.5rem",
                                 borderTopColor: plusButtonBorder,
@@ -407,9 +471,9 @@ export default function ProductCard({
                                 </svg>
                             )}
                         </div>
-                    </div>
-                )
-            }
-        </div >
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
