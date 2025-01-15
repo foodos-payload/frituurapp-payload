@@ -46,7 +46,7 @@ const Users: CollectionConfig = {
         de: 'Rollen',
         fr: 'Rôles',
       },
-      defaultValue: ['user'],
+      // defaultValue: ['user'],
       hasMany: true,
       admin: {
         description: {

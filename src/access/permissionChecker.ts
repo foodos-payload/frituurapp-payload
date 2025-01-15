@@ -22,13 +22,12 @@ export async function checkPermission(
     action: PermissionAction,
     req: PayloadRequest
 ): Promise<boolean> {
+
+    if (isSuperAdmin({ req })) {
+        return true
+    }
     const roles = req.user?.roles as Role[]
     try {
-
-        if (isSuperAdmin({ req })) {
-            return true
-        }
-
         if (!req.user?.roles?.length) {
             return false
         }

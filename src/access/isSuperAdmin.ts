@@ -1,15 +1,11 @@
-import type { Access } from 'payload';
+// src/access/isSuperAdmin.ts
+import type { Access } from 'payload'
 
-export const isSuperAdmin: Access = (context) => {
-  const { req } = context || {}; // Safely destructure `req`
+export const isSuperAdmin: Access = ({ req }) => {
+  if (!req?.user) return false
+  const hasSuperAdmin = (req.user.roles || []).some((roleDoc: any) => {
+    return roleDoc?.name === 'Super Admin' // or .toLowerCase() if you prefer
+  })
 
-  if (!req?.user) {
-    console.log('isSuperAdmin return value:', false);
-    return false; // Return false if no user is present
-  }
-
-  // Check if the user has the `super-admin` role
-  const isSuperAdmin = Boolean(req.user.roles?.includes('super-admin'));
-  console.log('isSuperAdmin return value:', isSuperAdmin);
-  return isSuperAdmin;
-};
+  return hasSuperAdmin
+}
