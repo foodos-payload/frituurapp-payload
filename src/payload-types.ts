@@ -13,6 +13,7 @@ export interface Config {
   collections: {
     tenants: Tenant;
     users: User;
+    roles: Role;
     shops: Shop;
     'payment-methods': PaymentMethod;
     'fulfillment-methods': FulfillmentMethod;
@@ -24,6 +25,7 @@ export interface Config {
     tables: Table;
     printers: Printer;
     pos: Po;
+    tipping: Tipping;
     pages: Page;
     media: Media;
     customers: Customer;
@@ -37,6 +39,7 @@ export interface Config {
     products: Product;
     subproducts: Subproduct;
     productpopups: Productpopup;
+    services: Service;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -45,6 +48,7 @@ export interface Config {
   collectionsSelect: {
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    roles: RolesSelect<false> | RolesSelect<true>;
     shops: ShopsSelect<false> | ShopsSelect<true>;
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
@@ -56,6 +60,7 @@ export interface Config {
     tables: TablesSelect<false> | TablesSelect<true>;
     printers: PrintersSelect<false> | PrintersSelect<true>;
     pos: PosSelect<false> | PosSelect<true>;
+    tipping: TippingSelect<false> | TippingSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     customers: CustomersSelect<false> | CustomersSelect<true>;
@@ -69,6 +74,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
     productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
+    services: ServicesSelect<false> | ServicesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -138,7 +144,7 @@ export interface User {
   /**
    * Assign roles to the user.
    */
-  roles?: ('super-admin' | 'user')[] | null;
+  roles?: (string | Role)[] | null;
   tenants?:
     | {
         /**
@@ -160,7 +166,6 @@ export interface User {
    * The username of the user.
    */
   username?: string | null;
-  password: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -170,6 +175,27 @@ export interface User {
   hash?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
+  password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "roles".
+ */
+export interface Role {
+  id: string;
+  name?: string | null;
+  collections?:
+    | {
+        collectionName?: string | null;
+        read?: boolean | null;
+        create?: boolean | null;
+        update?: boolean | null;
+        delete?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1256,6 +1282,39 @@ export interface Po {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tipping".
+ */
+export interface Tipping {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  title: string;
+  /**
+   * Toggle to enable or disable tip functionality for this shop.
+   */
+  enabled?: boolean | null;
+  /**
+   * If enabled, a "round up" option will be shown to the customer.
+   */
+  enableRoundUp?: boolean | null;
+  /**
+   * Define quick-select tip amounts (percentage or fixed).
+   */
+  tipOptions?:
+    | {
+        type: 'percentage' | 'fixed';
+        /**
+         * E.g. 5 => 5% if type=percentage, or €5 if type=fixed.
+         */
+        value: number;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */
 export interface Page {
@@ -1657,6 +1716,16 @@ export interface Order {
       used?: boolean | null;
     };
   };
+  tippingUsed?: {
+    /**
+     * Specifies whether the tip is a fixed amount, a percentage, a round-up, or none.
+     */
+    type?: ('none' | 'fixed' | 'percentage' | 'round_up') | null;
+    /**
+     * The numeric tip value (e.g. 2.50 for €2.50, or 10 for 10%).
+     */
+    amount?: number | null;
+  };
   /**
    * The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.
    */
@@ -1665,6 +1734,54 @@ export interface Order {
    * If the order was placed from a kiosk, store the kiosk ID here.
    */
   kioskNumber?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services".
+ */
+export interface Service {
+  id: string;
+  title_nl: string;
+  title_en?: string | null;
+  title_de?: string | null;
+  title_fr?: string | null;
+  description_nl?: string | null;
+  description_en?: string | null;
+  description_de?: string | null;
+  description_fr?: string | null;
+  monthly_price: string;
+  yearly_price: string;
+  role?: (string | null) | Role;
+  yearly_price_discount?: string | null;
+  try_demo?: string | null;
+  service_thumbnail: string | Media;
+  /**
+   * Stripe referral code for this service
+   */
+  referral_code?: string | null;
+  /**
+   * Stripe coupon code for this service
+   */
+  coupon_code?: string | null;
+  /**
+   * Semantic versioning (e.g., 1.0.0)
+   */
+  service_version: string;
+  service_last_update_date: string;
+  /**
+   * Select tenants for which this service should be hidden
+   */
+  hide_for_tenants?: (string | Tenant)[] | null;
+  /**
+   * URL for additional information about the service
+   */
+  get_more_info_url?: string | null;
+  stripe_monthly_product_id?: string | null;
+  stripe_yearly_product_id?: string | null;
+  stripe_monthly_price_id?: string | null;
+  stripe_yearly_price_id?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1682,6 +1799,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: string | User;
+      } | null)
+    | ({
+        relationTo: 'roles';
+        value: string | Role;
       } | null)
     | ({
         relationTo: 'shops';
@@ -1726,6 +1847,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pos';
         value: string | Po;
+      } | null)
+    | ({
+        relationTo: 'tipping';
+        value: string | Tipping;
       } | null)
     | ({
         relationTo: 'pages';
@@ -1778,6 +1903,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'productpopups';
         value: string | Productpopup;
+      } | null)
+    | ({
+        relationTo: 'services';
+        value: string | Service;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1853,7 +1982,6 @@ export interface UsersSelect<T extends boolean = true> {
       };
   shops?: T;
   username?: T;
-  password?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1863,6 +1991,25 @@ export interface UsersSelect<T extends boolean = true> {
   hash?: T;
   loginAttempts?: T;
   lockUntil?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "roles_select".
+ */
+export interface RolesSelect<T extends boolean = true> {
+  name?: T;
+  collections?:
+    | T
+    | {
+        collectionName?: T;
+        read?: T;
+        create?: T;
+        update?: T;
+        delete?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2233,6 +2380,26 @@ export interface PosSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tipping_select".
+ */
+export interface TippingSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  title?: T;
+  enabled?: T;
+  enableRoundUp?: T;
+  tipOptions?:
+    | T
+    | {
+        type?: T;
+        value?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages_select".
  */
 export interface PagesSelect<T extends boolean = true> {
@@ -2508,6 +2675,12 @@ export interface OrdersSelect<T extends boolean = true> {
               used?: T;
             };
       };
+  tippingUsed?:
+    | T
+    | {
+        type?: T;
+        amount?: T;
+      };
   userLocale?: T;
   kioskNumber?: T;
   updatedAt?: T;
@@ -2636,6 +2809,38 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   allowMultipleTimes?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services_select".
+ */
+export interface ServicesSelect<T extends boolean = true> {
+  title_nl?: T;
+  title_en?: T;
+  title_de?: T;
+  title_fr?: T;
+  description_nl?: T;
+  description_en?: T;
+  description_de?: T;
+  description_fr?: T;
+  monthly_price?: T;
+  yearly_price?: T;
+  role?: T;
+  yearly_price_discount?: T;
+  try_demo?: T;
+  service_thumbnail?: T;
+  referral_code?: T;
+  coupon_code?: T;
+  service_version?: T;
+  service_last_update_date?: T;
+  hide_for_tenants?: T;
+  get_more_info_url?: T;
+  stripe_monthly_product_id?: T;
+  stripe_yearly_product_id?: T;
+  stripe_monthly_price_id?: T;
+  stripe_yearly_price_id?: T;
   updatedAt?: T;
   createdAt?: T;
 }

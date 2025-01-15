@@ -73,6 +73,20 @@ export default async function CheckoutRoute() {
         console.error('Error fetching fulfillment methods:', err)
     }
 
+    let tippingMethods = []
+    try {
+        const tmRes = await fetch(
+            `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getTippingConfig?host=${encodeURIComponent(
+                hostSlug,
+            )}`,
+            { cache: 'no-store' },
+        )
+        if (tmRes.ok) {
+            tippingMethods = await tmRes.json()
+        }
+    } catch (err) {
+        console.error('Error fetching fulfillment methods:', err)
+    }
     return (
         <main className="min-h-screen">
             <CheckoutPage
@@ -81,6 +95,7 @@ export default async function CheckoutRoute() {
                 initialTimeslots={timeslots}
                 shopInfo={shopInfo}
                 fulfillmentMethods={fulfillmentMethods}
+                tippingMethods={tippingMethods}
             />
         </main>
     )

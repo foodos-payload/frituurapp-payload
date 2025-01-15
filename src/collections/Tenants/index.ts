@@ -1,15 +1,16 @@
 import type { CollectionConfig } from 'payload';
 
 import { isSuperAdmin } from '../../access/isSuperAdmin';
-import { canMutateTenant, filterByTenantRead } from './access/byTenant';
+import { filterByTenantRead } from './access/byTenant';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const Tenants: CollectionConfig = {
   slug: 'tenants',
   access: {
-    create: isSuperAdmin,
-    delete: canMutateTenant,
+    create: hasPermission('tenants', 'create'),
+    delete: hasPermission('tenants', 'delete'),
     read: filterByTenantRead,
-    update: canMutateTenant,
+    update: hasPermission('tenants', 'update'),
   },
   admin: {
     useAsTitle: 'name',

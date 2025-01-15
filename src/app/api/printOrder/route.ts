@@ -169,6 +169,9 @@ function buildEscposForKitchen(order: any): string {
     // Show total
     esc += `TOTAL: ${order.total?.toFixed(2) || '0.00'}\n`;
 
+    if (order.tippingUsed?.type !== 'none') {
+        esc += `TIP: ${(order.tippingUsed?.amount || 0).toFixed(2)}\n`;
+    }
     // Final cut
     esc += '\x1D\x56\x42\x00'; // Cut
     return esc;
@@ -281,6 +284,10 @@ function buildEscposForCustomer(order: any): string {
     }
     esc += `Tax (included): ${tax.toFixed(2)}\n`;
     esc += `TOTAL: ${total.toFixed(2)}\n\n`;
+
+    if (order.tippingUsed?.type !== 'none') {
+        esc += `TIP: ${(order.tippingUsed?.amount || 0).toFixed(2)}\n`;
+    }
 
     esc += 'Thank you for your order!\n\n';
 

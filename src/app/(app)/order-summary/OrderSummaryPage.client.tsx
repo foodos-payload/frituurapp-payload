@@ -109,6 +109,12 @@ interface PromotionsUsed {
     };
 }
 
+interface TippingUsed {
+    type?: "none" | "fixed" | "percentage" | "round_up";
+    amount?: number;
+    actualTip?: number;
+}
+
 /** 
  * The full order object
  */
@@ -129,6 +135,7 @@ interface Order {
     customer_details?: CustomerDetails;
     discountTotal?: number;
     promotionsUsed?: PromotionsUsed;
+    tippingUsed?: TippingUsed;
     // etc...
 }
 
@@ -313,6 +320,7 @@ export function OrderSummaryPage({
         localStorage.removeItem("selectedShippingMethod");
         localStorage.removeItem("selectedPaymentId");
         localStorage.removeItem("shippingCost");
+        localStorage.removeItem("tippingUsed");
 
         // We'll never reset createNewOrderLoading to false, 
         // because we navigate away and won't come back
@@ -644,6 +652,18 @@ export function OrderSummaryPage({
                             </div>
                         )}
 
+                        {/* Tipping => show if type != 'none' */}
+                        {order.tippingUsed && order.tippingUsed.type !== "none" && (
+                            <div className="flex items-center justify-end p-3 pt-3 text-blue-600">
+                                <span className="text-2xl font-semibold">
+                                    Tip: €{(
+                                        order.tippingUsed.actualTip ??
+                                        order.tippingUsed.amount ??
+                                        0
+                                    ).toFixed(2)}
+                                </span>
+                            </div>
+                        )}
 
                         {/* shipping cost if any */}
                         {shippingCost > 0 && (
@@ -922,6 +942,19 @@ export function OrderSummaryPage({
                                             -€{(order.promotionsUsed.giftVoucherUsed.value ?? 0).toFixed(2)}
                                         </div>
                                     )}
+                            </div>
+                        )}
+
+                        {/* If tippingUsed => tip line */}
+                        {order.tippingUsed && order.tippingUsed.type !== "none" && (
+                            <div className="flex items-center justify-end p-3 pt-3 text-blue-600">
+                                <span className="text-md font-semibold">
+                                    Tip: €{(
+                                        order.tippingUsed.actualTip ??
+                                        order.tippingUsed.amount ??
+                                        0
+                                    ).toFixed(2)}
+                                </span>
                             </div>
                         )}
 

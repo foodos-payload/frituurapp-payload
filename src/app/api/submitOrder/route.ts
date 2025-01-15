@@ -151,9 +151,10 @@ export async function POST(request: NextRequest) {
             customerDetails,      // { firstName, lastName, ... }
             shippingCost,
             promotionsUsed,
+            tippingUsed,
             kioskNumber,
         } = body;
-
+        console.log(body)
         // 2) Find the shop doc by slug
         //    (We still need the Shop ID + tenant ID.)
         const shopResult = await payload.find({
@@ -230,6 +231,7 @@ export async function POST(request: NextRequest) {
                 payments: paymentsToStore || [],
                 shipping_cost: typeof shippingCost === 'number' ? shippingCost : 0,
                 promotionsUsed: promotionsUsed || {},
+                tippingUsed: tippingUsed || {},
                 kioskNumber: kioskNumber || null,
 
             },
