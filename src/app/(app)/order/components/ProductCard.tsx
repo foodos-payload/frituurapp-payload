@@ -413,7 +413,8 @@ export default function ProductCard({
                 self-end
                 font-bold
                 px-6 py-3
-               
+                bottom-0
+                absolute
                 rounded-tl-lg
               "
                             style={{
@@ -439,6 +440,7 @@ export default function ProductCard({
                 border-t-[2px]
                 border-l-[2px]
                 border-transparent
+                
                 
               "
                             style={{
