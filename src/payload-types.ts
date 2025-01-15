@@ -14,6 +14,7 @@ export interface Config {
     tenants: Tenant;
     users: User;
     roles: Role;
+    subscriptions: Subscription;
     shops: Shop;
     'payment-methods': PaymentMethod;
     'fulfillment-methods': FulfillmentMethod;
@@ -49,6 +50,7 @@ export interface Config {
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     roles: RolesSelect<false> | RolesSelect<true>;
+    subscriptions: SubscriptionsSelect<false> | SubscriptionsSelect<true>;
     shops: ShopsSelect<false> | ShopsSelect<true>;
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
@@ -163,6 +165,10 @@ export interface User {
    */
   shops?: (string | Shop)[] | null;
   /**
+   * The subscriptions associated with this user.
+   */
+  subscriptions?: (string | Subscription)[] | null;
+  /**
    * The username of the user.
    */
   username?: string | null;
@@ -268,6 +274,35 @@ export interface Shop {
          * The reason for the closure.
          */
         reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions".
+ */
+export interface Subscription {
+  id: string;
+  /**
+   * The user associated with this subscription.
+   */
+  user: string | User;
+  service: string;
+  status: string;
+  subscription_amount: number;
+  start_date: string;
+  end_date: string;
+  currency?: string | null;
+  transactions?:
+    | {
+        amount?: number | null;
+        currency?: string | null;
+        date?: string | null;
+        status?: string | null;
+        service?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1805,6 +1840,10 @@ export interface PayloadLockedDocument {
         value: string | Role;
       } | null)
     | ({
+        relationTo: 'subscriptions';
+        value: string | Subscription;
+      } | null)
+    | ({
         relationTo: 'shops';
         value: string | Shop;
       } | null)
@@ -1981,6 +2020,7 @@ export interface UsersSelect<T extends boolean = true> {
         id?: T;
       };
   shops?: T;
+  subscriptions?: T;
   username?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2006,6 +2046,31 @@ export interface RolesSelect<T extends boolean = true> {
         create?: T;
         update?: T;
         delete?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions_select".
+ */
+export interface SubscriptionsSelect<T extends boolean = true> {
+  user?: T;
+  service?: T;
+  status?: T;
+  subscription_amount?: T;
+  start_date?: T;
+  end_date?: T;
+  currency?: T;
+  transactions?:
+    | T
+    | {
+        amount?: T;
+        currency?: T;
+        date?: T;
+        status?: T;
+        service?: T;
         id?: T;
       };
   updatedAt?: T;
