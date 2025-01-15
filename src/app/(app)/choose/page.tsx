@@ -1,4 +1,4 @@
-// File: /src/app/(app)/index/page.tsx
+// File: /src/app/(app)/choose/page.tsx
 
 import React from "react";
 import { headers } from "next/headers";

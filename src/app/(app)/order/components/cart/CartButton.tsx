@@ -49,9 +49,9 @@ export default function CartButton({
         // Optionally: we could do a small setTimeout if you want a forced delay,
         // but typically the route transitions quickly:
         if (isKiosk) {
-            router.push("/index?kiosk=true");
+            router.push("/choose?kiosk=true");
         } else {
-            router.push("/index");
+            router.push("/choose");
         }
     }
 

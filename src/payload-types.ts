@@ -516,6 +516,59 @@ export interface ShopBranding {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Structured timeslots for each day of the week.
+   */
+  openingHours?:
+    | {
+        day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+        openTime?: string | null;
+        closeTime?: string | null;
+        /**
+         * Check if the shop is closed that day
+         */
+        closed?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Short text to display prominently (e.g., tagline).
+   */
+  shopHeaderText?: string | null;
+  /**
+   * A short introductory paragraph for your landing page or kiosk screen.
+   */
+  shopIntrotext?: string | null;
+  /**
+   * Additional text describing the menu or categories.
+   */
+  ourMenuText?: string | null;
+  /**
+   * A list of images to show in a gallery section.
+   */
+  galleryImages?:
+    | {
+        image: string | Media;
+        altText?: string | null;
+        /**
+         * Additional text to display alongside the image in the gallery.
+         */
+        extraInfo?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Paste the iframe from google maps here...
+   */
+  googleMapsIframe?: string | null;
+  /**
+   * Short tagline or slogan for your shop/brand.
+   */
+  slogan?: string | null;
+  /**
+   * Enter a numeric value representing how rounded elements are (in rem). For example, "0.5" => "0.5rem" in the frontend. Minimum 0.
+   */
+  borderRadius?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2011,6 +2064,29 @@ export interface ShopBrandingSelect<T extends boolean = true> {
         video?: T;
         id?: T;
       };
+  openingHours?:
+    | T
+    | {
+        day?: T;
+        openTime?: T;
+        closeTime?: T;
+        closed?: T;
+        id?: T;
+      };
+  shopHeaderText?: T;
+  shopIntrotext?: T;
+  ourMenuText?: T;
+  galleryImages?:
+    | T
+    | {
+        image?: T;
+        altText?: T;
+        extraInfo?: T;
+        id?: T;
+      };
+  googleMapsIframe?: T;
+  slogan?: T;
+  borderRadius?: T;
   updatedAt?: T;
   createdAt?: T;
 }

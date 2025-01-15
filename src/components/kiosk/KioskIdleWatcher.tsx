@@ -71,11 +71,12 @@ export const KioskIdleWatcher: React.FC<KioskIdleWatcherProps> = ({ branding }) 
             "/kitchen-screen",
             "/digital-menu",
             "/order-summary",
-            "/index"
+            "/choose",
+            "/"
         ];
 
         if (isKioskMode && kiosk_idle_screen_enabled === true) {
-            base.splice(base.indexOf("/index"), 1);
+            base.splice(base.indexOf("/choose"), 1);
             console.log(
                 "[KioskIdleWatcher] kiosk_idle_screen_enabled is true and isKioskMode => including /index"
             );
@@ -166,10 +167,10 @@ export const KioskIdleWatcher: React.FC<KioskIdleWatcherProps> = ({ branding }) 
                 if (kiosk_idle_screen_enabled) {
                     router.push("/kiosk-idle");
                 } else {
-                    router.push("/index?kiosk=true");
+                    router.push("/choose?kiosk=true");
                 }
             } else {
-                router.push("/index");
+                router.push("/choose");
             }
         }
     }, [

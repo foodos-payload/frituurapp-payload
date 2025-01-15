@@ -317,9 +317,9 @@ export function OrderSummaryPage({
         // We'll never reset createNewOrderLoading to false, 
         // because we navigate away and won't come back
         if (kioskMode) {
-            router.push(`/index?kiosk=true`);
+            router.push(`/choose?kiosk=true`);
         } else {
-            router.push(`/index`);
+            router.push(`/choose`);
         }
     }, [kioskMode, router, createNewOrderLoading]);
 

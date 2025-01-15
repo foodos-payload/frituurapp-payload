@@ -292,5 +292,179 @@ export const ShopBranding: CollectionConfig = {
                 description: 'Multiple videos to loop endlessly if provided.',
             },
         },
+        // ==== NEW FIELDS YOU REQUESTED ====
+
+        {
+            name: 'openingHours',
+            label: 'Opening Hours',
+            type: 'array',
+            required: false,
+            admin: {
+                description: 'Structured timeslots for each day of the week.',
+            },
+            fields: [
+                {
+                    name: 'day',
+                    type: 'select',
+                    label: 'Day of Week',
+                    required: true,
+                    options: [
+                        { label: 'Monday', value: 'monday' },
+                        { label: 'Tuesday', value: 'tuesday' },
+                        { label: 'Wednesday', value: 'wednesday' },
+                        { label: 'Thursday', value: 'thursday' },
+                        { label: 'Friday', value: 'friday' },
+                        { label: 'Saturday', value: 'saturday' },
+                        { label: 'Sunday', value: 'sunday' },
+                    ],
+                },
+                {
+                    name: 'openTime',
+                    type: 'text',
+                    label: 'Open Time',
+                    required: false,
+                    admin: {
+                        placeholder: 'e.g. 10:00',
+                    },
+                },
+                {
+                    name: 'closeTime',
+                    type: 'text',
+                    label: 'Close Time',
+                    required: false,
+                    admin: {
+                        placeholder: 'e.g. 22:00',
+                    },
+                },
+                {
+                    name: 'closed',
+                    type: 'checkbox',
+                    label: 'Closed?',
+                    required: false,
+                    admin: {
+                        description: 'Check if the shop is closed that day',
+                    },
+                },
+            ],
+        },
+
+        // 2) ShopHeaderText
+        {
+            name: 'shopHeaderText',
+            label: 'Shop Header Text',
+            type: 'text',
+            required: false,
+            admin: {
+                description: 'Short text to display prominently (e.g., tagline).',
+            },
+        },
+
+        // 3) ShopIntrotext
+        {
+            name: 'shopIntrotext',
+            label: 'Shop Intro Text',
+            type: 'textarea',
+            required: false,
+            admin: {
+                description: 'A short introductory paragraph for your landing page or kiosk screen.',
+            },
+        },
+
+        // 4) OurMenuText
+        {
+            name: 'ourMenuText',
+            label: 'Our Menu Text',
+            type: 'textarea',
+            required: false,
+            admin: {
+                description: 'Additional text describing the menu or categories.',
+            },
+        },
+
+        // 5) GalleryImages
+        {
+            name: 'galleryImages',
+            label: 'Gallery Images',
+            type: 'array',
+            required: false,
+            fields: [
+                {
+                    name: 'image',
+                    label: 'Image',
+                    type: 'upload',
+                    relationTo: 'media',
+                    required: true,
+                },
+                {
+                    name: 'altText',
+                    label: 'Alt Text',
+                    type: 'text',
+                    required: false,
+                },
+                {
+                    name: 'extraInfo',
+                    label: 'Extra Info (Text)',
+                    type: 'textarea',
+                    required: false,
+                    admin: {
+                        description: 'Additional text to display alongside the image in the gallery.',
+                    },
+                },
+            ],
+            admin: {
+                description: 'A list of images to show in a gallery section.',
+            },
+        },
+
+        {
+            name: 'googleMapsIframe',
+            type: 'text',
+            label: {
+                en: 'Google Maps Embed URL',
+            },
+            required: false,
+            admin: {
+                description: 'Paste the iframe from google maps here...',
+                placeholder: 'https://www.google.com/maps/embed?pb=...',
+            },
+        },
+
+        // 6) Slogan
+        {
+            name: 'slogan',
+            label: 'Slogan',
+            type: 'text',
+            required: false,
+            admin: {
+                description: 'Short tagline or slogan for your shop/brand.',
+            },
+        },
+
+        // 7) borderRadius => number, in rem units
+        {
+            name: 'borderRadius',
+            label: 'Border Radius (in rem)',
+            type: 'number',
+            required: false,
+            defaultValue: 0.5,
+            admin: {
+                description:
+                    'Enter a numeric value representing how rounded elements are (in rem). ' +
+                    'For example, "0.5" => "0.5rem" in the frontend. Minimum 0.',
+                step: 0.1,
+            },
+            min: 0, // prevent negative values
+            validate: (val: number | null | undefined): true | string => {
+                // If not provided, it's fine
+                if (val === null || val === undefined) {
+                    return true;
+                }
+                // Must be a non-negative number
+                if (typeof val !== 'number' || val < 0) {
+                    return 'Value must be a non-negative number.';
+                }
+                return true;
+            },
+        },
     ],
 };

@@ -130,7 +130,7 @@ function useLocalIdleWatcher(
             clearTimers();
             setShowIdleModal(false);
             // e.g. redirect or do something else
-            window.location.href = isKiosk ? "/index?kiosk=true" : "/index";
+            window.location.href = isKiosk ? "/choose?kiosk=true" : "/choose";
         }
     }, [countdown, showIdleModal, clearTimers, isKiosk]);
 
