@@ -88,7 +88,7 @@ export default function TermsAndConditionsPage({
                 <h2 className="text-xl font-semibold mb-2">Ondernemingsgegevens</h2>
                 <p className="mb-4">
                     {/* If no company_name is found, fallback */}
-                    {company_name || "Frituur De Frietpost"} <br />
+                    {company_name || "Frituur"} <br />
                     {addressLine}
                     {vat_nr ? (
                         <>
@@ -118,7 +118,7 @@ export default function TermsAndConditionsPage({
 
                 <h2 className="text-xl font-semibold mb-2">Algemene voorwaarden</h2>
                 <p className="mb-4">
-                    {company_name || "Frituur De Frietpost"} <br />
+                    {company_name || "Frituur"} <br />
                     {addressLine} <br />
                     <br />
                     <br />
@@ -127,18 +127,18 @@ export default function TermsAndConditionsPage({
 
                 <h2 className="text-xl font-semibold mb-2">Artikel 1: Algemene bepalingen</h2>
                 <p className="mb-4">
-                    De e-commerce website van {company_name || "Frituur De Frietpost Tielt"}, een
+                    De e-commerce website van {company_name || "Frituur"}, een
                     eenmanszaak met maatschappelijke zetel te {addressLine}, BTW {vat_nr || "BE 0760.870.572"}, RPR
                     Tielt, biedt haar klanten de mogelijkheid om de producten uit haar webwinkel online aan te
                     kopen.
                     <br />
                     Onderhavige Algemene Voorwaarden (“Voorwaarden”) zijn van toepassing op elke bestelling die
                     geplaatst wordt door een bezoeker van deze e-commerce website (“Klant”). Bij het plaatsen van
-                    een bestelling via de webwinkel van {company_name || "Frituur De Frietpost Tielt"} moet
+                    een bestelling via de webwinkel van {company_name || "Frituur"} moet
                     de Klant deze Voorwaarden uitdrukkelijk aanvaarden, waarmee hij instemt met de toepasselijkheid
                     van deze Voorwaarden, met uitsluiting van alle andere voorwaarden. Bijkomende voorwaarden van de
                     Klant worden uitgesloten, behoudens wanneer deze voorafgaandelijk, schriftelijk en uitdrukkelijk
-                    door {company_name || "Frituur De Frietpost Tielt"} aanvaard zijn.
+                    door {company_name || "Frituur"} aanvaard zijn.
                 </p>
 
                 <h2 className="text-xl font-semibold mb-2">Artikel 2: Prijs</h2>
@@ -176,7 +176,7 @@ export default function TermsAndConditionsPage({
 
                 <h2 className="text-xl font-semibold mb-2">Artikel 4: Online aankopen</h2>
                 <p className="mb-4">
-                    De klant van {company_name || "Frituur De Frietpost Tielt"} kan online een bestelling plaatsen en deze nadien
+                    De klant van {company_name || "Frituur"} kan online een bestelling plaatsen en deze nadien
                     ter plaatse afhalen. De klant kan een keuze uit het assortiment maken, het aantal stuks kiezen en
                     toevoegen aan hun winkelmand. Nadien kan deze de winkelmand nog een laatste keer nakijken en dan
                     overgaan naar checkout waar de klant kan betalen met Bancontact of Mastercard. Klanten worden
@@ -188,7 +188,7 @@ export default function TermsAndConditionsPage({
                     <br />
                     De Klant heeft de keuze tussen de volgende betaalwijzen: via kredietkaart (Mastercard of Visa).
                     <br />
-                    {company_name || "Frituur De Frietpost Tielt"} is gerechtigd een bestelling te weigeren ingevolge een ernstige
+                    {company_name || "Frituur"} is gerechtigd een bestelling te weigeren ingevolge een ernstige
                     tekortkoming van de Klant met betrekking tot bestellingen waarbij de Klant betrokken is.
                 </p>
 
@@ -197,33 +197,33 @@ export default function TermsAndConditionsPage({
                 </h2>
                 <p className="mb-4">
                     Artikelen besteld via deze webwinkel worden niet geleverd maar moeten afgehaald worden bij{" "}
-                    {company_name || "Frituur De Frietpost Tielt"}, {addressLine}, België.
+                    {company_name || "Frituur"}, {addressLine}, België.
                     <br />
                     Elke zichtbare beschadiging en/of kwalitatieve tekortkoming van een artikel of andere
                     tekortkoming bij de afhaal, moeten door de Klant onverwijld worden gemeld aan{" "}
-                    {company_name || "Frituur De Frietpost Tielt"}.
+                    {company_name || "Frituur"}.
                     <br />
                     Het risico wegens verlies of beschadiging gaat over op de Klant vanaf hij (of een door hem
                     aangewezen derde partij, die niet de vervoerder is) de goederen fysiek in bezit heeft gekregen.
                     Het risico gaat echter al over op de Klant bij levering aan de vervoerder, als de vervoerder van
                     de Klant de opdracht heeft gekregen de goederen te vervoeren en deze keuze niet door de{" "}
-                    {company_name || "Frituur De Frietpost Tielt"} was geboden.
+                    {company_name || "Frituur"} was geboden.
                 </p>
 
                 <h2 className="text-xl font-semibold mb-2">Artikel 6: Eigendomsvoorbehoud</h2>
                 <p className="mb-4">
                     De geleverde artikelen blijven tot op het moment van gehele betaling door de Klant, de exclusieve
-                    eigendom van {company_name || "Frituur De Frietpost Tielt"}.
+                    eigendom van {company_name || "Frituur"}.
                     <br />
                     De Klant verbindt er zich toe zo nodig derden op het eigendomsvoorbehoud van{" "}
-                    {company_name || "Frituur De Frietpost Tielt"} te wijzen, bv. aan eenieder die op de nog niet geheel betaalde
+                    {company_name || "Frituur"} te wijzen, bv. aan eenieder die op de nog niet geheel betaalde
                     artikelen beslag zou komen leggen.
                 </p>
 
                 <h2 className="text-xl font-semibold mb-2">Artikel 7: Herroepingsrecht</h2>
                 <p className="mb-4">
                     De bepalingen van dit artikel gelden enkel voor Klanten die in hun hoedanigheid van consument
-                    artikelen online aankopen bij {company_name || "Frituur De Frietpost Tielt"}.
+                    artikelen online aankopen bij {company_name || "Frituur"}.
                     <br />
                     Aangezien het om consumptie gaat van bereide gerechten en dranken met een beperkte
                     houdbarheidsdatum, is geen herroepingsrecht mogelijk.
@@ -244,10 +244,10 @@ export default function TermsAndConditionsPage({
                     <br />
                     Voor artikelen die online werden aangekocht en afgehaald werden door de klant, dient de Klant
                     contact op te nemen met de uitbaters van{" "}
-                    {company_name || "Frituur De Frietpost Tielt"} en duidelijk te vermelden welk artikel ontbrak of
+                    {company_name || "Frituur"} en duidelijk te vermelden welk artikel ontbrak of
                     wat ermee scheelde.
                     <br />
-                    Bij vaststelling van een gebrek moet de Klant {company_name || "Frituur De Frietpost Tielt"} zo
+                    Bij vaststelling van een gebrek moet de Klant {company_name || "Frituur"} zo
                     snel mogelijk inlichten. In ieder geval dient elk gebrek binnen een termijn van 2 maanden na
                     vaststelling ervan door de Klant te worden gemeld. Nadien vervalt elk recht op tegemoetkoming.
                     <br />
@@ -260,7 +260,7 @@ export default function TermsAndConditionsPage({
 
                 <h2 className="text-xl font-semibold mb-2">Artikel 9: Klantendienst</h2>
                 <p className="mb-4">
-                    De klantendienst van {company_name || "Frituur De Frietpost Tielt"} is bereikbaar op het telefoonnummer
+                    De klantendienst van {company_name || "Frituur"} is bereikbaar op het telefoonnummer
                     051 80 10 65 of via e-mail op hallo@defrietpost.be. Eventuele klachten kunnen hieraan gericht
                     worden.
                 </p>
@@ -272,13 +272,13 @@ export default function TermsAndConditionsPage({
                     sancties in geval van niet betaling.
                     <br />
                     Tenzij er zich een fout voordoet bij de financiële instelling waarbij de klant zich bevindt. Dan
-                    heeft {company_name || "Frituur De Frietpost Tielt"} het recht om de klant te vragen de betaling alsnog te laten
+                    heeft {company_name || "Frituur"} het recht om de klant te vragen de betaling alsnog te laten
                     doorvoeren.
                 </p>
 
                 <h2 className="text-xl font-semibold mb-2">Artikel 11: Privacy</h2>
                 <p className="mb-4">
-                    De verantwoordelijke voor de verwerking, {company_name || "Frituur De Frietpost Tielt"}, respecteert de
+                    De verantwoordelijke voor de verwerking, {company_name || "Frituur"}, respecteert de
                     Algemene Verordening Gegevensbescherming en de Belgische Privacywet van 30 juli 2018.
                     <br />
                     De door u meegedeelde persoonsgegevens zullen enkel gebruikt worden voor volgende doeleinden:
@@ -291,7 +291,7 @@ export default function TermsAndConditionsPage({
                     verwerking van uw persoonsgegevens te beperken. U kan zich eveneens verzetten tegen de verwerking
                     van uw persoonsgegevens als u daar ernstige en legitieme redenen voor heeft die onze noodzaak om
                     uw gegevens te verwerken, overstijgen. Via een schriftelijke, gedateerde en ondertekende aanvraag
-                    aan {company_name || "Frituur De Frietpost Tielt"}, {addressLine}, hallo@defrietpost.be,
+                    aan {company_name || "Frituur"}, {addressLine}, hallo@defrietpost.be,
                     kan u gratis uw persoonsgegevens in digitale en leesbare vorm opvragen en/of aan andere
                     verantwoordelijken over laten dragen. Voor zover onze verwerking gebaseerd is op uw voorafgaande
                     toestemming, heeft u het recht om die toestemming in te trekken.
@@ -299,7 +299,7 @@ export default function TermsAndConditionsPage({
                     In geval van gebruik van gegevens voor direct marketing: U kan zich kosteloos verzetten tegen het
                     gebruik van uw gegevens voor direct marketing en hoeft daarvoor geen reden op te geven.
                     <br />
-                    Om uw rechten uit te oefenen, kan u zich richten tot {company_name || "Frituur De Frietpost Tielt"}, {addressLine}, hallo@defrietpost.be.
+                    Om uw rechten uit te oefenen, kan u zich richten tot {company_name || "Frituur"}, {addressLine}, hallo@defrietpost.be.
                     <br />
                     Wij behandelen uw gegevens als vertrouwelijke informatie en zullen die niet doorgeven, verhuren
                     of verkopen aan derden.
@@ -315,7 +315,7 @@ export default function TermsAndConditionsPage({
                     geen enkele wijze de geldigheid, de wettigheid en de toepasbaarheid van de andere bepalingen
                     aantasten.
                     <br />
-                    Het nalaten op gelijk welk moment door {company_name || "Frituur De Frietpost Tielt"} om één van de in
+                    Het nalaten op gelijk welk moment door {company_name || "Frituur"} om één van de in
                     deze Voorwaarden opgesomde rechten af te dwingen, of gelijk welk recht hiervan uit te oefenen,
                     zal nooit gezien worden als een verzaking aan zulke bepaling en zal nooit de geldigheid van deze
                     rechten aantasten.
@@ -324,7 +324,7 @@ export default function TermsAndConditionsPage({
                 <h2 className="text-xl font-semibold mb-2">Artikel 13: Wijziging voorwaarden</h2>
                 <p className="mb-4">
                     Deze Voorwaarden worden aangevuld door andere voorwaarden waar expliciet naar verwezen wordt, en
-                    de algemene verkoopsvoorwaarden van {company_name || "Frituur De Frietpost Tielt"}. Ingeval van
+                    de algemene verkoopsvoorwaarden van {company_name || "Frituur"}. Ingeval van
                     tegenstrijdigheid, primeren onderhavige Voorwaarden.
                 </p>
 
