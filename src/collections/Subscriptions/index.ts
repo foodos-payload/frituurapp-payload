@@ -1,8 +1,15 @@
 // File: subscriptions.ts
 import type { CollectionConfig } from 'payload';
+import { hasPermission } from '@/access/permissionChecker';
 
 const Subscriptions: CollectionConfig = {
     slug: 'subscriptions',
+    access: {
+        create: hasPermission('categories', 'create'),
+        delete: hasPermission('categories', 'delete'),
+        read: hasPermission('categories', 'read'),
+        update: hasPermission('categories', 'update'),
+    },
     labels: {
         singular: {
             en: 'Subscription',

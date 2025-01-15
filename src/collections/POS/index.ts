@@ -1,6 +1,6 @@
 // src/collections/POS/index.ts
 import type { CollectionConfig } from 'payload'
-import { isSuperAdmin } from '../../access/isSuperAdmin'
+import { hasPermission } from '@/access/permissionChecker'
 
 export const POS: CollectionConfig = {
     slug: 'pos',
@@ -9,10 +9,10 @@ export const POS: CollectionConfig = {
         plural: 'POS Integrations',
     },
     access: {
-        create: ({ req }) => isSuperAdmin({ req }),
-        read: () => true,
-        update: ({ req }) => isSuperAdmin({ req }),
-        delete: ({ req }) => isSuperAdmin({ req }),
+        create: hasPermission('categories', 'create'),
+        delete: hasPermission('categories', 'delete'),
+        read: hasPermission('categories', 'read'),
+        update: hasPermission('categories', 'update'),
     },
     fields: [
         {

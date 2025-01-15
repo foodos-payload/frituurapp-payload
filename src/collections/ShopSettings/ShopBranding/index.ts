@@ -3,16 +3,15 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from '../FulfillmentMethods/access/baseListFilter';
-import { canMutateBranding } from './access/byTenant';
-import { readAccess } from '../FulfillmentMethods/access/readAccess';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const ShopBranding: CollectionConfig = {
     slug: 'shop-branding',
     access: {
-        create: canMutateBranding,
-        read: readAccess,
-        update: canMutateBranding,
-        delete: canMutateBranding,
+        create: hasPermission('categories', 'create'),
+        delete: hasPermission('categories', 'delete'),
+        read: hasPermission('categories', 'read'),
+        update: hasPermission('categories', 'update'),
     },
     admin: {
         baseListFilter,

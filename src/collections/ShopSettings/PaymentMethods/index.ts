@@ -3,18 +3,16 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutatePaymentMethod } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
-import { readAccess } from './access/readAccess';
+import { hasPermission } from '@/access/permissionChecker';
 import { ensureUniqueProviderPerShop } from './hooks/ensureUniqueProviderPerShop';
 
 export const PaymentMethods: CollectionConfig = {
     slug: 'payment-methods',
     access: {
-        create: canMutatePaymentMethod,
-        delete: canMutatePaymentMethod,
-        read: readAccess,
-        update: canMutatePaymentMethod,
+        create: hasPermission('categories', 'create'),
+        delete: hasPermission('categories', 'delete'),
+        read: hasPermission('categories', 'read'),
+        update: hasPermission('categories', 'update'),
     },
     admin: {
         baseListFilter,

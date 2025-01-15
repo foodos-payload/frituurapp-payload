@@ -3,18 +3,16 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateTable } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
-import { readAccess } from './access/readAccess';
+import { hasPermission } from '@/access/permissionChecker';
 import { ensureUniqueTableNumberPerShop } from './hooks/ensureUniqueTableNumberPerShop';
 
 export const Tables: CollectionConfig = {
     slug: 'tables',
     access: {
-        create: canMutateTable,
-        delete: canMutateTable,
-        read: readAccess,
-        update: canMutateTable,
+        create: hasPermission('categories', 'create'),
+        delete: hasPermission('categories', 'delete'),
+        read: hasPermission('categories', 'read'),
+        update: hasPermission('categories', 'update'),
     },
     admin: {
         baseListFilter,

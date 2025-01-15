@@ -1,8 +1,7 @@
 // File: /src/collections/DigitalMenus/index.ts (example)
 
 import { baseListFilter } from './access/baseListFilter'
-import { canMutateDigitalMenu } from './access/byTenant'
-import { readAccess } from './access/readAccess'
+import { hasPermission } from '@/access/permissionChecker'
 import { ensureUniqueMenuName } from './hooks/ensureUniqueMenuName'
 import type { CollectionConfig } from 'payload'
 
@@ -12,10 +11,10 @@ import { shopsField } from '../../fields/ShopsField'
 export const DigitalMenus: CollectionConfig = {
     slug: 'digital-menus',
     access: {
-        create: canMutateDigitalMenu,
-        read: readAccess,
-        update: canMutateDigitalMenu,
-        delete: canMutateDigitalMenu,
+        create: hasPermission('categories', 'create'),
+        delete: hasPermission('categories', 'delete'),
+        read: hasPermission('categories', 'read'),
+        update: hasPermission('categories', 'update'),
     },
     admin: {
         baseListFilter,

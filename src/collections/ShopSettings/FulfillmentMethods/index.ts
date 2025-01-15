@@ -3,17 +3,15 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { canMutateFulfillmentMethod } from './access/byTenant';
-import { filterByShopRead } from './access/byShop';
-import { readAccess } from './access/readAccess';
+import { hasPermission } from '@/access/permissionChecker';
 
 export const FulfillmentMethods: CollectionConfig = {
     slug: 'fulfillment-methods',
     access: {
-        create: canMutateFulfillmentMethod,
-        delete: canMutateFulfillmentMethod,
-        read: readAccess,
-        update: canMutateFulfillmentMethod,
+        create: hasPermission('categories', 'create'),
+        delete: hasPermission('categories', 'delete'),
+        read: hasPermission('categories', 'read'),
+        update: hasPermission('categories', 'update'),
     },
     admin: {
         baseListFilter,

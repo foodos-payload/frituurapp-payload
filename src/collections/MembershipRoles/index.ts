@@ -4,16 +4,15 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { readAccess } from './access/readAccess';
-import { canMutate } from './access/byTenant'; // your custom access logic
+import { hasPermission } from '@/access/permissionChecker';
 
 export const MembershipRoles: CollectionConfig = {
     slug: 'membership-roles',
     access: {
-        create: canMutate,
-        read: readAccess,
-        update: canMutate,
-        delete: canMutate,
+        create: hasPermission('categories', 'create'),
+        delete: hasPermission('categories', 'delete'),
+        read: hasPermission('categories', 'read'),
+        update: hasPermission('categories', 'update'),
     },
     admin: {
         baseListFilter,
