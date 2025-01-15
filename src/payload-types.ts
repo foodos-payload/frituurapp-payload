@@ -14,7 +14,7 @@ export interface Config {
     tenants: Tenant;
     users: User;
     roles: Role;
-    subscriptions: Subscription;
+    services: Service;
     shops: Shop;
     'payment-methods': PaymentMethod;
     'fulfillment-methods': FulfillmentMethod;
@@ -40,7 +40,6 @@ export interface Config {
     products: Product;
     subproducts: Subproduct;
     productpopups: Productpopup;
-    services: Service;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -50,7 +49,7 @@ export interface Config {
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     roles: RolesSelect<false> | RolesSelect<true>;
-    subscriptions: SubscriptionsSelect<false> | SubscriptionsSelect<true>;
+    services: ServicesSelect<false> | ServicesSelect<true>;
     shops: ShopsSelect<false> | ShopsSelect<true>;
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
@@ -76,7 +75,6 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
     productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
-    services: ServicesSelect<false> | ServicesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -164,10 +162,6 @@ export interface User {
    * Assign shops to the user.
    */
   shops?: (string | Shop)[] | null;
-  /**
-   * The subscriptions associated with this user.
-   */
-  subscriptions?: (string | Subscription)[] | null;
   /**
    * The username of the user.
    */
@@ -282,32 +276,122 @@ export interface Shop {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "subscriptions".
+ * via the `definition` "services".
  */
-export interface Subscription {
+export interface Service {
   id: string;
+  title_nl: string;
+  title_en?: string | null;
+  title_de?: string | null;
+  title_fr?: string | null;
+  description_nl?: string | null;
+  description_en?: string | null;
+  description_de?: string | null;
+  description_fr?: string | null;
+  monthly_price: string;
+  yearly_price: string;
   /**
-   * The user associated with this subscription.
+   * Select one or more Tenants associated with this Service.
    */
-  user: string | User;
-  service: string;
-  status: string;
-  subscription_amount: number;
-  start_date: string;
-  end_date: string;
-  currency?: string | null;
-  transactions?:
+  tenants?: (string | Tenant)[] | null;
+  /**
+   * Select one or more Shops that offer or are linked to this Service.
+   */
+  shops?: (string | Shop)[] | null;
+  fields_data?: string | null;
+  collections_data?: string | null;
+  /**
+   * Assign one or more roles relevant to this Service.
+   */
+  roles?: (string | Role)[] | null;
+  yearly_price_discount?: string | null;
+  try_demo?: string | null;
+  service_thumbnail: string | Media;
+  /**
+   * Stripe referral code for this service
+   */
+  referral_code?: string | null;
+  /**
+   * Stripe coupon code for this service
+   */
+  coupon_code?: string | null;
+  /**
+   * Semantic versioning (e.g., 1.0.0)
+   */
+  service_version: string;
+  service_last_update_date: string;
+  /**
+   * Select tenants for which this service should be hidden
+   */
+  hide_for_tenants?: (string | Tenant)[] | null;
+  /**
+   * URL for additional information about the service
+   */
+  get_more_info_url?: string | null;
+  stripe_monthly_product_id?: string | null;
+  stripe_yearly_product_id?: string | null;
+  stripe_monthly_price_id?: string | null;
+  stripe_yearly_price_id?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  tenant: string | Tenant;
+  /**
+   * Optional tags to organize media files.
+   */
+  tags?:
     | {
-        amount?: number | null;
-        currency?: string | null;
-        date?: string | null;
-        status?: string | null;
-        service?: string | null;
+        tag?: string | null;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Blurhash representation of the image for quick previews.
+   */
+  blurhash?: string | null;
+  /**
+   * URL of the original image in S3.
+   */
+  s3_url?: string | null;
+  /**
+   * Alternative text for the media file to improve accessibility.
+   */
+  alt_text?: string | null;
   updatedAt: string;
   createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    medium?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -632,64 +716,6 @@ export interface ShopBranding {
   borderRadius?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  tenant: string | Tenant;
-  /**
-   * Optional tags to organize media files.
-   */
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Blurhash representation of the image for quick previews.
-   */
-  blurhash?: string | null;
-  /**
-   * URL of the original image in S3.
-   */
-  s3_url?: string | null;
-  /**
-   * Alternative text for the media file to improve accessibility.
-   */
-  alt_text?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    medium?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1774,54 +1800,6 @@ export interface Order {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "services".
- */
-export interface Service {
-  id: string;
-  title_nl: string;
-  title_en?: string | null;
-  title_de?: string | null;
-  title_fr?: string | null;
-  description_nl?: string | null;
-  description_en?: string | null;
-  description_de?: string | null;
-  description_fr?: string | null;
-  monthly_price: string;
-  yearly_price: string;
-  role?: (string | null) | Role;
-  yearly_price_discount?: string | null;
-  try_demo?: string | null;
-  service_thumbnail: string | Media;
-  /**
-   * Stripe referral code for this service
-   */
-  referral_code?: string | null;
-  /**
-   * Stripe coupon code for this service
-   */
-  coupon_code?: string | null;
-  /**
-   * Semantic versioning (e.g., 1.0.0)
-   */
-  service_version: string;
-  service_last_update_date: string;
-  /**
-   * Select tenants for which this service should be hidden
-   */
-  hide_for_tenants?: (string | Tenant)[] | null;
-  /**
-   * URL for additional information about the service
-   */
-  get_more_info_url?: string | null;
-  stripe_monthly_product_id?: string | null;
-  stripe_yearly_product_id?: string | null;
-  stripe_monthly_price_id?: string | null;
-  stripe_yearly_price_id?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -1840,8 +1818,8 @@ export interface PayloadLockedDocument {
         value: string | Role;
       } | null)
     | ({
-        relationTo: 'subscriptions';
-        value: string | Subscription;
+        relationTo: 'services';
+        value: string | Service;
       } | null)
     | ({
         relationTo: 'shops';
@@ -1942,10 +1920,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'productpopups';
         value: string | Productpopup;
-      } | null)
-    | ({
-        relationTo: 'services';
-        value: string | Service;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -2020,7 +1994,6 @@ export interface UsersSelect<T extends boolean = true> {
         id?: T;
       };
   shops?: T;
-  subscriptions?: T;
   username?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2053,26 +2026,37 @@ export interface RolesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "subscriptions_select".
+ * via the `definition` "services_select".
  */
-export interface SubscriptionsSelect<T extends boolean = true> {
-  user?: T;
-  service?: T;
-  status?: T;
-  subscription_amount?: T;
-  start_date?: T;
-  end_date?: T;
-  currency?: T;
-  transactions?:
-    | T
-    | {
-        amount?: T;
-        currency?: T;
-        date?: T;
-        status?: T;
-        service?: T;
-        id?: T;
-      };
+export interface ServicesSelect<T extends boolean = true> {
+  title_nl?: T;
+  title_en?: T;
+  title_de?: T;
+  title_fr?: T;
+  description_nl?: T;
+  description_en?: T;
+  description_de?: T;
+  description_fr?: T;
+  monthly_price?: T;
+  yearly_price?: T;
+  tenants?: T;
+  shops?: T;
+  fields_data?: T;
+  collections_data?: T;
+  roles?: T;
+  yearly_price_discount?: T;
+  try_demo?: T;
+  service_thumbnail?: T;
+  referral_code?: T;
+  coupon_code?: T;
+  service_version?: T;
+  service_last_update_date?: T;
+  hide_for_tenants?: T;
+  get_more_info_url?: T;
+  stripe_monthly_product_id?: T;
+  stripe_yearly_product_id?: T;
+  stripe_monthly_price_id?: T;
+  stripe_yearly_price_id?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2874,38 +2858,6 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   allowMultipleTimes?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "services_select".
- */
-export interface ServicesSelect<T extends boolean = true> {
-  title_nl?: T;
-  title_en?: T;
-  title_de?: T;
-  title_fr?: T;
-  description_nl?: T;
-  description_en?: T;
-  description_de?: T;
-  description_fr?: T;
-  monthly_price?: T;
-  yearly_price?: T;
-  role?: T;
-  yearly_price_discount?: T;
-  try_demo?: T;
-  service_thumbnail?: T;
-  referral_code?: T;
-  coupon_code?: T;
-  service_version?: T;
-  service_last_update_date?: T;
-  hide_for_tenants?: T;
-  get_more_info_url?: T;
-  stripe_monthly_product_id?: T;
-  stripe_yearly_product_id?: T;
-  stripe_monthly_price_id?: T;
-  stripe_yearly_price_id?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -66,7 +66,7 @@ export default function LandingHeader({
     return (
         <motion.header
             className="w-full z-50 shadow-2xl sticky top-0 bg-white rounded-b-xl p-2"
-            style={{ backgroundColor: finalHeaderBg }}
+
             initial={{ opacity: 0 }}       // invisible at start
             animate={{ opacity: 1 }}       // fade to visible
             transition={{ duration: 0.6 }} // fade duration

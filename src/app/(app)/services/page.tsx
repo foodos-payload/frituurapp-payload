@@ -40,9 +40,8 @@ export default async function Services() {
                                         id={service.id}
                                         variant="default"
                                         user={user}
-                                        amount={service.monthly_price}                                    
-                                        serviceRole={service.role as Role}
-                                        >
+                                        amount={service.monthly_price}
+                                        serviceRoles={(service.roles as Role[]) ?? []}                                    >
                                         Subscribe Monthly
                                     </SubscribeButton>
                                 </CardFooter>

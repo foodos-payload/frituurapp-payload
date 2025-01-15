@@ -10,11 +10,11 @@ interface SubscribeButtonProps extends ButtonProps {
     id: string | undefined
     amount: string | undefined
     user?: User | undefined
-    serviceRole?: Role | undefined
+    serviceRoles: Role[];
 }
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
-export function SubscribeButton({ priceId, children, id, user, serviceRole, amount, ...props }: SubscribeButtonProps) {
+export function SubscribeButton({ priceId, children, id, user, serviceRoles, amount, ...props }: SubscribeButtonProps) {
     const [isLoading, setIsLoading] = useState(false)
     async function handleSubscribe() {
         try {
@@ -37,7 +37,7 @@ export function SubscribeButton({ priceId, children, id, user, serviceRole, amou
                 body: JSON.stringify({
                     price: priceId,  // Pass your Stripe Price ID here
                     customerEmail: user?.email, // Optionally pass a customer email
-                    successUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/subscription-success-callback?service_id=${id}&user_id=${user?.id}&amount=${amount}&role=${serviceRole?.id}`,
+                    successUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/subscription-success-callback?service_id=${id}&user_id=${user?.id}&amount=${amount}&roles=${serviceRoles.map(role => role.id).join(',')}`,
                     cancelUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/services/${id}`,
                 }),
             });

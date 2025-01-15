@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import config from '@payload-config';
 import { afterOperationHook } from './hooks/afterChange';
 import { hasPermission } from '@/access/permissionChecker';
 
@@ -87,10 +88,103 @@ export const Services: CollectionConfig = {
             type: 'text',
             required: true,
         },
+        // 1. Tenants
         {
-            name: 'role',
+            name: 'tenants',
             type: 'relationship',
+            label: {
+                en: 'Tenants',
+                nl: 'Eigenaars',
+                de: 'Eigentümer',
+                fr: 'Propriétaires',
+            },
+            relationTo: 'tenants',
+            hasMany: true,
+            admin: {
+                description: {
+                    en: 'Select one or more Tenants associated with this Service.',
+                    nl: 'Selecteer een of meer eigenaars die bij deze dienst horen.',
+                    de: 'Wählen Sie einen oder mehrere Eigentümer aus, die mit diesem Service verbunden sind.',
+                    fr: 'Sélectionnez un ou plusieurs propriétaires associés à ce service.',
+                },
+            },
+        },
+
+        // 2. Shops
+        {
+            name: 'shops',
+            type: 'relationship',
+            label: {
+                en: 'Shops',
+                nl: 'Winkels',
+                de: 'Geschäfte',
+                fr: 'Magasins',
+            },
+            relationTo: 'shops',
+            hasMany: true,
+            admin: {
+                description: {
+                    en: 'Select one or more Shops that offer or are linked to this Service.',
+                    nl: 'Selecteer een of meer winkels die deze dienst aanbieden of eraan gekoppeld zijn.',
+                    de: 'Wählen Sie ein oder mehrere Geschäfte aus, die diesen Service anbieten oder damit verknüpft sind.',
+                    fr: 'Sélectionnez un ou plusieurs magasins qui offrent ou sont liés à ce service.',
+                },
+            },
+        },
+
+        {
+            name: 'fields_data',       // the real, hidden text field
+            type: 'text',
+            admin: { hidden: true },
+        },
+        {
+            name: 'fields_ui',         // a UI field to render the custom React Select
+            label: 'Fields UI',
+            type: 'ui',
+            admin: {
+                components: {
+                    Field: '@/fields/FieldsSelectUI', // your custom component
+                },
+            },
+        },
+
+        // 4. Collections
+        {
+            name: 'collections_data',      // the real field that gets stored
+            type: 'text',
+            admin: { hidden: true },       // hide from the admin UI
+        },
+        {
+            name: 'collections_ui',
+            label: 'Collections UI',
+            type: 'ui',
+            admin: {
+                components: {
+                    Field: '@/fields/CollectionsSelectUI',
+                },
+            },
+        },
+
+        // 5. Roles
+        {
+            name: 'roles',
+            type: 'relationship',
+            label: {
+                en: 'Roles',
+                nl: 'Rollen',
+                de: 'Rollen',
+                fr: 'Rôles',
+            },
             relationTo: 'roles',
+            hasMany: true,
+            admin: {
+                description: {
+                    en: 'Assign one or more roles relevant to this Service.',
+                    nl: 'Wijs een of meer rollen toe die relevant zijn voor deze dienst.',
+                    de: 'Weisen Sie eine oder mehrere Rollen zu, die für diesen Service relevant sind.',
+                    fr: 'Attribuez un ou plusieurs rôles pertinents pour ce service.',
+                },
+            },
         },
         {
             name: 'yearly_price_discount',
