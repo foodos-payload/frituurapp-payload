@@ -152,6 +152,27 @@ const Users: CollectionConfig = {
       },
     },
     {
+      name: 'subscriptions',
+      type: 'relationship',
+      relationTo: 'subscriptions', // This must refer to the 'subscriptions' collection
+      hasMany: true, // Allows the user to have multiple subscriptions
+      label: {
+        en: 'Subscriptions',
+        nl: 'Abonnementen',
+        de: 'Abonnements',
+        fr: 'Abonnements',
+      },
+      admin: {
+        description: {
+          en: 'The subscriptions associated with this user.',
+          nl: 'De abonnementen die aan deze gebruiker zijn gekoppeld.',
+          de: 'Die mit diesem Benutzer verknüpften Abonnements.',
+          fr: 'Les abonnements associés à cet utilisateur.',
+        },
+      },
+    },
+
+    {
       name: 'username',
       type: 'text',
       label: {
