@@ -56,7 +56,8 @@ export function CollectionsTable({ collectionNames, doc }: CollectionsTableProps
             toast.error('Role name is required')
             return
         }
-
+        console.log("LOGGING")
+        console.log(doc?.id)
         try {
             await saveRole(doc?.id, {
                 name: roleName,

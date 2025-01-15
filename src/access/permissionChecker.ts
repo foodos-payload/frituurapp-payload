@@ -1,4 +1,5 @@
 import { Access, PayloadRequest } from 'payload'
+import { isSuperAdmin } from './isSuperAdmin'
 
 export type PermissionAction = 'read' | 'create' | 'update' | 'delete'
 
@@ -23,6 +24,11 @@ export async function checkPermission(
 ): Promise<boolean> {
     const roles = req.user?.roles as Role[]
     try {
+
+        if (isSuperAdmin({ req })) {
+            return true
+        }
+
         if (!req.user?.roles?.length) {
             return false
         }
