@@ -1343,8 +1343,6 @@ export interface Service {
    * Select one or more Shops that offer or are linked to this Service.
    */
   shops?: (string | Shop)[] | null;
-  fields_data?: string | null;
-  collections_data?: string | null;
   /**
    * Assign one or more roles relevant to this Service.
    */
@@ -2526,8 +2524,6 @@ export interface ServicesSelect<T extends boolean = true> {
   yearly_price?: T;
   tenants?: T;
   shops?: T;
-  fields_data?: T;
-  collections_data?: T;
   roles?: T;
   yearly_price_discount?: T;
   try_demo?: T;

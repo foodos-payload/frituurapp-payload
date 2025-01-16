@@ -1,5 +1,3 @@
-// File: /src/app/(app)/subscription-success-callback/SubscriptionSuccessCallbackClient.tsx
-
 "use client"
 
 import React, { useEffect, useState } from "react"
@@ -16,39 +14,52 @@ export function SubscriptionSuccessCallbackClient() {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        // On client mount, grab query params and call our API route
-        async function updateSubscription() {
+        // On client mount, grab query params and call our new API route
+        async function processSubscription() {
             try {
                 const service_id = searchParams.get("service_id")
                 const user_id = searchParams.get("user_id")
                 const amount = searchParams.get("amount")
-                const role = searchParams.get("role")
+                const rolesParam = searchParams.get("roles") // e.g. "roleID1,roleID2"
+                const shop_id = searchParams.get("shop_id") // if needed
 
-                // Call our API route to update the user in Payload
-                const response = await fetch("/api/update-subscription", {
+                if (!service_id || !user_id) {
+                    throw new Error("Missing required params: service_id or user_id")
+                }
+
+                // Convert roles from comma-delimited string to array if needed
+                const roles = rolesParam ? rolesParam.split(",") : []
+
+                // Call our NEW /api/manage-subscriptions (or whatever your route is named)
+                const response = await fetch("/api/manage-subscriptions", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        service_id,
-                        user_id,
+                        serviceId: service_id,
+                        userId: user_id,
                         amount,
-                        role,
+                        roles,
+                        shopId: shop_id,
                     }),
                 })
 
                 if (!response.ok) {
-                    throw new Error(`Error: ${response.status} - ${response.statusText}`)
+                    const msg = await response.json()
+                    throw new Error(
+                        msg?.error || `Error: ${response.status} - ${response.statusText}`
+                    )
                 }
             } catch (err: any) {
-                console.error("Error updating subscription:", err)
+                console.error("Error managing subscription:", err)
                 setError(err.message || "Unknown error")
             } finally {
                 setIsLoading(false)
             }
         }
-        updateSubscription()
+
+        processSubscription()
     }, [searchParams])
 
     if (isLoading) {

@@ -21,7 +21,7 @@ export const Media: CollectionConfig = {
   access: {
     create: hasPermission('media', 'create'),
     delete: hasPermission('media', 'delete'),
-    read: filterByTenantRead, // specialized read filter
+    read: hasPermission('media', 'read'),
     update: hasPermission('media', 'update'),
   },
 

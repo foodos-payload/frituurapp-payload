@@ -18,7 +18,7 @@ export const Shops: CollectionConfig = {
   access: {
     create: hasPermission('shops', 'create'),
     delete: hasPermission('shops', 'delete'),
-    read: filterByShopRead,
+    read: hasPermission('shops', 'read'),
     update: hasPermission('shops', 'update'),
   },
 
