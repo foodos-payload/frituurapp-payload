@@ -1,90 +1,216 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-/* Set a global font-family */
+/* Global Styles */
 body {
-    font-family: 'Poppins', sans-serif;
-    font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  background-color: #f2f2f2cb;
+  color: #212121;
+  margin: 0;
+  padding: 0;
 }
 
-/* Example: Apply Poppins to specific elements */
-h1, h2, h3, h4, h5, h6 {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600; /* Semi-bold for headers */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
 }
 
+a,
+.btn,
+button {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+}
+
+/* Example: Buttons */
 a.btn {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 500; /* Medium for buttons */
-    background-color:var(--theme-elevation-100);
+  background-color: #f5f5f5; /* Light gray */
+  color: #212121; /* Darker text */
 }
 
+/* Card adjustments */
 .card > a {
-    background-color:unset !important;
-    color:unset;
+  background-color: unset !important;
+  color: unset;
 }
 
-.card a.btn.btn--icon.btn--icon-style-with-border.btn--icon-only.btn--size-medium.btn--icon-position-right.btn--withoutPopup.btn--style-icon-label.btn--round.btn--withoutPopup {
-    display: none;
+.card
+  a.btn.btn--icon.btn--icon-style-with-border.btn--icon-only.btn--size-medium.btn--icon-position-right.btn--withoutPopup.btn--style-icon-label.btn--round.btn--withoutPopup {
+  display: none;
 }
 
-button.collapsible__toggle.collapsible__toggle--open span, button.collapsible__toggle.collapsible__toggle--collapsed span {
-    display: none;
+/* Collapsible toggles */
+button.collapsible__toggle.collapsible__toggle--open span,
+button.collapsible__toggle.collapsible__toggle--collapsed span {
+  display: none;
 }
 
-
-/* Custom styling sidebar left */
-button.nav-group__toggle.nav-group__toggle--open {
-    font-size: x-large;
-    border-bottom: 1px solid var(--theme-elevation-800);
-}
-
+/* Sidebar toggles (if still needed) */
+button.nav-group__toggle.nav-group__toggle--open,
 button.nav-group__toggle.nav-group__toggle--collapsed {
-    font-size: x-large;
-    border-bottom: 1px solid var(--theme-elevation-800);
+  font-size: x-large;
 }
 
+/* Chevron icon in sidebar */
 svg.icon.icon--chevron.nav-group__indicator {
-    height: 40px;
-    width: 20px;
-    /* background-color: black !important; */
+  height: 40px;
+  width: 20px;
 }
 
 .nav-group__indicator svg .stroke {
-    stroke: var(--theme-elevation-800); 
+  stroke: #616161; /* Medium-dark gray for icon */
 }
 
-/* Button styling backend */
-a.btn.btn--icon-style-without-border.btn--size-small.btn--withoutPopup.btn--style-pill.btn--withoutPopup {
-    // background-color:#068b59;
-    // color:white;
-    font-size:large;
-    padding:5px;
-}
-
-// Hide localizer in admin ui (doesnt work anyway) 
+/* Hide localizer in admin UI */
 .localizer-button {
-    display: none;
+  display: none;
 }
 
-//Make tables full width 
+/* Make tables full width */
 .collection-list__wrap .table {
-    width: -webkit-fill-available !important;
+  width: -webkit-fill-available !important;
 }
 
-input, optgroup, select, textarea {
-    border-width: 2px;
+/* Form elements */
+input,
+optgroup,
+select,
+textarea {
+  border: 2px solid #e0e0e0;
+  padding: 8px;
+  font-family: 'Poppins', sans-serif;
+  &:focus {
+    border-color: #068b59; /* highlight with green on focus */
+    outline: none;
+  }
 }
 
+/* Checkbox styling */
 .checkbox-input__input {
-    border-width: 2px;
+  border-width: 2px;
+  border-color: #e0e0e0;
 }
 
+/* Array field add button */
 button.btn.array-field__add-row.btn--icon.btn--icon-style-with-border.btn--size-medium.btn--icon-position-left.btn--withoutPopup.btn--style-icon-label.btn--withoutPopup {
-    border: 1px solid var(--theme-elevation-800);
-    padding: 2px 10px;
+  padding: 2px 10px;
 }
 
+/* Secondary style button */
 button.btn.btn--icon-style-without-border.btn--size-medium.btn--withoutPopup.btn--style-secondary.btn--withoutPopup {
-    padding: 3px 10px;
+  padding: 3px 10px;
+  background-color: #f5f5f5;
+  color: #212121;
 }
 
+/* Utility Classes for confirm/cancel styling */
+.btn--confirm {
+  background-color: #068b59; /* Green */
+  color: #ffffff;
+  border: 1px solid #068b59;
+  &:hover {
+    background-color: darken(#068b59, 5%);
+  }
+}
+
+.btn--cancel {
+  background-color: #ce2027; /* Red */
+  color: #ffffff;
+  border: 1px solid #ce2027;
+  &:hover {
+    background-color: darken(#ce2027, 5%);
+  }
+}
+
+/* Alerts / Notifications */
+.alert--success {
+  background-color: rgba(6, 139, 89, 0.1); /* Subtle green background */
+  border: 1px solid #068b59;
+  color: #068b59;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.alert--error {
+  background-color: rgba(206, 32, 39, 0.1); /* Subtle red background */
+  border: 1px solid #ce2027;
+  color: #ce2027;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+/* SideBar Left */
+.sidebar-left {
+  background-color: #f5f5f5;
+  border-right: 1px solid #e0e0e0;
+}
+
+.nav__scroll {
+  background-color: #0c131f;
+  border-right: 1px solid #e0e0e0;
+  padding-left: 30px !important;
+  padding-right: 30px !important;
+  border-top-right-radius: 1em;
+  border-bottom-right-radius: 1em;
+  box-shadow: 3px 0 10px rgba(190, 181, 181, 0.2); /* Increased shadow on right for more depth */
+}
+
+.nav__wrap {
+  margin-top: 67px;
+}
+
+//Navigation links
+.nav__link,
+.nav-group__indicator,
+.nav-group__label {
+  color: #ffffff;
+}
+
+.nav__link:hover {
+  background-color: white;
+  color: #0c131f;
+}
+
+.nav__link {
+  padding: 10px;
+  border-radius: 0.5em;
+}
+
+.nav-group {
+  padding-bottom: 15px;
+}
+
+.nav nav a.active {
+  background-color: #ffffff !important;
+  color: #0c131f;
+}
+
+.nav-group__label {
+  font-size: large;
+}
+
+.nav-group__indicator svg .stroke {
+  stroke: #fff !important;
+}
+
+//Collapsible hamburger menu
+.hamburger__close-icon {
+  margin-right:1px;
+}
+
+//Tenant Selector
+.nav__wrap .tenant-selector .field-label {
+  display:none;
+}
+
+//Log out button 
+.nav__log-out svg .stroke {
+ stroke:white;
+}

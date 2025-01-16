@@ -72,91 +72,91 @@ export default buildConfig({
       ...Tenants,
       admin: {
         ...Tenants.admin,
-        group: '🏪',
+        group: '🏪 Shops',
       },
     },
     {
       ...Users,
       admin: {
         ...Users.admin,
-        group: '🏪',
+        group: '🏪 Shops',
       },
     },
     {
       ...Roles,
       admin: {
         ...Roles.admin,
-        group: '🏪',
+        group: '🏪 Shops',
       },
     },
     {
       ...Services,
       admin: {
         ...Services.admin,
-        group: '🏪',
+        group: '🏪 Shops',
       },
     },
     {
       ...Shops,
       admin: {
         ...Shops.admin,
-        group: '🏪',
+        group: '🏪 Shops',
       },
     },
     {
       ...PaymentMethods,
       admin: {
         ...PaymentMethods.admin,
-        group: '🛠️',
+        group: '🛠️ Settings',
       },
     },
     {
       ...FulfillmentMethods,
       admin: {
         ...FulfillmentMethods.admin,
-        group: '🛠️',
+        group: '🛠️ Settings',
       },
     },
     {
       ...Timeslots,
       admin: {
         ...Timeslots.admin,
-        group: '🛠️',
+        group: '🛠️ Settings',
       },
     },
     {
       ...ShopBranding,
       admin: {
         ...ShopBranding.admin,
-        group: '🛠️',
+        group: '🛠️ Settings',
       },
     },
     {
       ...DigitalMenus,
       admin: {
         ...DigitalMenus.admin,
-        group: '🛠️',
+        group: '🛠️ Settings',
       },
     },
     {
       ...ReservationEntries,
       admin: {
         ...ReservationEntries.admin,
-        group: '📆🪑', // Reserveringen group
+        group: '📆 Reservations', // Reserveringen group
       },
     },
     {
       ...ReservationSettings,
       admin: {
         ...ReservationSettings.admin,
-        group: '📆🪑', // Reserveringen group
+        group: '📆 Reservations', // Reserveringen group
       },
     },
     {
       ...Tables,
       admin: {
         ...Tables.admin,
-        group: '📆🪑', // Reserveringen group
+        group: '📆 Reservations', // Reserveringen group
       },
     },
 
@@ -164,108 +164,108 @@ export default buildConfig({
       ...Printers,
       admin: {
         ...Printers.admin,
-        group: '🛠️',
+        group: '🛠️ Settings',
       },
     },
     {
       ...POS,
       admin: {
         ...POS.admin,
-        group: '🛠️'
+        group: '🛠️ Settings'
       }
     },
     {
-      ...Tipping, admin: { ...Tipping.admin, group: '🛠️' }
+      ...Tipping, admin: { ...Tipping.admin, group: '🛠️ Settings' }
     },
     {
       ...Pages,
       admin: {
         ...Pages.admin,
-        group: '🏪',
+        group: '🏪 Shops',
       },
     },
     {
       ...Media,
       admin: {
         ...Media.admin,
-        group: '🏪',
+        group: '🏪 Shops',
       },
     },
     {
       ...Customers,
       admin: {
         ...Customers.admin,
-        group: '🎁',
+        group: '🎁 Loyalty',
       },
     },
     {
       ...CustomerCredits,
       admin: {
         ...CustomerCredits.admin,
-        group: '🎁',
+        group: '🎁 Loyalty',
       },
     },
     {
       ...CustomerLoyalty,
       admin: {
         ...CustomerLoyalty.admin,
-        group: '🎁',
+        group: '🎁 Loyalty',
       },
     },
     {
       ...Coupons,
       admin: {
         ...Coupons.admin,
-        group: '🎁',
+        group: '🎁 Loyalty',
       },
     },
     {
       ...GiftVouchers,
       admin: {
         ...GiftVouchers.admin,
-        group: '🎁',
+        group: '🎁 Loyalty',
       },
     },
     {
       ...MembershipRoles,
       admin: {
         ...MembershipRoles.admin,
-        group: '🎁',
+        group: '🎁 Loyalty',
       },
     },
     {
       ...Orders,
       admin: {
         ...Orders.admin,
-        group: '🛒',
+        group: '🛒 Content',
       },
     },
     {
       ...Categories,
       admin: {
         ...Categories.admin,
-        group: '🛒',
+        group: '🛒 Content',
       },
     },
     {
       ...Products,
       admin: {
         ...Products.admin,
-        group: '🛒',
+        group: '🛒 Content',
       },
     },
     {
       ...Subproducts,
       admin: {
         ...Subproducts.admin,
-        group: '🛒',
+        group: '🛒 Content',
       },
     },
     {
       ...Productpopups,
       admin: {
         ...Productpopups.admin,
-        group: '🛒',
+        group: '🛒 Content',
       },
     },
 
