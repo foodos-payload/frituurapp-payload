@@ -156,7 +156,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
             console.log(`Attempting to print order #${orderId} as [${type}] on kitchen printers...`)
 
             const printersRes = await fetch(
-                `/api/printers?host=${encodeURIComponent(hostSlug)}&type=kitchen`
+                `/api/getPrinters?host=${encodeURIComponent(hostSlug)}&type=kitchen`
             )
             if (!printersRes.ok) {
                 throw new Error(`Failed to fetch kitchen printers, status ${printersRes.status}`)
