@@ -183,9 +183,26 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 // 1) Utility hook to get the first path segment as shopSlug
 function useShopSlug() {
-    const pathname = usePathname();
-    const segments = pathname.split("/").filter(Boolean);
-    return segments[0] || "";
+    const [shopSlug, setShopSlug] = useState("");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            // e.g. "frituur-den-overkant.localhost" or "frituur-den-overkant.localhost:3000"
+            const hostname = window.location.hostname;
+
+            // split on "." -> ["frituur-den-overkant", "localhost"] 
+            // or ["frituur-den-overkant", "localhost:3000"]
+            const parts = hostname.split(".");
+
+            // You could do more robust checking here, but typically the first part is the subdomain
+            const firstPart = parts[0];
+
+            setShopSlug(firstPart);
+
+        }
+    }, []);
+
+    return shopSlug;
 }
 
 export function useCart() {
