@@ -1797,6 +1797,10 @@ export interface Order {
      * The numeric tip value (e.g. 2.50 for €2.50, or 10 for 10%).
      */
     amount?: number | null;
+    /**
+     * The final computed tip after rounding, etc.
+     */
+    actualTip?: number | null;
   };
   /**
    * The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.
@@ -2751,6 +2755,7 @@ export interface OrdersSelect<T extends boolean = true> {
     | {
         type?: T;
         amount?: T;
+        actualTip?: T;
       };
   userLocale?: T;
   kioskNumber?: T;
