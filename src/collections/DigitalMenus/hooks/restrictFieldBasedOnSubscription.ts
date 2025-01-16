@@ -18,7 +18,7 @@ export function restrictFieldBasedOnSubscription(
         }
 
         // find the shops array from data or originalDoc
-        const shops = data.shops !== undefined ? data.shops : originalDoc?.shops
+        const shops = data?.shops !== undefined ? data.shops : originalDoc?.shops
         if (!shops || !Array.isArray(shops)) {
             return value
         }

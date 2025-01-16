@@ -31,6 +31,7 @@ export interface Config {
     roles: Role;
     services: Service;
     shops: Shop;
+    pages: Page;
     'payment-methods': PaymentMethod;
     'fulfillment-methods': FulfillmentMethod;
     timeslots: Timeslot;
@@ -65,6 +66,7 @@ export interface Config {
     roles: RolesSelect<false> | RolesSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     shops: ShopsSelect<false> | ShopsSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'fulfillment-methods': FulfillmentMethodsSelect<false> | FulfillmentMethodsSelect<true>;
     timeslots: TimeslotsSelect<false> | TimeslotsSelect<true>;
@@ -1380,6 +1382,28 @@ export interface Service {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: string;
+  /**
+   * Title of the page.
+   */
+  title?: string | null;
+  /**
+   * Used for URL paths, e.g., /page-slug.
+   */
+  slug?: string | null;
+  /**
+   * Used for URL paths, e.g., /page-slug.
+   */
+  slug2?: string | null;
+  tenant: string | Tenant;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "fulfillment-methods".
  */
 export interface FulfillmentMethod {
@@ -1873,6 +1897,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'shops';
         value: string | Shop;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: string | Page;
       } | null)
     | ({
         relationTo: 'payment-methods';
@@ -2576,6 +2604,18 @@ export interface ShopsSelect<T extends boolean = true> {
         reason?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  slug2?: T;
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }

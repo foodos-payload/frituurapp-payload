@@ -173,8 +173,8 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                                                 <SubscribeButton
                                                     priceId={
                                                         isYearly
-                                                            ? service.stripe_yearly_price_id
-                                                            : service.stripe_monthly_price_id
+                                                            ? service.stripe_yearly_price_id || undefined
+                                                            : service.stripe_monthly_price_id || undefined
                                                     }
                                                     id={service.id}
                                                     user={currentUser}

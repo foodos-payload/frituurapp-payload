@@ -29,14 +29,16 @@ export async function shopHasCollectionSubscription(
     for (const s of serviceDocs) {
         const roles = s.roles || []
         for (const role of roles) {
-            const colls = role.collections || []
-            // find any collection entry that matches
-            const found = colls.find(
-                (c: any) =>
-                    c.collectionName === collectionSlug &&
-                    (c.read || c.create || c.update || c.delete),
-            )
-            if (found) return true
+            if (typeof role !== 'string') {
+                const colls = role.collections || []
+                // find any collection entry that matches
+                const found = colls.find(
+                    (c: any) =>
+                        c.collectionName === collectionSlug &&
+                        (c.read || c.create || c.update || c.delete),
+                )
+                if (found) return true
+            }
         }
     }
     return false
@@ -58,7 +60,7 @@ export async function serviceUnlocksCollection(
     // 2) gather all roles
     const roles = serviceDoc.roles || []
     for (const role of roles) {
-        if (!role?.collections) continue
+        if (typeof role === 'string' || !role?.collections) continue
         // 3) see if any item in role.collections matches
         const found = role.collections.find(
             (c: any) =>
@@ -102,6 +104,9 @@ export async function shopHasFieldSubscription(
     for (const s of serviceDocs) {
         const roles = s.roles || []
         for (const role of roles) {
+            // Ensure role is an object before accessing fields
+            if (typeof role !== 'object' || !role?.fields) continue
+
             const fieldsPerms = role.fields || []
             // find any item with matching collectionName + fieldName
             const found = fieldsPerms.find(
@@ -109,7 +114,6 @@ export async function shopHasFieldSubscription(
                     f.collectionName === collectionSlug &&
                     f.fieldName === fieldName &&
                     (f.update || f.create || f.delete),
-                // or specifically "f.update" if you only care about update
             )
             if (found) return true
         }
