@@ -29,6 +29,14 @@ export const Products: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'name_nl',
+        // The key part — reorder columns in the list view:
+        defaultColumns: [
+            'image',    // put the image field first
+            'name_nl',  // then the name
+            'price',
+            'status',
+            // any other fields you'd like in the columns
+        ],
     },
 
     labels: {
@@ -47,38 +55,30 @@ export const Products: CollectionConfig = {
     },
 
     fields: [
-        // 1) Tenant
         {
-            ...tenantField,
-
-        },
-
-        // 2) Shops
-        {
-            ...shopsField,
-
-        },
-
-        // 3) Categories
-        {
-            ...categoriesField,
-
-        },
-
-        // 4) CloudPOS ID
-        {
-            name: 'cloudPOSId',
-            type: 'number',
-            label: 'CloudPOS ID',
+            name: 'image',
+            type: 'upload',
+            label: {
+                en: 'Image',
+                nl: 'Afbeelding',
+                de: 'Bild',
+                fr: 'Image',
+            },
+            relationTo: 'media',
             required: false,
             admin: {
-                position: 'sidebar',
-                description: 'The CloudPOS ID for syncing. Leave empty if not synced yet.',
+                description: {
+                    en: 'Reference an image from the Media library.',
+                    nl: 'Verwijs naar een afbeelding uit de mediabibliotheek.',
+                    de: 'Verweisen Sie auf ein Bild aus der Medienbibliothek.',
+                    fr: 'Faites référence à une image de la bibliothèque multimédia.',
+                },
             },
             access: {
-                read: hasFieldPermission('products', 'cloudPOSId', 'read'),
-                update: hasFieldPermission('products', 'cloudPOSId', 'update'),
+                read: hasFieldPermission('products', 'image', 'read'),
+                update: hasFieldPermission('products', 'image', 'update'),
             },
+            displayPreview: true,
         },
 
         // 5) name_nl
@@ -87,7 +87,7 @@ export const Products: CollectionConfig = {
             type: 'text',
             label: {
                 en: 'Name (Dutch)',
-                nl: 'Naam (Nederlands)',
+                nl: 'Naam',
                 de: 'Name (Niederländisch)',
                 fr: 'Nom (Néerlandais)',
             },
@@ -115,6 +115,62 @@ export const Products: CollectionConfig = {
             },
         },
 
+        // 9) price
+        {
+            name: 'price',
+            type: 'number',
+            label: {
+                en: 'Sales Price',
+                nl: 'Verkoopprijs',
+                de: 'Verkaufspreis',
+                fr: 'Prix de Vente',
+            },
+            admin: {
+                condition: (data) => data?.price_unified,
+                description: {
+                    en: 'The unified sale price.',
+                    nl: 'De eenvormige verkoopprijs.',
+                    de: 'Der einheitliche Verkaufspreis.',
+                    fr: 'Le prix de vente unifié.',
+                },
+            },
+            access: {
+                read: hasFieldPermission('products', 'price', 'read'),
+                update: hasFieldPermission('products', 'price', 'update'),
+            },
+        },
+
+        // 28) status
+        {
+            name: 'status',
+            type: 'select',
+            label: {
+                en: 'Status',
+                nl: 'Status',
+                de: 'Status',
+                fr: 'Statut',
+            },
+            required: true,
+            defaultValue: 'enabled',
+            options: [
+                { label: 'Enabled', value: 'enabled' },
+                { label: 'Disabled', value: 'disabled' },
+            ],
+            admin: {
+                position: 'sidebar',
+                description: {
+                    en: 'Product status (enabled or disabled).',
+                    nl: 'Productstatus (ingeschakeld of uitgeschakeld).',
+                    de: 'Produktstatus (aktiviert oder deaktiviert).',
+                    fr: 'Statut du produit (activé ou désactivé).',
+                },
+            },
+            access: {
+                read: hasFieldPermission('products', 'status', 'read'),
+                update: hasFieldPermission('products', 'status', 'update'),
+            },
+        },
+
         // 6) Tabs: Translated Names
         {
             type: 'tabs',
@@ -132,7 +188,7 @@ export const Products: CollectionConfig = {
                             name: 'name_en',
                             type: 'text',
                             label: {
-                                en: 'Name (English)',
+                                en: 'Name',
                                 nl: 'Naam (Engels)',
                                 de: 'Name (Englisch)',
                                 fr: 'Nom (Anglais)',
@@ -167,7 +223,7 @@ export const Products: CollectionConfig = {
                             label: {
                                 en: 'Name (German)',
                                 nl: 'Naam (Duits)',
-                                de: 'Name (Deutsch)',
+                                de: 'Name',
                                 fr: 'Nom (Allemand)',
                             },
                             admin: {
@@ -201,7 +257,7 @@ export const Products: CollectionConfig = {
                                 en: 'Name (French)',
                                 nl: 'Naam (Frans)',
                                 de: 'Name (Französisch)',
-                                fr: 'Nom (Français)',
+                                fr: 'Nom',
                             },
                             admin: {
                                 placeholder: {
@@ -274,10 +330,10 @@ export const Products: CollectionConfig = {
             name: 'price_unified',
             type: 'checkbox',
             label: {
-                en: 'Unified Price',
-                nl: 'Eenvormige Prijs',
-                de: 'Einheitlicher Preis',
-                fr: 'Prix Unifié',
+                en: 'Price',
+                nl: 'Prijs',
+                de: 'Preis',
+                fr: 'Prix',
             },
             defaultValue: true,
             admin: {
@@ -294,30 +350,7 @@ export const Products: CollectionConfig = {
             },
         },
 
-        // 9) price
-        {
-            name: 'price',
-            type: 'number',
-            label: {
-                en: 'Unified Sale Price',
-                nl: 'Eenvormige Verkoopprijs',
-                de: 'Einheitlicher Verkaufspreis',
-                fr: 'Prix de Vente Unifié',
-            },
-            admin: {
-                condition: (data) => data?.price_unified,
-                description: {
-                    en: 'The unified sale price.',
-                    nl: 'De eenvormige verkoopprijs.',
-                    de: 'Der einheitliche Verkaufspreis.',
-                    fr: 'Le prix de vente unifié.',
-                },
-            },
-            access: {
-                read: hasFieldPermission('products', 'price', 'read'),
-                update: hasFieldPermission('products', 'price', 'update'),
-            },
-        },
+
 
         // 10) price_dinein
         {
@@ -620,31 +653,7 @@ export const Products: CollectionConfig = {
             },
         },
 
-        // 22) image
-        {
-            name: 'image',
-            type: 'relationship',
-            label: {
-                en: 'Image',
-                nl: 'Afbeelding',
-                de: 'Bild',
-                fr: 'Image',
-            },
-            relationTo: 'media',
-            required: false,
-            admin: {
-                description: {
-                    en: 'Reference an image from the Media library.',
-                    nl: 'Verwijs naar een afbeelding uit de mediabibliotheek.',
-                    de: 'Verweisen Sie auf ein Bild aus der Medienbibliothek.',
-                    fr: 'Faites référence à une image de la bibliothèque multimédia.',
-                },
-            },
-            access: {
-                read: hasFieldPermission('products', 'image', 'read'),
-                update: hasFieldPermission('products', 'image', 'update'),
-            },
-        },
+
 
         // 23) modtime
         {
@@ -867,37 +876,6 @@ export const Products: CollectionConfig = {
             },
         },
 
-        // 28) status
-        {
-            name: 'status',
-            type: 'select',
-            label: {
-                en: 'Status',
-                nl: 'Status',
-                de: 'Status',
-                fr: 'Statut',
-            },
-            required: true,
-            defaultValue: 'enabled',
-            options: [
-                { label: 'Enabled', value: 'enabled' },
-                { label: 'Disabled', value: 'disabled' },
-            ],
-            admin: {
-                position: 'sidebar',
-                description: {
-                    en: 'Product status (enabled or disabled).',
-                    nl: 'Productstatus (ingeschakeld of uitgeschakeld).',
-                    de: 'Produktstatus (aktiviert oder deaktiviert).',
-                    fr: 'Statut du produit (activé ou désactivé).',
-                },
-            },
-            access: {
-                read: hasFieldPermission('products', 'status', 'read'),
-                update: hasFieldPermission('products', 'status', 'update'),
-            },
-        },
-
         // 29) exclude_category_popups
         {
             name: 'exclude_category_popups',
@@ -995,6 +973,39 @@ export const Products: CollectionConfig = {
             access: {
                 read: hasFieldPermission('products', 'productpopups', 'read'),
                 update: hasFieldPermission('products', 'productpopups', 'update'),
+            },
+        },
+        // 1) Tenant
+        {
+            ...tenantField,
+
+        },
+
+        // 2) Shops
+        {
+            ...shopsField,
+
+        },
+
+        // 3) Categories
+        {
+            ...categoriesField,
+
+        },
+
+        // 4) CloudPOS ID
+        {
+            name: 'cloudPOSId',
+            type: 'number',
+            label: 'CloudPOS ID',
+            required: false,
+            admin: {
+                position: 'sidebar',
+                description: 'The CloudPOS ID for syncing. Leave empty if not synced yet.',
+            },
+            access: {
+                read: hasFieldPermission('products', 'cloudPOSId', 'read'),
+                update: hasFieldPermission('products', 'cloudPOSId', 'update'),
             },
         },
     ],

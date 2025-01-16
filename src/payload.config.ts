@@ -69,73 +69,45 @@ export default buildConfig({
   },
   collections: [
     {
-      ...Tenants,
+      ...Orders,
       admin: {
-        ...Tenants.admin,
-        group: '🏪 Shops',
+        ...Orders.admin,
+        group: '🛒 Content',
       },
     },
     {
-      ...Users,
+      ...Categories,
       admin: {
-        ...Users.admin,
-        group: '🏪 Shops',
+        ...Categories.admin,
+        group: '🛒 Content',
       },
     },
     {
-      ...Roles,
+      ...Products,
       admin: {
-        ...Roles.admin,
-        group: '🏪 Shops',
+        ...Products.admin,
+        group: '🛒 Content',
       },
     },
     {
-      ...Services,
+      ...Subproducts,
       admin: {
-        ...Services.admin,
-        group: '🏪 Shops',
+        ...Subproducts.admin,
+        group: '🛒 Content',
       },
     },
     {
-      ...Shops,
+      ...Productpopups,
       admin: {
-        ...Shops.admin,
-        group: '🏪 Shops',
+        ...Productpopups.admin,
+        group: '🛒 Content',
       },
     },
     {
-      ...PaymentMethods,
+      ...Media,
       admin: {
-        ...PaymentMethods.admin,
-        group: '🛠️ Settings',
-      },
-    },
-    {
-      ...FulfillmentMethods,
-      admin: {
-        ...FulfillmentMethods.admin,
-        group: '🛠️ Settings',
-      },
-    },
-    {
-      ...Timeslots,
-      admin: {
-        ...Timeslots.admin,
-        group: '🛠️ Settings',
-      },
-    },
-    {
-      ...ShopBranding,
-      admin: {
-        ...ShopBranding.admin,
-        group: '🛠️ Settings',
-      },
-    },
-    {
-      ...DigitalMenus,
-      admin: {
-        ...DigitalMenus.admin,
-        group: '🛠️ Settings',
+        ...Media.admin,
+        group: '🛒 Content',
       },
     },
     {
@@ -157,38 +129,6 @@ export default buildConfig({
       admin: {
         ...Tables.admin,
         group: '📆 Reservations', // Reserveringen group
-      },
-    },
-
-    {
-      ...Printers,
-      admin: {
-        ...Printers.admin,
-        group: '🛠️ Settings',
-      },
-    },
-    {
-      ...POS,
-      admin: {
-        ...POS.admin,
-        group: '🛠️ Settings'
-      }
-    },
-    {
-      ...Tipping, admin: { ...Tipping.admin, group: '🛠️ Settings' }
-    },
-    {
-      ...Pages,
-      admin: {
-        ...Pages.admin,
-        group: '🏪 Shops',
-      },
-    },
-    {
-      ...Media,
-      admin: {
-        ...Media.admin,
-        group: '🏪 Shops',
       },
     },
     {
@@ -233,42 +173,101 @@ export default buildConfig({
         group: '🎁 Loyalty',
       },
     },
-    {
-      ...Orders,
-      admin: {
-        ...Orders.admin,
-        group: '🛒 Content',
-      },
-    },
-    {
-      ...Categories,
-      admin: {
-        ...Categories.admin,
-        group: '🛒 Content',
-      },
-    },
-    {
-      ...Products,
-      admin: {
-        ...Products.admin,
-        group: '🛒 Content',
-      },
-    },
-    {
-      ...Subproducts,
-      admin: {
-        ...Subproducts.admin,
-        group: '🛒 Content',
-      },
-    },
-    {
-      ...Productpopups,
-      admin: {
-        ...Productpopups.admin,
-        group: '🛒 Content',
-      },
-    },
 
+    {
+      ...Tenants,
+      admin: {
+        ...Tenants.admin,
+        group: '🏪 Shops',
+      },
+    },
+    {
+      ...Users,
+      admin: {
+        ...Users.admin,
+        group: '🏪 Shops',
+      },
+    },
+    {
+      ...Roles,
+      admin: {
+        ...Roles.admin,
+        group: '🏪 Shops',
+      },
+    },
+    {
+      ...Services,
+      admin: {
+        ...Services.admin,
+        group: '🏪 Shops',
+      },
+    },
+    {
+      ...Shops,
+      admin: {
+        ...Shops.admin,
+        group: '🏪 Shops',
+      },
+    },
+    // {
+    //   ...Pages,
+    //   admin: {
+    //     ...Pages.admin,
+    //     group: '🏪 Shops',
+    //   },
+    // },
+    {
+      ...PaymentMethods,
+      admin: {
+        ...PaymentMethods.admin,
+        group: '🛠️ Settings',
+      },
+    },
+    {
+      ...FulfillmentMethods,
+      admin: {
+        ...FulfillmentMethods.admin,
+        group: '🛠️ Settings',
+      },
+    },
+    {
+      ...Timeslots,
+      admin: {
+        ...Timeslots.admin,
+        group: '🛠️ Settings',
+      },
+    },
+    {
+      ...ShopBranding,
+      admin: {
+        ...ShopBranding.admin,
+        group: '🛠️ Settings',
+      },
+    },
+    {
+      ...DigitalMenus,
+      admin: {
+        ...DigitalMenus.admin,
+        group: '🛠️ Settings',
+      },
+    },
+    {
+      ...POS,
+      admin: {
+        ...POS.admin,
+        group: '🛠️ Settings'
+      }
+    },
+    {
+      ...Printers,
+      admin: {
+        ...Printers.admin,
+        group: '🛠️ Settings',
+      },
+    },
+    {
+      ...Tipping, admin: { ...Tipping.admin, group: '🛠️ Settings' }
+    },
 
   ],
   localization: {

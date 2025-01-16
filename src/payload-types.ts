@@ -11,6 +11,21 @@ export interface Config {
     users: UserAuthOperations;
   };
   collections: {
+    orders: Order;
+    categories: Category;
+    products: Product;
+    subproducts: Subproduct;
+    productpopups: Productpopup;
+    media: Media;
+    'reservation-entries': ReservationEntry;
+    'reservation-settings': ReservationSetting;
+    tables: Table;
+    customers: Customer;
+    'customer-credits': CustomerCredit;
+    'customer-loyalty': CustomerLoyalty;
+    coupons: Coupon;
+    'gift-vouchers': GiftVoucher;
+    'membership-roles': MembershipRole;
     tenants: Tenant;
     users: User;
     roles: Role;
@@ -21,31 +36,30 @@ export interface Config {
     timeslots: Timeslot;
     'shop-branding': ShopBranding;
     'digital-menus': DigitalMenu;
-    'reservation-entries': ReservationEntry;
-    'reservation-settings': ReservationSetting;
-    tables: Table;
-    printers: Printer;
     pos: Po;
+    printers: Printer;
     tipping: Tipping;
-    pages: Page;
-    media: Media;
-    customers: Customer;
-    'customer-credits': CustomerCredit;
-    'customer-loyalty': CustomerLoyalty;
-    coupons: Coupon;
-    'gift-vouchers': GiftVoucher;
-    'membership-roles': MembershipRole;
-    orders: Order;
-    categories: Category;
-    products: Product;
-    subproducts: Subproduct;
-    productpopups: Productpopup;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {};
   collectionsSelect: {
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
+    subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
+    productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
+    'reservation-entries': ReservationEntriesSelect<false> | ReservationEntriesSelect<true>;
+    'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
+    tables: TablesSelect<false> | TablesSelect<true>;
+    customers: CustomersSelect<false> | CustomersSelect<true>;
+    'customer-credits': CustomerCreditsSelect<false> | CustomerCreditsSelect<true>;
+    'customer-loyalty': CustomerLoyaltySelect<false> | CustomerLoyaltySelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
+    'gift-vouchers': GiftVouchersSelect<false> | GiftVouchersSelect<true>;
+    'membership-roles': MembershipRolesSelect<false> | MembershipRolesSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     roles: RolesSelect<false> | RolesSelect<true>;
@@ -56,25 +70,9 @@ export interface Config {
     timeslots: TimeslotsSelect<false> | TimeslotsSelect<true>;
     'shop-branding': ShopBrandingSelect<false> | ShopBrandingSelect<true>;
     'digital-menus': DigitalMenusSelect<false> | DigitalMenusSelect<true>;
-    'reservation-entries': ReservationEntriesSelect<false> | ReservationEntriesSelect<true>;
-    'reservation-settings': ReservationSettingsSelect<false> | ReservationSettingsSelect<true>;
-    tables: TablesSelect<false> | TablesSelect<true>;
-    printers: PrintersSelect<false> | PrintersSelect<true>;
     pos: PosSelect<false> | PosSelect<true>;
+    printers: PrintersSelect<false> | PrintersSelect<true>;
     tipping: TippingSelect<false> | TippingSelect<true>;
-    pages: PagesSelect<false> | PagesSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
-    customers: CustomersSelect<false> | CustomersSelect<true>;
-    'customer-credits': CustomerCreditsSelect<false> | CustomerCreditsSelect<true>;
-    'customer-loyalty': CustomerLoyaltySelect<false> | CustomerLoyaltySelect<true>;
-    coupons: CouponsSelect<false> | CouponsSelect<true>;
-    'gift-vouchers': GiftVouchersSelect<false> | GiftVouchersSelect<true>;
-    'membership-roles': MembershipRolesSelect<false> | MembershipRolesSelect<true>;
-    orders: OrdersSelect<false> | OrdersSelect<true>;
-    categories: CategoriesSelect<false> | CategoriesSelect<true>;
-    products: ProductsSelect<false> | ProductsSelect<true>;
-    subproducts: SubproductsSelect<false> | SubproductsSelect<true>;
-    productpopups: ProductpopupsSelect<false> | ProductpopupsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -113,6 +111,175 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * The order ID used by CloudPOS if synced.
+   */
+  cloudPOSId?: number | null;
+  /**
+   * Order ID from e.g. MultiSafePay, Mollie, etc.
+   */
+  providerOrderId?: string | null;
+  /**
+   * Auto-incrementing identifier for the order.
+   */
+  id: number;
+  /**
+   * Daily incremented order number.
+   */
+  tempOrdNr?: number | null;
+  /**
+   * Current status of the order.
+   */
+  status:
+    | 'pending_payment'
+    | 'awaiting_preparation'
+    | 'in_preparation'
+    | 'ready_for_pickup'
+    | 'in_delivery'
+    | 'complete'
+    | 'cancelled';
+  /**
+   * Type of order (POS, Web, or Kiosk).
+   */
+  order_type: 'pos' | 'web' | 'kiosk';
+  /**
+   * List of products in the order (line items).
+   */
+  order_details?:
+    | {
+        product: string | Product;
+        quantity: number;
+        price: number;
+        tax?: number | null;
+        tax_dinein?: number | null;
+        name_nl?: string | null;
+        name_en?: string | null;
+        name_de?: string | null;
+        name_fr?: string | null;
+        subproducts?:
+          | {
+              subproductId?: string | null;
+              name_nl?: string | null;
+              name_en?: string | null;
+              name_de?: string | null;
+              name_fr?: string | null;
+              price?: number | null;
+              tax?: number | null;
+              tax_dinein?: number | null;
+              /**
+               * If subproduct can have multiple units.
+               */
+              quantity?: number | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Payment details for the order.
+   */
+  payments?:
+    | {
+        payment_method: string | PaymentMethod;
+        sub_method_label?: string | null;
+        amount?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  fulfillment_method?: ('delivery' | 'takeaway' | 'dine_in') | null;
+  fulfillment_date?: string | null;
+  fulfillment_time?: string | null;
+  /**
+   * Link to the customer who placed this order (if known).
+   */
+  customer?: (string | null) | Customer;
+  /**
+   * If user used barcode, store it for reference.
+   */
+  customerBarcode?: string | null;
+  customer_details?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+  };
+  /**
+   * Delivery fee if applicable.
+   */
+  shipping_cost?: number | null;
+  subtotalBeforeDiscount?: number | null;
+  discountTotal?: number | null;
+  totalAfterDiscount?: number | null;
+  total_tax?: number | null;
+  /**
+   * Same as net subtotal, for backward compatibility.
+   */
+  subtotal?: number | null;
+  total?: number | null;
+  promotionsUsed?: {
+    /**
+     * How many membership points were redeemed?
+     */
+    pointsUsed?: number | null;
+    /**
+     * How many store credits were used?
+     */
+    creditsUsed?: number | null;
+    couponUsed?: {
+      couponId?: string | null;
+      barcode?: string | null;
+      value?: number | null;
+      value_type?: string | null;
+      valid_from?: string | null;
+      valid_until?: string | null;
+      max_uses?: number | null;
+      used?: boolean | null;
+    };
+    giftVoucherUsed?: {
+      voucherId?: string | null;
+      barcode?: string | null;
+      value?: number | null;
+      valid_from?: string | null;
+      valid_until?: string | null;
+      used?: boolean | null;
+    };
+  };
+  tippingUsed?: {
+    /**
+     * Specifies whether the tip is a fixed amount, a percentage, a round-up, or none.
+     */
+    type?: ('none' | 'fixed' | 'percentage' | 'round_up') | null;
+    /**
+     * The numeric tip value (e.g. 2.50 for €2.50, or 10 for 10%).
+     */
+    amount?: number | null;
+    /**
+     * The final computed tip after rounding, etc.
+     */
+    actualTip?: number | null;
+  };
+  /**
+   * The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.
+   */
+  userLocale?: string | null;
+  /**
+   * If the order was placed from a kiosk, store the kiosk ID here.
+   */
+  kioskNumber?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tenants".
  */
 export interface Tenant {
@@ -132,79 +299,6 @@ export interface Tenant {
    * If checked, logging in is not required.
    */
   public?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: string;
-  /**
-   * Assign roles to the user.
-   */
-  roles?: (string | Role)[] | null;
-  tenants?:
-    | {
-        /**
-         * Assign tenants to the user.
-         */
-        tenant: string | Tenant;
-        /**
-         * Assign roles specific to the tenant.
-         */
-        roles: ('tenant-admin' | 'tenant-viewer')[];
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Assign shops to the user.
-   */
-  shops?: (string | Shop)[] | null;
-  /**
-   * The username of the user.
-   */
-  username?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  password?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "roles".
- */
-export interface Role {
-  id: string;
-  name: string;
-  collections?:
-    | {
-        collectionName?: string | null;
-        read?: boolean | null;
-        create?: boolean | null;
-        update?: boolean | null;
-        delete?: boolean | null;
-        id?: string | null;
-      }[]
-    | null;
-  fields?:
-    | {
-        collectionName?: string | null;
-        fieldName?: string | null;
-        read?: boolean | null;
-        create?: boolean | null;
-        update?: boolean | null;
-        delete?: boolean | null;
-        id?: string | null;
-      }[]
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -287,62 +381,165 @@ export interface Shop {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "services".
+ * via the `definition` "products".
  */
-export interface Service {
+export interface Product {
   id: string;
-  title_nl: string;
-  title_en?: string | null;
-  title_de?: string | null;
-  title_fr?: string | null;
-  description_nl?: string | null;
+  /**
+   * Reference an image from the Media library.
+   */
+  image?: (string | null) | Media;
+  /**
+   * Enter the product name in Dutch.
+   */
+  name_nl: string;
+  /**
+   * The unified sale price.
+   */
+  price?: number | null;
+  /**
+   * Product status (enabled or disabled).
+   */
+  status: 'enabled' | 'disabled';
+  /**
+   * Enter the name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the name in French.
+   */
+  name_fr?: string | null;
+  /**
+   * Select all allergens that apply to this product.
+   */
+  allergens?:
+    | (
+        | 'gluten'
+        | 'eggs'
+        | 'fish'
+        | 'peanuts'
+        | 'soybeans'
+        | 'milk'
+        | 'nuts'
+        | 'celery'
+        | 'mustard'
+        | 'sesame'
+        | 'sulphites'
+        | 'lupin'
+        | 'molluscs'
+      )[]
+    | null;
+  /**
+   * Use a unified sale price for all fulfillment methods.
+   */
+  price_unified?: boolean | null;
+  /**
+   * Sale price for dine-in.
+   */
+  price_dinein?: number | null;
+  /**
+   * Sale price for takeaway.
+   */
+  price_takeaway?: number | null;
+  /**
+   * Sale price for delivery.
+   */
+  price_delivery?: number | null;
+  /**
+   * Products with a lower menuOrder appear first. If two items share the same menuOrder, they’re sorted alphabetically by name.
+   */
+  menuOrder?: number | null;
+  /**
+   * Check if this product is on promotion. Old price field will appear.
+   */
+  isPromotion?: boolean | null;
+  /**
+   * Please put the old (original) price here, and use the normal price field for the new price.
+   */
+  old_price?: number | null;
+  /**
+   * Enable stock tracking for this product.
+   */
+  enable_stock?: boolean | null;
+  /**
+   * Specify the stock quantity for this product.
+   */
+  quantity?: number | null;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax: number;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax_dinein?: number | null;
+  /**
+   * Enable product visibility in the POS system.
+   */
+  posshow?: boolean | null;
+  /**
+   * Product barcode (if applicable).
+   */
+  barcode?: string | null;
+  /**
+   * Timestamp for last modification.
+   */
+  modtime: number;
+  /**
+   * Enter the default description in Dutch.
+   */
+  description_nl: string;
+  /**
+   * Enter the description in English.
+   */
   description_en?: string | null;
+  /**
+   * Enter the description in German.
+   */
   description_de?: string | null;
+  /**
+   * Enter the description in French.
+   */
   description_fr?: string | null;
-  monthly_price: string;
-  yearly_price: string;
   /**
-   * Select one or more Tenants associated with this Service.
+   * Show this product in the webshop.
    */
-  tenants?: (string | Tenant)[] | null;
+  webshopshow?: boolean | null;
   /**
-   * Select one or more Shops that offer or are linked to this Service.
+   * Allow this product to be ordered via the webshop.
    */
-  shops?: (string | Shop)[] | null;
-  fields_data?: string | null;
-  collections_data?: string | null;
+  webshoporderable?: boolean | null;
   /**
-   * Assign one or more roles relevant to this Service.
+   * Enable this to prevent category-specific popups from applying to this product.
    */
-  roles?: (string | Role)[] | null;
-  yearly_price_discount?: string | null;
-  try_demo?: string | null;
-  service_thumbnail: string | Media;
+  exclude_category_popups?: boolean | null;
   /**
-   * Stripe referral code for this service
+   * Assign popups to this product and define their order.
    */
-  referral_code?: string | null;
+  productpopups?:
+    | {
+        /**
+         * Select a popup to assign to this product.
+         */
+        popup: string | Productpopup;
+        /**
+         * Order in which this popup appears in the product workflow.
+         */
+        order: number;
+        id?: string | null;
+      }[]
+    | null;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  categories: (string | Category)[];
   /**
-   * Stripe coupon code for this service
+   * The CloudPOS ID for syncing. Leave empty if not synced yet.
    */
-  coupon_code?: string | null;
-  /**
-   * Semantic versioning (e.g., 1.0.0)
-   */
-  service_version: string;
-  service_last_update_date: string;
-  /**
-   * Select tenants for which this service should be hidden
-   */
-  hide_for_tenants?: (string | Tenant)[] | null;
-  /**
-   * URL for additional information about the service
-   */
-  get_more_info_url?: string | null;
-  stripe_monthly_product_id?: string | null;
-  stripe_yearly_product_id?: string | null;
-  stripe_monthly_price_id?: string | null;
-  stripe_yearly_price_id?: string | null;
+  cloudPOSId?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -406,6 +603,216 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "productpopups".
+ */
+export interface Productpopup {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Enter the popup title in Dutch (default).
+   */
+  popup_title_nl: string;
+  /**
+   * Enter the popup title in English.
+   */
+  popup_title_en?: string | null;
+  /**
+   * Enter the popup title in German.
+   */
+  popup_title_de?: string | null;
+  /**
+   * Enter the popup title in French.
+   */
+  popup_title_fr?: string | null;
+  /**
+   * Allow selecting multiple options in this popup.
+   */
+  multiselect?: boolean | null;
+  /**
+   * Require selection of an option in the cash register.
+   */
+  required_option_cashregister?: boolean | null;
+  /**
+   * Require selection of an option in the webshop.
+   */
+  required_option_webshop?: boolean | null;
+  /**
+   * Minimum number of options to select.
+   */
+  minimum_option?: number | null;
+  /**
+   * Maximum number of options to select. Set to 0 for no limit.
+   */
+  maximum_option?: number | null;
+  /**
+   * If enabled, users can select the same option multiple times (e.g., extra sauce x3).
+   */
+  allowMultipleTimes?: boolean | null;
+  /**
+   * Default subproduct selected when the popup loads.
+   */
+  default_checked_subproduct?: (string | null) | Subproduct;
+  /**
+   * List of subproducts associated with this popup.
+   */
+  subproducts?: (string | Subproduct)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subproducts".
+ */
+export interface Subproduct {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * The CloudPOS ID for this subproduct. If empty, not synced.
+   */
+  cloudPOSId?: number | null;
+  /**
+   * Enter the subproduct name in Dutch.
+   */
+  name_nl: string;
+  /**
+   * Enter the subproduct name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the subproduct name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the subproduct name in French.
+   */
+  name_fr?: string | null;
+  /**
+   * Use a unified sale price for all fulfillment methods.
+   */
+  price_unified?: boolean | null;
+  /**
+   * The unified sale price.
+   */
+  price?: number | null;
+  /**
+   * Sale price for dine-in.
+   */
+  price_dinein?: number | null;
+  /**
+   * Sale price for takeaway.
+   */
+  price_takeaway?: number | null;
+  /**
+   * Sale price for delivery.
+   */
+  price_delivery?: number | null;
+  /**
+   * Enable linking to an existing product. If enabled, price and tax fields will be hidden.
+   */
+  linked_product_enabled?: boolean | null;
+  /**
+   * Select a product to link with this subproduct.
+   */
+  linked_product?: (string | null) | Product;
+  /**
+   * Enable stock tracking for this subproduct.
+   */
+  stock_enabled?: boolean | null;
+  /**
+   * Stock quantity
+   */
+  stock_quantity?: number | null;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax?: number | null;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax_table?: number | null;
+  /**
+   * Reference an image from the Media library.
+   */
+  image?: (string | null) | Media;
+  /**
+   * Timestamp for last modification.
+   */
+  modtime: number;
+  /**
+   * Mark this subproduct as deleted
+   */
+  deleted?: boolean | null;
+  /**
+   * Subproduct status (enabled or disabled).
+   */
+  status: 'enabled' | 'disabled';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * The CloudPOS ID of this category. Leave empty if not synced.
+   */
+  cloudPOSId?: number | null;
+  /**
+   * Enter the category name in Dutch (default).
+   */
+  name_nl: string;
+  /**
+   * Enter the category name in English.
+   */
+  name_en?: string | null;
+  /**
+   * Enter the category name in German.
+   */
+  name_de?: string | null;
+  /**
+   * Enter the category name in French.
+   */
+  name_fr?: string | null;
+  /**
+   * Determines the front-end order of categories (lowest first).
+   */
+  menuOrder?: number | null;
+  /**
+   * Reference an image from the Media library.
+   */
+  image?: (string | null) | Media;
+  /**
+   * Timestamp for last modification
+   */
+  modtime: number;
+  /**
+   * Category status (enabled or disabled)
+   */
+  status: 'enabled' | 'disabled';
+  /**
+   * Assign product popups to this category. These popups will apply to all products in the category.
+   */
+  productpopups?:
+    | {
+        popup: string | Productpopup;
+        /**
+         * The order in which this popup will appear.
+         */
+        order?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payment-methods".
  */
 export interface PaymentMethod {
@@ -454,6 +861,522 @@ export interface PaymentMethod {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers".
+ */
+export interface Customer {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * The CloudPOS ID for this customer if synced.
+   */
+  cloudPOSId?: number | null;
+  /**
+   * First name of the customer.
+   */
+  firstname: string;
+  /**
+   * Last name of the customer.
+   */
+  lastname: string;
+  /**
+   * Company name associated with the customer (if applicable).
+   */
+  company_name?: string | null;
+  /**
+   * Email address of the customer.
+   */
+  email: string;
+  /**
+   * Phone number of the customer.
+   */
+  phone?: string | null;
+  tags?:
+    | {
+        /**
+         * Tag ID associated with the customer.
+         */
+        tag_id?: string | null;
+        /**
+         * Type of tag (e.g., loyalty, preference).
+         */
+        tag_type?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  memberships?:
+    | {
+        role: string | MembershipRole;
+        points?: number | null;
+        status?: ('active' | 'disabled') | null;
+        dateJoined?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  barcode?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "membership-roles".
+ */
+export interface MembershipRole {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Display name (e.g. "VIP", "Gold").
+   */
+  label: string;
+  /**
+   * Internal value (e.g. "vip", "gold").
+   */
+  value: string;
+  /**
+   * Which loyalty programs can use this role?
+   */
+  loyaltyPrograms?: (string | CustomerLoyalty)[] | null;
+  /**
+   * If checked, this role can be auto-assigned to new customers who have no roles yet.
+   */
+  defaultRole?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-loyalty".
+ */
+export interface CustomerLoyalty {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name of the loyalty program, e.g., "VIP Rewards".
+   */
+  program_name: string;
+  /**
+   * Number of points awarded per purchase.
+   */
+  points_per_purchase: number;
+  /**
+   * Conversion ratio for points to currency, e.g., 100 points = $1.
+   */
+  redeem_ratio: number;
+  /**
+   * Status of the loyalty program.
+   */
+  status: 'active' | 'inactive';
+  /**
+   * Additional details about the loyalty program.
+   */
+  description?: string | null;
+  /**
+   * Which membership roles are allowed for this loyalty program?
+   */
+  rolesAllowed?: (string | MembershipRole)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-entries".
+ */
+export interface ReservationEntry {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name of the customer making the reservation.
+   */
+  customer_name: string;
+  /**
+   * Phone number of the customer.
+   */
+  customer_phone: string;
+  /**
+   * Email address of the customer making the reservation.
+   */
+  customer_email: string;
+  /**
+   * Date of the reservation.
+   */
+  date: string;
+  /**
+   * Date of the reservation.
+   */
+  time: string;
+  /**
+   * Number of persons for the reservation.
+   */
+  persons: number;
+  /**
+   * Assigned table for the reservation.
+   */
+  table: string | Table;
+  /**
+   * Special requests from the customer.
+   */
+  special_requests?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables".
+ */
+export interface Table {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Unique table number within a shop.
+   */
+  table_num: number;
+  /**
+   * Current status of the table.
+   */
+  status?: ('0' | '1' | '2') | null;
+  /**
+   * Number of persons that can fit on this table.
+   */
+  capacity: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-settings".
+ */
+export interface ReservationSetting {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Name for reservation settings (e.g., Lunch Reservations).
+   */
+  reservation_name: string;
+  /**
+   * Define active days for reservations.
+   */
+  active_days?: {
+    monday?: boolean | null;
+    tuesday?: boolean | null;
+    wednesday?: boolean | null;
+    thursday?: boolean | null;
+    friday?: boolean | null;
+    saturday?: boolean | null;
+    sunday?: boolean | null;
+  };
+  /**
+   * Define multiple reservation periods.
+   */
+  reservation_periods?:
+    | {
+        start_date: string;
+        end_date: string;
+        start_time: string;
+        end_time: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Define holidays when reservations are not allowed.
+   */
+  holidays?:
+    | {
+        start_date: string;
+        end_date: string;
+        /**
+         * Optional reason for the holiday period.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * List of fully booked days.
+   */
+  fully_booked_days?:
+    | {
+        date: string;
+        /**
+         * Optional reason for marking the day as fully booked.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * List of exceptions when reservations are not allowed.
+   */
+  exceptions?:
+    | {
+        exception_date: string;
+        /**
+         * Reason for the exception (optional).
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-credits".
+ */
+export interface CustomerCredit {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * The customer this credit is assigned to.
+   */
+  customerid: string | Customer;
+  /**
+   * Credit value available for the customer.
+   */
+  value: number;
+  /**
+   * Optional tag identifier for this credit.
+   */
+  tagid?: string | null;
+  /**
+   * Optional tag type for this credit.
+   */
+  tagtype?: string | null;
+  /**
+   * Product associated with this credit (if applicable).
+   */
+  productid?: (string | null) | Product;
+  /**
+   * Category associated with this credit (if applicable).
+   */
+  categoryid?: (string | null) | Category;
+  /**
+   * Payment method associated with this credit.
+   */
+  paymenttype?: (string | null) | PaymentMethod;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons".
+ */
+export interface Coupon {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Unique barcode for the coupon.
+   */
+  barcode: string;
+  /**
+   * Value of the coupon (percentage or fixed amount).
+   */
+  value: number;
+  /**
+   * Type of value for the coupon.
+   */
+  value_type: 'percentage' | 'fixed';
+  /**
+   * Start date for the coupon validity.
+   */
+  valid_from: string;
+  /**
+   * End date for the coupon validity.
+   */
+  valid_until: string;
+  /**
+   * Maximum number of times the coupon can be used. Leave empty for unlimited.
+   */
+  max_uses?: number | null;
+  /**
+   * Number of times this coupon has been used.
+   */
+  uses?: number | null;
+  /**
+   * Mark if the gift voucher has been used.
+   */
+  used?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gift-vouchers".
+ */
+export interface GiftVoucher {
+  id: string;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * Unique barcode for the gift voucher.
+   */
+  barcode: string;
+  /**
+   * Value of the gift voucher.
+   */
+  value: number;
+  /**
+   * Start date for the gift voucher validity.
+   */
+  valid_from: string;
+  /**
+   * End date for the gift voucher validity.
+   */
+  valid_until: string;
+  /**
+   * Mark if the gift voucher has been used.
+   */
+  used?: boolean | null;
+  /**
+   * The payment method used to purchase this voucher.
+   */
+  payment_type: string | PaymentMethod;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: string;
+  /**
+   * Assign roles to the user.
+   */
+  roles?: (string | Role)[] | null;
+  tenants?:
+    | {
+        /**
+         * Assign tenants to the user.
+         */
+        tenant: string | Tenant;
+        /**
+         * Assign roles specific to the tenant.
+         */
+        roles: ('tenant-admin' | 'tenant-viewer')[];
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Assign shops to the user.
+   */
+  shops?: (string | Shop)[] | null;
+  /**
+   * The username of the user.
+   */
+  username?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "roles".
+ */
+export interface Role {
+  id: string;
+  name: string;
+  collections?:
+    | {
+        collectionName?: string | null;
+        read?: boolean | null;
+        create?: boolean | null;
+        update?: boolean | null;
+        delete?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  fields?:
+    | {
+        collectionName?: string | null;
+        fieldName?: string | null;
+        read?: boolean | null;
+        create?: boolean | null;
+        update?: boolean | null;
+        delete?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "services".
+ */
+export interface Service {
+  id: string;
+  title_nl: string;
+  title_en?: string | null;
+  title_de?: string | null;
+  title_fr?: string | null;
+  description_nl?: string | null;
+  description_en?: string | null;
+  description_de?: string | null;
+  description_fr?: string | null;
+  monthly_price: string;
+  yearly_price: string;
+  /**
+   * Select one or more Tenants associated with this Service.
+   */
+  tenants?: (string | Tenant)[] | null;
+  /**
+   * Select one or more Shops that offer or are linked to this Service.
+   */
+  shops?: (string | Shop)[] | null;
+  fields_data?: string | null;
+  collections_data?: string | null;
+  /**
+   * Assign one or more roles relevant to this Service.
+   */
+  roles?: (string | Role)[] | null;
+  yearly_price_discount?: string | null;
+  try_demo?: string | null;
+  service_thumbnail: string | Media;
+  /**
+   * Stripe referral code for this service
+   */
+  referral_code?: string | null;
+  /**
+   * Stripe coupon code for this service
+   */
+  coupon_code?: string | null;
+  /**
+   * Semantic versioning (e.g., 1.0.0)
+   */
+  service_version: string;
+  service_last_update_date: string;
+  /**
+   * Select tenants for which this service should be hidden
+   */
+  hide_for_tenants?: (string | Tenant)[] | null;
+  /**
+   * URL for additional information about the service
+   */
+  get_more_info_url?: string | null;
+  stripe_monthly_product_id?: string | null;
+  stripe_yearly_product_id?: string | null;
+  stripe_monthly_price_id?: string | null;
+  stripe_yearly_price_id?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -754,520 +1677,38 @@ export interface DigitalMenu {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
+ * via the `definition` "pos".
  */
-export interface Category {
+export interface Po {
   id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
   /**
-   * The CloudPOS ID of this category. Leave empty if not synced.
+   * Choose which POS system this config belongs to.
    */
-  cloudPOSId?: number | null;
+  provider: 'cloudpos' | 'deliverect';
   /**
-   * Enter the category name in Dutch (default).
+   * For CloudPOS or other POS providers requiring a license name.
    */
-  name_nl: string;
+  licenseName?: string | null;
   /**
-   * Enter the category name in English.
+   * For CloudPOS or other POS providers requiring a token.
    */
-  name_en?: string | null;
+  token?: string | null;
   /**
-   * Enter the category name in German.
+   * API key if needed. For CloudPOS, you might not need it, but we keep it for other providers.
    */
-  name_de?: string | null;
+  apiKey?: string | null;
   /**
-   * Enter the category name in French.
+   * API secret if needed. Hide or show carefully if it’s sensitive.
    */
-  name_fr?: string | null;
+  apiSecret?: string | null;
   /**
-   * Determines the front-end order of categories (lowest first).
+   * Enable or disable this POS configuration.
    */
-  menuOrder?: number | null;
+  active?: boolean | null;
   /**
-   * Reference an image from the Media library.
+   * Which shop does this POS config belong to?
    */
-  image?: (string | null) | Media;
-  /**
-   * Timestamp for last modification
-   */
-  modtime: number;
-  /**
-   * Category status (enabled or disabled)
-   */
-  status: 'enabled' | 'disabled';
-  /**
-   * Assign product popups to this category. These popups will apply to all products in the category.
-   */
-  productpopups?:
-    | {
-        popup: string | Productpopup;
-        /**
-         * The order in which this popup will appear.
-         */
-        order?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "productpopups".
- */
-export interface Productpopup {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Enter the popup title in Dutch (default).
-   */
-  popup_title_nl: string;
-  /**
-   * Enter the popup title in English.
-   */
-  popup_title_en?: string | null;
-  /**
-   * Enter the popup title in German.
-   */
-  popup_title_de?: string | null;
-  /**
-   * Enter the popup title in French.
-   */
-  popup_title_fr?: string | null;
-  /**
-   * Allow selecting multiple options in this popup.
-   */
-  multiselect?: boolean | null;
-  /**
-   * Require selection of an option in the cash register.
-   */
-  required_option_cashregister?: boolean | null;
-  /**
-   * Require selection of an option in the webshop.
-   */
-  required_option_webshop?: boolean | null;
-  /**
-   * Minimum number of options to select.
-   */
-  minimum_option?: number | null;
-  /**
-   * Maximum number of options to select. Set to 0 for no limit.
-   */
-  maximum_option?: number | null;
-  /**
-   * If enabled, users can select the same option multiple times (e.g., extra sauce x3).
-   */
-  allowMultipleTimes?: boolean | null;
-  /**
-   * Default subproduct selected when the popup loads.
-   */
-  default_checked_subproduct?: (string | null) | Subproduct;
-  /**
-   * List of subproducts associated with this popup.
-   */
-  subproducts?: (string | Subproduct)[] | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "subproducts".
- */
-export interface Subproduct {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * The CloudPOS ID for this subproduct. If empty, not synced.
-   */
-  cloudPOSId?: number | null;
-  /**
-   * Enter the subproduct name in Dutch.
-   */
-  name_nl: string;
-  /**
-   * Enter the subproduct name in English.
-   */
-  name_en?: string | null;
-  /**
-   * Enter the subproduct name in German.
-   */
-  name_de?: string | null;
-  /**
-   * Enter the subproduct name in French.
-   */
-  name_fr?: string | null;
-  /**
-   * Use a unified sale price for all fulfillment methods.
-   */
-  price_unified?: boolean | null;
-  /**
-   * The unified sale price.
-   */
-  price?: number | null;
-  /**
-   * Sale price for dine-in.
-   */
-  price_dinein?: number | null;
-  /**
-   * Sale price for takeaway.
-   */
-  price_takeaway?: number | null;
-  /**
-   * Sale price for delivery.
-   */
-  price_delivery?: number | null;
-  /**
-   * Enable linking to an existing product. If enabled, price and tax fields will be hidden.
-   */
-  linked_product_enabled?: boolean | null;
-  /**
-   * Select a product to link with this subproduct.
-   */
-  linked_product?: (string | null) | Product;
-  /**
-   * Enable stock tracking for this subproduct.
-   */
-  stock_enabled?: boolean | null;
-  /**
-   * Stock quantity
-   */
-  stock_quantity?: number | null;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax?: number | null;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax_table?: number | null;
-  /**
-   * Reference an image from the Media library.
-   */
-  image?: (string | null) | Media;
-  /**
-   * Timestamp for last modification.
-   */
-  modtime: number;
-  /**
-   * Mark this subproduct as deleted
-   */
-  deleted?: boolean | null;
-  /**
-   * Subproduct status (enabled or disabled).
-   */
-  status: 'enabled' | 'disabled';
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "products".
- */
-export interface Product {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  categories: (string | Category)[];
-  /**
-   * The CloudPOS ID for syncing. Leave empty if not synced yet.
-   */
-  cloudPOSId?: number | null;
-  /**
-   * Enter the product name in Dutch.
-   */
-  name_nl: string;
-  /**
-   * Enter the name in English.
-   */
-  name_en?: string | null;
-  /**
-   * Enter the name in German.
-   */
-  name_de?: string | null;
-  /**
-   * Enter the name in French.
-   */
-  name_fr?: string | null;
-  /**
-   * Select all allergens that apply to this product.
-   */
-  allergens?:
-    | (
-        | 'gluten'
-        | 'eggs'
-        | 'fish'
-        | 'peanuts'
-        | 'soybeans'
-        | 'milk'
-        | 'nuts'
-        | 'celery'
-        | 'mustard'
-        | 'sesame'
-        | 'sulphites'
-        | 'lupin'
-        | 'molluscs'
-      )[]
-    | null;
-  /**
-   * Use a unified sale price for all fulfillment methods.
-   */
-  price_unified?: boolean | null;
-  /**
-   * The unified sale price.
-   */
-  price?: number | null;
-  /**
-   * Sale price for dine-in.
-   */
-  price_dinein?: number | null;
-  /**
-   * Sale price for takeaway.
-   */
-  price_takeaway?: number | null;
-  /**
-   * Sale price for delivery.
-   */
-  price_delivery?: number | null;
-  /**
-   * Products with a lower menuOrder appear first. If two items share the same menuOrder, they’re sorted alphabetically by name.
-   */
-  menuOrder?: number | null;
-  /**
-   * Check if this product is on promotion. Old price field will appear.
-   */
-  isPromotion?: boolean | null;
-  /**
-   * Please put the old (original) price here, and use the normal price field for the new price.
-   */
-  old_price?: number | null;
-  /**
-   * Enable stock tracking for this product.
-   */
-  enable_stock?: boolean | null;
-  /**
-   * Specify the stock quantity for this product.
-   */
-  quantity?: number | null;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax: number;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax_dinein?: number | null;
-  /**
-   * Enable product visibility in the POS system.
-   */
-  posshow?: boolean | null;
-  /**
-   * Product barcode (if applicable).
-   */
-  barcode?: string | null;
-  /**
-   * Reference an image from the Media library.
-   */
-  image?: (string | null) | Media;
-  /**
-   * Timestamp for last modification.
-   */
-  modtime: number;
-  /**
-   * Enter the default description in Dutch.
-   */
-  description_nl: string;
-  /**
-   * Enter the description in English.
-   */
-  description_en?: string | null;
-  /**
-   * Enter the description in German.
-   */
-  description_de?: string | null;
-  /**
-   * Enter the description in French.
-   */
-  description_fr?: string | null;
-  /**
-   * Show this product in the webshop.
-   */
-  webshopshow?: boolean | null;
-  /**
-   * Allow this product to be ordered via the webshop.
-   */
-  webshoporderable?: boolean | null;
-  /**
-   * Product status (enabled or disabled).
-   */
-  status: 'enabled' | 'disabled';
-  /**
-   * Enable this to prevent category-specific popups from applying to this product.
-   */
-  exclude_category_popups?: boolean | null;
-  /**
-   * Assign popups to this product and define their order.
-   */
-  productpopups?:
-    | {
-        /**
-         * Select a popup to assign to this product.
-         */
-        popup: string | Productpopup;
-        /**
-         * Order in which this popup appears in the product workflow.
-         */
-        order: number;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-entries".
- */
-export interface ReservationEntry {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Name of the customer making the reservation.
-   */
-  customer_name: string;
-  /**
-   * Phone number of the customer.
-   */
-  customer_phone: string;
-  /**
-   * Email address of the customer making the reservation.
-   */
-  customer_email: string;
-  /**
-   * Date of the reservation.
-   */
-  date: string;
-  /**
-   * Date of the reservation.
-   */
-  time: string;
-  /**
-   * Number of persons for the reservation.
-   */
-  persons: number;
-  /**
-   * Assigned table for the reservation.
-   */
-  table: string | Table;
-  /**
-   * Special requests from the customer.
-   */
-  special_requests?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tables".
- */
-export interface Table {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Unique table number within a shop.
-   */
-  table_num: number;
-  /**
-   * Current status of the table.
-   */
-  status?: ('0' | '1' | '2') | null;
-  /**
-   * Number of persons that can fit on this table.
-   */
-  capacity: number;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-settings".
- */
-export interface ReservationSetting {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Name for reservation settings (e.g., Lunch Reservations).
-   */
-  reservation_name: string;
-  /**
-   * Define active days for reservations.
-   */
-  active_days?: {
-    monday?: boolean | null;
-    tuesday?: boolean | null;
-    wednesday?: boolean | null;
-    thursday?: boolean | null;
-    friday?: boolean | null;
-    saturday?: boolean | null;
-    sunday?: boolean | null;
-  };
-  /**
-   * Define multiple reservation periods.
-   */
-  reservation_periods?:
-    | {
-        start_date: string;
-        end_date: string;
-        start_time: string;
-        end_time: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Define holidays when reservations are not allowed.
-   */
-  holidays?:
-    | {
-        start_date: string;
-        end_date: string;
-        /**
-         * Optional reason for the holiday period.
-         */
-        reason?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * List of fully booked days.
-   */
-  fully_booked_days?:
-    | {
-        date: string;
-        /**
-         * Optional reason for marking the day as fully booked.
-         */
-        reason?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * List of exceptions when reservations are not allowed.
-   */
-  exceptions?:
-    | {
-        exception_date: string;
-        /**
-         * Reason for the exception (optional).
-         */
-        reason?: string | null;
-        id?: string | null;
-      }[]
-    | null;
+  shop: string | Shop;
   updatedAt: string;
   createdAt: string;
 }
@@ -1317,43 +1758,6 @@ export interface Printer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pos".
- */
-export interface Po {
-  id: string;
-  /**
-   * Choose which POS system this config belongs to.
-   */
-  provider: 'cloudpos' | 'deliverect';
-  /**
-   * For CloudPOS or other POS providers requiring a license name.
-   */
-  licenseName?: string | null;
-  /**
-   * For CloudPOS or other POS providers requiring a token.
-   */
-  token?: string | null;
-  /**
-   * API key if needed. For CloudPOS, you might not need it, but we keep it for other providers.
-   */
-  apiKey?: string | null;
-  /**
-   * API secret if needed. Hide or show carefully if it’s sensitive.
-   */
-  apiSecret?: string | null;
-  /**
-   * Enable or disable this POS configuration.
-   */
-  active?: boolean | null;
-  /**
-   * Which shop does this POS config belong to?
-   */
-  shop: string | Shop;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tipping".
  */
 export interface Tipping {
@@ -1387,439 +1791,71 @@ export interface Tipping {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages".
- */
-export interface Page {
-  id: string;
-  /**
-   * Title of the page.
-   */
-  title?: string | null;
-  /**
-   * Used for URL paths, e.g., /page-slug.
-   */
-  slug?: string | null;
-  /**
-   * Used for URL paths, e.g., /page-slug.
-   */
-  slug2?: string | null;
-  tenant: string | Tenant;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customers".
- */
-export interface Customer {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * The CloudPOS ID for this customer if synced.
-   */
-  cloudPOSId?: number | null;
-  /**
-   * First name of the customer.
-   */
-  firstname: string;
-  /**
-   * Last name of the customer.
-   */
-  lastname: string;
-  /**
-   * Company name associated with the customer (if applicable).
-   */
-  company_name?: string | null;
-  /**
-   * Email address of the customer.
-   */
-  email: string;
-  /**
-   * Phone number of the customer.
-   */
-  phone?: string | null;
-  tags?:
-    | {
-        /**
-         * Tag ID associated with the customer.
-         */
-        tag_id?: string | null;
-        /**
-         * Type of tag (e.g., loyalty, preference).
-         */
-        tag_type?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  memberships?:
-    | {
-        role: string | MembershipRole;
-        points?: number | null;
-        status?: ('active' | 'disabled') | null;
-        dateJoined?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  barcode?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "membership-roles".
- */
-export interface MembershipRole {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Display name (e.g. "VIP", "Gold").
-   */
-  label: string;
-  /**
-   * Internal value (e.g. "vip", "gold").
-   */
-  value: string;
-  /**
-   * Which loyalty programs can use this role?
-   */
-  loyaltyPrograms?: (string | CustomerLoyalty)[] | null;
-  /**
-   * If checked, this role can be auto-assigned to new customers who have no roles yet.
-   */
-  defaultRole?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customer-loyalty".
- */
-export interface CustomerLoyalty {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Name of the loyalty program, e.g., "VIP Rewards".
-   */
-  program_name: string;
-  /**
-   * Number of points awarded per purchase.
-   */
-  points_per_purchase: number;
-  /**
-   * Conversion ratio for points to currency, e.g., 100 points = $1.
-   */
-  redeem_ratio: number;
-  /**
-   * Status of the loyalty program.
-   */
-  status: 'active' | 'inactive';
-  /**
-   * Additional details about the loyalty program.
-   */
-  description?: string | null;
-  /**
-   * Which membership roles are allowed for this loyalty program?
-   */
-  rolesAllowed?: (string | MembershipRole)[] | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customer-credits".
- */
-export interface CustomerCredit {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * The customer this credit is assigned to.
-   */
-  customerid: string | Customer;
-  /**
-   * Credit value available for the customer.
-   */
-  value: number;
-  /**
-   * Optional tag identifier for this credit.
-   */
-  tagid?: string | null;
-  /**
-   * Optional tag type for this credit.
-   */
-  tagtype?: string | null;
-  /**
-   * Product associated with this credit (if applicable).
-   */
-  productid?: (string | null) | Product;
-  /**
-   * Category associated with this credit (if applicable).
-   */
-  categoryid?: (string | null) | Category;
-  /**
-   * Payment method associated with this credit.
-   */
-  paymenttype?: (string | null) | PaymentMethod;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "coupons".
- */
-export interface Coupon {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Unique barcode for the coupon.
-   */
-  barcode: string;
-  /**
-   * Value of the coupon (percentage or fixed amount).
-   */
-  value: number;
-  /**
-   * Type of value for the coupon.
-   */
-  value_type: 'percentage' | 'fixed';
-  /**
-   * Start date for the coupon validity.
-   */
-  valid_from: string;
-  /**
-   * End date for the coupon validity.
-   */
-  valid_until: string;
-  /**
-   * Maximum number of times the coupon can be used. Leave empty for unlimited.
-   */
-  max_uses?: number | null;
-  /**
-   * Number of times this coupon has been used.
-   */
-  uses?: number | null;
-  /**
-   * Mark if the gift voucher has been used.
-   */
-  used?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "gift-vouchers".
- */
-export interface GiftVoucher {
-  id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * Unique barcode for the gift voucher.
-   */
-  barcode: string;
-  /**
-   * Value of the gift voucher.
-   */
-  value: number;
-  /**
-   * Start date for the gift voucher validity.
-   */
-  valid_from: string;
-  /**
-   * End date for the gift voucher validity.
-   */
-  valid_until: string;
-  /**
-   * Mark if the gift voucher has been used.
-   */
-  used?: boolean | null;
-  /**
-   * The payment method used to purchase this voucher.
-   */
-  payment_type: string | PaymentMethod;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "orders".
- */
-export interface Order {
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * The order ID used by CloudPOS if synced.
-   */
-  cloudPOSId?: number | null;
-  /**
-   * Order ID from e.g. MultiSafePay, Mollie, etc.
-   */
-  providerOrderId?: string | null;
-  /**
-   * Auto-incrementing identifier for the order.
-   */
-  id: number;
-  /**
-   * Daily incremented order number.
-   */
-  tempOrdNr?: number | null;
-  /**
-   * Current status of the order.
-   */
-  status:
-    | 'pending_payment'
-    | 'awaiting_preparation'
-    | 'in_preparation'
-    | 'ready_for_pickup'
-    | 'in_delivery'
-    | 'complete'
-    | 'cancelled';
-  /**
-   * Type of order (POS, Web, or Kiosk).
-   */
-  order_type: 'pos' | 'web' | 'kiosk';
-  /**
-   * List of products in the order (line items).
-   */
-  order_details?:
-    | {
-        product: string | Product;
-        quantity: number;
-        price: number;
-        tax?: number | null;
-        tax_dinein?: number | null;
-        name_nl?: string | null;
-        name_en?: string | null;
-        name_de?: string | null;
-        name_fr?: string | null;
-        subproducts?:
-          | {
-              subproductId?: string | null;
-              name_nl?: string | null;
-              name_en?: string | null;
-              name_de?: string | null;
-              name_fr?: string | null;
-              price?: number | null;
-              tax?: number | null;
-              tax_dinein?: number | null;
-              /**
-               * If subproduct can have multiple units.
-               */
-              quantity?: number | null;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Payment details for the order.
-   */
-  payments?:
-    | {
-        payment_method: string | PaymentMethod;
-        sub_method_label?: string | null;
-        amount?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  fulfillment_method?: ('delivery' | 'takeaway' | 'dine_in') | null;
-  fulfillment_date?: string | null;
-  fulfillment_time?: string | null;
-  /**
-   * Link to the customer who placed this order (if known).
-   */
-  customer?: (string | null) | Customer;
-  /**
-   * If user used barcode, store it for reference.
-   */
-  customerBarcode?: string | null;
-  customer_details?: {
-    firstName?: string | null;
-    lastName?: string | null;
-    email?: string | null;
-    phone?: string | null;
-    address?: string | null;
-    city?: string | null;
-    postalCode?: string | null;
-  };
-  /**
-   * Delivery fee if applicable.
-   */
-  shipping_cost?: number | null;
-  subtotalBeforeDiscount?: number | null;
-  discountTotal?: number | null;
-  totalAfterDiscount?: number | null;
-  total_tax?: number | null;
-  /**
-   * Same as net subtotal, for backward compatibility.
-   */
-  subtotal?: number | null;
-  total?: number | null;
-  promotionsUsed?: {
-    /**
-     * How many membership points were redeemed?
-     */
-    pointsUsed?: number | null;
-    /**
-     * How many store credits were used?
-     */
-    creditsUsed?: number | null;
-    couponUsed?: {
-      couponId?: string | null;
-      barcode?: string | null;
-      value?: number | null;
-      value_type?: string | null;
-      valid_from?: string | null;
-      valid_until?: string | null;
-      max_uses?: number | null;
-      used?: boolean | null;
-    };
-    giftVoucherUsed?: {
-      voucherId?: string | null;
-      barcode?: string | null;
-      value?: number | null;
-      valid_from?: string | null;
-      valid_until?: string | null;
-      used?: boolean | null;
-    };
-  };
-  tippingUsed?: {
-    /**
-     * Specifies whether the tip is a fixed amount, a percentage, a round-up, or none.
-     */
-    type?: ('none' | 'fixed' | 'percentage' | 'round_up') | null;
-    /**
-     * The numeric tip value (e.g. 2.50 for €2.50, or 10 for 10%).
-     */
-    amount?: number | null;
-    /**
-     * The final computed tip after rounding, etc.
-     */
-    actualTip?: number | null;
-  };
-  /**
-   * The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.
-   */
-  userLocale?: string | null;
-  /**
-   * If the order was placed from a kiosk, store the kiosk ID here.
-   */
-  kioskNumber?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
   id: string;
   document?:
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: string | Category;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: string | Product;
+      } | null)
+    | ({
+        relationTo: 'subproducts';
+        value: string | Subproduct;
+      } | null)
+    | ({
+        relationTo: 'productpopups';
+        value: string | Productpopup;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'reservation-entries';
+        value: string | ReservationEntry;
+      } | null)
+    | ({
+        relationTo: 'reservation-settings';
+        value: string | ReservationSetting;
+      } | null)
+    | ({
+        relationTo: 'tables';
+        value: string | Table;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: string | Customer;
+      } | null)
+    | ({
+        relationTo: 'customer-credits';
+        value: string | CustomerCredit;
+      } | null)
+    | ({
+        relationTo: 'customer-loyalty';
+        value: string | CustomerLoyalty;
+      } | null)
+    | ({
+        relationTo: 'coupons';
+        value: string | Coupon;
+      } | null)
+    | ({
+        relationTo: 'gift-vouchers';
+        value: string | GiftVoucher;
+      } | null)
+    | ({
+        relationTo: 'membership-roles';
+        value: string | MembershipRole;
+      } | null)
     | ({
         relationTo: 'tenants';
         value: string | Tenant;
@@ -1861,80 +1897,16 @@ export interface PayloadLockedDocument {
         value: string | DigitalMenu;
       } | null)
     | ({
-        relationTo: 'reservation-entries';
-        value: string | ReservationEntry;
-      } | null)
-    | ({
-        relationTo: 'reservation-settings';
-        value: string | ReservationSetting;
-      } | null)
-    | ({
-        relationTo: 'tables';
-        value: string | Table;
+        relationTo: 'pos';
+        value: string | Po;
       } | null)
     | ({
         relationTo: 'printers';
         value: string | Printer;
       } | null)
     | ({
-        relationTo: 'pos';
-        value: string | Po;
-      } | null)
-    | ({
         relationTo: 'tipping';
         value: string | Tipping;
-      } | null)
-    | ({
-        relationTo: 'pages';
-        value: string | Page;
-      } | null)
-    | ({
-        relationTo: 'media';
-        value: string | Media;
-      } | null)
-    | ({
-        relationTo: 'customers';
-        value: string | Customer;
-      } | null)
-    | ({
-        relationTo: 'customer-credits';
-        value: string | CustomerCredit;
-      } | null)
-    | ({
-        relationTo: 'customer-loyalty';
-        value: string | CustomerLoyalty;
-      } | null)
-    | ({
-        relationTo: 'coupons';
-        value: string | Coupon;
-      } | null)
-    | ({
-        relationTo: 'gift-vouchers';
-        value: string | GiftVoucher;
-      } | null)
-    | ({
-        relationTo: 'membership-roles';
-        value: string | MembershipRole;
-      } | null)
-    | ({
-        relationTo: 'orders';
-        value: number | Order;
-      } | null)
-    | ({
-        relationTo: 'categories';
-        value: string | Category;
-      } | null)
-    | ({
-        relationTo: 'products';
-        value: string | Product;
-      } | null)
-    | ({
-        relationTo: 'subproducts';
-        value: string | Subproduct;
-      } | null)
-    | ({
-        relationTo: 'productpopups';
-        value: string | Productpopup;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1977,6 +1949,493 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  cloudPOSId?: T;
+  providerOrderId?: T;
+  id?: T;
+  tempOrdNr?: T;
+  status?: T;
+  order_type?: T;
+  order_details?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        price?: T;
+        tax?: T;
+        tax_dinein?: T;
+        name_nl?: T;
+        name_en?: T;
+        name_de?: T;
+        name_fr?: T;
+        subproducts?:
+          | T
+          | {
+              subproductId?: T;
+              name_nl?: T;
+              name_en?: T;
+              name_de?: T;
+              name_fr?: T;
+              price?: T;
+              tax?: T;
+              tax_dinein?: T;
+              quantity?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  payments?:
+    | T
+    | {
+        payment_method?: T;
+        sub_method_label?: T;
+        amount?: T;
+        id?: T;
+      };
+  fulfillment_method?: T;
+  fulfillment_date?: T;
+  fulfillment_time?: T;
+  customer?: T;
+  customerBarcode?: T;
+  customer_details?:
+    | T
+    | {
+        firstName?: T;
+        lastName?: T;
+        email?: T;
+        phone?: T;
+        address?: T;
+        city?: T;
+        postalCode?: T;
+      };
+  shipping_cost?: T;
+  subtotalBeforeDiscount?: T;
+  discountTotal?: T;
+  totalAfterDiscount?: T;
+  total_tax?: T;
+  subtotal?: T;
+  total?: T;
+  promotionsUsed?:
+    | T
+    | {
+        pointsUsed?: T;
+        creditsUsed?: T;
+        couponUsed?:
+          | T
+          | {
+              couponId?: T;
+              barcode?: T;
+              value?: T;
+              value_type?: T;
+              valid_from?: T;
+              valid_until?: T;
+              max_uses?: T;
+              used?: T;
+            };
+        giftVoucherUsed?:
+          | T
+          | {
+              voucherId?: T;
+              barcode?: T;
+              value?: T;
+              valid_from?: T;
+              valid_until?: T;
+              used?: T;
+            };
+      };
+  tippingUsed?:
+    | T
+    | {
+        type?: T;
+        amount?: T;
+        actualTip?: T;
+      };
+  userLocale?: T;
+  kioskNumber?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  cloudPOSId?: T;
+  name_nl?: T;
+  name_en?: T;
+  name_de?: T;
+  name_fr?: T;
+  menuOrder?: T;
+  image?: T;
+  modtime?: T;
+  status?: T;
+  productpopups?:
+    | T
+    | {
+        popup?: T;
+        order?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  image?: T;
+  name_nl?: T;
+  price?: T;
+  status?: T;
+  name_en?: T;
+  name_de?: T;
+  name_fr?: T;
+  allergens?: T;
+  price_unified?: T;
+  price_dinein?: T;
+  price_takeaway?: T;
+  price_delivery?: T;
+  menuOrder?: T;
+  isPromotion?: T;
+  old_price?: T;
+  enable_stock?: T;
+  quantity?: T;
+  tax?: T;
+  tax_dinein?: T;
+  posshow?: T;
+  barcode?: T;
+  modtime?: T;
+  description_nl?: T;
+  description_en?: T;
+  description_de?: T;
+  description_fr?: T;
+  webshopshow?: T;
+  webshoporderable?: T;
+  exclude_category_popups?: T;
+  productpopups?:
+    | T
+    | {
+        popup?: T;
+        order?: T;
+        id?: T;
+      };
+  tenant?: T;
+  shops?: T;
+  categories?: T;
+  cloudPOSId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subproducts_select".
+ */
+export interface SubproductsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  cloudPOSId?: T;
+  name_nl?: T;
+  name_en?: T;
+  name_de?: T;
+  name_fr?: T;
+  price_unified?: T;
+  price?: T;
+  price_dinein?: T;
+  price_takeaway?: T;
+  price_delivery?: T;
+  linked_product_enabled?: T;
+  linked_product?: T;
+  stock_enabled?: T;
+  stock_quantity?: T;
+  tax?: T;
+  tax_table?: T;
+  image?: T;
+  modtime?: T;
+  deleted?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "productpopups_select".
+ */
+export interface ProductpopupsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  popup_title_nl?: T;
+  popup_title_en?: T;
+  popup_title_de?: T;
+  popup_title_fr?: T;
+  multiselect?: T;
+  required_option_cashregister?: T;
+  required_option_webshop?: T;
+  minimum_option?: T;
+  maximum_option?: T;
+  allowMultipleTimes?: T;
+  default_checked_subproduct?: T;
+  subproducts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media_select".
+ */
+export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  blurhash?: T;
+  s3_url?: T;
+  alt_text?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        medium?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-entries_select".
+ */
+export interface ReservationEntriesSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  customer_name?: T;
+  customer_phone?: T;
+  customer_email?: T;
+  date?: T;
+  time?: T;
+  persons?: T;
+  table?: T;
+  special_requests?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservation-settings_select".
+ */
+export interface ReservationSettingsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  reservation_name?: T;
+  active_days?:
+    | T
+    | {
+        monday?: T;
+        tuesday?: T;
+        wednesday?: T;
+        thursday?: T;
+        friday?: T;
+        saturday?: T;
+        sunday?: T;
+      };
+  reservation_periods?:
+    | T
+    | {
+        start_date?: T;
+        end_date?: T;
+        start_time?: T;
+        end_time?: T;
+        id?: T;
+      };
+  holidays?:
+    | T
+    | {
+        start_date?: T;
+        end_date?: T;
+        reason?: T;
+        id?: T;
+      };
+  fully_booked_days?:
+    | T
+    | {
+        date?: T;
+        reason?: T;
+        id?: T;
+      };
+  exceptions?:
+    | T
+    | {
+        exception_date?: T;
+        reason?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables_select".
+ */
+export interface TablesSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  table_num?: T;
+  status?: T;
+  capacity?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers_select".
+ */
+export interface CustomersSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  cloudPOSId?: T;
+  firstname?: T;
+  lastname?: T;
+  company_name?: T;
+  email?: T;
+  phone?: T;
+  tags?:
+    | T
+    | {
+        tag_id?: T;
+        tag_type?: T;
+        id?: T;
+      };
+  memberships?:
+    | T
+    | {
+        role?: T;
+        points?: T;
+        status?: T;
+        dateJoined?: T;
+        id?: T;
+      };
+  barcode?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-credits_select".
+ */
+export interface CustomerCreditsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  customerid?: T;
+  value?: T;
+  tagid?: T;
+  tagtype?: T;
+  productid?: T;
+  categoryid?: T;
+  paymenttype?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customer-loyalty_select".
+ */
+export interface CustomerLoyaltySelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  program_name?: T;
+  points_per_purchase?: T;
+  redeem_ratio?: T;
+  status?: T;
+  description?: T;
+  rolesAllowed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons_select".
+ */
+export interface CouponsSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  barcode?: T;
+  value?: T;
+  value_type?: T;
+  valid_from?: T;
+  valid_until?: T;
+  max_uses?: T;
+  uses?: T;
+  used?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gift-vouchers_select".
+ */
+export interface GiftVouchersSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  barcode?: T;
+  value?: T;
+  valid_from?: T;
+  valid_until?: T;
+  used?: T;
+  payment_type?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "membership-roles_select".
+ */
+export interface MembershipRolesSelect<T extends boolean = true> {
+  tenant?: T;
+  shops?: T;
+  label?: T;
+  value?: T;
+  loyaltyPrograms?: T;
+  defaultRole?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2337,85 +2796,16 @@ export interface DigitalMenusSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-entries_select".
+ * via the `definition` "pos_select".
  */
-export interface ReservationEntriesSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  customer_name?: T;
-  customer_phone?: T;
-  customer_email?: T;
-  date?: T;
-  time?: T;
-  persons?: T;
-  table?: T;
-  special_requests?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reservation-settings_select".
- */
-export interface ReservationSettingsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  reservation_name?: T;
-  active_days?:
-    | T
-    | {
-        monday?: T;
-        tuesday?: T;
-        wednesday?: T;
-        thursday?: T;
-        friday?: T;
-        saturday?: T;
-        sunday?: T;
-      };
-  reservation_periods?:
-    | T
-    | {
-        start_date?: T;
-        end_date?: T;
-        start_time?: T;
-        end_time?: T;
-        id?: T;
-      };
-  holidays?:
-    | T
-    | {
-        start_date?: T;
-        end_date?: T;
-        reason?: T;
-        id?: T;
-      };
-  fully_booked_days?:
-    | T
-    | {
-        date?: T;
-        reason?: T;
-        id?: T;
-      };
-  exceptions?:
-    | T
-    | {
-        exception_date?: T;
-        reason?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tables_select".
- */
-export interface TablesSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  table_num?: T;
-  status?: T;
-  capacity?: T;
+export interface PosSelect<T extends boolean = true> {
+  provider?: T;
+  licenseName?: T;
+  token?: T;
+  apiKey?: T;
+  apiSecret?: T;
+  active?: T;
+  shop?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2440,21 +2830,6 @@ export interface PrintersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pos_select".
- */
-export interface PosSelect<T extends boolean = true> {
-  provider?: T;
-  licenseName?: T;
-  token?: T;
-  apiKey?: T;
-  apiSecret?: T;
-  active?: T;
-  shop?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tipping_select".
  */
 export interface TippingSelect<T extends boolean = true> {
@@ -2470,421 +2845,6 @@ export interface TippingSelect<T extends boolean = true> {
         value?: T;
         id?: T;
       };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages_select".
- */
-export interface PagesSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  slug2?: T;
-  tenant?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
- */
-export interface MediaSelect<T extends boolean = true> {
-  tenant?: T;
-  tags?:
-    | T
-    | {
-        tag?: T;
-        id?: T;
-      };
-  blurhash?: T;
-  s3_url?: T;
-  alt_text?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-  sizes?:
-    | T
-    | {
-        thumbnail?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        medium?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-      };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customers_select".
- */
-export interface CustomersSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  cloudPOSId?: T;
-  firstname?: T;
-  lastname?: T;
-  company_name?: T;
-  email?: T;
-  phone?: T;
-  tags?:
-    | T
-    | {
-        tag_id?: T;
-        tag_type?: T;
-        id?: T;
-      };
-  memberships?:
-    | T
-    | {
-        role?: T;
-        points?: T;
-        status?: T;
-        dateJoined?: T;
-        id?: T;
-      };
-  barcode?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customer-credits_select".
- */
-export interface CustomerCreditsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  customerid?: T;
-  value?: T;
-  tagid?: T;
-  tagtype?: T;
-  productid?: T;
-  categoryid?: T;
-  paymenttype?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customer-loyalty_select".
- */
-export interface CustomerLoyaltySelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  program_name?: T;
-  points_per_purchase?: T;
-  redeem_ratio?: T;
-  status?: T;
-  description?: T;
-  rolesAllowed?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "coupons_select".
- */
-export interface CouponsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  barcode?: T;
-  value?: T;
-  value_type?: T;
-  valid_from?: T;
-  valid_until?: T;
-  max_uses?: T;
-  uses?: T;
-  used?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "gift-vouchers_select".
- */
-export interface GiftVouchersSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  barcode?: T;
-  value?: T;
-  valid_from?: T;
-  valid_until?: T;
-  used?: T;
-  payment_type?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "membership-roles_select".
- */
-export interface MembershipRolesSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  label?: T;
-  value?: T;
-  loyaltyPrograms?: T;
-  defaultRole?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "orders_select".
- */
-export interface OrdersSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  cloudPOSId?: T;
-  providerOrderId?: T;
-  id?: T;
-  tempOrdNr?: T;
-  status?: T;
-  order_type?: T;
-  order_details?:
-    | T
-    | {
-        product?: T;
-        quantity?: T;
-        price?: T;
-        tax?: T;
-        tax_dinein?: T;
-        name_nl?: T;
-        name_en?: T;
-        name_de?: T;
-        name_fr?: T;
-        subproducts?:
-          | T
-          | {
-              subproductId?: T;
-              name_nl?: T;
-              name_en?: T;
-              name_de?: T;
-              name_fr?: T;
-              price?: T;
-              tax?: T;
-              tax_dinein?: T;
-              quantity?: T;
-              id?: T;
-            };
-        id?: T;
-      };
-  payments?:
-    | T
-    | {
-        payment_method?: T;
-        sub_method_label?: T;
-        amount?: T;
-        id?: T;
-      };
-  fulfillment_method?: T;
-  fulfillment_date?: T;
-  fulfillment_time?: T;
-  customer?: T;
-  customerBarcode?: T;
-  customer_details?:
-    | T
-    | {
-        firstName?: T;
-        lastName?: T;
-        email?: T;
-        phone?: T;
-        address?: T;
-        city?: T;
-        postalCode?: T;
-      };
-  shipping_cost?: T;
-  subtotalBeforeDiscount?: T;
-  discountTotal?: T;
-  totalAfterDiscount?: T;
-  total_tax?: T;
-  subtotal?: T;
-  total?: T;
-  promotionsUsed?:
-    | T
-    | {
-        pointsUsed?: T;
-        creditsUsed?: T;
-        couponUsed?:
-          | T
-          | {
-              couponId?: T;
-              barcode?: T;
-              value?: T;
-              value_type?: T;
-              valid_from?: T;
-              valid_until?: T;
-              max_uses?: T;
-              used?: T;
-            };
-        giftVoucherUsed?:
-          | T
-          | {
-              voucherId?: T;
-              barcode?: T;
-              value?: T;
-              valid_from?: T;
-              valid_until?: T;
-              used?: T;
-            };
-      };
-  tippingUsed?:
-    | T
-    | {
-        type?: T;
-        amount?: T;
-        actualTip?: T;
-      };
-  userLocale?: T;
-  kioskNumber?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories_select".
- */
-export interface CategoriesSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  cloudPOSId?: T;
-  name_nl?: T;
-  name_en?: T;
-  name_de?: T;
-  name_fr?: T;
-  menuOrder?: T;
-  image?: T;
-  modtime?: T;
-  status?: T;
-  productpopups?:
-    | T
-    | {
-        popup?: T;
-        order?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "products_select".
- */
-export interface ProductsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  categories?: T;
-  cloudPOSId?: T;
-  name_nl?: T;
-  name_en?: T;
-  name_de?: T;
-  name_fr?: T;
-  allergens?: T;
-  price_unified?: T;
-  price?: T;
-  price_dinein?: T;
-  price_takeaway?: T;
-  price_delivery?: T;
-  menuOrder?: T;
-  isPromotion?: T;
-  old_price?: T;
-  enable_stock?: T;
-  quantity?: T;
-  tax?: T;
-  tax_dinein?: T;
-  posshow?: T;
-  barcode?: T;
-  image?: T;
-  modtime?: T;
-  description_nl?: T;
-  description_en?: T;
-  description_de?: T;
-  description_fr?: T;
-  webshopshow?: T;
-  webshoporderable?: T;
-  status?: T;
-  exclude_category_popups?: T;
-  productpopups?:
-    | T
-    | {
-        popup?: T;
-        order?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "subproducts_select".
- */
-export interface SubproductsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  cloudPOSId?: T;
-  name_nl?: T;
-  name_en?: T;
-  name_de?: T;
-  name_fr?: T;
-  price_unified?: T;
-  price?: T;
-  price_dinein?: T;
-  price_takeaway?: T;
-  price_delivery?: T;
-  linked_product_enabled?: T;
-  linked_product?: T;
-  stock_enabled?: T;
-  stock_quantity?: T;
-  tax?: T;
-  tax_table?: T;
-  image?: T;
-  modtime?: T;
-  deleted?: T;
-  status?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "productpopups_select".
- */
-export interface ProductpopupsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  popup_title_nl?: T;
-  popup_title_en?: T;
-  popup_title_de?: T;
-  popup_title_fr?: T;
-  multiselect?: T;
-  required_option_cashregister?: T;
-  required_option_webshop?: T;
-  minimum_option?: T;
-  maximum_option?: T;
-  allowMultipleTimes?: T;
-  default_checked_subproduct?: T;
-  subproducts?: T;
   updatedAt?: T;
   createdAt?: T;
 }
