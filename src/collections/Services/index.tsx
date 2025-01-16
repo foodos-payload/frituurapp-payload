@@ -132,38 +132,38 @@ export const Services: CollectionConfig = {
             },
         },
 
-        {
-            name: 'fields_data',       // the real, hidden text field
-            type: 'text',
-            admin: { hidden: true },
-        },
-        {
-            name: 'fields_ui',         // a UI field to render the custom React Select
-            label: 'Fields UI',
-            type: 'ui',
-            admin: {
-                components: {
-                    Field: '@/fields/FieldsSelectUI', // your custom component
-                },
-            },
-        },
+        // {
+        //     name: 'fields_data',       // the real, hidden text field
+        //     type: 'text',
+        //     admin: { hidden: true },
+        // },
+        // {
+        //     name: 'fields_ui',         // a UI field to render the custom React Select
+        //     label: 'Fields UI',
+        //     type: 'ui',
+        //     admin: {
+        //         components: {
+        //             Field: '@/fields/FieldsSelectUI', // your custom component
+        //         },
+        //     },
+        // },
 
         // 4. Collections
-        {
-            name: 'collections_data',      // the real field that gets stored
-            type: 'text',
-            admin: { hidden: true },       // hide from the admin UI
-        },
-        {
-            name: 'collections_ui',
-            label: 'Collections UI',
-            type: 'ui',
-            admin: {
-                components: {
-                    Field: '@/fields/CollectionsSelectUI',
-                },
-            },
-        },
+        // {
+        //     name: 'collections_data',      // the real field that gets stored
+        //     type: 'text',
+        //     admin: { hidden: true },       // hide from the admin UI
+        // },
+        // {
+        //     name: 'collections_ui',
+        //     label: 'Collections UI',
+        //     type: 'ui',
+        //     admin: {
+        //         components: {
+        //             Field: '@/fields/CollectionsSelectUI',
+        //         },
+        //     },
+        // },
 
         // 5. Roles
         {
