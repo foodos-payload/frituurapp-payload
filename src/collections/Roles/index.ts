@@ -1,7 +1,6 @@
 import { hasPermission } from '@/access/permissionChecker';
 import type { CollectionConfig } from 'payload';
 
-
 const Roles: CollectionConfig = {
     slug: 'roles',
     access: {
@@ -15,12 +14,11 @@ const Roles: CollectionConfig = {
         components: {
             views: {
                 edit: {
-                    root: {
-                        Component: '@/fields/custom-field/collections-field.tsx'
-                    }
-                }
-            }
-        }
+                    // Remove the root override entirely so the normal form is used
+                    root: { Component: '@/fields/custom-field/collections-field.tsx' }
+                },
+            },
+        },
     },
     labels: {
         plural: {
@@ -38,98 +36,102 @@ const Roles: CollectionConfig = {
     },
     fields: [
         {
-            name: "name",
-            type: "text",
+            name: 'name',
+            type: 'text',
             label: {
-                en: "Name",
-                nl: "Naam",
-                de: "Name",
-                fr: "Nom",
-            }
+                en: 'Name',
+                nl: 'Naam',
+                de: 'Name',
+                fr: 'Nom',
+            },
+            required: true,
         },
-        // {
-        //     name: "permissions",
-        //     type: "array",
-        //     label: {
-        //         en: "Permissions",
-        //         nl: "Permissies",
-        //         de: "Berechtigungen",
-        //         fr: "Permissions",
-        //     },
-        //     fields: [
-        //         {
-        //             name: "shops",
-        //             type: "array",
-        //             label: {
-        //                 en: "Shops",
-        //                 nl: "Winkels",
-        //                 de: "Shops",
-        //                 fr: "Shops",
-        //             },
-        //         }
-        //     ]
-        // }
         {
-            name: "collections",
-            type: "array",
+            // The main array for both collection-level + field-level perms (unified UI)
+            name: 'collections',
+            type: 'array',
             admin: {
                 components: {
-                    Field: '@/fields/custom-field/collections-field.tsx'
-                }
+                    // This references our single custom field that merges both sets of perms
+                    Field: '@/fields/custom-field/collections-field.tsx',
+                },
+            },
+            fields: [
+                // The "item" structure for collection-level perms
+                {
+                    name: 'collectionName',
+                    type: 'text',
+                    label: {
+                        en: 'Collection Name',
+                        nl: 'Collectie Naam',
+                        de: 'Collection Name',
+                        fr: 'Nom de la collection',
+                    },
+                },
+                {
+                    name: 'read',
+                    type: 'checkbox',
+                    label: { en: 'Read', nl: 'Lezen', de: 'Lesen', fr: 'Lire' },
+                },
+                {
+                    name: 'create',
+                    type: 'checkbox',
+                    label: { en: 'Create', nl: 'Aanmaken', de: 'Erstellen', fr: 'Créer' },
+                },
+                {
+                    name: 'update',
+                    type: 'checkbox',
+                    label: { en: 'Update', nl: 'Bewerken', de: 'Bearbeiten', fr: 'Modifier' },
+                },
+                {
+                    name: 'delete',
+                    type: 'checkbox',
+                    label: { en: 'Delete', nl: 'Verwijderen', de: 'Löschen', fr: 'Supprimer' },
+                },
+            ],
+        },
+        {
+            // Hidden array for storing field-level perms in doc,
+            // but not displayed in the normal form.
+            name: 'fields',
+            label: 'Field-level Permissions (Hidden)',
+            type: 'array',
+            admin: {
+                hidden: true, // no default UI
             },
             fields: [
                 {
-                    name: "collectionName",
-                    type: "text",
-                    label: {
-                        en: "Collection Name",
-                        nl: "Collectie Naam",
-                        de: "Collection Name",
-                        fr: "Nom de la collection",
-                    }
+                    name: 'collectionName',
+                    type: 'text',
+                    label: { en: 'Collection Name' },
                 },
                 {
-                    name: "read",
-                    type: "checkbox",
-                    label: {
-                        en: "Read",
-                        nl: "Lezen",
-                        de: "Lesen",
-                        fr: "Lire",
-                    }
+                    name: 'fieldName',
+                    type: 'text',
+                    label: { en: 'Field Name' },
                 },
                 {
-                    name: "create",
-                    type: "checkbox",
-                    label: {
-                        en: "Create",
-                        nl: "Aanmaken",
-                        de: "Erstellen",
-                        fr: "Créer",
-                    }
+                    name: 'read',
+                    type: 'checkbox',
+                    label: { en: 'Read' },
                 },
                 {
-                    name: "update",
-                    type: "checkbox",
-                    label: {
-                        en: "Update",
-                        nl: "Bewerken",
-                        de: "Bearbeiten",
-                        fr: "Modifier",
-                    }
+                    name: 'create',
+                    type: 'checkbox',
+                    label: { en: 'Create' },
                 },
                 {
-                    name: "delete",
-                    type: "checkbox",
-                    label: {
-                        en: "Delete",
-                        nl: "Verwijderen",
-                        de: "Löschen",
-                        fr: "Supprimer",
-                    }
+                    name: 'update',
+                    type: 'checkbox',
+                    label: { en: 'Update' },
                 },
-            ]
-        }
+                {
+                    name: 'delete',
+                    type: 'checkbox',
+                    label: { en: 'Delete' },
+                },
+            ],
+        },
     ],
 };
 

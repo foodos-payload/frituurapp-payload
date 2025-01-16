@@ -10,10 +10,10 @@ import { colorPickerField } from '@innovixx/payload-color-picker-field'
 export const ShopBranding: CollectionConfig = {
     slug: 'shop-branding',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('shop-branding', 'create'),
+        delete: hasPermission('shop-branding', 'delete'),
+        read: hasPermission('shop-branding', 'read'),
+        update: hasPermission('shop-branding', 'update'),
     },
     admin: {
         baseListFilter,

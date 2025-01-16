@@ -8,10 +8,10 @@ import { hasPermission } from '@/access/permissionChecker';
 export const FulfillmentMethods: CollectionConfig = {
     slug: 'fulfillment-methods',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('fulfillment-methods', 'create'),
+        delete: hasPermission('fulfillment-methods', 'delete'),
+        read: hasPermission('fulfillment-methods', 'read'),
+        update: hasPermission('fulfillment-methods', 'update'),
     },
     admin: {
         baseListFilter,

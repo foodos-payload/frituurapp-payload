@@ -8,10 +8,10 @@ import { hasPermission } from '@/access/permissionChecker';
 export const Timeslots: CollectionConfig = {
     slug: 'timeslots',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('timeslots', 'create'),
+        delete: hasPermission('timeslots', 'delete'),
+        read: hasPermission('timeslots', 'read'),
+        update: hasPermission('timeslots', 'update'),
     },
     admin: {
         baseListFilter,

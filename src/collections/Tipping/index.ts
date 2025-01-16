@@ -12,10 +12,10 @@ import { ensureSingleEnabled } from './hooks/ensureSingleTippingEnabled';
 export const Tipping: CollectionConfig = {
     slug: 'tipping',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('tipping', 'create'),
+        delete: hasPermission('tipping', 'delete'),
+        read: hasPermission('tipping', 'read'),
+        update: hasPermission('tipping', 'update'),
     },
     admin: {
         baseListFilter,

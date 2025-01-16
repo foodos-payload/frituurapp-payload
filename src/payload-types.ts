@@ -183,10 +183,21 @@ export interface User {
  */
 export interface Role {
   id: string;
-  name?: string | null;
+  name: string;
   collections?:
     | {
         collectionName?: string | null;
+        read?: boolean | null;
+        create?: boolean | null;
+        update?: boolean | null;
+        delete?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  fields?:
+    | {
+        collectionName?: string | null;
+        fieldName?: string | null;
         read?: boolean | null;
         create?: boolean | null;
         update?: boolean | null;
@@ -2015,6 +2026,17 @@ export interface RolesSelect<T extends boolean = true> {
     | T
     | {
         collectionName?: T;
+        read?: T;
+        create?: T;
+        update?: T;
+        delete?: T;
+        id?: T;
+      };
+  fields?:
+    | T
+    | {
+        collectionName?: T;
+        fieldName?: T;
         read?: T;
         create?: T;
         update?: T;

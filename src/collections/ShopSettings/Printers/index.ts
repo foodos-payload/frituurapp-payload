@@ -14,10 +14,10 @@ import { checkPrinterNameUniqueness } from './hooks/checkPrinterNameUniqueness';
 export const Printers: CollectionConfig = {
     slug: 'printers',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('printers', 'create'),
+        delete: hasPermission('printers', 'delete'),
+        read: hasPermission('printers', 'read'),
+        update: hasPermission('printers', 'update'),
     },
     admin: {
         baseListFilter,

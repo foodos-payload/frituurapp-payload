@@ -1,27 +1,37 @@
+// src/fields/custom-field/api.ts
+
 import { RoleFormData } from './types'
 import { toast } from 'sonner'
 
 const API_URL = process.env.NEXT_PUBLIC_SERVER_URL
 
 interface ValidationErrorDetail {
-    message: string;
-    path: string;
+    message: string
+    path: string
 }
 
 interface ValidationError {
-    name: 'ValidationError';
+    name: 'ValidationError'
     data: {
-        errors: ValidationErrorDetail[];
-    };
+        errors: ValidationErrorDetail[]
+    }
 }
 
-async function handleApiRequest<T>(url: string, method: string, data: RoleFormData): Promise<T> {
-    const response = await fetch(url, {
+/**
+ * ------------
+ * Shared Utility to handle create/update
+ * ------------
+ */
+async function handleApiRequest<T>(url: string, method: string, data?: RoleFormData): Promise<T> {
+    const opts: RequestInit = {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    })
+    }
+    if (data) {
+        opts.body = JSON.stringify(data)
+    }
 
+    const response = await fetch(url, opts)
     const responseData = await response.json()
 
     if (!response.ok) {
@@ -43,6 +53,11 @@ async function handleApiRequest<T>(url: string, method: string, data: RoleFormDa
     return responseData
 }
 
+/**
+ * ------------
+ * Create / Update Role
+ * ------------
+ */
 async function createRole(data: RoleFormData) {
     const response = await handleApiRequest(`${API_URL}/api/roles`, 'POST', data)
     toast.success('Role created successfully')
@@ -57,4 +72,23 @@ async function updateRole(id: string, data: RoleFormData) {
 
 export async function saveRole(id: string | undefined, data: RoleFormData) {
     return id ? updateRole(id, data) : createRole(data)
-} 
+}
+
+/**
+ * ------------
+ * Fetch all collections & fields from /api/getAllFields
+ * ------------
+ */
+export async function getAllFields() {
+    const response = await fetch(`/api/getAllFields`, {
+        method: 'GET',
+    })
+    const data = await response.json()
+
+    if (!response.ok) {
+        toast.error(data.message || 'Error fetching collections/fields')
+        throw new Error(data.message || 'Error fetching collections/fields')
+    }
+
+    return data
+}

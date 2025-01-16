@@ -9,10 +9,10 @@ import { ensureUniqueTableNumberPerShop } from './hooks/ensureUniqueTableNumberP
 export const Tables: CollectionConfig = {
     slug: 'tables',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('tables', 'create'),
+        delete: hasPermission('tables', 'delete'),
+        read: hasPermission('tables', 'read'),
+        update: hasPermission('tables', 'update'),
     },
     admin: {
         baseListFilter,

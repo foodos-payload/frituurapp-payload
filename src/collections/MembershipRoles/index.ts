@@ -9,10 +9,10 @@ import { hasPermission } from '@/access/permissionChecker';
 export const MembershipRoles: CollectionConfig = {
     slug: 'membership-roles',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('membership-roles', 'create'),
+        delete: hasPermission('membership-roles', 'delete'),
+        read: hasPermission('membership-roles', 'read'),
+        update: hasPermission('membership-roles', 'update'),
     },
     admin: {
         baseListFilter,

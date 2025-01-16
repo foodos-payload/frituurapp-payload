@@ -11,10 +11,10 @@ import { shopsField } from '../../fields/ShopsField'
 export const DigitalMenus: CollectionConfig = {
     slug: 'digital-menus',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('digital-menus', 'create'),
+        delete: hasPermission('digital-menus', 'delete'),
+        read: hasPermission('digital-menus', 'read'),
+        update: hasPermission('digital-menus', 'update'),
     },
     admin: {
         baseListFilter,

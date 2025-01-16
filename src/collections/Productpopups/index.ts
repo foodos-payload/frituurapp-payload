@@ -8,10 +8,10 @@ import { hasPermission } from '@/access/permissionChecker';
 export const Productpopups: CollectionConfig = {
     slug: 'productpopups',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('productpopups', 'create'),
+        delete: hasPermission('productpopups', 'delete'),
+        read: hasPermission('productpopups', 'read'),
+        update: hasPermission('productpopups', 'update'),
     },
     admin: {
         baseListFilter,

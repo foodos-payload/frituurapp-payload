@@ -9,10 +9,10 @@ export const POS: CollectionConfig = {
         plural: 'POS Integrations',
     },
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('pos', 'create'),
+        delete: hasPermission('pos', 'delete'),
+        read: hasPermission('pos', 'read'),
+        update: hasPermission('pos', 'update'),
     },
     fields: [
         {

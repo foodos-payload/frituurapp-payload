@@ -9,10 +9,10 @@ import { ensureUniqueProviderPerShop } from './hooks/ensureUniqueProviderPerShop
 export const PaymentMethods: CollectionConfig = {
     slug: 'payment-methods',
     access: {
-        create: hasPermission('categories', 'create'),
-        delete: hasPermission('categories', 'delete'),
-        read: hasPermission('categories', 'read'),
-        update: hasPermission('categories', 'update'),
+        create: hasPermission('payment-methods', 'create'),
+        delete: hasPermission('payment-methods', 'delete'),
+        read: hasPermission('payment-methods', 'read'),
+        update: hasPermission('payment-methods', 'update'),
     },
     admin: {
         baseListFilter,
