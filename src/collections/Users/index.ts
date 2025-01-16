@@ -1,20 +1,27 @@
+// File: src/collections/Users/index.ts
+
 import type { CollectionConfig } from 'payload';
 import { externalUsersLogin } from './endpoints/externalUsersLogin';
 import { setCookieBasedOnDomain } from './hooks/setCookieBasedOnDomain';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 const Users: CollectionConfig = {
   slug: 'users',
+
+  // ---------------------------
+  // Collection-level access
+  // ---------------------------
   access: {
     create: hasPermission('users', 'create'),
     delete: hasPermission('users', 'delete'),
     read: hasPermission('users', 'read'),
     update: hasPermission('users', 'update'),
   },
+
   admin: {
     useAsTitle: 'email',
-
   },
+
   labels: {
     plural: {
       en: 'Users',
@@ -31,12 +38,16 @@ const Users: CollectionConfig = {
   },
 
   auth: true,
+
   hooks: {
     afterLogin: [setCookieBasedOnDomain],
   },
+
   endpoints: [externalUsersLogin],
+
   fields: [
     {
+      // 1) Roles relationship field
       name: 'roles',
       type: 'relationship',
       relationTo: 'roles',
@@ -46,7 +57,6 @@ const Users: CollectionConfig = {
         de: 'Rollen',
         fr: 'Rôles',
       },
-      // defaultValue: ['user'],
       hasMany: true,
       admin: {
         description: {
@@ -56,10 +66,20 @@ const Users: CollectionConfig = {
           fr: 'Attribuez des rôles à l\'utilisateur.',
         },
       },
+      // Field-level access
+      access: {
+        read: hasFieldPermission('users', 'roles', 'read'),
+        update: hasFieldPermission('users', 'roles', 'update'),
+      },
     },
     {
+      // 2) Tenants array
       name: 'tenants',
       type: 'array',
+      access: {
+        read: hasFieldPermission('users', 'tenants', 'read'),
+        update: hasFieldPermission('users', 'tenants', 'update'),
+      },
       fields: [
         {
           name: 'tenant',
@@ -102,14 +122,32 @@ const Users: CollectionConfig = {
             },
           },
           options: [
-            { label: { en: 'Tenant Admin', nl: 'Eigenaar Beheerder', de: 'Eigentümeradministrator', fr: 'Administrateur du Propriétaire' }, value: 'tenant-admin' },
-            { label: { en: 'Tenant Viewer', nl: 'Eigenaar Kijker', de: 'Eigentümerbetrachter', fr: 'Visualiseur du Propriétaire' }, value: 'tenant-viewer' },
-          ], required: true,
+            {
+              label: {
+                en: 'Tenant Admin',
+                nl: 'Eigenaar Beheerder',
+                de: 'Eigentümeradministrator',
+                fr: 'Administrateur du Propriétaire',
+              },
+              value: 'tenant-admin',
+            },
+            {
+              label: {
+                en: 'Tenant Viewer',
+                nl: 'Eigenaar Kijker',
+                de: 'Eigentümerbetrachter',
+                fr: 'Visualiseur du Propriétaire',
+              },
+              value: 'tenant-viewer',
+            },
+          ],
+          required: true,
         },
       ],
       saveToJWT: true,
     },
     {
+      // 3) Shops relationship
       name: 'shops',
       type: 'relationship',
       label: {
@@ -118,7 +156,6 @@ const Users: CollectionConfig = {
         de: 'Geschäfte',
         fr: 'Magasins',
       },
-
       relationTo: 'shops',
       hasMany: true,
       saveToJWT: true,
@@ -150,8 +187,14 @@ const Users: CollectionConfig = {
           fr: 'Attribuez des magasins à l\'utilisateur.',
         },
       },
+      // Field-level access
+      access: {
+        read: hasFieldPermission('users', 'shops', 'read'),
+        update: hasFieldPermission('users', 'shops', 'update'),
+      },
     },
     {
+      // 4) Username text
       name: 'username',
       type: 'text',
       label: {
@@ -169,6 +212,10 @@ const Users: CollectionConfig = {
         },
       },
       index: true,
+      access: {
+        read: hasFieldPermission('users', 'username', 'read'),
+        update: hasFieldPermission('users', 'username', 'update'),
+      },
     },
   ],
 };

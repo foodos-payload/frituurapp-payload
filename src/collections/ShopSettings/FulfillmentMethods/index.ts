@@ -1,22 +1,30 @@
+// File: src/collections/FulfillmentMethods/index.ts
+
 import type { CollectionConfig } from 'payload';
 
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const FulfillmentMethods: CollectionConfig = {
     slug: 'fulfillment-methods',
+
+    // -------------------------
+    // Collection-level access
+    // -------------------------
     access: {
         create: hasPermission('fulfillment-methods', 'create'),
         delete: hasPermission('fulfillment-methods', 'delete'),
         read: hasPermission('fulfillment-methods', 'read'),
         update: hasPermission('fulfillment-methods', 'update'),
     },
+
     admin: {
         baseListFilter,
         useAsTitle: 'method_type',
     },
+
     labels: {
         plural: {
             en: 'Fulfillment Methods',
@@ -33,8 +41,19 @@ export const FulfillmentMethods: CollectionConfig = {
     },
 
     fields: [
-        tenantField, // Ensure fulfillment methods are scoped by tenant
-        shopsField, // Link fulfillment methods to specific shops
+        // 1) tenantField
+        {
+            ...tenantField,
+
+        },
+
+        // 2) shopsField
+        {
+            ...shopsField,
+
+        },
+
+        // 3) method_type
         {
             name: 'method_type',
             type: 'select',
@@ -58,7 +77,13 @@ export const FulfillmentMethods: CollectionConfig = {
                     fr: 'Sélectionnez le type de méthode de réalisation.',
                 },
             },
+            access: {
+                read: hasFieldPermission('fulfillment-methods', 'method_type', 'read'),
+                update: hasFieldPermission('fulfillment-methods', 'method_type', 'update'),
+            },
         },
+
+        // 4) delivery_fee
         {
             name: 'delivery_fee',
             type: 'number',
@@ -78,7 +103,13 @@ export const FulfillmentMethods: CollectionConfig = {
                     fr: 'Spécifiez les frais de livraison de base, le cas échéant.',
                 },
             },
+            access: {
+                read: hasFieldPermission('fulfillment-methods', 'delivery_fee', 'read'),
+                update: hasFieldPermission('fulfillment-methods', 'delivery_fee', 'update'),
+            },
         },
+
+        // 5) minimum_order
         {
             name: 'minimum_order',
             type: 'number',
@@ -97,7 +128,13 @@ export const FulfillmentMethods: CollectionConfig = {
                     fr: 'Spécifiez le montant minimum de commande pour cette méthode de réalisation.',
                 },
             },
+            access: {
+                read: hasFieldPermission('fulfillment-methods', 'minimum_order', 'read'),
+                update: hasFieldPermission('fulfillment-methods', 'minimum_order', 'update'),
+            },
         },
+
+        // 6) extra_cost_per_km
         {
             name: 'extra_cost_per_km',
             type: 'number',
@@ -117,7 +154,13 @@ export const FulfillmentMethods: CollectionConfig = {
                     fr: 'Spécifiez le coût supplémentaire par kilomètre pour la livraison.',
                 },
             },
+            access: {
+                read: hasFieldPermission('fulfillment-methods', 'extra_cost_per_km', 'read'),
+                update: hasFieldPermission('fulfillment-methods', 'extra_cost_per_km', 'update'),
+            },
         },
+
+        // 7) enabled
         {
             name: 'enabled',
             type: 'checkbox',
@@ -136,7 +179,13 @@ export const FulfillmentMethods: CollectionConfig = {
                     fr: 'Activez ou désactivez cette méthode de réalisation.',
                 },
             },
+            access: {
+                read: hasFieldPermission('fulfillment-methods', 'enabled', 'read'),
+                update: hasFieldPermission('fulfillment-methods', 'enabled', 'update'),
+            },
         },
+
+        // 8) settings (group)
         {
             name: 'settings',
             type: 'group',
@@ -216,7 +265,8 @@ export const FulfillmentMethods: CollectionConfig = {
                     label: 'Share Booked Slots',
                     defaultValue: false,
                     admin: {
-                        description: 'If true, this method’s orders will block timeslots for other methods that also share slots.',
+                        description:
+                            'If true, this method’s orders will block timeslots for other methods that also share slots.',
                     },
                 },
                 {
@@ -247,6 +297,12 @@ export const FulfillmentMethods: CollectionConfig = {
                     },
                 },
             ],
+            access: {
+                read: hasFieldPermission('fulfillment-methods', 'settings', 'read'),
+                update: hasFieldPermission('fulfillment-methods', 'settings', 'update'),
+            },
         },
     ],
 };
+
+export default FulfillmentMethods;

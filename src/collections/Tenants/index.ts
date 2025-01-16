@@ -1,24 +1,29 @@
+// File: src/collections/Tenants/index.ts
+
 import type { CollectionConfig } from 'payload';
 
 import { isSuperAdmin } from '../../access/isSuperAdmin';
 import { filterByTenantRead } from './access/byTenant';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const Tenants: CollectionConfig = {
   slug: 'tenants',
+
+  // -------------------------
+  // Collection-level access
+  // -------------------------
   access: {
     create: hasPermission('tenants', 'create'),
     delete: hasPermission('tenants', 'delete'),
-    read: filterByTenantRead,
+    read: filterByTenantRead, // custom read filter
     update: hasPermission('tenants', 'update'),
   },
+
   admin: {
     useAsTitle: 'name',
     hidden: ({ user }) => {
-      // Ensure `user` exists and cast it to the expected type
+      // Hide from non-superadmins with access to exactly one tenant
       if (!user) return true;
-
-      // Hide for non-superadmins with access to a single tenant
       return (
         !isSuperAdmin({ req: { user } as any }) &&
         user.tenants &&
@@ -26,6 +31,7 @@ export const Tenants: CollectionConfig = {
       );
     },
   },
+
   labels: {
     plural: {
       en: 'Tenants',
@@ -40,8 +46,10 @@ export const Tenants: CollectionConfig = {
       fr: 'Propriétaire',
     },
   },
+
   fields: [
     {
+      // 1) Name (text)
       name: 'name',
       type: 'text',
       required: true,
@@ -51,8 +59,13 @@ export const Tenants: CollectionConfig = {
         de: 'Name',
         fr: 'Nom',
       },
+      access: {
+        read: hasFieldPermission('tenants', 'name', 'read'),
+        update: hasFieldPermission('tenants', 'name', 'update'),
+      },
     },
     {
+      // 2) domains array
       name: 'domains',
       type: 'array',
       label: {
@@ -75,8 +88,13 @@ export const Tenants: CollectionConfig = {
         },
       ],
       index: true,
+      access: {
+        read: hasFieldPermission('tenants', 'domains', 'read'),
+        update: hasFieldPermission('tenants', 'domains', 'update'),
+      },
     },
     {
+      // 3) slug
       name: 'slug',
       type: 'text',
       label: {
@@ -95,8 +113,13 @@ export const Tenants: CollectionConfig = {
       },
       index: true,
       required: true,
+      access: {
+        read: hasFieldPermission('tenants', 'slug', 'read'),
+        update: hasFieldPermission('tenants', 'slug', 'update'),
+      },
     },
     {
+      // 4) public checkbox
       name: 'public',
       type: 'checkbox',
       label: {
@@ -116,6 +139,12 @@ export const Tenants: CollectionConfig = {
       },
       defaultValue: false,
       index: true,
+      access: {
+        read: hasFieldPermission('tenants', 'public', 'read'),
+        update: hasFieldPermission('tenants', 'public', 'update'),
+      },
     },
   ],
 };
+
+export default Tenants;

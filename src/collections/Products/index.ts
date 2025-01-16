@@ -1,24 +1,36 @@
+// File: src/collections/Products/index.ts
+
 import type { CollectionConfig } from 'payload';
 
+// Keep the existing imports
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { categoriesField } from '../../fields/CategoriesField';
 import { baseListFilter } from './access/baseListFilter';
 import { ensureUniqueNamePerShop } from './hooks/ensureUniqueNamePerShop';
-import { hasPermission } from '@/access/permissionChecker';
+import {
+    hasPermission,       // For collection-level
+    hasFieldPermission,  // For field-level
+} from '@/access/permissionChecker';
 
 export const Products: CollectionConfig = {
     slug: 'products',
+
+    // -----------------------
+    // Collection-level Access
+    // -----------------------
     access: {
         create: hasPermission('products', 'create'),
         delete: hasPermission('products', 'delete'),
         read: hasPermission('products', 'read'),
         update: hasPermission('products', 'update'),
     },
+
     admin: {
         baseListFilter,
         useAsTitle: 'name_nl',
     },
+
     labels: {
         plural: {
             en: 'Products',
@@ -35,9 +47,25 @@ export const Products: CollectionConfig = {
     },
 
     fields: [
-        tenantField, // Ensure products are scoped by tenant
-        shopsField, // Link products to one or multiple shops
-        categoriesField, // Link products to categories
+        // 1) Tenant
+        {
+            ...tenantField,
+
+        },
+
+        // 2) Shops
+        {
+            ...shopsField,
+
+        },
+
+        // 3) Categories
+        {
+            ...categoriesField,
+
+        },
+
+        // 4) CloudPOS ID
         {
             name: 'cloudPOSId',
             type: 'number',
@@ -47,7 +75,13 @@ export const Products: CollectionConfig = {
                 position: 'sidebar',
                 description: 'The CloudPOS ID for syncing. Leave empty if not synced yet.',
             },
+            access: {
+                read: hasFieldPermission('products', 'cloudPOSId', 'read'),
+                update: hasFieldPermission('products', 'cloudPOSId', 'update'),
+            },
         },
+
+        // 5) name_nl
         {
             name: 'name_nl',
             type: 'text',
@@ -75,7 +109,13 @@ export const Products: CollectionConfig = {
             hooks: {
                 beforeValidate: [ensureUniqueNamePerShop],
             },
+            access: {
+                read: hasFieldPermission('products', 'name_nl', 'read'),
+                update: hasFieldPermission('products', 'name_nl', 'update'),
+            },
         },
+
+        // 6) Tabs: Translated Names
         {
             type: 'tabs',
             label: {
@@ -111,6 +151,10 @@ export const Products: CollectionConfig = {
                                     fr: 'Entrez le nom en anglais.',
                                 },
                             },
+                            access: {
+                                read: hasFieldPermission('products', 'name_en', 'read'),
+                                update: hasFieldPermission('products', 'name_en', 'update'),
+                            },
                         },
                     ],
                 },
@@ -139,6 +183,10 @@ export const Products: CollectionConfig = {
                                     de: 'Geben Sie den Namen auf Deutsch ein.',
                                     fr: 'Entrez le nom en allemand.',
                                 },
+                            },
+                            access: {
+                                read: hasFieldPermission('products', 'name_de', 'read'),
+                                update: hasFieldPermission('products', 'name_de', 'update'),
                             },
                         },
                     ],
@@ -169,12 +217,18 @@ export const Products: CollectionConfig = {
                                     fr: 'Entrez le nom en français.',
                                 },
                             },
+                            access: {
+                                read: hasFieldPermission('products', 'name_fr', 'read'),
+                                update: hasFieldPermission('products', 'name_fr', 'update'),
+                            },
                         },
                     ],
                 },
             ],
+            // No direct `access` needed on the "tabs" wrapper
         },
 
+        // 7) allergens
         {
             name: 'allergens',
             type: 'select',
@@ -195,126 +249,27 @@ export const Products: CollectionConfig = {
                 },
             },
             options: [
-                {
-                    label: {
-                        en: 'Gluten',
-                        nl: 'Gluten',
-                        de: 'Gluten',
-                        fr: 'Gluten',
-                    },
-                    value: 'gluten',
-                },
-                {
-                    label: {
-                        en: 'Eggs',
-                        nl: 'Eieren',
-                        de: 'Eier',
-                        fr: 'Oeufs',
-                    },
-                    value: 'eggs',
-                },
-                {
-                    label: {
-                        en: 'Fish',
-                        nl: 'Vis',
-                        de: 'Fisch',
-                        fr: 'Poisson',
-                    },
-                    value: 'fish',
-                },
-                {
-                    label: {
-                        en: 'Peanuts',
-                        nl: 'Pinda’s',
-                        de: 'Erdnüsse',
-                        fr: 'Arachides',
-                    },
-                    value: 'peanuts',
-                },
-                {
-                    label: {
-                        en: 'Soybeans',
-                        nl: 'Sojabonen',
-                        de: 'Sojabohnen',
-                        fr: 'Soja',
-                    },
-                    value: 'soybeans',
-                },
-                {
-                    label: {
-                        en: 'Milk',
-                        nl: 'Melk',
-                        de: 'Milch',
-                        fr: 'Lait',
-                    },
-                    value: 'milk',
-                },
-                {
-                    label: {
-                        en: 'Nuts',
-                        nl: 'Noten',
-                        de: 'Nüsse',
-                        fr: 'Noix',
-                    },
-                    value: 'nuts',
-                },
-                {
-                    label: {
-                        en: 'Celery',
-                        nl: 'Selderij',
-                        de: 'Sellerie',
-                        fr: 'Céleri',
-                    },
-                    value: 'celery',
-                },
-                {
-                    label: {
-                        en: 'Mustard',
-                        nl: 'Mosterd',
-                        de: 'Senf',
-                        fr: 'Moutarde',
-                    },
-                    value: 'mustard',
-                },
-                {
-                    label: {
-                        en: 'Sesame',
-                        nl: 'Sesam',
-                        de: 'Sesam',
-                        fr: 'Sésame',
-                    },
-                    value: 'sesame',
-                },
-                {
-                    label: {
-                        en: 'Sulphites',
-                        nl: 'Sulfieten',
-                        de: 'Sulfite',
-                        fr: 'Sulfites',
-                    },
-                    value: 'sulphites',
-                },
-                {
-                    label: {
-                        en: 'Lupin',
-                        nl: 'Lupine',
-                        de: 'Lupine',
-                        fr: 'Lupin',
-                    },
-                    value: 'lupin',
-                },
-                {
-                    label: {
-                        en: 'Molluscs',
-                        nl: 'Weekdieren',
-                        de: 'Weichtiere',
-                        fr: 'Mollusques',
-                    },
-                    value: 'molluscs',
-                },
+                { label: { en: 'Gluten', nl: 'Gluten', de: 'Gluten', fr: 'Gluten' }, value: 'gluten' },
+                { label: { en: 'Eggs', nl: 'Eieren', de: 'Eier', fr: 'Oeufs' }, value: 'eggs' },
+                { label: { en: 'Fish', nl: 'Vis', de: 'Fisch', fr: 'Poisson' }, value: 'fish' },
+                { label: { en: 'Peanuts', nl: 'Pinda’s', de: 'Erdnüsse', fr: 'Arachides' }, value: 'peanuts' },
+                { label: { en: 'Soybeans', nl: 'Sojabonen', de: 'Sojabohnen', fr: 'Soja' }, value: 'soybeans' },
+                { label: { en: 'Milk', nl: 'Melk', de: 'Milch', fr: 'Lait' }, value: 'milk' },
+                { label: { en: 'Nuts', nl: 'Noten', de: 'Nüsse', fr: 'Noix' }, value: 'nuts' },
+                { label: { en: 'Celery', nl: 'Selderij', de: 'Sellerie', fr: 'Céleri' }, value: 'celery' },
+                { label: { en: 'Mustard', nl: 'Mosterd', de: 'Senf', fr: 'Moutarde' }, value: 'mustard' },
+                { label: { en: 'Sesame', nl: 'Sesam', de: 'Sesam', fr: 'Sésame' }, value: 'sesame' },
+                { label: { en: 'Sulphites', nl: 'Sulfieten', de: 'Sulfite', fr: 'Sulfites' }, value: 'sulphites' },
+                { label: { en: 'Lupin', nl: 'Lupine', de: 'Lupine', fr: 'Lupin' }, value: 'lupin' },
+                { label: { en: 'Molluscs', nl: 'Weekdieren', de: 'Weichtiere', fr: 'Mollusques' }, value: 'molluscs' },
             ],
+            access: {
+                read: hasFieldPermission('products', 'allergens', 'read'),
+                update: hasFieldPermission('products', 'allergens', 'update'),
+            },
         },
 
+        // 8) price_unified
         {
             name: 'price_unified',
             type: 'checkbox',
@@ -324,7 +279,6 @@ export const Products: CollectionConfig = {
                 de: 'Einheitlicher Preis',
                 fr: 'Prix Unifié',
             },
-
             defaultValue: true,
             admin: {
                 description: {
@@ -334,7 +288,13 @@ export const Products: CollectionConfig = {
                     fr: 'Utilisez un prix de vente unifié pour toutes les méthodes de réalisation.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'price_unified', 'read'),
+                update: hasFieldPermission('products', 'price_unified', 'update'),
+            },
         },
+
+        // 9) price
         {
             name: 'price',
             type: 'number',
@@ -344,9 +304,8 @@ export const Products: CollectionConfig = {
                 de: 'Einheitlicher Verkaufspreis',
                 fr: 'Prix de Vente Unifié',
             },
-
             admin: {
-                condition: (data) => data?.price_unified, // Only show if unified pricing is enabled
+                condition: (data) => data?.price_unified,
                 description: {
                     en: 'The unified sale price.',
                     nl: 'De eenvormige verkoopprijs.',
@@ -354,7 +313,13 @@ export const Products: CollectionConfig = {
                     fr: 'Le prix de vente unifié.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'price', 'read'),
+                update: hasFieldPermission('products', 'price', 'update'),
+            },
         },
+
+        // 10) price_dinein
         {
             name: 'price_dinein',
             type: 'number',
@@ -364,9 +329,8 @@ export const Products: CollectionConfig = {
                 de: 'Preis für Verzehr vor Ort',
                 fr: 'Prix pour Manger sur Place',
             },
-
             admin: {
-                condition: (data) => !data?.price_unified, // Only show if unified pricing is disabled
+                condition: (data) => !data?.price_unified,
                 description: {
                     en: 'Sale price for dine-in.',
                     nl: 'Verkoopprijs voor eten op locatie.',
@@ -374,7 +338,13 @@ export const Products: CollectionConfig = {
                     fr: 'Prix de vente pour manger sur place.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'price_dinein', 'read'),
+                update: hasFieldPermission('products', 'price_dinein', 'update'),
+            },
         },
+
+        // 11) price_takeaway
         {
             name: 'price_takeaway',
             type: 'number',
@@ -384,9 +354,8 @@ export const Products: CollectionConfig = {
                 de: 'Mitnahmepreis',
                 fr: 'Prix à Emporter',
             },
-
             admin: {
-                condition: (data) => !data?.price_unified, // Only show if unified pricing is disabled
+                condition: (data) => !data?.price_unified,
                 description: {
                     en: 'Sale price for takeaway.',
                     nl: 'Verkoopprijs voor afhalen.',
@@ -394,7 +363,13 @@ export const Products: CollectionConfig = {
                     fr: 'Prix de vente à emporter.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'price_takeaway', 'read'),
+                update: hasFieldPermission('products', 'price_takeaway', 'update'),
+            },
         },
+
+        // 12) price_delivery
         {
             name: 'price_delivery',
             type: 'number',
@@ -404,9 +379,8 @@ export const Products: CollectionConfig = {
                 de: 'Lieferpreis',
                 fr: 'Prix de Livraison',
             },
-
             admin: {
-                condition: (data) => !data?.price_unified, // Only show if unified pricing is disabled
+                condition: (data) => !data?.price_unified,
                 description: {
                     en: 'Sale price for delivery.',
                     nl: 'Verkoopprijs voor bezorging.',
@@ -414,7 +388,13 @@ export const Products: CollectionConfig = {
                     fr: 'Prix de vente pour livraison.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'price_delivery', 'read'),
+                update: hasFieldPermission('products', 'price_delivery', 'update'),
+            },
         },
+
+        // 13) menuOrder
         {
             name: 'menuOrder',
             type: 'number',
@@ -435,7 +415,13 @@ export const Products: CollectionConfig = {
                     fr: 'Les produits ayant un ordre de menu plus faible apparaissent en premier. Si deux éléments partagent le même ordre, ils sont triés par ordre alphabétique.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'menuOrder', 'read'),
+                update: hasFieldPermission('products', 'menuOrder', 'update'),
+            },
         },
+
+        // 14) isPromotion
         {
             name: 'isPromotion',
             type: 'checkbox',
@@ -454,7 +440,13 @@ export const Products: CollectionConfig = {
                     fr: 'Cochez si ce produit est en promotion. Le champ de l’ancien prix apparaîtra.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'isPromotion', 'read'),
+                update: hasFieldPermission('products', 'isPromotion', 'update'),
+            },
         },
+
+        // 15) old_price
         {
             name: 'old_price',
             type: 'number',
@@ -465,7 +457,7 @@ export const Products: CollectionConfig = {
                 fr: 'Ancien Prix',
             },
             admin: {
-                condition: (data) => data?.isPromotion === true, // only show when isPromotion = true
+                condition: (data) => data?.isPromotion === true,
                 description: {
                     en: 'Please put the old (original) price here, and use the normal price field for the new price.',
                     nl: 'Vul hier de oude (oorspronkelijke) prijs in, en gebruik het normale prijsveld voor de nieuwe prijs.',
@@ -473,7 +465,13 @@ export const Products: CollectionConfig = {
                     fr: 'Veuillez mettre ici l’ancien prix (d’origine), et utiliser le champ de prix normal pour le nouveau prix.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'old_price', 'read'),
+                update: hasFieldPermission('products', 'old_price', 'update'),
+            },
         },
+
+        // 16) enable_stock
         {
             name: 'enable_stock',
             type: 'checkbox',
@@ -483,7 +481,6 @@ export const Products: CollectionConfig = {
                 de: 'Bestandsverfolgung Aktivieren',
                 fr: 'Activer le Suivi des Stocks',
             },
-
             defaultValue: false,
             admin: {
                 description: {
@@ -493,7 +490,13 @@ export const Products: CollectionConfig = {
                     fr: 'Activez le suivi des stocks pour ce produit.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'enable_stock', 'read'),
+                update: hasFieldPermission('products', 'enable_stock', 'update'),
+            },
         },
+
+        // 17) quantity
         {
             name: 'quantity',
             type: 'number',
@@ -503,10 +506,9 @@ export const Products: CollectionConfig = {
                 de: 'Lagerbestand',
                 fr: 'Quantité en Stock',
             },
-
             defaultValue: 0,
             admin: {
-                condition: (data) => data?.enable_stock, // Only show if stock tracking is enabled
+                condition: (data) => data?.enable_stock,
                 description: {
                     en: 'Specify the stock quantity for this product.',
                     nl: 'Geef de voorraadhoeveelheid voor dit product op.',
@@ -514,7 +516,13 @@ export const Products: CollectionConfig = {
                     fr: 'Spécifiez la quantité en stock pour ce produit.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'quantity', 'read'),
+                update: hasFieldPermission('products', 'quantity', 'update'),
+            },
         },
+
+        // 18) tax
         {
             name: 'tax',
             type: 'number',
@@ -524,7 +532,6 @@ export const Products: CollectionConfig = {
                 de: 'MwSt-Prozentsatz',
                 fr: 'Pourcentage de TVA',
             },
-
             required: true,
             admin: {
                 description: {
@@ -534,7 +541,13 @@ export const Products: CollectionConfig = {
                     fr: 'Spécifiez le pourcentage de TVA (p.ex., 6, 12, 21).',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'tax', 'read'),
+                update: hasFieldPermission('products', 'tax', 'update'),
+            },
         },
+
+        // 19) tax_dinein
         {
             name: 'tax_dinein',
             type: 'number',
@@ -544,7 +557,6 @@ export const Products: CollectionConfig = {
                 de: 'Steuer für Verzehr vor Ort',
                 fr: 'Taxe pour Manger sur Place',
             },
-
             admin: {
                 description: {
                     en: 'Specify the VAT percentage (e.g., 6, 12, 21).',
@@ -553,7 +565,13 @@ export const Products: CollectionConfig = {
                     fr: 'Spécifiez le pourcentage de TVA (p.ex., 6, 12, 21).',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'tax_dinein', 'read'),
+                update: hasFieldPermission('products', 'tax_dinein', 'update'),
+            },
         },
+
+        // 20) posshow
         {
             name: 'posshow',
             type: 'checkbox',
@@ -563,7 +581,6 @@ export const Products: CollectionConfig = {
                 de: 'Im POS-System Anzeigen',
                 fr: 'Afficher dans le Système POS',
             },
-
             defaultValue: false,
             admin: {
                 description: {
@@ -573,7 +590,13 @@ export const Products: CollectionConfig = {
                     fr: 'Activez l\'affichage du produit dans le système POS.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'posshow', 'read'),
+                update: hasFieldPermission('products', 'posshow', 'update'),
+            },
         },
+
+        // 21) barcode
         {
             name: 'barcode',
             type: 'text',
@@ -583,7 +606,6 @@ export const Products: CollectionConfig = {
                 de: 'Strichcode',
                 fr: 'Code-barres',
             },
-
             admin: {
                 description: {
                     en: 'Product barcode (if applicable).',
@@ -592,7 +614,13 @@ export const Products: CollectionConfig = {
                     fr: 'Code-barres du produit (le cas échéant).',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'barcode', 'read'),
+                update: hasFieldPermission('products', 'barcode', 'update'),
+            },
         },
+
+        // 22) image
         {
             name: 'image',
             type: 'relationship',
@@ -602,7 +630,6 @@ export const Products: CollectionConfig = {
                 de: 'Bild',
                 fr: 'Image',
             },
-
             relationTo: 'media',
             required: false,
             admin: {
@@ -613,7 +640,13 @@ export const Products: CollectionConfig = {
                     fr: 'Faites référence à une image de la bibliothèque multimédia.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'image', 'read'),
+                update: hasFieldPermission('products', 'image', 'update'),
+            },
         },
+
+        // 23) modtime
         {
             name: 'modtime',
             type: 'number',
@@ -623,7 +656,6 @@ export const Products: CollectionConfig = {
                 de: 'Zeitstempel der Änderung',
                 fr: 'Horodatage de Modification',
             },
-
             required: true,
             defaultValue: () => Date.now(),
             admin: {
@@ -635,7 +667,13 @@ export const Products: CollectionConfig = {
                     fr: 'Horodatage de la dernière modification.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'modtime', 'read'),
+                update: hasFieldPermission('products', 'modtime', 'update'),
+            },
         },
+
+        // 24) description_nl
         {
             name: 'description_nl',
             type: 'textarea',
@@ -660,7 +698,13 @@ export const Products: CollectionConfig = {
                     fr: 'Entrez la description par défaut en néerlandais.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'description_nl', 'read'),
+                update: hasFieldPermission('products', 'description_nl', 'update'),
+            },
         },
+
+        // 25) Tabs: Translated Descriptions
         {
             type: 'tabs',
             label: {
@@ -696,6 +740,10 @@ export const Products: CollectionConfig = {
                                     fr: 'Entrez la description en anglais.',
                                 },
                             },
+                            access: {
+                                read: hasFieldPermission('products', 'description_en', 'read'),
+                                update: hasFieldPermission('products', 'description_en', 'update'),
+                            },
                         },
                     ],
                 },
@@ -724,6 +772,10 @@ export const Products: CollectionConfig = {
                                     de: 'Geben Sie die Beschreibung auf Deutsch ein.',
                                     fr: 'Entrez la description en allemand.',
                                 },
+                            },
+                            access: {
+                                read: hasFieldPermission('products', 'description_de', 'read'),
+                                update: hasFieldPermission('products', 'description_de', 'update'),
                             },
                         },
                     ],
@@ -754,12 +806,18 @@ export const Products: CollectionConfig = {
                                     fr: 'Entrez la description en français.',
                                 },
                             },
+                            access: {
+                                read: hasFieldPermission('products', 'description_fr', 'read'),
+                                update: hasFieldPermission('products', 'description_fr', 'update'),
+                            },
                         },
                     ],
                 },
             ],
+            // The “tabs” wrapper doesn't itself require an `access` property.
         },
 
+        // 26) webshopshow
         {
             name: 'webshopshow',
             type: 'checkbox',
@@ -769,7 +827,6 @@ export const Products: CollectionConfig = {
                 de: 'Im Webshop Anzeigen',
                 fr: 'Afficher dans la Boutique en Ligne',
             },
-
             defaultValue: false,
             admin: {
                 description: {
@@ -779,7 +836,13 @@ export const Products: CollectionConfig = {
                     fr: 'Afficher ce produit dans la boutique en ligne.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'webshopshow', 'read'),
+                update: hasFieldPermission('products', 'webshopshow', 'update'),
+            },
         },
+
+        // 27) webshoporderable
         {
             name: 'webshoporderable',
             type: 'checkbox',
@@ -789,7 +852,6 @@ export const Products: CollectionConfig = {
                 de: 'Über Webshop Bestellbar',
                 fr: 'Commandable via Boutique en Ligne',
             },
-
             defaultValue: false,
             admin: {
                 description: {
@@ -799,7 +861,13 @@ export const Products: CollectionConfig = {
                     fr: 'Permettre à ce produit d\'être commandé via la boutique en ligne.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'webshoporderable', 'read'),
+                update: hasFieldPermission('products', 'webshoporderable', 'update'),
+            },
         },
+
+        // 28) status
         {
             name: 'status',
             type: 'select',
@@ -809,7 +877,6 @@ export const Products: CollectionConfig = {
                 de: 'Status',
                 fr: 'Statut',
             },
-
             required: true,
             defaultValue: 'enabled',
             options: [
@@ -825,7 +892,13 @@ export const Products: CollectionConfig = {
                     fr: 'Statut du produit (activé ou désactivé).',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'status', 'read'),
+                update: hasFieldPermission('products', 'status', 'update'),
+            },
         },
+
+        // 29) exclude_category_popups
         {
             name: 'exclude_category_popups',
             type: 'checkbox',
@@ -844,7 +917,13 @@ export const Products: CollectionConfig = {
                     fr: 'Activez ceci pour empêcher les pop-ups spécifiques à la catégorie de s\'appliquer à ce produit.',
                 },
             },
+            access: {
+                read: hasFieldPermission('products', 'exclude_category_popups', 'read'),
+                update: hasFieldPermission('products', 'exclude_category_popups', 'update'),
+            },
         },
+
+        // 30) productpopups
         {
             name: 'productpopups',
             type: 'array',
@@ -854,7 +933,6 @@ export const Products: CollectionConfig = {
                 de: 'Produkt-Popups',
                 fr: 'Pop-ups Produit',
             },
-
             fields: [
                 {
                     name: 'popup',
@@ -874,6 +952,10 @@ export const Products: CollectionConfig = {
                             de: 'Wählen Sie ein Popup aus, das diesem Produkt zugewiesen werden soll.',
                             fr: 'Sélectionnez une pop-up à attribuer à ce produit.',
                         },
+                    },
+                    access: {
+                        read: hasFieldPermission('products', 'popup', 'read'),
+                        update: hasFieldPermission('products', 'popup', 'update'),
                     },
                 },
                 {
@@ -895,6 +977,10 @@ export const Products: CollectionConfig = {
                             fr: 'L\'ordre dans lequel cette pop-up apparaît dans le flux de travail du produit.',
                         },
                     },
+                    access: {
+                        read: hasFieldPermission('products', 'order', 'read'),
+                        update: hasFieldPermission('products', 'order', 'update'),
+                    },
                 },
             ],
             admin: {
@@ -905,6 +991,13 @@ export const Products: CollectionConfig = {
                     fr: 'Attribuez des pop-ups à ce produit et définissez leur ordre.',
                 },
             },
+            // The array itself can also have read/update if needed:
+            access: {
+                read: hasFieldPermission('products', 'productpopups', 'read'),
+                update: hasFieldPermission('products', 'productpopups', 'update'),
+            },
         },
     ],
 };
+
+export default Products;

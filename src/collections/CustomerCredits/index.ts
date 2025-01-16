@@ -1,21 +1,32 @@
+// File: src/collections/CustomerCredits.ts
+
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import {
+  hasPermission,
+  hasFieldPermission,
+} from '@/access/permissionChecker';
 
 export const CustomerCredits: CollectionConfig = {
   slug: 'customer-credits',
+
+  // -------------------------
+  // Collection-level Access
+  // -------------------------
   access: {
     create: hasPermission('customer-credits', 'create'),
     delete: hasPermission('customer-credits', 'delete'),
     read: hasPermission('customer-credits', 'read'),
     update: hasPermission('customer-credits', 'update'),
   },
+
   admin: {
     baseListFilter,
     useAsTitle: 'customerid', // Display customer ID in admin view
   },
+
   labels: {
     plural: {
       en: 'Customer Credits',
@@ -30,9 +41,21 @@ export const CustomerCredits: CollectionConfig = {
       fr: 'Crédit Client',
     },
   },
+
   fields: [
-    tenantField, // Ensure customer credits are scoped by tenant
-    shopsField, // Link customer credits to specific shops
+    // 1) Tenant
+    {
+      ...tenantField,
+
+    },
+
+    // 2) Shops
+    {
+      ...shopsField,
+
+    },
+
+    // 3) customerid
     {
       name: 'customerid',
       type: 'relationship',
@@ -52,7 +75,13 @@ export const CustomerCredits: CollectionConfig = {
           fr: 'Le client à qui ce crédit est attribué.',
         },
       },
+      access: {
+        read: hasFieldPermission('customer-credits', 'customerid', 'read'),
+        update: hasFieldPermission('customer-credits', 'customerid', 'update'),
+      },
     },
+
+    // 4) value
     {
       name: 'value',
       type: 'number',
@@ -71,7 +100,13 @@ export const CustomerCredits: CollectionConfig = {
           fr: 'Valeur du crédit disponible pour le client.',
         },
       },
+      access: {
+        read: hasFieldPermission('customer-credits', 'value', 'read'),
+        update: hasFieldPermission('customer-credits', 'value', 'update'),
+      },
     },
+
+    // 5) tagid
     {
       name: 'tagid',
       type: 'text',
@@ -90,7 +125,13 @@ export const CustomerCredits: CollectionConfig = {
           fr: 'Identifiant de tag facultatif pour ce crédit.',
         },
       },
+      access: {
+        read: hasFieldPermission('customer-credits', 'tagid', 'read'),
+        update: hasFieldPermission('customer-credits', 'tagid', 'update'),
+      },
     },
+
+    // 6) tagtype
     {
       name: 'tagtype',
       type: 'text',
@@ -109,7 +150,13 @@ export const CustomerCredits: CollectionConfig = {
           fr: 'Type de tag facultatif pour ce crédit.',
         },
       },
+      access: {
+        read: hasFieldPermission('customer-credits', 'tagtype', 'read'),
+        update: hasFieldPermission('customer-credits', 'tagtype', 'update'),
+      },
     },
+
+    // 7) productid
     {
       name: 'productid',
       type: 'relationship',
@@ -129,7 +176,13 @@ export const CustomerCredits: CollectionConfig = {
           fr: 'Produit associé à ce crédit (le cas échéant).',
         },
       },
+      access: {
+        read: hasFieldPermission('customer-credits', 'productid', 'read'),
+        update: hasFieldPermission('customer-credits', 'productid', 'update'),
+      },
     },
+
+    // 8) categoryid
     {
       name: 'categoryid',
       type: 'relationship',
@@ -149,7 +202,13 @@ export const CustomerCredits: CollectionConfig = {
           fr: 'Catégorie associée à ce crédit (le cas échéant).',
         },
       },
+      access: {
+        read: hasFieldPermission('customer-credits', 'categoryid', 'read'),
+        update: hasFieldPermission('customer-credits', 'categoryid', 'update'),
+      },
     },
+
+    // 9) paymenttype
     {
       name: 'paymenttype',
       type: 'relationship',
@@ -169,6 +228,12 @@ export const CustomerCredits: CollectionConfig = {
           fr: 'Méthode de paiement associée à ce crédit.',
         },
       },
+      access: {
+        read: hasFieldPermission('customer-credits', 'paymenttype', 'read'),
+        update: hasFieldPermission('customer-credits', 'paymenttype', 'update'),
+      },
     },
   ],
 };
+
+export default CustomerCredits;

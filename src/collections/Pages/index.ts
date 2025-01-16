@@ -1,22 +1,27 @@
-import type { CollectionConfig } from 'payload';
+// File: src/collections/Pages/index.ts
 
+import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { baseListFilter } from './access/baseListFilter';
 import { ensureUniqueSlug } from './hooks/ensureUniqueSlug';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
+
+  // Collection-level access
   access: {
     create: hasPermission('pages', 'create'),
     delete: hasPermission('pages', 'delete'),
     read: hasPermission('pages', 'read'),
     update: hasPermission('pages', 'update'),
   },
+
   admin: {
     baseListFilter,
     useAsTitle: 'title',
   },
+
   labels: {
     plural: {
       en: 'Pages',
@@ -31,7 +36,9 @@ export const Pages: CollectionConfig = {
       fr: 'Page',
     },
   },
+
   fields: [
+    // 1) title
     {
       name: 'title',
       type: 'text',
@@ -55,7 +62,13 @@ export const Pages: CollectionConfig = {
           fr: 'p.ex., À Propos',
         },
       },
+      access: {
+        read: hasFieldPermission('pages', 'title', 'read'),
+        update: hasFieldPermission('pages', 'title', 'update'),
+      },
     },
+
+    // 2) slug
     {
       name: 'slug',
       type: 'text',
@@ -84,7 +97,13 @@ export const Pages: CollectionConfig = {
           fr: 'p.ex., a-propos',
         },
       },
+      access: {
+        read: hasFieldPermission('pages', 'slug', 'read'),
+        update: hasFieldPermission('pages', 'slug', 'update'),
+      },
     },
+
+    // 3) slug2 (second slug)
     {
       name: 'slug2',
       type: 'text',
@@ -110,7 +129,18 @@ export const Pages: CollectionConfig = {
           fr: 'p.ex., a-propos',
         },
       },
+      access: {
+        read: hasFieldPermission('pages', 'slug2', 'read'),
+        update: hasFieldPermission('pages', 'slug2', 'update'),
+      },
     },
-    tenantField, // Scopes pages by tenant
+
+    // 4) tenantField
+    {
+      ...tenantField,
+
+    },
   ],
 };
+
+export default Pages;

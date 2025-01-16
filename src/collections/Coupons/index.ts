@@ -1,22 +1,33 @@
+// File: src/collections/Coupons.ts
+
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import {
+  hasPermission,
+  hasFieldPermission,
+} from '@/access/permissionChecker';
 import { ensureUniqueBarcodePerShop } from './hooks/ensureUniqueBarcodePerShop';
 
 export const Coupons: CollectionConfig = {
   slug: 'coupons',
+
+  // -------------------------
+  // Collection-level Access
+  // -------------------------
   access: {
     create: hasPermission('coupons', 'create'),
     delete: hasPermission('coupons', 'delete'),
     read: hasPermission('coupons', 'read'),
     update: hasPermission('coupons', 'update'),
   },
+
   admin: {
     baseListFilter,
     useAsTitle: 'barcode',
   },
+
   labels: {
     plural: {
       en: 'Coupons',
@@ -31,9 +42,21 @@ export const Coupons: CollectionConfig = {
       fr: 'Coupon',
     },
   },
+
   fields: [
-    tenantField, // Ensure coupons are scoped by tenant
-    shopsField, // Link coupons to specific shops
+    // 1) Tenant
+    {
+      ...tenantField,
+
+    },
+
+    // 2) Shops
+    {
+      ...shopsField,
+
+    },
+
+    // 3) barcode
     {
       name: 'barcode',
       type: 'text',
@@ -62,7 +85,13 @@ export const Coupons: CollectionConfig = {
           fr: 'p.ex., 12345ABC',
         },
       },
+      access: {
+        read: hasFieldPermission('coupons', 'barcode', 'read'),
+        update: hasFieldPermission('coupons', 'barcode', 'update'),
+      },
     },
+
+    // 4) value
     {
       name: 'value',
       type: 'number',
@@ -81,7 +110,13 @@ export const Coupons: CollectionConfig = {
           fr: 'Valeur du coupon (pourcentage ou montant fixe).',
         },
       },
+      access: {
+        read: hasFieldPermission('coupons', 'value', 'read'),
+        update: hasFieldPermission('coupons', 'value', 'update'),
+      },
     },
+
+    // 5) value_type
     {
       name: 'value_type',
       type: 'select',
@@ -104,7 +139,13 @@ export const Coupons: CollectionConfig = {
           fr: 'Type de valeur pour le coupon.',
         },
       },
+      access: {
+        read: hasFieldPermission('coupons', 'value_type', 'read'),
+        update: hasFieldPermission('coupons', 'value_type', 'update'),
+      },
     },
+
+    // 6) valid_from
     {
       name: 'valid_from',
       type: 'date',
@@ -123,7 +164,13 @@ export const Coupons: CollectionConfig = {
           fr: 'Date de début de validité du coupon.',
         },
       },
+      access: {
+        read: hasFieldPermission('coupons', 'valid_from', 'read'),
+        update: hasFieldPermission('coupons', 'valid_from', 'update'),
+      },
     },
+
+    // 7) valid_until
     {
       name: 'valid_until',
       type: 'date',
@@ -142,7 +189,13 @@ export const Coupons: CollectionConfig = {
           fr: 'Date de fin de validité du coupon.',
         },
       },
+      access: {
+        read: hasFieldPermission('coupons', 'valid_until', 'read'),
+        update: hasFieldPermission('coupons', 'valid_until', 'update'),
+      },
     },
+
+    // 8) max_uses
     {
       name: 'max_uses',
       type: 'number',
@@ -161,7 +214,13 @@ export const Coupons: CollectionConfig = {
           fr: 'Nombre maximal d\'utilisations du coupon. Laissez vide pour illimité.',
         },
       },
+      access: {
+        read: hasFieldPermission('coupons', 'max_uses', 'read'),
+        update: hasFieldPermission('coupons', 'max_uses', 'update'),
+      },
     },
+
+    // 9) uses
     {
       name: 'uses',
       type: 'number',
@@ -181,7 +240,15 @@ export const Coupons: CollectionConfig = {
           fr: 'Nombre de fois que ce coupon a été utilisé.',
         },
       },
+      access: {
+        read: hasFieldPermission('coupons', 'uses', 'read'),
+        // no `update` permission needed if you never want manual updates 
+        // (only done by system or hooks). If you want to allow manual update, add it:
+        update: hasFieldPermission('coupons', 'uses', 'update'),
+      },
     },
+
+    // 10) used
     {
       name: 'used',
       type: 'checkbox',
@@ -200,6 +267,12 @@ export const Coupons: CollectionConfig = {
           fr: 'Marquez si le bon cadeau a été utilisé.',
         },
       },
+      access: {
+        read: hasFieldPermission('coupons', 'used', 'read'),
+        update: hasFieldPermission('coupons', 'used', 'update'),
+      },
     },
   ],
 };
+
+export default Coupons;

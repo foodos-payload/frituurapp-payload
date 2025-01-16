@@ -1,21 +1,30 @@
+// File: src/collections/ReservationEntries/index.ts
+
 import type { CollectionConfig } from 'payload';
+
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const ReservationEntries: CollectionConfig = {
   slug: 'reservation-entries',
+
+  // -------------------------
+  // Collection-level Access
+  // -------------------------
   access: {
     create: hasPermission('reservation-entries', 'create'),
     delete: hasPermission('reservation-entries', 'delete'),
     read: hasPermission('reservation-entries', 'read'),
     update: hasPermission('reservation-entries', 'update'),
   },
+
   admin: {
     baseListFilter,
-    useAsTitle: 'customer_name', // Use customer name as the title
+    useAsTitle: 'customer_name', // Use the customer name as the title
   },
+
   labels: {
     plural: {
       en: 'Reservation Entries',
@@ -32,8 +41,19 @@ export const ReservationEntries: CollectionConfig = {
   },
 
   fields: [
-    tenantField,
-    shopsField,
+    // 1) tenantField
+    {
+      ...tenantField,
+
+    },
+
+    // 2) shopsField
+    {
+      ...shopsField,
+
+    },
+
+    // 3) customer_name
     {
       name: 'customer_name',
       type: 'text',
@@ -43,7 +63,6 @@ export const ReservationEntries: CollectionConfig = {
         de: 'Name des Kunden',
         fr: 'Nom du Client',
       },
-
       required: true,
       admin: {
         description: {
@@ -53,7 +72,13 @@ export const ReservationEntries: CollectionConfig = {
           fr: 'Nom du client effectuant la réservation.',
         },
       },
+      access: {
+        read: hasFieldPermission('reservation-entries', 'customer_name', 'read'),
+        update: hasFieldPermission('reservation-entries', 'customer_name', 'update'),
+      },
     },
+
+    // 4) customer_phone
     {
       name: 'customer_phone',
       type: 'text',
@@ -63,7 +88,6 @@ export const ReservationEntries: CollectionConfig = {
         de: 'Telefonnummer des Kunden',
         fr: 'Numéro de Téléphone du Client',
       },
-
       required: true,
       admin: {
         description: {
@@ -73,7 +97,13 @@ export const ReservationEntries: CollectionConfig = {
           fr: 'Numéro de téléphone du client.',
         },
       },
+      access: {
+        read: hasFieldPermission('reservation-entries', 'customer_phone', 'read'),
+        update: hasFieldPermission('reservation-entries', 'customer_phone', 'update'),
+      },
     },
+
+    // 5) customer_email
     {
       name: 'customer_email',
       type: 'email',
@@ -92,7 +122,13 @@ export const ReservationEntries: CollectionConfig = {
           fr: 'Adresse électronique du client effectuant la réservation.',
         },
       },
+      access: {
+        read: hasFieldPermission('reservation-entries', 'customer_email', 'read'),
+        update: hasFieldPermission('reservation-entries', 'customer_email', 'update'),
+      },
     },
+
+    // 6) date
     {
       name: 'date',
       type: 'date',
@@ -102,7 +138,6 @@ export const ReservationEntries: CollectionConfig = {
         de: 'Reservierungsdatum',
         fr: 'Date de Réservation',
       },
-
       required: true,
       admin: {
         description: {
@@ -112,17 +147,22 @@ export const ReservationEntries: CollectionConfig = {
           fr: 'Date de la réservation.',
         },
       },
+      access: {
+        read: hasFieldPermission('reservation-entries', 'date', 'read'),
+        update: hasFieldPermission('reservation-entries', 'date', 'update'),
+      },
     },
+
+    // 7) time
     {
       name: 'time',
-      type: 'text', // Use 'text' to ensure input visibility
+      type: 'text', // "text" so the user can see the input easily
       label: {
         en: 'Reservation Time',
         nl: 'Reserveringstijd',
         de: 'Reservierungszeit',
         fr: 'Heure de Réservation',
       },
-
       required: true,
       validate: (value: string | null | undefined) => {
         if (typeof value === 'string') {
@@ -147,7 +187,13 @@ export const ReservationEntries: CollectionConfig = {
           fr: 'p.ex., 13:30',
         },
       },
+      access: {
+        read: hasFieldPermission('reservation-entries', 'time', 'read'),
+        update: hasFieldPermission('reservation-entries', 'time', 'update'),
+      },
     },
+
+    // 8) persons
     {
       name: 'persons',
       type: 'number',
@@ -157,7 +203,6 @@ export const ReservationEntries: CollectionConfig = {
         de: 'Anzahl der Personen',
         fr: 'Nombre de Personnes',
       },
-
       required: true,
       admin: {
         description: {
@@ -167,7 +212,13 @@ export const ReservationEntries: CollectionConfig = {
           fr: 'Nombre de personnes pour la réservation.',
         },
       },
+      access: {
+        read: hasFieldPermission('reservation-entries', 'persons', 'read'),
+        update: hasFieldPermission('reservation-entries', 'persons', 'update'),
+      },
     },
+
+    // 9) table (relationship to "tables")
     {
       name: 'table',
       type: 'relationship',
@@ -177,7 +228,6 @@ export const ReservationEntries: CollectionConfig = {
         de: 'Zugewiesener Tisch',
         fr: 'Table Assignée',
       },
-
       relationTo: 'tables',
       required: true,
       admin: {
@@ -188,7 +238,13 @@ export const ReservationEntries: CollectionConfig = {
           fr: 'Table assignée pour la réservation.',
         },
       },
+      access: {
+        read: hasFieldPermission('reservation-entries', 'table', 'read'),
+        update: hasFieldPermission('reservation-entries', 'table', 'update'),
+      },
     },
+
+    // 10) special_requests
     {
       name: 'special_requests',
       type: 'textarea',
@@ -198,7 +254,6 @@ export const ReservationEntries: CollectionConfig = {
         de: 'Besondere Wünsche',
         fr: 'Demandes Spéciales',
       },
-
       admin: {
         description: {
           en: 'Special requests from the customer.',
@@ -207,6 +262,12 @@ export const ReservationEntries: CollectionConfig = {
           fr: 'Demandes spéciales du client.',
         },
       },
+      access: {
+        read: hasFieldPermission('reservation-entries', 'special_requests', 'read'),
+        update: hasFieldPermission('reservation-entries', 'special_requests', 'update'),
+      },
     },
   ],
 };
+
+export default ReservationEntries;

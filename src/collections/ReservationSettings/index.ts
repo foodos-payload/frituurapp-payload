@@ -1,22 +1,31 @@
+// File: src/collections/ReservationSettings/index.ts
+
 import type { CollectionConfig } from 'payload';
+
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { ensureUniqueReservationSetting } from './hooks/ensureUniqueReservationSetting';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const ReservationSettings: CollectionConfig = {
   slug: 'reservation-settings',
+
+  // -------------------------
+  // Collection-level Access
+  // -------------------------
   access: {
     create: hasPermission('reservation-settings', 'create'),
     delete: hasPermission('reservation-settings', 'delete'),
     read: hasPermission('reservation-settings', 'read'),
     update: hasPermission('reservation-settings', 'update'),
   },
+
   admin: {
     baseListFilter,
     useAsTitle: 'reservation_name',
   },
+
   labels: {
     plural: {
       en: 'Reservation Settings',
@@ -31,12 +40,25 @@ export const ReservationSettings: CollectionConfig = {
       fr: 'Paramètre de Réservation',
     },
   },
+
   hooks: {
     beforeValidate: [ensureUniqueReservationSetting],
   },
+
   fields: [
-    tenantField, // Scope by tenant
-    shopsField, // Link to shops
+    // 1) tenantField
+    {
+      ...tenantField,
+
+    },
+
+    // 2) shopsField
+    {
+      ...shopsField,
+
+    },
+
+    // 3) reservation_name
     {
       name: 'reservation_name',
       type: 'text',
@@ -55,7 +77,13 @@ export const ReservationSettings: CollectionConfig = {
           fr: 'Nom des paramètres de réservation (p.ex., Réservations Déjeuner).',
         },
       },
+      access: {
+        read: hasFieldPermission('reservation-settings', 'reservation_name', 'read'),
+        update: hasFieldPermission('reservation-settings', 'reservation_name', 'update'),
+      },
     },
+
+    // 4) active_days (group)
     {
       name: 'active_days',
       type: 'group',
@@ -152,8 +180,13 @@ export const ReservationSettings: CollectionConfig = {
           },
         },
       ],
-
+      access: {
+        read: hasFieldPermission('reservation-settings', 'active_days', 'read'),
+        update: hasFieldPermission('reservation-settings', 'active_days', 'update'),
+      },
     },
+
+    // 5) reservation_periods (array)
     {
       name: 'reservation_periods',
       type: 'array',
@@ -249,7 +282,13 @@ export const ReservationSettings: CollectionConfig = {
           },
         },
       ],
+      access: {
+        read: hasFieldPermission('reservation-settings', 'reservation_periods', 'read'),
+        update: hasFieldPermission('reservation-settings', 'reservation_periods', 'update'),
+      },
     },
+
+    // 6) holidays (array)
     {
       name: 'holidays',
       type: 'array',
@@ -259,7 +298,6 @@ export const ReservationSettings: CollectionConfig = {
         de: 'Feiertage',
         fr: 'Vacances',
       },
-
       admin: {
         description: {
           en: 'Define holidays when reservations are not allowed.',
@@ -267,7 +305,6 @@ export const ReservationSettings: CollectionConfig = {
           de: 'Definieren Sie Feiertage, an denen keine Reservierungen erlaubt sind.',
           fr: 'Définissez les jours de vacances où les réservations ne sont pas autorisées.',
         },
-
       },
       fields: [
         {
@@ -311,8 +348,13 @@ export const ReservationSettings: CollectionConfig = {
           },
         },
       ],
-
+      access: {
+        read: hasFieldPermission('reservation-settings', 'holidays', 'read'),
+        update: hasFieldPermission('reservation-settings', 'holidays', 'update'),
+      },
     },
+
+    // 7) fully_booked_days (array)
     {
       name: 'fully_booked_days',
       type: 'array',
@@ -361,8 +403,13 @@ export const ReservationSettings: CollectionConfig = {
           },
         },
       ],
-
+      access: {
+        read: hasFieldPermission('reservation-settings', 'fully_booked_days', 'read'),
+        update: hasFieldPermission('reservation-settings', 'fully_booked_days', 'update'),
+      },
     },
+
+    // 8) exceptions (array)
     {
       name: 'exceptions',
       type: 'array',
@@ -411,7 +458,12 @@ export const ReservationSettings: CollectionConfig = {
           },
         },
       ],
-
+      access: {
+        read: hasFieldPermission('reservation-settings', 'exceptions', 'read'),
+        update: hasFieldPermission('reservation-settings', 'exceptions', 'update'),
+      },
     },
   ],
 };
+
+export default ReservationSettings;

@@ -1,23 +1,31 @@
+// File: src/collections/Tables/index.ts
+
 import type { CollectionConfig } from 'payload';
 
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 import { ensureUniqueTableNumberPerShop } from './hooks/ensureUniqueTableNumberPerShop';
 
 export const Tables: CollectionConfig = {
     slug: 'tables',
+
+    // -------------------------
+    // Collection-level access
+    // -------------------------
     access: {
         create: hasPermission('tables', 'create'),
         delete: hasPermission('tables', 'delete'),
         read: hasPermission('tables', 'read'),
         update: hasPermission('tables', 'update'),
     },
+
     admin: {
         baseListFilter,
         useAsTitle: 'table_num',
     },
+
     labels: {
         plural: {
             en: 'Tables',
@@ -34,8 +42,19 @@ export const Tables: CollectionConfig = {
     },
 
     fields: [
-        tenantField, // Ensure tables are scoped by tenant
-        shopsField, // Link tables to specific shops
+        // 1) Tenant field
+        {
+            ...tenantField,
+
+        },
+
+        // 2) Shops field
+        {
+            ...shopsField,
+
+        },
+
+        // 3) table_num (number)
         {
             name: 'table_num',
             type: 'number',
@@ -57,7 +76,13 @@ export const Tables: CollectionConfig = {
                     fr: 'Numéro de table unique dans un magasin.',
                 },
             },
+            access: {
+                read: hasFieldPermission('tables', 'table_num', 'read'),
+                update: hasFieldPermission('tables', 'table_num', 'update'),
+            },
         },
+
+        // 4) status (select)
         {
             name: 'status',
             type: 'select',
@@ -68,11 +93,34 @@ export const Tables: CollectionConfig = {
                 fr: 'Statut de la Table',
             },
             options: [
-                { label: { en: 'Available', nl: 'Beschikbaar', de: 'Verfügbar', fr: 'Disponible' }, value: '0' },
-                { label: { en: 'Reserved', nl: 'Gereserveerd', de: 'Reserviert', fr: 'Réservé' }, value: '1' },
-                { label: { en: 'Occupied', nl: 'Bezet', de: 'Besetzt', fr: 'Occupé' }, value: '2' },
+                {
+                    label: {
+                        en: 'Available',
+                        nl: 'Beschikbaar',
+                        de: 'Verfügbar',
+                        fr: 'Disponible',
+                    },
+                    value: '0',
+                },
+                {
+                    label: {
+                        en: 'Reserved',
+                        nl: 'Gereserveerd',
+                        de: 'Reserviert',
+                        fr: 'Réservé',
+                    },
+                    value: '1',
+                },
+                {
+                    label: {
+                        en: 'Occupied',
+                        nl: 'Bezet',
+                        de: 'Besetzt',
+                        fr: 'Occupé',
+                    },
+                    value: '2',
+                },
             ],
-
             defaultValue: '0',
             admin: {
                 description: {
@@ -82,7 +130,13 @@ export const Tables: CollectionConfig = {
                     fr: 'Statut actuel de la table.',
                 },
             },
+            access: {
+                read: hasFieldPermission('tables', 'status', 'read'),
+                update: hasFieldPermission('tables', 'status', 'update'),
+            },
         },
+
+        // 5) capacity (number)
         {
             name: 'capacity',
             type: 'number',
@@ -101,6 +155,12 @@ export const Tables: CollectionConfig = {
                     fr: 'Nombre de personnes pouvant tenir à cette table.',
                 },
             },
+            access: {
+                read: hasFieldPermission('tables', 'capacity', 'read'),
+                update: hasFieldPermission('tables', 'capacity', 'update'),
+            },
         },
     ],
 };
+
+export default Tables;

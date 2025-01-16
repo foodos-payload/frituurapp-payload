@@ -1,26 +1,32 @@
+// File: src/collections/Tipping/index.ts
+
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
-
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 import { validateTipOptions } from './hooks/maxTipOptions';
 import { ensureSingleEnabled } from './hooks/ensureSingleTippingEnabled';
 
-
 export const Tipping: CollectionConfig = {
     slug: 'tipping',
+
+    // ------------------------------
+    // Collection-level Access
+    // ------------------------------
     access: {
         create: hasPermission('tipping', 'create'),
         delete: hasPermission('tipping', 'delete'),
         read: hasPermission('tipping', 'read'),
         update: hasPermission('tipping', 'update'),
     },
+
     admin: {
         baseListFilter,
         useAsTitle: 'title',
     },
+
     labels: {
         plural: {
             en: 'Tipping Settings',
@@ -32,11 +38,21 @@ export const Tipping: CollectionConfig = {
             // ...
         },
     },
-    fields: [
-        tenantField,
-        shopsField,
 
-        // Give the Tipping config a name/title
+    fields: [
+        // 1) Tenant field
+        {
+            ...tenantField,
+
+        },
+
+        // 2) Shops field
+        {
+            ...shopsField,
+
+        },
+
+        // 3) Title (text)
         {
             name: 'title',
             type: 'text',
@@ -45,9 +61,13 @@ export const Tipping: CollectionConfig = {
             admin: {
                 placeholder: 'e.g. "Default Tipping Setup"',
             },
+            access: {
+                read: hasFieldPermission('tipping', 'title', 'read'),
+                update: hasFieldPermission('tipping', 'title', 'update'),
+            },
         },
 
-        // Enable/Disable Tipping
+        // 4) Enable/Disable Tipping (checkbox)
         {
             name: 'enabled',
             type: 'checkbox',
@@ -56,9 +76,13 @@ export const Tipping: CollectionConfig = {
             admin: {
                 description: 'Toggle to enable or disable tip functionality for this shop.',
             },
+            access: {
+                read: hasFieldPermission('tipping', 'enabled', 'read'),
+                update: hasFieldPermission('tipping', 'enabled', 'update'),
+            },
         },
 
-        // Round-Up option
+        // 5) Round-Up option (checkbox)
         {
             name: 'enableRoundUp',
             type: 'checkbox',
@@ -67,9 +91,13 @@ export const Tipping: CollectionConfig = {
             admin: {
                 description: 'If enabled, a "round up" option will be shown to the customer.',
             },
+            access: {
+                read: hasFieldPermission('tipping', 'enableRoundUp', 'read'),
+                update: hasFieldPermission('tipping', 'enableRoundUp', 'update'),
+            },
         },
 
-        // Tip Options array (percentages or fixed amounts)
+        // 6) Tip Options array
         {
             name: 'tipOptions',
             type: 'array',
@@ -83,6 +111,11 @@ export const Tipping: CollectionConfig = {
             },
             hooks: {
                 beforeValidate: [validateTipOptions, ensureSingleEnabled],
+            },
+            access: {
+                // Only the top-level array field is restricted
+                read: hasFieldPermission('tipping', 'tipOptions', 'read'),
+                update: hasFieldPermission('tipping', 'tipOptions', 'update'),
             },
             fields: [
                 {

@@ -1,24 +1,30 @@
-// src/collections/Customers.ts
+// File: src/collections/Customers.ts
 
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const Customers: CollectionConfig = {
   slug: 'customers',
+
+  // -------------------------
+  // Collection-level Access
+  // -------------------------
   access: {
     create: hasPermission('customers', 'create'),
     delete: hasPermission('customers', 'delete'),
     read: hasPermission('customers', 'read'),
     update: hasPermission('customers', 'update'),
   },
+
   admin: {
     baseListFilter,
     useAsTitle: 'firstname',
     group: 'Shop Settings',
   },
+
   labels: {
     plural: {
       en: 'Customers',
@@ -33,9 +39,21 @@ export const Customers: CollectionConfig = {
       fr: 'Client',
     },
   },
+
   fields: [
-    tenantField,  // scope by tenant
-    shopsField,   // scope by shop
+    // 1) Tenant
+    {
+      ...tenantField,
+
+    },
+
+    // 2) Shops
+    {
+      ...shopsField,
+
+    },
+
+    // 3) cloudPOSId
     {
       name: 'cloudPOSId',
       type: 'number',
@@ -45,7 +63,13 @@ export const Customers: CollectionConfig = {
         position: 'sidebar',
         description: 'The CloudPOS ID for this customer if synced.',
       },
+      access: {
+        read: hasFieldPermission('customers', 'cloudPOSId', 'read'),
+        update: hasFieldPermission('customers', 'cloudPOSId', 'update'),
+      },
     },
+
+    // 4) firstname
     {
       name: 'firstname',
       type: 'text',
@@ -65,7 +89,13 @@ export const Customers: CollectionConfig = {
           fr: 'p.ex., Jean',
         },
       },
+      access: {
+        read: hasFieldPermission('customers', 'firstname', 'read'),
+        update: hasFieldPermission('customers', 'firstname', 'update'),
+      },
     },
+
+    // 5) lastname
     {
       name: 'lastname',
       type: 'text',
@@ -85,7 +115,13 @@ export const Customers: CollectionConfig = {
           fr: 'p.ex., Dupont',
         },
       },
+      access: {
+        read: hasFieldPermission('customers', 'lastname', 'read'),
+        update: hasFieldPermission('customers', 'lastname', 'update'),
+      },
     },
+
+    // 6) company_name
     {
       name: 'company_name',
       type: 'text',
@@ -109,7 +145,13 @@ export const Customers: CollectionConfig = {
           fr: 'p.ex., Acme SARL',
         },
       },
+      access: {
+        read: hasFieldPermission('customers', 'company_name', 'read'),
+        update: hasFieldPermission('customers', 'company_name', 'update'),
+      },
     },
+
+    // 7) email
     {
       name: 'email',
       type: 'email',
@@ -129,7 +171,13 @@ export const Customers: CollectionConfig = {
           fr: 'p.ex., jean.dupont@example.fr',
         },
       },
+      access: {
+        read: hasFieldPermission('customers', 'email', 'read'),
+        update: hasFieldPermission('customers', 'email', 'update'),
+      },
     },
+
+    // 8) phone
     {
       name: 'phone',
       type: 'text',
@@ -148,7 +196,13 @@ export const Customers: CollectionConfig = {
           fr: 'p.ex., +33123456789',
         },
       },
+      access: {
+        read: hasFieldPermission('customers', 'phone', 'read'),
+        update: hasFieldPermission('customers', 'phone', 'update'),
+      },
     },
+
+    // 9) tags (array)
     {
       name: 'tags',
       type: 'array',
@@ -181,9 +235,13 @@ export const Customers: CollectionConfig = {
           },
         },
       ],
+      access: {
+        read: hasFieldPermission('customers', 'tags', 'read'),
+        update: hasFieldPermission('customers', 'tags', 'update'),
+      },
     },
 
-    // --------- NEW FIELD: memberships array ---------
+    // 10) memberships (array)
     {
       name: 'memberships',
       type: 'array',
@@ -218,21 +276,27 @@ export const Customers: CollectionConfig = {
           label: { en: 'Date Joined Program' },
         },
       ],
+      access: {
+        read: hasFieldPermission('customers', 'memberships', 'read'),
+        update: hasFieldPermission('customers', 'memberships', 'update'),
+      },
     },
 
+    // 11) barcode (with custom UI)
     {
       name: 'barcode',
       type: 'text',
       admin: {
         readOnly: false,
         components: {
-          Field: '@/fields/CustomerQRField'
+          Field: '@/fields/CustomerQRField',
         },
       },
-    }
-
-
-    // -----------------------------------------------
+      access: {
+        read: hasFieldPermission('customers', 'barcode', 'read'),
+        update: hasFieldPermission('customers', 'barcode', 'update'),
+      },
+    },
   ],
 
   hooks: {
@@ -262,22 +326,17 @@ export const Customers: CollectionConfig = {
       async ({ data, req, operation }) => {
         if (!data) return;
 
+        // 1) On CREATE, if no barcode, generate a random code
         if (operation === 'create' && !data.barcode) {
-          // 1. Generate a random or hashed code
-          // e.g., short random string, or a hashed customer ID, or a UUID
           const randomCode = `CUST-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
-
-          // 2. Assign it
           data.barcode = randomCode;
         }
 
-        // On CREATE or UPDATE, if memberships is empty, assign a default role
+        // 2) On CREATE or UPDATE, if memberships is empty => assign default role
         if (operation === 'create' || operation === 'update') {
-          // If `memberships` is NOT provided by the incoming data, we consider it "empty"
-          // or if the array length is 0
           const memberships = data.memberships || [];
           if (memberships.length === 0) {
-            // 1) find any membership role with `defaultRole = true`
+            // find any membership role(s) with `defaultRole = true`
             const defaultRoles = await req.payload.find({
               collection: 'membership-roles',
               where: { defaultRole: { equals: true } },
@@ -285,7 +344,6 @@ export const Customers: CollectionConfig = {
             });
 
             if (defaultRoles.docs.length > 0) {
-              // 2) For each default role doc, add an item to `memberships`
               defaultRoles.docs.forEach((roleDoc: any) => {
                 memberships.push({
                   role: roleDoc.id,
@@ -295,8 +353,6 @@ export const Customers: CollectionConfig = {
                 });
               });
             }
-
-            // 3) Save the updated memberships array back to data
             data.memberships = memberships;
           }
         }
@@ -304,3 +360,5 @@ export const Customers: CollectionConfig = {
     ],
   },
 };
+
+export default Customers;

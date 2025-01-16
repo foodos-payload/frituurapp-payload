@@ -1,28 +1,35 @@
+// File: /app/(...)/order/collections/ShopSettings/Printers/index.ts
+
 import type { CollectionConfig } from 'payload';
 
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 import { checkPrinterNameUniqueness } from './hooks/checkPrinterNameUniqueness';
 // import { automatePrinterSetup } from './hooks/automatePrinterSetup';
 // import { removePrinterOnDelete } from './hooks/removePrinterOnDelete';
 
-
 export const Printers: CollectionConfig = {
     slug: 'printers',
+
+    // -------------------------
+    // Collection-level Access
+    // -------------------------
     access: {
         create: hasPermission('printers', 'create'),
         delete: hasPermission('printers', 'delete'),
         read: hasPermission('printers', 'read'),
         update: hasPermission('printers', 'update'),
     },
+
     admin: {
         baseListFilter,
         useAsTitle: 'printer_name',
     },
+
     labels: {
         plural: {
             en: 'Printers',
@@ -37,6 +44,7 @@ export const Printers: CollectionConfig = {
             fr: 'Imprimante',
         },
     },
+
     hooks: {
         beforeValidate: [
             async ({ data, req, operation, originalDoc }) => {
@@ -46,12 +54,10 @@ export const Printers: CollectionConfig = {
                 }
 
                 // 1) Merge relevant fields from `data` or `originalDoc`
-                //    (the user might not have specified some fields yet)
                 const shops = data?.shops ?? originalDoc?.shops;
                 const printerType = data?.printer_type ?? originalDoc?.printer_type;
                 const uniqueID = data?.unique_id ?? originalDoc?.unique_id;
 
-                // If any are missing, just return—let normal validations handle it
                 if (!shops || shops.length === 0 || !printerType || !uniqueID) {
                     return data;
                 }
@@ -74,15 +80,12 @@ export const Printers: CollectionConfig = {
 
                 return data;
             },
-            /**
-             * Step 4) If `printer_name` is set, run the uniqueness logic
-             */
+            // 4) If `printer_name` is set, run uniqueness logic
             async ({ data, req, operation, originalDoc }) => {
                 if (operation !== 'create' && operation !== 'update') {
                     return data;
                 }
 
-                // If no printer_name, skip
                 const finalPrinterName = data?.printer_name;
                 if (!finalPrinterName) {
                     return data;
@@ -100,12 +103,23 @@ export const Printers: CollectionConfig = {
             },
         ],
         // afterChange: [automatePrinterSetup],
-        // afterDelete: [removePrinterOnDelete], # TODO: Implement this hook after staging works
+        // afterDelete: [removePrinterOnDelete], // TODO: Implement after staging
     },
-    fields: [
-        tenantField, // Possibly required, ensure user picks a tenant
-        shopsField,  // Possibly required, ensure user picks at least one shop
 
+    fields: [
+        // 1) tenantField
+        {
+            ...tenantField,
+
+        },
+
+        // 2) shopsField
+        {
+            ...shopsField,
+
+        },
+
+        // 3) awlIP
         {
             name: 'awlIP',
             type: 'text',
@@ -114,7 +128,13 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'Copy/paste the AWL IP of the new printer.',
             },
+            access: {
+                read: hasFieldPermission('printers', 'awlIP', 'read'),
+                update: hasFieldPermission('printers', 'awlIP', 'update'),
+            },
         },
+
+        // 4) setupPortal (ui)
         {
             name: 'setupPortal',
             type: 'ui',
@@ -124,9 +144,10 @@ export const Printers: CollectionConfig = {
                     Field: '@/fields/PrinterPortalButton',
                 },
             },
+
         },
 
-        // Computed, hidden field
+        // 5) printer_name (computed, hidden)
         {
             name: 'printer_name',
             type: 'text',
@@ -135,8 +156,13 @@ export const Printers: CollectionConfig = {
                 hidden: true,
                 readOnly: true,
             },
+            access: {
+                read: hasFieldPermission('printers', 'printer_name', 'read'),
+                update: hasFieldPermission('printers', 'printer_name', 'update'),
+            },
         },
 
+        // 6) queue_name
         {
             name: 'queue_name',
             type: 'text',
@@ -145,7 +171,13 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'Enter the queue name from the printer setup portal.',
             },
+            access: {
+                read: hasFieldPermission('printers', 'queue_name', 'read'),
+                update: hasFieldPermission('printers', 'queue_name', 'update'),
+            },
         },
+
+        // 7) printer_type
         {
             name: 'printer_type',
             type: 'select',
@@ -158,7 +190,13 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'Select whether this printer is a kitchen or kiosk printer.',
             },
+            access: {
+                read: hasFieldPermission('printers', 'printer_type', 'read'),
+                update: hasFieldPermission('printers', 'printer_type', 'update'),
+            },
         },
+
+        // 8) unique_id
         {
             name: 'unique_id',
             type: 'text',
@@ -167,7 +205,13 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'Differentiate multiple kiosk/kitchen printers in the same shop.',
             },
+            access: {
+                read: hasFieldPermission('printers', 'unique_id', 'read'),
+                update: hasFieldPermission('printers', 'unique_id', 'update'),
+            },
         },
+
+        // 9) print_enabled
         {
             name: 'print_enabled',
             type: 'checkbox',
@@ -176,7 +220,13 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'Enable or disable printing functionality.',
             },
+            access: {
+                read: hasFieldPermission('printers', 'print_enabled', 'read'),
+                update: hasFieldPermission('printers', 'print_enabled', 'update'),
+            },
         },
+
+        // 10) customer_enabled
         {
             name: 'customer_enabled',
             type: 'checkbox',
@@ -186,7 +236,13 @@ export const Printers: CollectionConfig = {
                 description: 'Also print a customer copy on the kitchen printer if enabled.',
                 condition: (_, siblingData) => siblingData?.printer_type === 'kitchen',
             },
+            access: {
+                read: hasFieldPermission('printers', 'customer_enabled', 'read'),
+                update: hasFieldPermission('printers', 'customer_enabled', 'update'),
+            },
         },
+
+        // 11) kitchen_ticket_amount
         {
             name: 'kitchen_ticket_amount',
             type: 'number',
@@ -196,7 +252,13 @@ export const Printers: CollectionConfig = {
                 description: 'How many copies to print for each kitchen ticket?',
                 condition: (_, siblingData) => siblingData?.printer_type === 'kitchen',
             },
+            access: {
+                read: hasFieldPermission('printers', 'kitchen_ticket_amount', 'read'),
+                update: hasFieldPermission('printers', 'kitchen_ticket_amount', 'update'),
+            },
         },
+
+        // 12) print_category_headers
         {
             name: 'print_category_headers',
             type: 'checkbox',
@@ -205,6 +267,10 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'If enabled, print category headers on the kitchen ticket.',
                 condition: (_, siblingData) => siblingData?.printer_type === 'kitchen',
+            },
+            access: {
+                read: hasFieldPermission('printers', 'print_category_headers', 'read'),
+                update: hasFieldPermission('printers', 'print_category_headers', 'update'),
             },
         },
     ],

@@ -1,23 +1,32 @@
+// File: src/collections/Shops/index.ts
+
 import type { CollectionConfig } from 'payload';
+
 import { tenantField } from '../../fields/TenantField';
 import { baseListFilter } from './access/baseListFilter';
 import { filterByShopRead } from './access/byShop';
 import { ensureUniqueName } from './hooks/ensureUniqueName';
-import { slugify } from './hooks/slugify';
-import { hasPermission } from '@/access/permissionChecker';
+// import { slugify } from './hooks/slugify';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const Shops: CollectionConfig = {
   slug: 'shops',
+
+  // -------------------------
+  // Collection-level access
+  // -------------------------
   access: {
     create: hasPermission('shops', 'create'),
     delete: hasPermission('shops', 'delete'),
     read: filterByShopRead,
     update: hasPermission('shops', 'update'),
   },
+
   admin: {
     baseListFilter,
     useAsTitle: 'name',
   },
+
   labels: {
     plural: {
       en: 'Shops',
@@ -39,6 +48,7 @@ export const Shops: CollectionConfig = {
         if (operation === 'create') {
           const userID = req.user?.id;
           if (!userID || !doc?.id) return;
+
           setTimeout(async () => {
             try {
               const existingUser = await req.payload.findByID({
@@ -46,10 +56,12 @@ export const Shops: CollectionConfig = {
                 id: userID,
                 depth: 0,
               });
+
               const userShopIDs = Array.isArray(existingUser?.shops)
                 ? existingUser.shops.map(shop => (typeof shop === 'object' ? shop.id : shop))
                 : [];
               const updatedShops = [...new Set([...userShopIDs, doc.id])];
+
               await req.payload.update({
                 collection: 'users',
                 id: userID,
@@ -66,7 +78,13 @@ export const Shops: CollectionConfig = {
   },
 
   fields: [
-    tenantField,
+    // 1) tenantField
+    {
+      ...tenantField,
+
+    },
+
+    // 2) domain
     {
       name: 'domain',
       type: 'text',
@@ -77,7 +95,13 @@ export const Shops: CollectionConfig = {
         fr: 'FQDN including https:// needed for payments  eg. https://example.com',
       },
       required: true,
+      access: {
+        read: hasFieldPermission('shops', 'domain', 'read'),
+        update: hasFieldPermission('shops', 'domain', 'update'),
+      },
     },
+
+    // 3) name (with ensureUniqueName hook)
     {
       name: 'name',
       type: 'text',
@@ -99,7 +123,13 @@ export const Shops: CollectionConfig = {
       hooks: {
         beforeValidate: [ensureUniqueName],
       },
+      access: {
+        read: hasFieldPermission('shops', 'name', 'read'),
+        update: hasFieldPermission('shops', 'name', 'update'),
+      },
     },
+
+    // 4) slug
     {
       name: 'slug',
       type: 'text',
@@ -107,7 +137,13 @@ export const Shops: CollectionConfig = {
       // hooks: {
       //   beforeChange: [slugify],
       // },
+      access: {
+        read: hasFieldPermission('shops', 'slug', 'read'),
+        update: hasFieldPermission('shops', 'slug', 'update'),
+      },
     },
+
+    // 5) address
     {
       name: 'address',
       type: 'text',
@@ -125,9 +161,14 @@ export const Shops: CollectionConfig = {
           fr: 'L\'adresse du magasin.',
         },
       },
+      access: {
+        read: hasFieldPermission('shops', 'address', 'read'),
+        update: hasFieldPermission('shops', 'address', 'update'),
+      },
     },
+
+    // 6) generateLocation (UI field)
     {
-      // This is the new UI field for the "Generate Lat/Lng" button
       name: 'generateLocation',
       type: 'ui',
       label: 'Generate Lat/Lng from Address',
@@ -136,7 +177,10 @@ export const Shops: CollectionConfig = {
           Field: '@/fields/ShopGeocodeButton',
         },
       },
+
     },
+
+    // 7) location (group)
     {
       name: 'location',
       type: 'group',
@@ -159,7 +203,13 @@ export const Shops: CollectionConfig = {
           },
         },
       ],
+      access: {
+        read: hasFieldPermission('shops', 'location', 'read'),
+        update: hasFieldPermission('shops', 'location', 'update'),
+      },
     },
+
+    // 8) phone
     {
       name: 'phone',
       type: 'text',
@@ -177,7 +227,13 @@ export const Shops: CollectionConfig = {
           fr: 'Le numéro de téléphone du magasin.',
         },
       },
+      access: {
+        read: hasFieldPermission('shops', 'phone', 'read'),
+        update: hasFieldPermission('shops', 'phone', 'update'),
+      },
     },
+
+    // 9) company_details (group)
     {
       name: 'company_details',
       type: 'group',
@@ -324,7 +380,13 @@ export const Shops: CollectionConfig = {
           },
         },
       ],
+      access: {
+        read: hasFieldPermission('shops', 'company_details', 'read'),
+        update: hasFieldPermission('shops', 'company_details', 'update'),
+      },
     },
+
+    // 10) exceptionally_closed_days (array)
     {
       name: 'exceptionally_closed_days',
       type: 'array',
@@ -382,6 +444,12 @@ export const Shops: CollectionConfig = {
           },
         },
       ],
+      access: {
+        read: hasFieldPermission('shops', 'exceptionally_closed_days', 'read'),
+        update: hasFieldPermission('shops', 'exceptionally_closed_days', 'update'),
+      },
     },
   ],
 };
+
+export default Shops;

@@ -1,24 +1,30 @@
 // File: /app/(...)/order/collections/ShopSettings/ShopBranding/index.ts
+
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from '../FulfillmentMethods/access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
-import { colorPickerField } from '@innovixx/payload-color-picker-field'
-
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
+import { colorPickerField } from '@innovixx/payload-color-picker-field';
 
 export const ShopBranding: CollectionConfig = {
     slug: 'shop-branding',
+
+    // -------------------------
+    // Collection-level access
+    // -------------------------
     access: {
         create: hasPermission('shop-branding', 'create'),
         delete: hasPermission('shop-branding', 'delete'),
         read: hasPermission('shop-branding', 'read'),
         update: hasPermission('shop-branding', 'update'),
     },
+
     admin: {
         baseListFilter,
         useAsTitle: 'siteTitle',
     },
+
     labels: {
         plural: {
             en: 'Shop Branding',
@@ -33,12 +39,21 @@ export const ShopBranding: CollectionConfig = {
             fr: 'Branding du Magasin',
         },
     },
-    fields: [
-        // 1) Tenant + Shops link
-        tenantField,
-        shopsField,
 
-        // 2) Basic text field
+    fields: [
+        // 1) tenantField
+        {
+            ...tenantField,
+
+        },
+
+        // 2) shopsField
+        {
+            ...shopsField,
+
+        },
+
+        // 3) siteTitle
         {
             name: 'siteTitle',
             type: 'text',
@@ -57,9 +72,13 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Titre pour l’affichage du kiosque.',
                 },
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'siteTitle', 'read'),
+                update: hasFieldPermission('shop-branding', 'siteTitle', 'update'),
+            },
         },
 
-        // 3) Header image
+        // 4) siteHeaderImg
         {
             name: 'siteHeaderImg',
             type: 'upload',
@@ -79,9 +98,13 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Grande image d’arrière-plan pour l’en-tête du kiosque.',
                 },
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'siteHeaderImg', 'read'),
+                update: hasFieldPermission('shop-branding', 'siteHeaderImg', 'update'),
+            },
         },
 
-        // 4) Site Logo
+        // 5) siteLogo
         {
             name: 'siteLogo',
             type: 'upload',
@@ -101,9 +124,13 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Logo affiché dans l’en-tête ou dans un coin (facultatif).',
                 },
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'siteLogo', 'read'),
+                update: hasFieldPermission('shop-branding', 'siteLogo', 'update'),
+            },
         },
 
-        // 5) Advertisement image
+        // 6) adImage
         {
             name: 'adImage',
             type: 'upload',
@@ -123,7 +150,13 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Image publicitaire pour la page de statut de commande.',
                 },
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'adImage', 'read'),
+                update: hasFieldPermission('shop-branding', 'adImage', 'update'),
+            },
         },
+
+        // 7) headerBackgroundColor
         colorPickerField({
             name: 'headerBackgroundColor',
             label: {
@@ -140,7 +173,16 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Couleur d’arrière-plan pour l’en-tête (si aucune image).',
                 },
             },
+            // Extend the returned object with field-level access
+
+            access: {
+                read: hasFieldPermission('shop-branding', 'headerBackgroundColor', 'read'),
+                update: hasFieldPermission('shop-branding', 'headerBackgroundColor', 'update'),
+            },
+
         }),
+
+        // 8) categoryCardBgColor
         colorPickerField({
             name: 'categoryCardBgColor',
             label: {
@@ -158,7 +200,15 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Couleur d’arrière-plan pour les cartes de catégories du kiosque.',
                 },
             },
+
+            access: {
+                read: hasFieldPermission('shop-branding', 'categoryCardBgColor', 'read'),
+                update: hasFieldPermission('shop-branding', 'categoryCardBgColor', 'update'),
+            },
+
         }),
+
+        // 9) primaryColorCTA
         colorPickerField({
             name: 'primaryColorCTA',
             label: {
@@ -176,7 +226,15 @@ export const ShopBranding: CollectionConfig = {
                 },
             },
             defaultValue: '#068b59',
+
+            access: {
+                read: hasFieldPermission('shop-branding', 'primaryColorCTA', 'read'),
+                update: hasFieldPermission('shop-branding', 'primaryColorCTA', 'update'),
+            },
+
         }),
+
+        // 10) googleReviewUrl
         {
             name: 'googleReviewUrl',
             type: 'text',
@@ -195,7 +253,13 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Lien facultatif pour que les clients laissent un avis Google.',
                 },
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'googleReviewUrl', 'read'),
+                update: hasFieldPermission('shop-branding', 'googleReviewUrl', 'update'),
+            },
         },
+
+        // 11) tripAdvisorUrl
         {
             name: 'tripAdvisorUrl',
             type: 'text',
@@ -214,7 +278,13 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Lien facultatif pour que les clients laissent un avis sur TripAdvisor.',
                 },
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'tripAdvisorUrl', 'read'),
+                update: hasFieldPermission('shop-branding', 'tripAdvisorUrl', 'update'),
+            },
         },
+
+        // 12) kiosk_idle_screen_enabled
         {
             name: 'kiosk_idle_screen_enabled',
             type: 'checkbox',
@@ -233,7 +303,13 @@ export const ShopBranding: CollectionConfig = {
                     fr: 'Activez la fonctionnalité d\'écran de veille du kiosque.',
                 },
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'kiosk_idle_screen_enabled', 'read'),
+                update: hasFieldPermission('shop-branding', 'kiosk_idle_screen_enabled', 'update'),
+            },
         },
+
+        // 13) kioskIdleImage
         {
             name: 'kioskIdleImage',
             label: 'Kiosk Idle Image (portrait)',
@@ -243,7 +319,13 @@ export const ShopBranding: CollectionConfig = {
             admin: {
                 description: 'Single photo to show in kiosk idle overlay if no videos are provided.',
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'kioskIdleImage', 'read'),
+                update: hasFieldPermission('shop-branding', 'kioskIdleImage', 'update'),
+            },
         },
+
+        // 14) kioskIdleVideos
         {
             name: 'kioskIdleVideos',
             label: 'Kiosk Idle Videos (portrait)',
@@ -261,9 +343,13 @@ export const ShopBranding: CollectionConfig = {
             admin: {
                 description: 'Multiple videos to loop endlessly if provided.',
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'kioskIdleVideos', 'read'),
+                update: hasFieldPermission('shop-branding', 'kioskIdleVideos', 'update'),
+            },
         },
-        // ==== NEW FIELDS YOU REQUESTED ====
 
+        // 15) openingHours (array)
         {
             name: 'openingHours',
             label: 'Opening Hours',
@@ -316,9 +402,13 @@ export const ShopBranding: CollectionConfig = {
                     },
                 },
             ],
+            access: {
+                read: hasFieldPermission('shop-branding', 'openingHours', 'read'),
+                update: hasFieldPermission('shop-branding', 'openingHours', 'update'),
+            },
         },
 
-        // 2) ShopHeaderText
+        // 16) shopHeaderText
         {
             name: 'shopHeaderText',
             label: 'Shop Header Text',
@@ -327,9 +417,13 @@ export const ShopBranding: CollectionConfig = {
             admin: {
                 description: 'Short text to display prominently (e.g., tagline).',
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'shopHeaderText', 'read'),
+                update: hasFieldPermission('shop-branding', 'shopHeaderText', 'update'),
+            },
         },
 
-        // 3) ShopIntrotext
+        // 17) shopIntrotext
         {
             name: 'shopIntrotext',
             label: 'Shop Intro Text',
@@ -338,9 +432,13 @@ export const ShopBranding: CollectionConfig = {
             admin: {
                 description: 'A short introductory paragraph for your landing page or kiosk screen.',
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'shopIntrotext', 'read'),
+                update: hasFieldPermission('shop-branding', 'shopIntrotext', 'update'),
+            },
         },
 
-        // 4) OurMenuText
+        // 18) ourMenuText
         {
             name: 'ourMenuText',
             label: 'Our Menu Text',
@@ -349,9 +447,13 @@ export const ShopBranding: CollectionConfig = {
             admin: {
                 description: 'Additional text describing the menu or categories.',
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'ourMenuText', 'read'),
+                update: hasFieldPermission('shop-branding', 'ourMenuText', 'update'),
+            },
         },
 
-        // 5) GalleryImages
+        // 19) galleryImages
         {
             name: 'galleryImages',
             label: 'Gallery Images',
@@ -384,8 +486,13 @@ export const ShopBranding: CollectionConfig = {
             admin: {
                 description: 'A list of images to show in a gallery section.',
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'galleryImages', 'read'),
+                update: hasFieldPermission('shop-branding', 'galleryImages', 'update'),
+            },
         },
 
+        // 20) googleMapsIframe
         {
             name: 'googleMapsIframe',
             type: 'text',
@@ -397,9 +504,13 @@ export const ShopBranding: CollectionConfig = {
                 description: 'Paste the iframe from google maps here...',
                 placeholder: 'https://www.google.com/maps/embed?pb=...',
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'googleMapsIframe', 'read'),
+                update: hasFieldPermission('shop-branding', 'googleMapsIframe', 'update'),
+            },
         },
 
-        // 6) Slogan
+        // 21) slogan
         {
             name: 'slogan',
             label: 'Slogan',
@@ -408,9 +519,13 @@ export const ShopBranding: CollectionConfig = {
             admin: {
                 description: 'Short tagline or slogan for your shop/brand.',
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'slogan', 'read'),
+                update: hasFieldPermission('shop-branding', 'slogan', 'update'),
+            },
         },
 
-        // 7) borderRadius => number, in rem units
+        // 22) borderRadius
         {
             name: 'borderRadius',
             label: 'Border Radius (in rem)',
@@ -423,18 +538,20 @@ export const ShopBranding: CollectionConfig = {
                     'For example, "0.5" => "0.5rem" in the frontend. Minimum 0.',
                 step: 0.1,
             },
-            min: 0, // prevent negative values
+            min: 0, // prevent negative
             validate: (val: number | null | undefined): true | string => {
-                // If not provided, it's fine
-                if (val === null || val === undefined) {
-                    return true;
-                }
-                // Must be a non-negative number
+                if (val === null || val === undefined) return true;
                 if (typeof val !== 'number' || val < 0) {
                     return 'Value must be a non-negative number.';
                 }
                 return true;
             },
+            access: {
+                read: hasFieldPermission('shop-branding', 'borderRadius', 'read'),
+                update: hasFieldPermission('shop-branding', 'borderRadius', 'update'),
+            },
         },
     ],
 };
+
+export default ShopBranding;

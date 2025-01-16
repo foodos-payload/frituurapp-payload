@@ -1,3 +1,5 @@
+// File: src/collections/Media/index.ts
+
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { baseListFilter } from './access/baseListFilter';
@@ -5,20 +7,29 @@ import { filterByTenantRead } from './access/byTenant';
 import { generateBlurhash } from './hooks/generateBlurhash'; // Updated to reflect no Base64
 import { S3 } from '@aws-sdk/client-s3';
 
-import { hasPermission } from '@/access/permissionChecker';
+import {
+  hasPermission,
+  hasFieldPermission,
+} from '@/access/permissionChecker';
 
 export const Media: CollectionConfig = {
   slug: 'media',
+
+  // -------------------------
+  // Collection-level Access
+  // -------------------------
   access: {
     create: hasPermission('media', 'create'),
     delete: hasPermission('media', 'delete'),
-    read: filterByTenantRead,
+    read: filterByTenantRead, // specialized read filter
     update: hasPermission('media', 'update'),
   },
+
   admin: {
     baseListFilter,
     useAsTitle: 'filename',
   },
+
   labels: {
     plural: {
       en: 'Media',
@@ -33,6 +44,7 @@ export const Media: CollectionConfig = {
       fr: 'Média',
     },
   },
+
   upload: {
     disableLocalStorage: true, // Use S3 entirely
     imageSizes: [
@@ -40,6 +52,7 @@ export const Media: CollectionConfig = {
       { name: 'medium', width: 600, height: 600 },
     ],
   },
+
   hooks: {
     beforeChange: [
       async ({ data, operation }) => {
@@ -87,13 +100,20 @@ export const Media: CollectionConfig = {
             } catch (error) {
               console.error('Error in afterChange hook:', error);
             }
-          }, 500); // Delay of 500ms
+          }, 500);
         }
       },
     ],
   },
+
   fields: [
-    tenantField,
+    // 1) tenantField
+    {
+      ...tenantField,
+
+    },
+
+    // 2) tags (array)
     {
       name: 'tags',
       type: 'array',
@@ -131,8 +151,13 @@ export const Media: CollectionConfig = {
           },
         },
       ],
+      access: {
+        read: hasFieldPermission('media', 'tags', 'read'),
+        update: hasFieldPermission('media', 'tags', 'update'),
+      },
     },
 
+    // 3) blurhash
     {
       name: 'blurhash',
       type: 'text',
@@ -151,7 +176,13 @@ export const Media: CollectionConfig = {
           fr: 'Représentation Blurhash de l\'image pour des aperçus rapides.',
         },
       },
+      access: {
+        read: hasFieldPermission('media', 'blurhash', 'read'),
+        update: hasFieldPermission('media', 'blurhash', 'update'),
+      },
     },
+
+    // 4) s3_url
     {
       name: 's3_url',
       type: 'text',
@@ -170,7 +201,13 @@ export const Media: CollectionConfig = {
           fr: 'URL de l\'image originale dans S3.',
         },
       },
+      access: {
+        read: hasFieldPermission('media', 's3_url', 'read'),
+        update: hasFieldPermission('media', 's3_url', 'update'),
+      },
     },
+
+    // 5) alt_text
     {
       name: 'alt_text',
       type: 'text',
@@ -195,6 +232,12 @@ export const Media: CollectionConfig = {
           fr: 'Texte alternatif pour le fichier multimédia pour améliorer l\'accessibilité.',
         },
       },
+      access: {
+        read: hasFieldPermission('media', 'alt_text', 'read'),
+        update: hasFieldPermission('media', 'alt_text', 'update'),
+      },
     },
   ],
 };
+
+export default Media;

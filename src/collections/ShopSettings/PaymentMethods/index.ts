@@ -1,23 +1,31 @@
+// File: src/collections/PaymentMethods/index.ts
+
 import type { CollectionConfig } from 'payload';
 
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 import { ensureUniqueProviderPerShop } from './hooks/ensureUniqueProviderPerShop';
 
 export const PaymentMethods: CollectionConfig = {
     slug: 'payment-methods',
+
+    // -------------------------
+    // Collection-level access
+    // -------------------------
     access: {
         create: hasPermission('payment-methods', 'create'),
         delete: hasPermission('payment-methods', 'delete'),
         read: hasPermission('payment-methods', 'read'),
         update: hasPermission('payment-methods', 'update'),
     },
+
     admin: {
         baseListFilter,
         useAsTitle: 'provider',
     },
+
     labels: {
         plural: {
             en: 'Payment Methods',
@@ -34,8 +42,19 @@ export const PaymentMethods: CollectionConfig = {
     },
 
     fields: [
-        tenantField, // Ensure payment methods are scoped by tenant
-        shopsField, // Link payment methods to one or multiple shops
+        // 1) tenantField
+        {
+            ...tenantField,
+
+        },
+
+        // 2) shopsField
+        {
+            ...shopsField,
+
+        },
+
+        // 3) provider (select)
         {
             name: 'provider',
             type: 'select',
@@ -51,7 +70,7 @@ export const PaymentMethods: CollectionConfig = {
                 { label: 'Cash on Delivery', value: 'cash_on_delivery' },
             ],
             hooks: {
-                beforeValidate: [ensureUniqueProviderPerShop], // Add uniqueness validation here
+                beforeValidate: [ensureUniqueProviderPerShop],
             },
             admin: {
                 description: {
@@ -61,7 +80,13 @@ export const PaymentMethods: CollectionConfig = {
                     fr: 'Sélectionnez un fournisseur de paiement.',
                 },
             },
+            access: {
+                read: hasFieldPermission('payment-methods', 'provider', 'read'),
+                update: hasFieldPermission('payment-methods', 'provider', 'update'),
+            },
         },
+
+        // 4) multisafepay_settings (group)
         {
             name: 'multisafepay_settings',
             type: 'group',
@@ -72,7 +97,7 @@ export const PaymentMethods: CollectionConfig = {
                 fr: 'Paramètres MultiSafePay',
             },
             admin: {
-                condition: (data) => data.provider === 'multisafepay', // Show only if MultiSafePay is selected
+                condition: (data) => data.provider === 'multisafepay',
                 description: {
                     en: 'Settings for MultiSafePay.',
                     nl: 'Instellingen voor MultiSafePay.',
@@ -162,7 +187,13 @@ export const PaymentMethods: CollectionConfig = {
                     },
                 },
             ],
+            access: {
+                read: hasFieldPermission('payment-methods', 'multisafepay_settings', 'read'),
+                update: hasFieldPermission('payment-methods', 'multisafepay_settings', 'update'),
+            },
         },
+
+        // 5) enabled
         {
             name: 'enabled',
             type: 'checkbox',
@@ -181,7 +212,13 @@ export const PaymentMethods: CollectionConfig = {
                     fr: 'Activez ou désactivez cette méthode de paiement.',
                 },
             },
+            access: {
+                read: hasFieldPermission('payment-methods', 'enabled', 'read'),
+                update: hasFieldPermission('payment-methods', 'enabled', 'update'),
+            },
         },
+
+        // 6) terminal_ids (array)
         {
             name: 'terminal_ids',
             type: 'array',
@@ -231,6 +268,12 @@ export const PaymentMethods: CollectionConfig = {
                     },
                 },
             ],
+            access: {
+                read: hasFieldPermission('payment-methods', 'terminal_ids', 'read'),
+                update: hasFieldPermission('payment-methods', 'terminal_ids', 'update'),
+            },
         },
     ],
 };
+
+export default PaymentMethods;

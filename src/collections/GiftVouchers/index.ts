@@ -1,22 +1,30 @@
+// File: src/collections/GiftVouchers/index.ts
+
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { ensureUniqueBarcodePerShop } from './hooks/ensureUniqueBarcodePerShop';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const GiftVouchers: CollectionConfig = {
   slug: 'gift-vouchers',
+
+  // -------------------------
+  // Collection-level Access
+  // -------------------------
   access: {
     create: hasPermission('gift-vouchers', 'create'),
     delete: hasPermission('gift-vouchers', 'delete'),
     read: hasPermission('gift-vouchers', 'read'),
     update: hasPermission('gift-vouchers', 'update'),
   },
+
   admin: {
     baseListFilter,
     useAsTitle: 'barcode',
   },
+
   labels: {
     plural: {
       en: 'Gift Vouchers',
@@ -31,9 +39,21 @@ export const GiftVouchers: CollectionConfig = {
       fr: 'Bon Cadeau',
     },
   },
+
   fields: [
-    tenantField, // Ensure gift vouchers are scoped by tenant
-    shopsField, // Link gift vouchers to specific shops
+    // 1) Tenant
+    {
+      ...tenantField,
+
+    },
+
+    // 2) Shops
+    {
+      ...shopsField,
+
+    },
+
+    // 3) Barcode
     {
       name: 'barcode',
       type: 'text',
@@ -62,7 +82,13 @@ export const GiftVouchers: CollectionConfig = {
           fr: 'p.ex., GV12345',
         },
       },
+      access: {
+        read: hasFieldPermission('gift-vouchers', 'barcode', 'read'),
+        update: hasFieldPermission('gift-vouchers', 'barcode', 'update'),
+      },
     },
+
+    // 4) Value
     {
       name: 'value',
       type: 'number',
@@ -87,7 +113,13 @@ export const GiftVouchers: CollectionConfig = {
           fr: 'p.ex., 50.00',
         },
       },
+      access: {
+        read: hasFieldPermission('gift-vouchers', 'value', 'read'),
+        update: hasFieldPermission('gift-vouchers', 'value', 'update'),
+      },
     },
+
+    // 5) valid_from
     {
       name: 'valid_from',
       type: 'date',
@@ -106,7 +138,13 @@ export const GiftVouchers: CollectionConfig = {
           fr: 'Date de début de validité du bon cadeau.',
         },
       },
+      access: {
+        read: hasFieldPermission('gift-vouchers', 'valid_from', 'read'),
+        update: hasFieldPermission('gift-vouchers', 'valid_from', 'update'),
+      },
     },
+
+    // 6) valid_until
     {
       name: 'valid_until',
       type: 'date',
@@ -125,7 +163,13 @@ export const GiftVouchers: CollectionConfig = {
           fr: 'Date de fin de validité du bon cadeau.',
         },
       },
+      access: {
+        read: hasFieldPermission('gift-vouchers', 'valid_until', 'read'),
+        update: hasFieldPermission('gift-vouchers', 'valid_until', 'update'),
+      },
     },
+
+    // 7) used
     {
       name: 'used',
       type: 'checkbox',
@@ -144,7 +188,13 @@ export const GiftVouchers: CollectionConfig = {
           fr: 'Marquez si le bon cadeau a été utilisé.',
         },
       },
+      access: {
+        read: hasFieldPermission('gift-vouchers', 'used', 'read'),
+        update: hasFieldPermission('gift-vouchers', 'used', 'update'),
+      },
     },
+
+    // 8) payment_type (relationship)
     {
       name: 'payment_type',
       type: 'relationship',
@@ -164,6 +214,12 @@ export const GiftVouchers: CollectionConfig = {
           fr: 'La méthode de paiement utilisée pour acheter ce bon cadeau.',
         },
       },
+      access: {
+        read: hasFieldPermission('gift-vouchers', 'payment_type', 'read'),
+        update: hasFieldPermission('gift-vouchers', 'payment_type', 'update'),
+      },
     },
   ],
 };
+
+export default GiftVouchers;

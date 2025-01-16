@@ -1,23 +1,32 @@
+// File: src/collections/Orders/index.ts
+
 import type { CollectionConfig } from 'payload';
+
+// Keep existing imports
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
-import { generateOrderSummaryEmail } from '../../email/generateOrderSummaryEmail'
-
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker'; // import field-level as well
+import { generateOrderSummaryEmail } from '../../email/generateOrderSummaryEmail';
 
 export const Orders: CollectionConfig = {
   slug: 'orders',
+
+  // ---------------------------
+  // Collection-level Access
+  // ---------------------------
   access: {
     create: hasPermission('orders', 'create'),
     delete: hasPermission('orders', 'delete'),
     read: hasPermission('orders', 'read'),
     update: hasPermission('orders', 'update'),
   },
+
   admin: {
     baseListFilter,
     useAsTitle: 'id',
   },
+
   labels: {
     plural: {
       en: 'Orders',
@@ -45,7 +54,7 @@ export const Orders: CollectionConfig = {
           data.userLocale = 'nl';
         }
 
-        // 1) If kiosk => override the fulfillment_time & sub_method_label
+        // 1) Kiosk => override fulfillment_time & sub_method_label
         if (data.order_type === 'kiosk') {
           const now = new Date();
           data.fulfillment_time = now.toTimeString().slice(0, 5);
@@ -54,17 +63,16 @@ export const Orders: CollectionConfig = {
           }
         }
 
-        // 2) Timeslot concurrency check => ensure date/time not fully booked
         // 2) Timeslot concurrency check => skip if kiosk
         if (data.order_type === 'kiosk') {
           console.log('[orders.beforeChange] kiosk => skipping concurrency checks.');
         } else {
-          const methodType = data.fulfillment_method;         // e.g. 'delivery'
-          const dateStr = data.fulfillment_date;              // e.g. '2025-01-10'
-          const timeStr = data.fulfillment_time;              // e.g. '09:15'
+          const methodType = data.fulfillment_method; // e.g. 'delivery'
+          const dateStr = data.fulfillment_date;      // e.g. '2025-01-10'
+          const timeStr = data.fulfillment_time;      // e.g. '09:15'
 
           if (methodType && dateStr && timeStr) {
-            // (A) Find the relevant fulfillment-method doc => check shared_booked_slots
+            // (A) Find the relevant fulfillment-method doc
             const methodDoc = await req.payload.find({
               collection: 'fulfillment-methods',
               where: {
@@ -80,7 +88,7 @@ export const Orders: CollectionConfig = {
 
             const isShared = foundMethod.settings?.shared_booked_slots === true;
 
-            // (B) Convert dateStr => dayOfWeek => find timeslot range => get max_orders
+            // (B) Convert dateStr => dayOfWeek => find timeslot
             const [yyyy, mm, dd] = dateStr.split('-').map(Number);
             const dt = new Date(Date.UTC(yyyy, mm - 1, dd, 12));
             const dayNumber = dt.getUTCDay() === 0 ? 7 : dt.getUTCDay(); // 1..7
@@ -96,7 +104,6 @@ export const Orders: CollectionConfig = {
             };
             const dayKey = dayIndexMap[String(dayNumber)];
 
-            // Find timeslot doc => see if the chosen time is in a [start..end] range
             const timeslotsResult = await req.payload.find({
               collection: 'timeslots',
               where: {
@@ -157,7 +164,7 @@ export const Orders: CollectionConfig = {
               }
             }
 
-            // (D) Count existing orders with same date/time + method(s) => exclude cancelled
+            // (D) Count existing orders with same date/time + method(s)
             const usageCheck = await req.payload.find({
               collection: 'orders',
               where: {
@@ -176,12 +183,11 @@ export const Orders: CollectionConfig = {
             }
           }
         }
-        // End concurrency check
 
         // 3) Auto-increment: daily `tempOrdNr` + global `id`
         const today = new Date().toISOString().split('T')[0];
 
-        // (A) Find last order *today* => set tempOrdNr
+        // (A) Find last order *today*
         const lastOrderToday = await req.payload.find({
           collection: 'orders',
           where: {
@@ -221,7 +227,7 @@ export const Orders: CollectionConfig = {
           }
         }
 
-        // 4) (Optional) Cross-check each line's price with official product price
+        // 4) Optional cross-check line prices
         if (data.order_details) {
           for (const od of data.order_details) {
             try {
@@ -230,10 +236,7 @@ export const Orders: CollectionConfig = {
                 id: od.product,
               });
               if (productDoc) {
-                // Compare with official product price
-                const officialPrice = productDoc.price_unified
-                  ? productDoc.price
-                  : productDoc.price; // Simplified logic
+                const officialPrice = productDoc.price_unified ? productDoc.price : productDoc.price;
                 if (typeof od.price === 'number' && od.price !== officialPrice) {
                   throw new Error(
                     `Price mismatch for product ${productDoc.name_nl}. ` +
@@ -261,13 +264,10 @@ export const Orders: CollectionConfig = {
             const lineTax = lineSubtotal * fraction;
             const lineNet = lineSubtotal - lineTax;
 
-            // IMPORTANT: If subproduct has its own quantity, multiply that as well:
             if (od.subproducts) {
               for (const sub of od.subproducts) {
-                // If sub.quantity is defined, multiply it separately:
-                const subQty = sub.quantity ?? 1; // fallback to 1 if not present
+                const subQty = sub.quantity ?? 1;
                 const subLineSubtotal = (sub.price ?? 0) * (od.quantity ?? 1) * subQty;
-
                 const subFraction = (sub.tax ?? 21) / (100 + (sub.tax ?? 21));
                 const subLineTax = subLineSubtotal * subFraction;
                 const subLineNet = subLineSubtotal - subLineTax;
@@ -276,7 +276,6 @@ export const Orders: CollectionConfig = {
                 totalTax += subLineTax;
               }
             }
-
             baseSubtotal += lineNet;
             totalTax += lineTax;
           }
@@ -291,12 +290,7 @@ export const Orders: CollectionConfig = {
         const gross = baseSubtotal + totalTax;
 
         if (data.promotionsUsed) {
-          const {
-            pointsUsed,
-            creditsUsed,
-            couponUsed,
-            giftVoucherUsed,
-          } = data.promotionsUsed;
+          const { pointsUsed, creditsUsed, couponUsed, giftVoucherUsed } = data.promotionsUsed;
 
           // (A) membership points => 1 point => €0.01
           if (pointsUsed && pointsUsed > 0) {
@@ -347,17 +341,14 @@ export const Orders: CollectionConfig = {
                 throw new Error(`Coupon ${couponUsed.barcode} not found.`);
               }
 
-              // Store the coupon's ID
               data.promotionsUsed.couponUsed.couponId = couponDoc.id;
 
-              // Apply discount
               if (couponUsed.value_type === 'fixed') {
                 discount += couponUsed.value || 0;
               } else if (couponUsed.value_type === 'percentage') {
                 discount += gross * ((couponUsed.value || 0) / 100);
               }
 
-              // increment uses
               const newUses = (couponDoc.uses ?? 0) + 1;
               const maxUses = couponDoc.max_uses ?? null;
               let usedFlag = couponDoc.used || false;
@@ -366,7 +357,6 @@ export const Orders: CollectionConfig = {
                 usedFlag = true;
               }
 
-              // update the coupon doc
               await req.payload.update({
                 collection: 'coupons',
                 id: couponDoc.id,
@@ -414,7 +404,6 @@ export const Orders: CollectionConfig = {
 
             discount += giftVoucherUsed.value || 0;
 
-            // Mark voucher used
             await req.payload.update({
               collection: 'gift-vouchers',
               id: voucherDoc.id,
@@ -427,15 +416,15 @@ export const Orders: CollectionConfig = {
 
         data.discountTotal = Math.round(discount * 100) / 100;
 
-        // 7) final totalAfterDiscount => gross - discount
+        // 7) final totalAfterDiscount
         const afterDisc = Math.max(0, gross - discount);
         data.totalAfterDiscount = Math.round(afterDisc * 100) / 100;
 
-        // 8) Add shipping => final total
+        // 8) shipping => final total
         const shipping = typeof data.shipping_cost === 'number' ? data.shipping_cost : 0;
         data.total = data.totalAfterDiscount + shipping;
 
-        // 8.5) If there is a tip, add it now
+        // 8.5) Tipping
         if (data.tippingUsed && data.tippingUsed.type !== 'none') {
           let tipValue = 0;
           const tipType = data.tippingUsed.type;
@@ -455,12 +444,12 @@ export const Orders: CollectionConfig = {
           data.total += data.tippingUsed.actualTip;
         }
 
-        // 9) Reflect final total in the first payment line
+        // 9) Reflect final total in first payment line
         if (data.payments && data.payments.length > 0) {
           data.payments[0].amount = data.total;
         }
 
-        // 10) Now that discount is final => actually deduct from membership or store credits
+        // 10) Deduct membership points / store credits
         if (data.promotionsUsed) {
           const { pointsUsed, creditsUsed } = data.promotionsUsed;
 
@@ -473,7 +462,6 @@ export const Orders: CollectionConfig = {
             const membershipsArray = custDoc?.memberships ?? [];
 
             if (membershipsArray.length > 0) {
-              // Subtract used points from the first membership
               const updatedMemberships = membershipsArray.map((m: any, idx: number) => {
                 if (idx === 0) {
                   return {
@@ -486,9 +474,7 @@ export const Orders: CollectionConfig = {
               await req.payload.update({
                 collection: 'customers',
                 id: data.customer,
-                data: {
-                  memberships: updatedMemberships,
-                },
+                data: { memberships: updatedMemberships },
               });
             }
           }
@@ -506,9 +492,7 @@ export const Orders: CollectionConfig = {
               await req.payload.update({
                 collection: 'customer-credits',
                 id: creditDoc.id,
-                data: {
-                  value: newVal,
-                },
+                data: { value: newVal },
               });
             }
           }
@@ -516,13 +500,12 @@ export const Orders: CollectionConfig = {
       },
     ],
     afterChange: [
-      // 1) Print Logic: New vs Update
+      // 1) Print Logic
       async ({ doc, previousDoc, operation, req }) => {
-        // ───────────────────────────────────────────────────
         // A) NEW order with a non-pending status
-        // ───────────────────────────────────────────────────
         if (operation === 'create' && doc.status !== 'pending_payment') {
           try {
+            // kiosk logic
             if (doc.order_type === 'kiosk') {
               if (!doc.kioskNumber) {
                 console.warn('Order is kiosk-type, but no kioskNumber found; skipping kiosk print.');
@@ -556,7 +539,7 @@ export const Orders: CollectionConfig = {
                   const lastPart = nameParts[nameParts.length - 1];
 
                   if (String(lastPart) === String(doc.kioskNumber)) {
-                    // Retry logic (5 attempts, 15s wait in between)
+                    // Retry logic (5 attempts)
                     for (let attempt = 1; attempt <= 5; attempt++) {
                       try {
                         await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
@@ -568,7 +551,6 @@ export const Orders: CollectionConfig = {
                             orderData: doc,
                           }),
                         });
-                        // If successful, break out of the retry loop
                         break;
                       } catch (err) {
                         console.error(
@@ -576,10 +558,8 @@ export const Orders: CollectionConfig = {
                           err
                         );
                         if (attempt === 5) {
-                          // If final attempt fails, rethrow to log it outside
                           throw err;
                         } else {
-                          // Wait 15 seconds, then retry
                           await new Promise((resolve) => setTimeout(resolve, 15000));
                         }
                       }
@@ -591,9 +571,7 @@ export const Orders: CollectionConfig = {
               }
             }
 
-            // ───────────────────────────────────────────────────
-            // KITCHEN LOGIC (applies to all orders)
-            // ───────────────────────────────────────────────────
+            // KITCHEN LOGIC
             const shopIDs = Array.isArray(doc.shops)
               ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
               : [doc.shops];
@@ -629,7 +607,7 @@ export const Orders: CollectionConfig = {
                         orderData: doc,
                       }),
                     });
-                    break; // success
+                    break;
                   } catch (err) {
                     console.error(
                       `Error printing kitchen ticket to printer ${p.printer_name}, attempt ${attempt}/5:`,
@@ -643,7 +621,6 @@ export const Orders: CollectionConfig = {
                   }
                 }
 
-                // If that printer also prints a customer copy
                 if (p?.customer_enabled === true) {
                   for (let attempt = 1; attempt <= 5; attempt++) {
                     try {
@@ -656,7 +633,7 @@ export const Orders: CollectionConfig = {
                           orderData: doc,
                         }),
                       });
-                      break; // success
+                      break;
                     } catch (err) {
                       console.error(
                         `Error printing customer copy to printer ${p.printer_name}, attempt ${attempt}/5:`,
@@ -680,25 +657,20 @@ export const Orders: CollectionConfig = {
           return; // Stop here for the create case
         }
 
-        // ───────────────────────────────────────────────────
-        // B) EXISTING order updated: from pending_payment → something else
-        // ───────────────────────────────────────────────────
+        // B) EXISTING order updated: pending_payment -> something else
         if (operation === 'update') {
           const oldStatus = previousDoc?.status;
           const newStatus = doc.status;
 
           if (oldStatus === 'pending_payment' && newStatus !== 'pending_payment') {
             try {
+              // kiosk logic
               if (doc.order_type === 'kiosk') {
-                // ───────────────────────────────────────────────────
-                // KIOSK LOGIC (update)
-                // ───────────────────────────────────────────────────
                 if (!doc.kioskNumber) {
                   console.warn('Order is kiosk-type, but no kioskNumber found; skipping kiosk print.');
                   return;
                 }
 
-                // 1) Gather shop IDs
                 const shopIDs = Array.isArray(doc.shops)
                   ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
                   : [doc.shops];
@@ -708,7 +680,6 @@ export const Orders: CollectionConfig = {
                   return;
                 }
 
-                // 2) Find kiosk printers
                 const kioskPrinters = await req.payload.find({
                   collection: 'printers',
                   where: {
@@ -721,7 +692,6 @@ export const Orders: CollectionConfig = {
                   limit: 50,
                 });
 
-                // 3) Print only the "customer" ticket on the matching kiosk printer
                 for (const p of kioskPrinters.docs) {
                   try {
                     const nameParts = p.printer_name?.split('-') || [];
@@ -734,11 +704,11 @@ export const Orders: CollectionConfig = {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               printerName: p.printer_name,
-                              ticketType: 'customer', // kiosk only prints a customer ticket
+                              ticketType: 'customer',
                               orderData: doc,
                             }),
                           });
-                          break; // success
+                          break;
                         } catch (err) {
                           console.error(
                             `Error printing kiosk ticket to printer ${p.printer_name}, attempt ${attempt}/5:`,
@@ -756,40 +726,59 @@ export const Orders: CollectionConfig = {
                     console.error(`Error printing kiosk ticket to printer ${p.printer_name}:`, kioskErr);
                   }
                 }
-
-                // ───────────────────────────────────────────────────
               }
-              {
-                // ───────────────────────────────────────────────────
-                // KITCHEN LOGIC (update)
-                // ───────────────────────────────────────────────────
-                // 1) Gather shop IDs
-                const shopIDs = Array.isArray(doc.shops)
-                  ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
-                  : [doc.shops];
 
-                if (!shopIDs.length) {
-                  console.warn('No shops found on this order; skipping print logic.');
-                  return;
-                }
+              // KITCHEN LOGIC
+              const shopIDs = Array.isArray(doc.shops)
+                ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
+                : [doc.shops];
 
-                // 2) Find all kitchen printers for these shops
-                const printers = await req.payload.find({
-                  collection: 'printers',
-                  where: {
-                    and: [
-                      { shops: { in: shopIDs } },
-                      { printer_type: { equals: 'kitchen' } },
-                      { print_enabled: { equals: true } },
-                    ],
-                  },
-                  limit: 50,
-                });
+              if (!shopIDs.length) {
+                console.warn('No shops found on this order; skipping print logic.');
+                return;
+              }
 
-                // 3) Print "kitchen" + optional "customer"
-                for (const p of printers.docs) {
-                  try {
-                    // Always print the "kitchen" ticket
+              const printers = await req.payload.find({
+                collection: 'printers',
+                where: {
+                  and: [
+                    { shops: { in: shopIDs } },
+                    { printer_type: { equals: 'kitchen' } },
+                    { print_enabled: { equals: true } },
+                  ],
+                },
+                limit: 50,
+              });
+
+              for (const p of printers.docs) {
+                try {
+                  // Always print the "kitchen" ticket
+                  for (let attempt = 1; attempt <= 5; attempt++) {
+                    try {
+                      await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          printerName: p.printer_name,
+                          ticketType: 'kitchen',
+                          orderData: doc,
+                        }),
+                      });
+                      break;
+                    } catch (err) {
+                      console.error(
+                        `Error printing kitchen ticket to printer ${p.printer_name}, attempt ${attempt}/5:`,
+                        err
+                      );
+                      if (attempt === 5) {
+                        throw err;
+                      } else {
+                        await new Promise((resolve) => setTimeout(resolve, 15000));
+                      }
+                    }
+                  }
+
+                  if (p?.customer_enabled === true) {
                     for (let attempt = 1; attempt <= 5; attempt++) {
                       try {
                         await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
@@ -797,14 +786,14 @@ export const Orders: CollectionConfig = {
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
                             printerName: p.printer_name,
-                            ticketType: 'kitchen',
+                            ticketType: 'customer',
                             orderData: doc,
                           }),
                         });
-                        break; // success
+                        break;
                       } catch (err) {
                         console.error(
-                          `Error printing kitchen ticket to printer ${p.printer_name}, attempt ${attempt}/5:`,
+                          `Error printing customer copy to printer ${p.printer_name}, attempt ${attempt}/5:`,
                           err
                         );
                         if (attempt === 5) {
@@ -814,37 +803,9 @@ export const Orders: CollectionConfig = {
                         }
                       }
                     }
-
-                    // If that printer also prints a customer copy
-                    if (p?.customer_enabled === true) {
-                      for (let attempt = 1; attempt <= 5; attempt++) {
-                        try {
-                          await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              printerName: p.printer_name,
-                              ticketType: 'customer',
-                              orderData: doc,
-                            }),
-                          });
-                          break; // success
-                        } catch (err) {
-                          console.error(
-                            `Error printing customer copy to printer ${p.printer_name}, attempt ${attempt}/5:`,
-                            err
-                          );
-                          if (attempt === 5) {
-                            throw err;
-                          } else {
-                            await new Promise((resolve) => setTimeout(resolve, 15000));
-                          }
-                        }
-                      }
-                    }
-                  } catch (printErr) {
-                    console.error(`Error printing to printer ${p.printer_name}:`, printErr);
                   }
+                } catch (printErr) {
+                  console.error(`Error printing to printer ${p.printer_name}:`, printErr);
                 }
               }
             } catch (err) {
@@ -854,23 +815,22 @@ export const Orders: CollectionConfig = {
         }
       },
 
-      // 2) Email Logic: unchanged from your existing code
+      // 2) Email Logic
       async ({ doc, operation, req }) => {
         if (operation === 'create') {
           try {
             let branding: any = {};
 
-            // 1) If there's at least one shop attached, use the first
+            // 1) If there's at least one shop => use the first
             if (doc.shops && doc.shops.length > 0) {
               const firstShopId = doc.shops[0]?.id ?? doc.shops[0];
               if (firstShopId) {
-                // (A) Fetch the Shop doc
                 const shopDoc = await req.payload.findByID({
                   collection: 'shops',
                   id: firstShopId,
                 });
                 if (shopDoc) {
-                  // (B) Find the ShopBranding doc referencing this shop
+                  // find shop-branding doc
                   const brandingRes = await req.payload.find({
                     collection: 'shop-branding',
                     where: { shops: { in: [shopDoc.id] } },
@@ -878,8 +838,6 @@ export const Orders: CollectionConfig = {
                     limit: 1,
                   });
                   const brandingDoc = brandingRes.docs[0] || null;
-
-                  // Convert the returned doc into a simpler object if needed:
                   branding = {
                     siteTitle: brandingDoc?.siteTitle || shopDoc.name,
                     logoUrl: brandingDoc?.siteLogo,
@@ -887,13 +845,12 @@ export const Orders: CollectionConfig = {
                     primaryColorCTA: brandingDoc?.primaryColorCTA,
                     googleReviewUrl: brandingDoc?.googleReviewUrl,
                     tripAdvisorUrl: brandingDoc?.tripAdvisorUrl,
-                    // ... add other fields if desired
                   };
                 }
               }
             }
 
-            // 2) Build your "itemLines" array
+            // 2) Build itemLines
             const orderDetails = doc.order_details || [];
             const itemLines = orderDetails.map((detail: any) => {
               const subprods = (detail.subproducts || []).map((sp: any) => ({
@@ -935,11 +892,19 @@ export const Orders: CollectionConfig = {
   },
 
   fields: [
-    // (A) Tenant + Shop scoping
-    tenantField,
-    shopsField,
+    // (A) tenantField
+    {
+      ...tenantField,
 
-    // (B) Optional external ID
+    },
+
+    // (B) shopsField
+    {
+      ...shopsField,
+
+    },
+
+    // (C) cloudPOSId
     {
       name: 'cloudPOSId',
       type: 'number',
@@ -949,9 +914,13 @@ export const Orders: CollectionConfig = {
         position: 'sidebar',
         description: 'The order ID used by CloudPOS if synced.',
       },
+      access: {
+        read: hasFieldPermission('orders', 'cloudPOSId', 'read'),
+        update: hasFieldPermission('orders', 'cloudPOSId', 'update'),
+      },
     },
 
-    // (C) NEW: providerOrderId for Payment Providers
+    // (C) providerOrderId
     {
       name: 'providerOrderId',
       type: 'text',
@@ -962,9 +931,13 @@ export const Orders: CollectionConfig = {
         description: 'Order ID from e.g. MultiSafePay, Mollie, etc.',
         readOnly: true,
       },
+      access: {
+        read: hasFieldPermission('orders', 'providerOrderId', 'read'),
+        update: hasFieldPermission('orders', 'providerOrderId', 'update'),
+      },
     },
 
-    // (C) Auto-increment ID fields
+    // auto-increment ID
     {
       name: 'id',
       type: 'number',
@@ -973,6 +946,10 @@ export const Orders: CollectionConfig = {
       admin: {
         description: { en: 'Auto-incrementing identifier for the order.' },
         readOnly: true,
+      },
+      access: {
+        read: hasFieldPermission('orders', 'id', 'read'),
+        update: hasFieldPermission('orders', 'id', 'update'),
       },
     },
     {
@@ -983,9 +960,13 @@ export const Orders: CollectionConfig = {
         description: { en: 'Daily incremented order number.' },
         readOnly: true,
       },
+      access: {
+        read: hasFieldPermission('orders', 'tempOrdNr', 'read'),
+        update: hasFieldPermission('orders', 'tempOrdNr', 'update'),
+      },
     },
 
-    // (D) Order status / type
+    // status
     {
       name: 'status',
       type: 'select',
@@ -1005,6 +986,10 @@ export const Orders: CollectionConfig = {
         description: { en: 'Current status of the order.' },
         readOnly: true,
       },
+      access: {
+        read: hasFieldPermission('orders', 'status', 'read'),
+        update: hasFieldPermission('orders', 'status', 'update'),
+      },
     },
     {
       name: 'order_type',
@@ -1019,9 +1004,13 @@ export const Orders: CollectionConfig = {
       admin: {
         description: { en: 'Type of order (POS, Web, or Kiosk).' },
       },
+      access: {
+        read: hasFieldPermission('orders', 'order_type', 'read'),
+        update: hasFieldPermission('orders', 'order_type', 'update'),
+      },
     },
 
-    // (E) Order details array
+    // order_details array
     {
       name: 'order_details',
       type: 'array',
@@ -1036,29 +1025,162 @@ export const Orders: CollectionConfig = {
           relationTo: 'products',
           required: true,
           label: { en: 'Product' },
+          access: {
+            read: hasFieldPermission('orders', 'order_details.product', 'read'),
+            update: hasFieldPermission('orders', 'order_details.product', 'update'),
+          },
         },
-        { name: 'quantity', type: 'number', required: true, label: { en: 'Quantity' } },
-        { name: 'price', type: 'number', required: true, label: { en: 'Price' } },
-        { name: 'tax', type: 'number', label: { en: 'Tax Rate (%)' } },
-        { name: 'tax_dinein', type: 'number', label: { en: 'Dine-In Tax Rate (%)' } },
-        { name: 'name_nl', type: 'text', label: { en: 'Name (NL)' } },
-        { name: 'name_en', type: 'text', label: { en: 'Name (EN)' } },
-        { name: 'name_de', type: 'text', label: { en: 'Name (DE)' } },
-        { name: 'name_fr', type: 'text', label: { en: 'Name (FR)' } },
+        {
+          name: 'quantity',
+          type: 'number',
+          required: true,
+          label: { en: 'Quantity' },
+          access: {
+            read: hasFieldPermission('orders', 'order_details.quantity', 'read'),
+            update: hasFieldPermission('orders', 'order_details.quantity', 'update'),
+          },
+        },
+        {
+          name: 'price',
+          type: 'number',
+          required: true,
+          label: { en: 'Price' },
+          access: {
+            read: hasFieldPermission('orders', 'order_details.price', 'read'),
+            update: hasFieldPermission('orders', 'order_details.price', 'update'),
+          },
+        },
+        {
+          name: 'tax',
+          type: 'number',
+          label: { en: 'Tax Rate (%)' },
+          access: {
+            read: hasFieldPermission('orders', 'order_details.tax', 'read'),
+            update: hasFieldPermission('orders', 'order_details.tax', 'update'),
+          },
+        },
+        {
+          name: 'tax_dinein',
+          type: 'number',
+          label: { en: 'Dine-In Tax Rate (%)' },
+          access: {
+            read: hasFieldPermission('orders', 'order_details.tax_dinein', 'read'),
+            update: hasFieldPermission('orders', 'order_details.tax_dinein', 'update'),
+          },
+        },
+        {
+          name: 'name_nl',
+          type: 'text',
+          label: { en: 'Name (NL)' },
+          access: {
+            read: hasFieldPermission('orders', 'order_details.name_nl', 'read'),
+            update: hasFieldPermission('orders', 'order_details.name_nl', 'update'),
+          },
+        },
+        {
+          name: 'name_en',
+          type: 'text',
+          label: { en: 'Name (EN)' },
+          access: {
+            read: hasFieldPermission('orders', 'order_details.name_en', 'read'),
+            update: hasFieldPermission('orders', 'order_details.name_en', 'update'),
+          },
+        },
+        {
+          name: 'name_de',
+          type: 'text',
+          label: { en: 'Name (DE)' },
+          access: {
+            read: hasFieldPermission('orders', 'order_details.name_de', 'read'),
+            update: hasFieldPermission('orders', 'order_details.name_de', 'update'),
+          },
+        },
+        {
+          name: 'name_fr',
+          type: 'text',
+          label: { en: 'Name (FR)' },
+          access: {
+            read: hasFieldPermission('orders', 'order_details.name_fr', 'read'),
+            update: hasFieldPermission('orders', 'order_details.name_fr', 'update'),
+          },
+        },
         {
           name: 'subproducts',
           type: 'array',
           label: { en: 'Subproducts' },
           fields: [
-            { name: 'subproductId', type: 'text', label: { en: 'Subproduct ID' } },
-            { name: 'name_nl', type: 'text', label: { en: 'Name (NL)' } },
-            { name: 'name_en', type: 'text', label: { en: 'Name (EN)' } },
-            { name: 'name_de', type: 'text', label: { en: 'Name (DE)' } },
-            { name: 'name_fr', type: 'text', label: { en: 'Name (FR)' } },
-            { name: 'price', type: 'number', label: { en: 'Subproduct Price' } },
-            { name: 'tax', type: 'number', label: { en: 'Tax Rate (%)' } },
-            { name: 'tax_dinein', type: 'number', label: { en: 'Dine-In Tax Rate (%)' } },
-            // <-- NEW optional "quantity" field for subproducts
+            {
+              name: 'subproductId',
+              type: 'text',
+              label: { en: 'Subproduct ID' },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts.subproductId', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts.subproductId', 'update'),
+              },
+            },
+            {
+              name: 'name_nl',
+              type: 'text',
+              label: { en: 'Name (NL)' },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts.name_nl', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts.name_nl', 'update'),
+              },
+            },
+            {
+              name: 'name_en',
+              type: 'text',
+              label: { en: 'Name (EN)' },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts.name_en', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts.name_en', 'update'),
+              },
+            },
+            {
+              name: 'name_de',
+              type: 'text',
+              label: { en: 'Name (DE)' },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts.name_de', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts.name_de', 'update'),
+              },
+            },
+            {
+              name: 'name_fr',
+              type: 'text',
+              label: { en: 'Name (FR)' },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts.name_fr', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts.name_fr', 'update'),
+              },
+            },
+            {
+              name: 'price',
+              type: 'number',
+              label: { en: 'Subproduct Price' },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts.price', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts.price', 'update'),
+              },
+            },
+            {
+              name: 'tax',
+              type: 'number',
+              label: { en: 'Tax Rate (%)' },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts.tax', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts.tax', 'update'),
+              },
+            },
+            {
+              name: 'tax_dinein',
+              type: 'number',
+              label: { en: 'Dine-In Tax Rate (%)' },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts.tax_dinein', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts.tax_dinein', 'update'),
+              },
+            },
             {
               name: 'quantity',
               type: 'number',
@@ -1067,13 +1189,25 @@ export const Orders: CollectionConfig = {
               admin: {
                 description: 'If subproduct can have multiple units.',
               },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts.quantity', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts.quantity', 'update'),
+              },
             },
           ],
+          access: {
+            read: hasFieldPermission('orders', 'order_details.subproducts', 'read'),
+            update: hasFieldPermission('orders', 'order_details.subproducts', 'update'),
+          },
         },
       ],
+      access: {
+        read: hasFieldPermission('orders', 'order_details', 'read'),
+        update: hasFieldPermission('orders', 'order_details', 'update'),
+      },
     },
 
-    // (F) Payments array
+    // payments array
     {
       name: 'payments',
       type: 'array',
@@ -1088,23 +1222,39 @@ export const Orders: CollectionConfig = {
           relationTo: 'payment-methods',
           required: true,
           label: { en: 'Payment Method' },
+          access: {
+            read: hasFieldPermission('orders', 'payments.payment_method', 'read'),
+            update: hasFieldPermission('orders', 'payments.payment_method', 'update'),
+          },
         },
         {
           name: 'sub_method_label',
           type: 'text',
           required: false,
           label: { en: 'Sub-method Label (e.g. MSP_Bancontact)' },
+          access: {
+            read: hasFieldPermission('orders', 'payments.sub_method_label', 'read'),
+            update: hasFieldPermission('orders', 'payments.sub_method_label', 'update'),
+          },
         },
         {
           name: 'amount',
           type: 'number',
           required: false,
           label: { en: 'Payment Amount' },
+          access: {
+            read: hasFieldPermission('orders', 'payments.amount', 'read'),
+            update: hasFieldPermission('orders', 'payments.amount', 'update'),
+          },
         },
       ],
+      access: {
+        read: hasFieldPermission('orders', 'payments', 'read'),
+        update: hasFieldPermission('orders', 'payments', 'update'),
+      },
     },
 
-    // (G) Fulfillment info
+    // fulfillment info
     {
       name: 'fulfillment_method',
       type: 'select',
@@ -1114,9 +1264,29 @@ export const Orders: CollectionConfig = {
         { label: 'Dine In', value: 'dine_in' },
       ],
       label: { en: 'Fulfillment Method' },
+      access: {
+        read: hasFieldPermission('orders', 'fulfillment_method', 'read'),
+        update: hasFieldPermission('orders', 'fulfillment_method', 'update'),
+      },
     },
-    { name: 'fulfillment_date', type: 'text', label: { en: 'Fulfillment Date' } },
-    { name: 'fulfillment_time', type: 'text', label: { en: 'Fulfillment Time' } },
+    {
+      name: 'fulfillment_date',
+      type: 'text',
+      label: { en: 'Fulfillment Date' },
+      access: {
+        read: hasFieldPermission('orders', 'fulfillment_date', 'read'),
+        update: hasFieldPermission('orders', 'fulfillment_date', 'update'),
+      },
+    },
+    {
+      name: 'fulfillment_time',
+      type: 'text',
+      label: { en: 'Fulfillment Time' },
+      access: {
+        read: hasFieldPermission('orders', 'fulfillment_time', 'read'),
+        update: hasFieldPermission('orders', 'fulfillment_time', 'update'),
+      },
+    },
 
     // (H) Customer info
     {
@@ -1128,6 +1298,10 @@ export const Orders: CollectionConfig = {
       admin: {
         description: { en: 'Link to the customer who placed this order (if known).' },
       },
+      access: {
+        read: hasFieldPermission('orders', 'customer', 'read'),
+        update: hasFieldPermission('orders', 'customer', 'update'),
+      },
     },
     {
       name: 'customerBarcode',
@@ -1136,23 +1310,87 @@ export const Orders: CollectionConfig = {
       admin: {
         description: 'If user used barcode, store it for reference.',
       },
+      access: {
+        read: hasFieldPermission('orders', 'customerBarcode', 'read'),
+        update: hasFieldPermission('orders', 'customerBarcode', 'update'),
+      },
     },
     {
       name: 'customer_details',
       type: 'group',
       label: { en: 'Customer Details' },
       fields: [
-        { name: 'firstName', type: 'text', label: { en: 'First Name' } },
-        { name: 'lastName', type: 'text', label: { en: 'Last Name' } },
-        { name: 'email', type: 'text', label: { en: 'Email' } },
-        { name: 'phone', type: 'text', label: { en: 'Phone' } },
-        { name: 'address', type: 'text', label: { en: 'Address' } },
-        { name: 'city', type: 'text', label: { en: 'City' } },
-        { name: 'postalCode', type: 'text', label: { en: 'Postal Code' } },
+        {
+          name: 'firstName',
+          type: 'text',
+          label: { en: 'First Name' },
+          access: {
+            read: hasFieldPermission('orders', 'customer_details.firstName', 'read'),
+            update: hasFieldPermission('orders', 'customer_details.firstName', 'update'),
+          },
+        },
+        {
+          name: 'lastName',
+          type: 'text',
+          label: { en: 'Last Name' },
+          access: {
+            read: hasFieldPermission('orders', 'customer_details.lastName', 'read'),
+            update: hasFieldPermission('orders', 'customer_details.lastName', 'update'),
+          },
+        },
+        {
+          name: 'email',
+          type: 'text',
+          label: { en: 'Email' },
+          access: {
+            read: hasFieldPermission('orders', 'customer_details.email', 'read'),
+            update: hasFieldPermission('orders', 'customer_details.email', 'update'),
+          },
+        },
+        {
+          name: 'phone',
+          type: 'text',
+          label: { en: 'Phone' },
+          access: {
+            read: hasFieldPermission('orders', 'customer_details.phone', 'read'),
+            update: hasFieldPermission('orders', 'customer_details.phone', 'update'),
+          },
+        },
+        {
+          name: 'address',
+          type: 'text',
+          label: { en: 'Address' },
+          access: {
+            read: hasFieldPermission('orders', 'customer_details.address', 'read'),
+            update: hasFieldPermission('orders', 'customer_details.address', 'update'),
+          },
+        },
+        {
+          name: 'city',
+          type: 'text',
+          label: { en: 'City' },
+          access: {
+            read: hasFieldPermission('orders', 'customer_details.city', 'read'),
+            update: hasFieldPermission('orders', 'customer_details.city', 'update'),
+          },
+        },
+        {
+          name: 'postalCode',
+          type: 'text',
+          label: { en: 'Postal Code' },
+          access: {
+            read: hasFieldPermission('orders', 'customer_details.postalCode', 'read'),
+            update: hasFieldPermission('orders', 'customer_details.postalCode', 'update'),
+          },
+        },
       ],
+      access: {
+        read: hasFieldPermission('orders', 'customer_details', 'read'),
+        update: hasFieldPermission('orders', 'customer_details', 'update'),
+      },
     },
 
-    // (I) Totals
+    // Totals
     {
       name: 'shipping_cost',
       type: 'number',
@@ -1162,30 +1400,50 @@ export const Orders: CollectionConfig = {
         description: { en: 'Delivery fee if applicable.' },
         readOnly: false,
       },
+      access: {
+        read: hasFieldPermission('orders', 'shipping_cost', 'read'),
+        update: hasFieldPermission('orders', 'shipping_cost', 'update'),
+      },
     },
     {
       name: 'subtotalBeforeDiscount',
       type: 'number',
       label: { en: 'Subtotal Before Discount' },
       admin: { readOnly: true },
+      access: {
+        read: hasFieldPermission('orders', 'subtotalBeforeDiscount', 'read'),
+        update: hasFieldPermission('orders', 'subtotalBeforeDiscount', 'update'),
+      },
     },
     {
       name: 'discountTotal',
       type: 'number',
       label: { en: 'Discount Total' },
       admin: { readOnly: true },
+      access: {
+        read: hasFieldPermission('orders', 'discountTotal', 'read'),
+        update: hasFieldPermission('orders', 'discountTotal', 'update'),
+      },
     },
     {
       name: 'totalAfterDiscount',
       type: 'number',
       label: { en: 'Total After Discount (Net)' },
       admin: { readOnly: true },
+      access: {
+        read: hasFieldPermission('orders', 'totalAfterDiscount', 'read'),
+        update: hasFieldPermission('orders', 'totalAfterDiscount', 'update'),
+      },
     },
     {
       name: 'total_tax',
       type: 'number',
       label: { en: 'Total Tax' },
       admin: { readOnly: true },
+      access: {
+        read: hasFieldPermission('orders', 'total_tax', 'read'),
+        update: hasFieldPermission('orders', 'total_tax', 'update'),
+      },
     },
     {
       name: 'subtotal',
@@ -1195,15 +1453,23 @@ export const Orders: CollectionConfig = {
         description: { en: 'Same as net subtotal, for backward compatibility.' },
         readOnly: true,
       },
+      access: {
+        read: hasFieldPermission('orders', 'subtotal', 'read'),
+        update: hasFieldPermission('orders', 'subtotal', 'update'),
+      },
     },
     {
       name: 'total',
       type: 'number',
       label: { en: 'Final Total' },
       admin: { readOnly: true },
+      access: {
+        read: hasFieldPermission('orders', 'total', 'read'),
+        update: hasFieldPermission('orders', 'total', 'update'),
+      },
     },
 
-    // (J) Promotions used
+    // Promotions used
     {
       name: 'promotionsUsed',
       type: 'group',
@@ -1214,8 +1480,10 @@ export const Orders: CollectionConfig = {
           type: 'number',
           defaultValue: 0,
           label: { en: 'Points Used' },
-          admin: {
-            description: { en: 'How many membership points were redeemed?' },
+          admin: { description: { en: 'How many membership points were redeemed?' } },
+          access: {
+            read: hasFieldPermission('orders', 'promotionsUsed.pointsUsed', 'read'),
+            update: hasFieldPermission('orders', 'promotionsUsed.pointsUsed', 'update'),
           },
         },
         {
@@ -1223,8 +1491,10 @@ export const Orders: CollectionConfig = {
           type: 'number',
           defaultValue: 0,
           label: { en: 'Store Credits Used' },
-          admin: {
-            description: { en: 'How many store credits were used?' },
+          admin: { description: { en: 'How many store credits were used?' } },
+          access: {
+            read: hasFieldPermission('orders', 'promotionsUsed.creditsUsed', 'read'),
+            update: hasFieldPermission('orders', 'promotionsUsed.creditsUsed', 'update'),
           },
         },
         {
@@ -1241,6 +1511,10 @@ export const Orders: CollectionConfig = {
             { name: 'max_uses', type: 'number' },
             { name: 'used', type: 'checkbox' },
           ],
+          access: {
+            read: hasFieldPermission('orders', 'promotionsUsed.couponUsed', 'read'),
+            update: hasFieldPermission('orders', 'promotionsUsed.couponUsed', 'update'),
+          },
         },
         {
           name: 'giftVoucherUsed',
@@ -1254,9 +1528,19 @@ export const Orders: CollectionConfig = {
             { name: 'valid_until', type: 'date' },
             { name: 'used', type: 'checkbox' },
           ],
+          access: {
+            read: hasFieldPermission('orders', 'promotionsUsed.giftVoucherUsed', 'read'),
+            update: hasFieldPermission('orders', 'promotionsUsed.giftVoucherUsed', 'update'),
+          },
         },
       ],
+      access: {
+        read: hasFieldPermission('orders', 'promotionsUsed', 'read'),
+        update: hasFieldPermission('orders', 'promotionsUsed', 'update'),
+      },
     },
+
+    // tippingUsed
     {
       name: 'tippingUsed',
       type: 'group',
@@ -1275,7 +1559,12 @@ export const Orders: CollectionConfig = {
             { label: 'Round Up', value: 'round_up' },
           ],
           admin: {
-            description: 'Specifies whether the tip is a fixed amount, a percentage, a round-up, or none.',
+            description:
+              'Specifies whether the tip is a fixed amount, a percentage, a round-up, or none.',
+          },
+          access: {
+            read: hasFieldPermission('orders', 'tippingUsed.type', 'read'),
+            update: hasFieldPermission('orders', 'tippingUsed.type', 'update'),
           },
         },
         {
@@ -1286,9 +1575,33 @@ export const Orders: CollectionConfig = {
           admin: {
             description: 'The numeric tip value (e.g. 2.50 for €2.50, or 10 for 10%).',
           },
+          access: {
+            read: hasFieldPermission('orders', 'tippingUsed.amount', 'read'),
+            update: hasFieldPermission('orders', 'tippingUsed.amount', 'update'),
+          },
+        },
+        {
+          name: 'actualTip',
+          type: 'number',
+          label: { en: 'Actual Tip Calculated' },
+          required: false,
+          admin: {
+            readOnly: true,
+            description: 'The final computed tip after rounding, etc.',
+          },
+          access: {
+            read: hasFieldPermission('orders', 'tippingUsed.actualTip', 'read'),
+            update: hasFieldPermission('orders', 'tippingUsed.actualTip', 'update'),
+          },
         },
       ],
+      access: {
+        read: hasFieldPermission('orders', 'tippingUsed', 'read'),
+        update: hasFieldPermission('orders', 'tippingUsed', 'update'),
+      },
     },
+
+    // userLocale
     {
       name: 'userLocale',
       type: 'text',
@@ -1297,7 +1610,13 @@ export const Orders: CollectionConfig = {
       admin: {
         description: 'The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.',
       },
+      access: {
+        read: hasFieldPermission('orders', 'userLocale', 'read'),
+        update: hasFieldPermission('orders', 'userLocale', 'update'),
+      },
     },
+
+    // kioskNumber
     {
       name: 'kioskNumber',
       type: 'number',
@@ -1305,6 +1624,12 @@ export const Orders: CollectionConfig = {
       admin: {
         description: 'If the order was placed from a kiosk, store the kiosk ID here.',
       },
+      access: {
+        read: hasFieldPermission('orders', 'kioskNumber', 'read'),
+        update: hasFieldPermission('orders', 'kioskNumber', 'update'),
+      },
     },
   ],
 };
+
+export default Orders;

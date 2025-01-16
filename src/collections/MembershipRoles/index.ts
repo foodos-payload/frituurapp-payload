@@ -1,24 +1,30 @@
-// src/collections/MembershipRoles.ts
+// File: src/collections/MembershipRoles.ts
 
 import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const MembershipRoles: CollectionConfig = {
     slug: 'membership-roles',
+
+    // -------------------------
+    // Collection-level Access
+    // -------------------------
     access: {
         create: hasPermission('membership-roles', 'create'),
         delete: hasPermission('membership-roles', 'delete'),
         read: hasPermission('membership-roles', 'read'),
         update: hasPermission('membership-roles', 'update'),
     },
+
     admin: {
         baseListFilter,
         group: 'Shop Settings',
         useAsTitle: 'label',
     },
+
     labels: {
         singular: { en: 'Membership Role' },
         plural: { en: 'Membership Roles' },
@@ -36,8 +42,7 @@ export const MembershipRoles: CollectionConfig = {
                         where: {
                             defaultRole: { equals: true },
                         },
-                        // Maybe no limit or limit: 1 is enough
-                        limit: 1,
+                        limit: 1, // we only need to check if at least one exists
                     });
 
                     const alreadyDefaultDoc = existingDefaults.docs[0];
@@ -46,8 +51,7 @@ export const MembershipRoles: CollectionConfig = {
                         // If we are UPDATING the SAME doc, that might be OK.
                         // But if this is a different doc, throw error.
                         const isSameDoc =
-                            operation === 'update' &&
-                            alreadyDefaultDoc.id === originalDoc?.id;
+                            operation === 'update' && alreadyDefaultDoc.id === originalDoc?.id;
 
                         if (!isSameDoc) {
                             throw new Error(
@@ -61,8 +65,19 @@ export const MembershipRoles: CollectionConfig = {
     },
 
     fields: [
-        tenantField,
-        shopsField,
+        // 1) tenantField
+        {
+            ...tenantField,
+
+        },
+
+        // 2) shopsField
+        {
+            ...shopsField,
+
+        },
+
+        // 3) label
         {
             name: 'label',
             type: 'text',
@@ -71,7 +86,13 @@ export const MembershipRoles: CollectionConfig = {
             admin: {
                 description: { en: 'Display name (e.g. "VIP", "Gold").' },
             },
+            access: {
+                read: hasFieldPermission('membership-roles', 'label', 'read'),
+                update: hasFieldPermission('membership-roles', 'label', 'update'),
+            },
         },
+
+        // 4) value
         {
             name: 'value',
             type: 'text',
@@ -80,9 +101,13 @@ export const MembershipRoles: CollectionConfig = {
             admin: {
                 description: { en: 'Internal value (e.g. "vip", "gold").' },
             },
+            access: {
+                read: hasFieldPermission('membership-roles', 'value', 'read'),
+                update: hasFieldPermission('membership-roles', 'value', 'update'),
+            },
         },
 
-        // The many-to-many side referencing "customer-loyalty"
+        // 5) loyaltyPrograms (relationship)
         {
             name: 'loyaltyPrograms',
             type: 'relationship',
@@ -95,9 +120,13 @@ export const MembershipRoles: CollectionConfig = {
                     en: 'Which loyalty programs can use this role?',
                 },
             },
+            access: {
+                read: hasFieldPermission('membership-roles', 'loyaltyPrograms', 'read'),
+                update: hasFieldPermission('membership-roles', 'loyaltyPrograms', 'update'),
+            },
         },
 
-        // NEW: Default role checkbox
+        // 6) defaultRole (checkbox)
         {
             name: 'defaultRole',
             type: 'checkbox',
@@ -109,7 +138,12 @@ export const MembershipRoles: CollectionConfig = {
                     en: 'If checked, this role can be auto-assigned to new customers who have no roles yet.',
                 },
             },
+            access: {
+                read: hasFieldPermission('membership-roles', 'defaultRole', 'read'),
+                update: hasFieldPermission('membership-roles', 'defaultRole', 'update'),
+            },
         },
     ],
 };
 
+export default MembershipRoles;

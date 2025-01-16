@@ -1,23 +1,31 @@
+// File: src/collections/Subproducts/index.ts
+
 import type { CollectionConfig } from 'payload';
 
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { ensureUniqueNamePerShop } from './hooks/ensureUniqueNamePerShop';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const Subproducts: CollectionConfig = {
     slug: 'subproducts',
+
+    // -------------------------
+    // Collection-level access
+    // -------------------------
     access: {
         create: hasPermission('subproducts', 'create'),
         delete: hasPermission('subproducts', 'delete'),
         read: hasPermission('subproducts', 'read'),
         update: hasPermission('subproducts', 'update'),
     },
+
     admin: {
         baseListFilter,
         useAsTitle: 'name_nl',
     },
+
     labels: {
         plural: {
             en: 'Subproducts',
@@ -34,8 +42,19 @@ export const Subproducts: CollectionConfig = {
     },
 
     fields: [
-        tenantField, // Ensure subproducts are scoped by tenant
-        shopsField, // Link subproducts to one or multiple shops
+        // 1) tenantField
+        {
+            ...tenantField,
+
+        },
+
+        // 2) shopsField
+        {
+            ...shopsField,
+
+        },
+
+        // 3) cloudPOSId
         {
             name: 'cloudPOSId',
             type: 'number',
@@ -45,7 +64,13 @@ export const Subproducts: CollectionConfig = {
                 position: 'sidebar',
                 description: 'The CloudPOS ID for this subproduct. If empty, not synced.',
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'cloudPOSId', 'read'),
+                update: hasFieldPermission('subproducts', 'cloudPOSId', 'update'),
+            },
         },
+
+        // 4) name_nl (with ensureUniqueNamePerShop hook)
         {
             name: 'name_nl',
             type: 'text',
@@ -71,9 +96,15 @@ export const Subproducts: CollectionConfig = {
                 },
             },
             hooks: {
-                beforeValidate: [ensureUniqueNamePerShop], // Validate subproduct names within shops
+                beforeValidate: [ensureUniqueNamePerShop],
+            },
+            access: {
+                read: hasFieldPermission('subproducts', 'name_nl', 'read'),
+                update: hasFieldPermission('subproducts', 'name_nl', 'update'),
             },
         },
+
+        // 5) Translated Names (tabs) - no field-level checks on subfields
         {
             type: 'tabs',
             label: {
@@ -173,6 +204,7 @@ export const Subproducts: CollectionConfig = {
             ],
         },
 
+        // 6) price_unified
         {
             name: 'price_unified',
             type: 'checkbox',
@@ -191,7 +223,13 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Utilisez un prix de vente unifié pour toutes les méthodes de réalisation.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'price_unified', 'read'),
+                update: hasFieldPermission('subproducts', 'price_unified', 'update'),
+            },
         },
+
+        // 7) price
         {
             name: 'price',
             type: 'number',
@@ -202,7 +240,7 @@ export const Subproducts: CollectionConfig = {
                 fr: 'Prix de Vente Unifié',
             },
             admin: {
-                condition: (data) => data?.price_unified, // Show only if unified pricing is enabled
+                condition: (data) => data?.price_unified,
                 description: {
                     en: 'The unified sale price.',
                     nl: 'De eenvormige verkoopprijs.',
@@ -210,7 +248,13 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Le prix de vente unifié.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'price', 'read'),
+                update: hasFieldPermission('subproducts', 'price', 'update'),
+            },
         },
+
+        // 8) price_dinein
         {
             name: 'price_dinein',
             type: 'number',
@@ -221,7 +265,7 @@ export const Subproducts: CollectionConfig = {
                 fr: 'Prix pour Manger sur Place',
             },
             admin: {
-                condition: (data) => !data?.price_unified, // Show only if unified pricing is disabled
+                condition: (data) => !data?.price_unified,
                 description: {
                     en: 'Sale price for dine-in.',
                     nl: 'Verkoopprijs voor eten op locatie.',
@@ -229,7 +273,13 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Prix de vente pour manger sur place.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'price_dinein', 'read'),
+                update: hasFieldPermission('subproducts', 'price_dinein', 'update'),
+            },
         },
+
+        // 9) price_takeaway
         {
             name: 'price_takeaway',
             type: 'number',
@@ -240,7 +290,7 @@ export const Subproducts: CollectionConfig = {
                 fr: 'Prix à Emporter',
             },
             admin: {
-                condition: (data) => !data?.price_unified, // Show only if unified pricing is disabled
+                condition: (data) => !data?.price_unified,
                 description: {
                     en: 'Sale price for takeaway.',
                     nl: 'Verkoopprijs voor afhalen.',
@@ -248,7 +298,13 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Prix de vente à emporter.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'price_takeaway', 'read'),
+                update: hasFieldPermission('subproducts', 'price_takeaway', 'update'),
+            },
         },
+
+        // 10) price_delivery
         {
             name: 'price_delivery',
             type: 'number',
@@ -258,9 +314,8 @@ export const Subproducts: CollectionConfig = {
                 de: 'Lieferpreis',
                 fr: 'Prix de Livraison',
             },
-
             admin: {
-                condition: (data) => !data?.price_unified, // Show only if unified pricing is disabled
+                condition: (data) => !data?.price_unified,
                 description: {
                     en: 'Sale price for delivery.',
                     nl: 'Verkoopprijs voor bezorging.',
@@ -268,7 +323,13 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Prix de vente pour livraison.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'price_delivery', 'read'),
+                update: hasFieldPermission('subproducts', 'price_delivery', 'update'),
+            },
         },
+
+        // 11) linked_product_enabled
         {
             name: 'linked_product_enabled',
             type: 'checkbox',
@@ -286,7 +347,13 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Activez la liaison avec un produit existant. Si activé, les champs de prix et de taxe seront masqués.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'linked_product_enabled', 'read'),
+                update: hasFieldPermission('subproducts', 'linked_product_enabled', 'update'),
+            },
         },
+
+        // 12) linked_product
         {
             name: 'linked_product',
             type: 'relationship',
@@ -298,7 +365,7 @@ export const Subproducts: CollectionConfig = {
             },
             relationTo: 'products',
             admin: {
-                condition: (data) => data?.linked_product_enabled, // Show only if linked product is enabled
+                condition: (data) => data?.linked_product_enabled,
                 description: {
                     en: 'Select a product to link with this subproduct.',
                     nl: 'Selecteer een product om te koppelen aan dit subproduct.',
@@ -306,7 +373,13 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Sélectionnez un produit à associer à ce sous-produit.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'linked_product', 'read'),
+                update: hasFieldPermission('subproducts', 'linked_product', 'update'),
+            },
         },
+
+        // 13) stock_enabled
         {
             name: 'stock_enabled',
             type: 'checkbox',
@@ -325,16 +398,28 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Activez le suivi des stocks pour ce sous-produit.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'stock_enabled', 'read'),
+                update: hasFieldPermission('subproducts', 'stock_enabled', 'update'),
+            },
         },
+
+        // 14) stock_quantity
         {
             name: 'stock_quantity',
             type: 'number',
             defaultValue: 0,
             admin: {
-                condition: (data) => data?.stock_enabled, // Show only if stock tracking is enabled
+                condition: (data) => data?.stock_enabled,
                 description: 'Stock quantity',
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'stock_quantity', 'read'),
+                update: hasFieldPermission('subproducts', 'stock_quantity', 'update'),
+            },
         },
+
+        // 15) tax
         {
             name: 'tax',
             type: 'number',
@@ -351,9 +436,16 @@ export const Subproducts: CollectionConfig = {
                     nl: 'Specificeer het BTW-percentage (bijv. 6, 12, 21).',
                     de: 'Geben Sie den MwSt-Prozentsatz an (z. B. 6, 12, 21).',
                     fr: 'Spécifiez le pourcentage de TVA (p.ex., 6, 12, 21).',
-                }, condition: (data) => !data?.linked_product_enabled, // Hide if linked product is enabled
+                },
+                condition: (data) => !data?.linked_product_enabled,
+            },
+            access: {
+                read: hasFieldPermission('subproducts', 'tax', 'read'),
+                update: hasFieldPermission('subproducts', 'tax', 'update'),
             },
         },
+
+        // 16) tax_table
         {
             name: 'tax_table',
             type: 'number',
@@ -370,9 +462,16 @@ export const Subproducts: CollectionConfig = {
                     nl: 'Specificeer het BTW-percentage (bijv. 6, 12, 21).',
                     de: 'Geben Sie den MwSt-Prozentsatz an (z. B. 6, 12, 21).',
                     fr: 'Spécifiez le pourcentage de TVA (p.ex., 6, 12, 21).',
-                }, condition: (data) => !data?.linked_product_enabled, // Hide if linked product is enabled
+                },
+                condition: (data) => !data?.linked_product_enabled,
+            },
+            access: {
+                read: hasFieldPermission('subproducts', 'tax_table', 'read'),
+                update: hasFieldPermission('subproducts', 'tax_table', 'update'),
             },
         },
+
+        // 17) image
         {
             name: 'image',
             type: 'relationship',
@@ -392,7 +491,13 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Faites référence à une image de la bibliothèque multimédia.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'image', 'read'),
+                update: hasFieldPermission('subproducts', 'image', 'update'),
+            },
         },
+
+        // 18) modtime
         {
             name: 'modtime',
             type: 'number',
@@ -413,7 +518,13 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Horodatage de la dernière modification.',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'modtime', 'read'),
+                update: hasFieldPermission('subproducts', 'modtime', 'update'),
+            },
         },
+
+        // 19) deleted
         {
             name: 'deleted',
             type: 'checkbox',
@@ -421,7 +532,13 @@ export const Subproducts: CollectionConfig = {
             admin: {
                 description: 'Mark this subproduct as deleted',
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'deleted', 'read'),
+                update: hasFieldPermission('subproducts', 'deleted', 'update'),
+            },
         },
+
+        // 20) status
         {
             name: 'status',
             type: 'select',
@@ -462,6 +579,12 @@ export const Subproducts: CollectionConfig = {
                     fr: 'Statut du sous-produit (activé ou désactivé).',
                 },
             },
+            access: {
+                read: hasFieldPermission('subproducts', 'status', 'read'),
+                update: hasFieldPermission('subproducts', 'status', 'update'),
+            },
         },
     ],
 };
+
+export default Subproducts;

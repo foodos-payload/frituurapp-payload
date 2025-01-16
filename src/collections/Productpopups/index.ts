@@ -1,22 +1,30 @@
+// File: src/collections/Productpopups/index.ts
+
 import type { CollectionConfig } from 'payload';
 
 import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
-import { hasPermission } from '@/access/permissionChecker';
+import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 export const Productpopups: CollectionConfig = {
     slug: 'productpopups',
+
+    // -------------------------
+    // Collection-level access
+    // -------------------------
     access: {
         create: hasPermission('productpopups', 'create'),
         delete: hasPermission('productpopups', 'delete'),
         read: hasPermission('productpopups', 'read'),
         update: hasPermission('productpopups', 'update'),
     },
+
     admin: {
         baseListFilter,
         useAsTitle: 'popup_title_nl',
     },
+
     labels: {
         plural: {
             en: 'Product Popups',
@@ -31,9 +39,21 @@ export const Productpopups: CollectionConfig = {
             fr: 'Pop-up Produit',
         },
     },
+
     fields: [
-        tenantField,
-        shopsField,
+        // 1) tenantField
+        {
+            ...tenantField,
+
+        },
+
+        // 2) shopsField
+        {
+            ...shopsField,
+
+        },
+
+        // 3) popup_title_nl
         {
             name: 'popup_title_nl',
             type: 'text',
@@ -58,7 +78,13 @@ export const Productpopups: CollectionConfig = {
                     fr: 'Entrez le titre de la pop-up en néerlandais (par défaut).',
                 },
             },
+            access: {
+                read: hasFieldPermission('productpopups', 'popup_title_nl', 'read'),
+                update: hasFieldPermission('productpopups', 'popup_title_nl', 'update'),
+            },
         },
+
+        // 4) Translated popup titles (tabs)
         {
             type: 'tabs',
             label: {
@@ -156,9 +182,13 @@ export const Productpopups: CollectionConfig = {
                     ],
                 },
             ],
+            access: {
+                read: hasFieldPermission('productpopups', 'popup_title_translations', 'read'),
+                update: hasFieldPermission('productpopups', 'popup_title_translations', 'update'),
+            },
         },
 
-
+        // 5) multiselect
         {
             name: 'multiselect',
             type: 'checkbox',
@@ -177,7 +207,13 @@ export const Productpopups: CollectionConfig = {
                     fr: 'Autoriser la sélection de plusieurs options dans cette pop-up.',
                 },
             },
+            access: {
+                read: hasFieldPermission('productpopups', 'multiselect', 'read'),
+                update: hasFieldPermission('productpopups', 'multiselect', 'update'),
+            },
         },
+
+        // 6) required_option_cashregister
         {
             name: 'required_option_cashregister',
             type: 'checkbox',
@@ -196,7 +232,13 @@ export const Productpopups: CollectionConfig = {
                     fr: 'Exigez la sélection d\'une option dans la caisse.',
                 },
             },
+            access: {
+                read: hasFieldPermission('productpopups', 'required_option_cashregister', 'read'),
+                update: hasFieldPermission('productpopups', 'required_option_cashregister', 'update'),
+            },
         },
+
+        // 7) required_option_webshop
         {
             name: 'required_option_webshop',
             type: 'checkbox',
@@ -215,7 +257,13 @@ export const Productpopups: CollectionConfig = {
                     fr: 'Exigez la sélection d\'une option dans la boutique en ligne.',
                 },
             },
+            access: {
+                read: hasFieldPermission('productpopups', 'required_option_webshop', 'read'),
+                update: hasFieldPermission('productpopups', 'required_option_webshop', 'update'),
+            },
         },
+
+        // 8) minimum_option
         {
             name: 'minimum_option',
             type: 'number',
@@ -234,7 +282,13 @@ export const Productpopups: CollectionConfig = {
                     fr: 'Nombre minimum d\'options à sélectionner.',
                 },
             },
+            access: {
+                read: hasFieldPermission('productpopups', 'minimum_option', 'read'),
+                update: hasFieldPermission('productpopups', 'minimum_option', 'update'),
+            },
         },
+
+        // 9) maximum_option
         {
             name: 'maximum_option',
             type: 'number',
@@ -253,7 +307,13 @@ export const Productpopups: CollectionConfig = {
                     fr: 'Nombre maximum d\'options à sélectionner. Mettez 0 pour aucune limite.',
                 },
             },
+            access: {
+                read: hasFieldPermission('productpopups', 'maximum_option', 'read'),
+                update: hasFieldPermission('productpopups', 'maximum_option', 'update'),
+            },
         },
+
+        // 10) allowMultipleTimes
         {
             name: 'allowMultipleTimes',
             type: 'checkbox',
@@ -272,7 +332,13 @@ export const Productpopups: CollectionConfig = {
                     fr: 'Si activé, les utilisateurs peuvent sélectionner plusieurs fois la même option (par ex. sauce en extra x3).',
                 },
             },
+            access: {
+                read: hasFieldPermission('productpopups', 'allowMultipleTimes', 'read'),
+                update: hasFieldPermission('productpopups', 'allowMultipleTimes', 'update'),
+            },
         },
+
+        // 11) default_checked_subproduct
         {
             name: 'default_checked_subproduct',
             type: 'relationship',
@@ -292,7 +358,13 @@ export const Productpopups: CollectionConfig = {
                     fr: 'Sous-produit sélectionné par défaut lors du chargement de la pop-up.',
                 },
             },
+            access: {
+                read: hasFieldPermission('productpopups', 'default_checked_subproduct', 'read'),
+                update: hasFieldPermission('productpopups', 'default_checked_subproduct', 'update'),
+            },
         },
+
+        // 12) subproducts (relationship)
         {
             name: 'subproducts',
             type: 'relationship',
@@ -313,6 +385,12 @@ export const Productpopups: CollectionConfig = {
                     fr: 'Liste des sous-produits associés à cette pop-up.',
                 },
             },
+            access: {
+                read: hasFieldPermission('productpopups', 'subproducts', 'read'),
+                update: hasFieldPermission('productpopups', 'subproducts', 'update'),
+            },
         },
     ],
 };
+
+export default Productpopups;
