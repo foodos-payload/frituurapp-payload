@@ -30,7 +30,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/mocks/emptyObject.js"
-, "tailwind.config.js"  ],
+    "src/mocks/emptyObject.js",
+    "tailwind.config.js"
+  ],
   "exclude": ["node_modules"]
 }

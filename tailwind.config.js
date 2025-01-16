@@ -53,11 +53,6 @@ module.exports = {
           foreground: 'hsl(var(--card-foreground))',
         },
       },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'var(--radius)',
-        sm: 'var(--radius)',
-      },
 
       keyframes: {
         'accordion-down': {
