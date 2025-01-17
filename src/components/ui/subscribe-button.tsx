@@ -6,32 +6,31 @@ import { useState } from "react"
 import { loadStripe } from '@stripe/stripe-js';
 import { Role, User } from "@/payload-types"
 
-// SubscribeButtonProps no longer needs internal "selectedShopId" logic
 interface SubscribeButtonProps extends ButtonProps {
     priceId?: string      // The Stripe price ID
-    id?: string          // The service ID
+    id?: string           // The Payload Service doc ID
     amount?: string
     user?: User
     serviceRoles: Role[]
-    // The shop ID is now passed in from the parent
-    shopId?: string
+    shopId?: string       // The user-selected shop
+    tenantId?: string
 }
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
 
 export function SubscribeButton({
     priceId,
-    id,
+    id: serviceId,
     amount,
     user,
     serviceRoles,
     shopId,
+    tenantId,
     children,
     ...props
 }: SubscribeButtonProps) {
     const [isLoading, setIsLoading] = useState(false)
 
-    // Basic safety checks
     const userId = user?.id || ""
 
     async function handleSubscribe() {
@@ -53,13 +52,9 @@ export function SubscribeButton({
                 return
             }
 
-            // Build successUrl that includes shop_id, user_id, etc
-            const successUrl = `${process.env.NEXT_PUBLIC_SERVER_URL}/subscription-success-callback?` +
-                `service_id=${id}&` +
-                `user_id=${userId}&` +
-                `shop_id=${shopId}&` +
-                `amount=${amount}&` +
-                `roles=${serviceRoles.map((role) => role.id).join(",")}`
+            // Simple success / cancel URLs - no direct "callback" logic
+            const successUrl = `${process.env.NEXT_PUBLIC_SERVER_URL}/services/success`
+            const cancelUrl = `${process.env.NEXT_PUBLIC_SERVER_URL}/services`
 
             // Create the checkout session
             const response = await fetch("/api/create-checkout-session", {
@@ -69,8 +64,11 @@ export function SubscribeButton({
                     price: priceId,
                     userId,
                     customerEmail: user?.email,
+                    serviceId,
+                    shopId,
+                    tenantId,
                     successUrl,
-                    cancelUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/services/${id}`,
+                    cancelUrl,
                 }),
             })
 

@@ -1,47 +1,47 @@
 // File: /src/app/api/manage-billing/route.ts
 import { NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import Stripe from 'stripe'
 
 export async function POST(req: Request) {
     try {
         const payload = await getPayload({ config })
-        const { userId } = await req.json()
+        const { tenantId } = await req.json()
 
-        // Basic check
-        if (!userId) {
-            return NextResponse.json({ error: 'Missing `userId`' }, { status: 400 })
+        if (!tenantId) {
+            return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 })
         }
 
-        // 1) Fetch the user by ID
-        const userDoc = await payload.findByID({
-            collection: 'users',
-            id: userId,
+        // 1) Fetch the tenant doc
+        const tenantDoc = await payload.findByID({
+            collection: 'tenants',
+            id: tenantId,
         })
-        if (!userDoc) {
-            return NextResponse.json({ error: 'User not found.' }, { status: 404 })
+        if (!tenantDoc) {
+            return NextResponse.json({ error: 'Tenant not found.' }, { status: 404 })
         }
 
-        // 2) Check if the user has an associated stripeCustomerId
-        if (!userDoc.stripeCustomerId) {
-            return NextResponse.json({ error: 'No stripeCustomerId on user' }, { status: 400 })
+        // 2) Check if there's a stripeCustomerId on this tenant
+        const stripeCustomerId = tenantDoc.stripeCustomerId
+        if (!stripeCustomerId) {
+            return NextResponse.json({ error: 'No stripeCustomerId on tenant.' }, { status: 400 })
         }
 
-        // 3) Create the Stripe Billing Portal session
+        // 3) Create Stripe Portal session
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+            apiVersion: '2022-11-15',
+        })
         const portalSession = await stripe.billingPortal.sessions.create({
-            customer: userDoc.stripeCustomerId,
+            customer: stripeCustomerId,
             return_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/services`,
+            // or any other page you'd like to return to
         })
 
-        // 4) Return the portal session URL
+        // 4) Send the URL to the client
         return NextResponse.json({ url: portalSession.url })
-
     } catch (err: any) {
-        console.error('Error creating billing portal:', err)
-        return NextResponse.json(
-            { error: err?.message ?? 'Something went wrong' },
-            { status: 500 },
-        )
+        console.error('ManageBilling error:', err)
+        return NextResponse.json({ error: err?.message || 'Something went wrong' }, { status: 500 })
     }
 }

@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useState } from 'react'
-import Image from 'next/image'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { SubscribeButton } from '@/components/ui/subscribe-button'
-import { ManageBillingButton } from '@/components/ui/ManageBillingButton'
-import type { Service, Role, Media, User, Shop } from '@/payload-types'
+import React, { useState, useEffect } from "react"
+import Image from "next/image"
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { SubscribeButton } from "@/components/ui/subscribe-button"
+import { ManageBillingButton } from "@/components/ui/ManageBillingButton"
+import type { Service, Role, Media, User, Shop, TenantRole } from "@/payload-types"
 
 type ServicesClientProps = {
     services: Service[]
@@ -15,12 +15,39 @@ type ServicesClientProps = {
 export default function ServicesClient({ services, currentUser }: ServicesClientProps) {
     const [isYearly, setIsYearly] = useState(false)
     const [selectedShops, setSelectedShops] = useState<Record<string, string>>({})
+    const [selectedTenant, setSelectedTenant] = useState<string>("")
 
-    // Toggle monthly/yearly
     const handleToggle = () => setIsYearly((prev) => !prev)
 
-    // Get user's shops (if any)
+    // 1) Get user's shops
     const userShops = Array.isArray(currentUser?.shops) ? (currentUser.shops as Shop[]) : []
+
+    // 2) Get user's tenant entries (where each entry is { tenant: <Tenant or ID>, roles: [...] })
+    const userTenantEntries = Array.isArray(currentUser?.tenants)
+        ? (currentUser.tenants as TenantRole[])
+        : []
+
+    // 3) Only those where the user is "tenant-admin"
+    const tenantAdminEntries = userTenantEntries.filter((entry) => {
+        return entry.roles?.includes("tenant-admin")
+    })
+
+    // If the user has exactly one tenant-admin, auto-select it
+    useEffect(() => {
+        if (tenantAdminEntries.length === 1 && !selectedTenant) {
+            const singleTenantObj = tenantAdminEntries[0].tenant
+            const singleTenantID = typeof singleTenantObj === "object" ? singleTenantObj.id : singleTenantObj
+            setSelectedTenant(singleTenantID)
+        }
+    }, [tenantAdminEntries, selectedTenant])
+
+    // 4) Filter shops to only those that belong to selectedTenant (if any)
+    const filteredShops = selectedTenant
+        ? userShops.filter((shop) => {
+            const tenantID = typeof shop.tenant === "object" ? shop.tenant.id : shop.tenant
+            return tenantID === selectedTenant
+        })
+        : []
 
     return (
         <div className="min-h-screen bg-[#f2f2f2cb] flex flex-col items-center p-8">
@@ -36,10 +63,10 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
 
             {/* Billing Toggle + Manage Billing Row */}
             <div className="w-full max-w-7xl flex items-center justify-between">
-                {/* Toggle */}
+                {/* Toggle (Monthly / Yearly) */}
                 <div className="flex items-center space-x-2">
                     <span
-                        className={`text-lg font-bold ${!isYearly ? 'text-[#1f2a37]' : 'text-gray-400'}`}
+                        className={`text-lg font-bold ${!isYearly ? "text-[#1f2a37]" : "text-gray-400"}`}
                     >
                         Monthly
                     </span>
@@ -51,49 +78,71 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                     >
                         <span
                             className={`inline-block h-5 w-5 rounded-full bg-white transform transition
-                ${isYearly ? 'translate-x-5' : 'translate-x-0'}`}
+                ${isYearly ? "translate-x-5" : "translate-x-0"}`}
                         />
                     </button>
                     <span
-                        className={`text-lg font-bold ${isYearly ? 'text-[#1f2a37]' : 'text-gray-400'}`}
+                        className={`text-lg font-bold ${isYearly ? "text-[#1f2a37]" : "text-gray-400"}`}
                     >
                         Yearly
                     </span>
                 </div>
 
-                {/* If user has a stripeCustomerId => show "Manage Billing" */}
-                {currentUser?.stripeCustomerId && (
-                    <ManageBillingButton userId={currentUser.id!} />
+                {/* Tenant-based Manage Billing */}
+                {/* Only show a billing button if user is an admin for at least one tenant AND a tenant is selected */}
+                {tenantAdminEntries.length > 0 && selectedTenant && (
+                    <ManageBillingButton tenantId={selectedTenant} />
                 )}
             </div>
+
+            {/* Tenant Picker: only show if multiple tenant-admin entries exist */}
+            {tenantAdminEntries.length > 1 && (
+                <div className="w-full max-w-7xl mt-6 mb-2">
+                    <label htmlFor="tenant-select" className="block text-sm font-medium mb-2">
+                        Select Tenant
+                    </label>
+                    <select
+                        id="tenant-select"
+                        className="border p-2 rounded"
+                        onChange={(e) => setSelectedTenant(e.target.value)}
+                        value={selectedTenant}
+                    >
+                        <option value="">-- Select a Tenant --</option>
+                        {tenantAdminEntries.map((entry) => {
+                            const tObj = entry.tenant
+                            const tID = typeof tObj === "object" ? tObj.id : tObj
+                            const tName = typeof tObj === "object" ? tObj.name : "Unknown Tenant"
+                            return (
+                                <option key={tID} value={tID}>
+                                    {tName}
+                                </option>
+                            )
+                        })}
+                    </select>
+                </div>
+            )}
 
             {/* Services Grid */}
             <div className="w-full max-w-7xl mt-10 grid md:grid-cols-3 gap-6">
                 {services.map((service) => {
                     const thumbnail = service.service_thumbnail as Media
 
-                    // Suppose service.shops is the array of shops that already have this service
-                    const subscribedShopIDs = Array.isArray(service.shops)
-                        ? service.shops.map((sh) => (typeof sh === 'object' ? sh.id : sh))
-                        : []
+                    // Active subscriptions
+                    const subscribedShops = (service.subscriptions || []).filter((sub) => sub.active)
+                    const subscribedShopIDs = subscribedShops.map((sub) =>
+                        typeof sub.shop === "object" ? sub.shop?.id : sub.shop
+                    )
 
-                    // Filter out shops that already have this service
-                    const unsubscribedShops = userShops.filter(
+                    // Filter out shops that already have this service from the filteredShops
+                    const unsubscribedShops = filteredShops.filter(
                         (sh) => !subscribedShopIDs.includes(sh.id),
                     )
 
-                    // If at least one shop is in subscribedShopIDs => some shop has it
-                    const isOwned = subscribedShopIDs.some(
-                        (sid) => userShops.map((u) => u.id).includes(sid),
-                    )
+                    // Price display
+                    const displayedPrice = isYearly ? service.yearly_price : service.monthly_price
 
-                    // The displayed price depending on monthly vs yearly
-                    const displayedPrice = isYearly
-                        ? service.yearly_price
-                        : service.monthly_price
-
-                    // Keep track of the user’s selection for this particular service
-                    const selectedShop = selectedShops[service.id!] || ''
+                    // Track the shop selection for this service
+                    const selectedShop = selectedShops[service.id!] || ""
                     const handleShopChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
                         setSelectedShops((prev) => ({
                             ...prev,
@@ -101,7 +150,8 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                         }))
                     }
 
-                    const canSubscribe = unsubscribedShops.length > 0
+                    // We can only subscribe if a tenant is selected AND there are unsubscribed shops
+                    const canSubscribe = Boolean(selectedTenant) && unsubscribedShops.length > 0
                     const hasSelectedShop = Boolean(selectedShop)
 
                     return (
@@ -113,7 +163,7 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                                 {thumbnail?.url && (
                                     <Image
                                         src={thumbnail.url}
-                                        alt={service.title_nl || 'Service thumbnail'}
+                                        alt={service.title_nl || "Service thumbnail"}
                                         width={600}
                                         height={600}
                                         className="mb-4 w-full h-48 object-cover rounded-md mix-blend-multiply"
@@ -123,25 +173,20 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                                     {service.title_nl}
                                 </CardTitle>
                                 <CardDescription className="text-[#1f2a37] mt-1">
-                                    {service.description_nl || 'A powerful service for your business.'}
+                                    {service.description_nl || "A powerful service for your business."}
                                 </CardDescription>
                                 <div className="mt-4 text-4xl font-bold text-[#1f2a37]">
                                     €{displayedPrice}
                                     <span className="ml-1 text-lg font-semibold">
-                                        /{isYearly ? 'year' : 'month'}
+                                        /{isYearly ? "year" : "month"}
                                     </span>
                                 </div>
                             </CardHeader>
 
                             <CardFooter className="p-6 pt-0">
                                 <div className="flex flex-row flex-wrap items-end gap-4">
-                                    {/* Remove the old "Modify" button in favor of the single "Manage Billing" button */}
-                                    {/* If user wants to see which shops are subscribed, they can do so in the billing portal. */}
-
-                                    {/* 2) Subscription UI (shop selector + subscribe button) */}
                                     {canSubscribe ? (
                                         <>
-                                            {/* Shop dropdown */}
                                             <div className="flex flex-col">
                                                 <label
                                                     htmlFor={`shop-select-${service.id}`}
@@ -164,7 +209,6 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                                                 </select>
                                             </div>
 
-                                            {/* Subscribe button */}
                                             <SubscribeButton
                                                 priceId={
                                                     isYearly
@@ -176,15 +220,18 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                                                 serviceRoles={service.roles as Role[]}
                                                 amount={displayedPrice}
                                                 shopId={selectedShop}
+                                                tenantId={selectedTenant} // Pass the selected tenant ID
                                                 disabled={!hasSelectedShop}
                                                 className="border-4 hover:bg-[#0000002d] border-[#39454f]"
                                             >
-                                                Subscribe {isYearly ? 'Yearly' : 'Monthly'}
+                                                Subscribe {isYearly ? "Yearly" : "Monthly"}
                                             </SubscribeButton>
                                         </>
                                     ) : (
                                         <p className="text-center font-semibold text-gray-600">
-                                            All your shops already have this service
+                                            {!selectedTenant
+                                                ? "Please select a tenant first."
+                                                : "All your shops already have this service"}
                                         </p>
                                     )}
                                 </div>
