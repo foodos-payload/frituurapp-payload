@@ -1275,6 +1275,7 @@ export interface User {
    * Assign shops to the user.
    */
   shops?: (string | Shop)[] | null;
+  stripeCustomerId?: string | null;
   /**
    * The username of the user.
    */
@@ -2494,6 +2495,7 @@ export interface UsersSelect<T extends boolean = true> {
         id?: T;
       };
   shops?: T;
+  stripeCustomerId?: T;
   username?: T;
   updatedAt?: T;
   createdAt?: T;
