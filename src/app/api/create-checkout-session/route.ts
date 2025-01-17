@@ -90,7 +90,6 @@ export async function POST(request: Request) {
 
         // 5) Create Stripe session
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-            apiVersion: '2022-11-15',
         })
 
         const session = await stripe.checkout.sessions.create({

@@ -5,7 +5,7 @@ import Image from "next/image"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { SubscribeButton } from "@/components/ui/subscribe-button"
 import { ManageBillingButton } from "@/components/ui/ManageBillingButton"
-import type { Service, Role, Media, User, Shop, TenantRole } from "@/payload-types"
+import type { Service, Role, Media, User, Shop } from "@/payload-types"
 
 type ServicesClientProps = {
     services: Service[]
@@ -24,7 +24,7 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
 
     // 2) Get user's tenant entries (where each entry is { tenant: <Tenant or ID>, roles: [...] })
     const userTenantEntries = Array.isArray(currentUser?.tenants)
-        ? (currentUser.tenants as TenantRole[])
+        ? (currentUser.tenants)
         : []
 
     // 3) Only those where the user is "tenant-admin"

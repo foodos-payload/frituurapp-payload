@@ -50,8 +50,8 @@ export default buildConfig({
       login: '/auth/login',
 
     },
-    components: {
 
+    components: {
       afterNavLinks: ['@/components/TenantSelector#TenantSelectorRSC'],
       views: {
         login: {
@@ -64,7 +64,9 @@ export default buildConfig({
         },
       },
 
+
     },
+    theme: 'light',
 
 
 
