@@ -713,12 +713,12 @@ input {
   }
 }
 
-.doc-header h1 {
+.doc-header h1, #dashboard-header-wrap h1 {
   font-size: 1.2em;
   font-weight: 600;
 }
 
-.doc-header h1::before {
+.doc-header h1::before, #dashboard-header-wrap h1::before {
   content: '|';
   display: inline-block;
   width: 1em;

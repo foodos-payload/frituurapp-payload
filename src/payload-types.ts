@@ -1351,16 +1351,23 @@ export interface Service {
   monthly_price: string;
   yearly_price: string;
   /**
-   * Select one or more Tenants associated with this Service.
+   * Manage subscriptions per tenant/shop for this Service
    */
-  tenants?: (string | Tenant)[] | null;
-  /**
-   * Select one or more Shops that offer or are linked to this Service.
-   */
-  shops?: (string | Shop)[] | null;
-  /**
-   * Assign one or more roles relevant to this Service.
-   */
+  subscriptions?:
+    | {
+        tenant: string | Tenant;
+        shop: string | Shop;
+        /**
+         * The Stripe subscription ID for this tenant & shop
+         */
+        stripeSubscriptionId?: string | null;
+        /**
+         * Indicates whether the subscription is currently active
+         */
+        active?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
   roles?: (string | Role)[] | null;
   yearly_price_discount?: string | null;
   try_demo?: string | null;
@@ -2575,8 +2582,15 @@ export interface ServicesSelect<T extends boolean = true> {
   description_fr?: T;
   monthly_price?: T;
   yearly_price?: T;
-  tenants?: T;
-  shops?: T;
+  subscriptions?:
+    | T
+    | {
+        tenant?: T;
+        shop?: T;
+        stripeSubscriptionId?: T;
+        active?: T;
+        id?: T;
+      };
   roles?: T;
   yearly_price_discount?: T;
   try_demo?: T;

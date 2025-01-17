@@ -4,41 +4,37 @@ import { CustomDashboardClient } from './CustomDashboardClient'
 
 export const CustomDashboardRSC = async () => {
     try {
-        const res = await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getDashboardData`, {
+        // A) Dashboard data
+        const dashboardRes = await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getDashboardData`, {
             credentials: 'include',
             cache: 'no-store',
         })
-
-        if (!res.ok) {
-            throw new Error(`Dashboard request failed: ${res.status}`)
+        if (!dashboardRes.ok) {
+            throw new Error(`Dashboard request failed: ${dashboardRes.status}`)
         }
+        const data = await dashboardRes.json()
 
-        const data = await res.json() as {
-            error?: string
-            // 24H
-            last24hOrders: number
-            takeawayCount: number
-            dineinCount: number
-            deliveryCount: number
-
-            // 7D
-            last7dOrders: number
-            takeawayCount7d: number
-            dineinCount7d: number
-            deliveryCount7d: number
-
-            // 30D
-            last30dOrders: number
-            takeawayCount30d: number
-            dineinCount30d: number
-            deliveryCount30d: number
-
-            // existing
-            totalCategories: number
-            totalProducts: number
-            outOfStockCount: number
+        // B) Active services
+        const activeRes = await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getActiveServices`, {
+            credentials: 'include',
+            cache: 'no-store',
+        })
+        if (!activeRes.ok) {
+            throw new Error(`Active services request failed: ${activeRes.status}`)
         }
+        const activeData = await activeRes.json()
 
+        // C) Non-active services
+        const nonActiveRes = await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/getNonActiveServices`, {
+            credentials: 'include',
+            cache: 'no-store',
+        })
+        if (!nonActiveRes.ok) {
+            throw new Error(`Non-active services request failed: ${nonActiveRes.status}`)
+        }
+        const nonActiveData = await nonActiveRes.json()
+
+        // D) Build final props
         return (
             <CustomDashboardClient
                 error={data.error ?? null}
@@ -64,9 +60,14 @@ export const CustomDashboardRSC = async () => {
                 totalCategories={data.totalCategories}
                 totalProducts={data.totalProducts}
                 outOfStockCount={data.outOfStockCount}
+
+                // pass both arrays
+                activeServices={activeData.services || []}
+                nonActiveServices={nonActiveData.services || []}
             />
         )
     } catch (err: any) {
+        console.error('[CustomDashboardRSC] error =>', err)
         return (
             <CustomDashboardClient
                 error={err.message}
@@ -75,20 +76,21 @@ export const CustomDashboardRSC = async () => {
                 takeawayCount={0}
                 dineinCount={0}
                 deliveryCount={0}
-
                 last7dOrders={0}
                 takeawayCount7d={0}
                 dineinCount7d={0}
                 deliveryCount7d={0}
-
                 last30dOrders={0}
                 takeawayCount30d={0}
                 dineinCount30d={0}
                 deliveryCount30d={0}
-
                 totalCategories={0}
                 totalProducts={0}
                 outOfStockCount={0}
+
+                // empty arrays if error
+                activeServices={[]}
+                nonActiveServices={[]}
             />
         )
     }

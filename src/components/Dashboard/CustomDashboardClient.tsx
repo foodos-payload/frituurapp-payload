@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useState } from 'react'
 import { Gutter } from '@payloadcms/ui'
@@ -10,9 +10,29 @@ import {
   FaTags,
   FaBoxOpen,
   FaExclamationTriangle,
+  FaLock,
 } from 'react-icons/fa'
 import { RangeSalesChart } from './RangeSalesChart'
 
+// For your "Active Services"
+type ServiceCard = {
+  id: string
+  title_nl: string
+  description_nl?: string
+  monthly_price?: string
+  yearly_price?: string
+  service_thumbnail?: {
+    filename: string
+    url?: string
+    sizes?: {
+      icon?: { url: string }
+      card?: { url: string }
+      // etc. depends on your media config
+    }
+  }
+}
+
+// NEW: add nonActiveServices to Props
 type Props = {
   error: string | null
 
@@ -38,6 +58,12 @@ type Props = {
   totalCategories: number
   totalProducts: number
   outOfStockCount: number
+
+  // Active services
+  activeServices: ServiceCard[]
+
+  // NEW: locked modules
+  nonActiveServices: ServiceCard[]
 }
 
 export const CustomDashboardClient: React.FC<Props> = ({
@@ -65,6 +91,12 @@ export const CustomDashboardClient: React.FC<Props> = ({
   totalCategories,
   totalProducts,
   outOfStockCount,
+
+  // Active services
+  activeServices,
+
+  // NEW locked modules
+  nonActiveServices,
 }) => {
   if (error) {
     return (
@@ -74,7 +106,6 @@ export const CustomDashboardClient: React.FC<Props> = ({
     )
   }
 
-  // Range state used for both the cards AND the chart
   const [selectedRange, setSelectedRange] = useState<'24h' | '7d' | '30d'>('24h')
 
   // Return stats based on selected range
@@ -112,9 +143,25 @@ export const CustomDashboardClient: React.FC<Props> = ({
 
   return (
     <Gutter>
-      <section id="dashboard-header-wrap" className="doc-header flex justify-between mb-10">
-        <h1 style={{ fontSize: '1.7em' }}>Dashboard</h1>
-        <button id="action-save" className="btn-kitchen-screen flex justify-center items-center">
+      {/* HEADER */}
+      <section
+        id="dashboard-header-wrap"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          marginBottom: '10px',
+        }}
+      >
+        <h1 style={{ fontSize: '1.7em', margin: 0 }}>Dashboard</h1>
+        <button
+          id="action-save"
+          className="btn-kitchen-screen flex justify-center items-center"
+          style={{
+            whiteSpace: 'nowrap',
+          }}
+        >
           Go to kitchen screen{' '}
           <span style={{ marginLeft: '0.5em', display: 'flex', alignItems: 'center' }}>
             <FaArrowRight />
@@ -122,11 +169,26 @@ export const CustomDashboardClient: React.FC<Props> = ({
         </button>
       </section>
 
-      <div style={{ display: 'flex', gap: '20px' }}>
-        <main style={{ flex: 1 }}>
-          {/* TIME RANGE SWITCHER + 2-CARD ROW */}
+      {/* MAIN & ASIDE WRAPPER */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '20px',
+        }}
+      >
+        {/* MAIN CONTENT */}
+        <main
+          style={{
+            flex: '1 1 400px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+          }}
+        >
+          {/* TIME RANGE SWITCHER */}
           <section id="dashboard-order-info">
-            {/* Switcher */}
+            {/* Range switch buttons */}
             <div style={{ marginBottom: '1rem' }}>
               <button
                 style={{
@@ -159,18 +221,18 @@ export const CustomDashboardClient: React.FC<Props> = ({
               </button>
             </div>
 
-            {/* Cards Row */}
+            {/* TOP 2 CARDS (Orders & Per Type) */}
             <div
               style={{
                 display: 'flex',
+                flexWrap: 'wrap',
                 gap: '1rem',
-                flexWrap: 'nowrap',
               }}
             >
               {/* LEFT CARD => Total Orders */}
               <div
                 style={{
-                  flex: '1 1 50%',
+                  flex: '1 1 150px',
                   backgroundColor: '#f0f0f0',
                   borderRadius: '20px',
                   padding: '1rem',
@@ -178,7 +240,7 @@ export const CustomDashboardClient: React.FC<Props> = ({
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  minHeight: '200px',
+                  minHeight: '180px',
                 }}
               >
                 <div
@@ -187,29 +249,31 @@ export const CustomDashboardClient: React.FC<Props> = ({
                     justifyContent: 'center',
                     alignItems: 'center',
                     backgroundColor: '#E2E2E2',
-                    height: '82px',
-                    width: '82px',
+                    height: '72px',
+                    width: '72px',
                     borderRadius: '100%',
                     marginBottom: '1rem',
                   }}
                 >
                   <FaShoppingBag size={30} />
                 </div>
-                <strong className="text-3xl mb-2">{totalOrders}</strong>
-                <p>Orders ({label})</p>
+                <strong style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                  {totalOrders}
+                </strong>
+                <p style={{ margin: 0 }}>Orders ({label})</p>
               </div>
 
-              {/* RIGHT CARD => Breakdown by type */}
+              {/* RIGHT CARD => Per Type */}
               <div
                 style={{
-                  flex: '1 1 50%',
+                  flex: '1 1 150px',
                   backgroundColor: '#f0f0f0',
                   borderRadius: '20px',
                   padding: '1rem',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center',
-                  minHeight: '200px',
+                  minHeight: '180px',
                 }}
               >
                 <p
@@ -230,10 +294,8 @@ export const CustomDashboardClient: React.FC<Props> = ({
                       marginBottom: '0.5rem',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <FaShoppingBag size={30} />
-                    </div>
-                    <strong className="text-3xl">{tky}</strong>
+                    <FaShoppingBag size={30} />
+                    <strong style={{ fontSize: '2rem' }}>{tky}</strong>
                   </div>
                   <div
                     style={{
@@ -243,10 +305,8 @@ export const CustomDashboardClient: React.FC<Props> = ({
                       marginBottom: '0.5rem',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <FaUtensils size={30} />
-                    </div>
-                    <strong className="text-3xl">{din}</strong>
+                    <FaUtensils size={30} />
+                    <strong style={{ fontSize: '2rem' }}>{din}</strong>
                   </div>
                   <div
                     style={{
@@ -255,35 +315,33 @@ export const CustomDashboardClient: React.FC<Props> = ({
                       gap: '15px',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <FaTruck size={30} />
-                    </div>
-                    <strong className="text-3xl">{del}</strong>
+                    <FaTruck size={30} />
+                    <strong style={{ fontSize: '2rem' }}>{del}</strong>
                   </div>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Chart that also changes with the same selectedRange! */}
-          <section id="dashboard-sales-chart" style={{ marginTop: '2rem' }}>
+          {/* SALES CHART */}
+          <section id="dashboard-sales-chart">
             <RangeSalesChart selectedRange={selectedRange} />
           </section>
 
-          {/* STOCK MANAGE SECTION */}
-          <section id="dashboard-stock-manage" style={{ marginTop: '2rem' }}>
-            <h2>Products</h2>
+          {/* BOTTOM 3 CARDS (Stock Manage) */}
+          <section id="dashboard-stock-manage" style={{ marginTop: '1rem' }}>
+            <h2 style={{ marginBottom: '0.5rem' }}>Products</h2>
             <div
               style={{
                 display: 'flex',
+                flexWrap: 'wrap',
                 gap: '1rem',
-                flexWrap: 'nowrap',
               }}
             >
-              {/* CATEGORIES CARD */}
+              {/* CATEGORIES */}
               <div
                 style={{
-                  flex: '1 1 33%',
+                  flex: '1 1 180px',
                   backgroundColor: '#f0f0f0',
                   borderRadius: '20px',
                   padding: '1rem',
@@ -308,14 +366,16 @@ export const CustomDashboardClient: React.FC<Props> = ({
                 >
                   <FaTags size={25} />
                 </div>
-                <strong className="text-2xl mb-1">{totalCategories}</strong>
-                <p>Categories</p>
+                <strong style={{ fontSize: '1.5rem', marginBottom: '0.3rem' }}>
+                  {totalCategories}
+                </strong>
+                <p style={{ margin: 0 }}>Categories</p>
               </div>
 
-              {/* PRODUCTS CARD */}
+              {/* PRODUCTS */}
               <div
                 style={{
-                  flex: '1 1 33%',
+                  flex: '1 1 180px',
                   backgroundColor: '#f0f0f0',
                   borderRadius: '20px',
                   padding: '1rem',
@@ -340,14 +400,16 @@ export const CustomDashboardClient: React.FC<Props> = ({
                 >
                   <FaBoxOpen size={25} />
                 </div>
-                <strong className="text-2xl mb-1">{totalProducts}</strong>
-                <p>Products</p>
+                <strong style={{ fontSize: '1.5rem', marginBottom: '0.3rem' }}>
+                  {totalProducts}
+                </strong>
+                <p className="font-bold" style={{ margin: 0 }}>Products</p>
               </div>
 
-              {/* OUT OF STOCK CARD */}
+              {/* OUT OF STOCK */}
               <div
                 style={{
-                  flex: '1 1 33%',
+                  flex: '1 1 180px',
                   backgroundColor: '#f0f0f0',
                   borderRadius: '20px',
                   padding: '1rem',
@@ -372,25 +434,148 @@ export const CustomDashboardClient: React.FC<Props> = ({
                 >
                   <FaExclamationTriangle size={25} />
                 </div>
-                <strong className="text-2xl mb-1">{outOfStockCount}</strong>
-                <p>Out of Stock</p>
+                <strong style={{ fontSize: '1.5rem', marginBottom: '0.3rem' }}>
+                  {outOfStockCount}
+                </strong>
+                <p style={{ margin: 0 }}>Out of Stock</p>
               </div>
             </div>
           </section>
         </main>
 
+        {/* ASIDE => Active + Locked Services */}
         <aside
           id="dashboard-aside-right"
-          className="flex flex-col gap-2"
-          style={{ width: '300px', marginLeft: '20px' }}
+          style={{
+            flex: '1 1 300px',
+            maxWidth: '400px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+            padding: '0.5rem 1rem',
+            marginTop: '8px',
+          }}
         >
-          <h2>Aside Right</h2>
-          <div style={{ backgroundColor: '#f0f0f0', padding: '1rem' }}>
-            Recent Orders by status (Placeholder)
-          </div>
-          <div style={{ backgroundColor: '#f0f0f0', padding: '1rem' }}>
-            Favorite product of the week (Placeholder)
-          </div>
+          <h2 className="text-lg font-bold">Active Modules</h2>
+
+          {activeServices.length === 0 && (
+            <div
+              style={{
+                backgroundColor: '#f0f0f0',
+                padding: '1rem',
+                borderRadius: '10px',
+              }}
+            >
+              <p style={{ margin: 0 }}>No active services</p>
+            </div>
+          )}
+
+          {activeServices.map((svc) => {
+            const thumbURL =
+              svc.service_thumbnail?.sizes?.card?.url ||
+              svc.service_thumbnail?.url ||
+              'https://via.placeholder.com/150'
+
+            return (
+              <div
+                key={svc.id}
+                style={{
+                  backgroundColor: '#f0f0f0',
+                  padding: '1rem',
+                  borderRadius: '10px',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-around',
+                }}
+              >
+                <img
+                  src={thumbURL}
+                  alt={svc.title_nl}
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    objectFit: 'cover',
+                    borderRadius: '6px',
+                    mixBlendMode: 'multiply',
+                  }}
+                />
+                <div>
+                  <strong>{svc.title_nl}</strong>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* NEW LOCKED MODULES SECTION */}
+          <h2 className="text-lg font-bold">Locked Modules</h2>
+
+          {nonActiveServices.length === 0 && (
+            <div
+              style={{
+                backgroundColor: '#f0f0f0',
+                padding: '1rem',
+                borderRadius: '10px',
+              }}
+            >
+              <p style={{ margin: 0 }}>No locked services</p>
+            </div>
+          )}
+
+          {nonActiveServices.map((svc) => {
+            const thumbURL =
+              svc.service_thumbnail?.sizes?.card?.url ||
+              svc.service_thumbnail?.url ||
+              'https://via.placeholder.com/150'
+
+            return (
+              <div
+                key={svc.id}
+                style={{
+                  backgroundColor: '#f0f0f0',
+                  padding: '1rem',
+                  borderRadius: '10px',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-around',
+                }}
+              >
+                <img
+                  src={thumbURL}
+                  alt={svc.title_nl}
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    objectFit: 'cover',
+                    borderRadius: '6px',
+                    mixBlendMode: 'multiply',
+                  }}
+                />
+                <div>
+                  <strong>{svc.title_nl}</strong>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <button
+                      style={{
+                        backgroundColor: '#007bff',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '0.5rem 0.75rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      onClick={() => window.location.href = '/services'}
+                    >
+                      <FaLock style={{ marginRight: '0.5rem' }} />
+                      Buy to unlock module
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </aside>
       </div>
     </Gutter>
