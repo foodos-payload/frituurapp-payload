@@ -114,16 +114,6 @@ export interface UserAuthOperations {
  * via the `definition` "orders".
  */
 export interface Order {
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * The order ID used by CloudPOS if synced.
-   */
-  cloudPOSId?: number | null;
-  /**
-   * Order ID from e.g. MultiSafePay, Mollie, etc.
-   */
-  providerOrderId?: string | null;
   /**
    * Auto-incrementing identifier for the order.
    */
@@ -192,39 +182,6 @@ export interface Order {
         id?: string | null;
       }[]
     | null;
-  fulfillment_method?: ('delivery' | 'takeaway' | 'dine_in') | null;
-  fulfillment_date?: string | null;
-  fulfillment_time?: string | null;
-  /**
-   * Link to the customer who placed this order (if known).
-   */
-  customer?: (string | null) | Customer;
-  /**
-   * If user used barcode, store it for reference.
-   */
-  customerBarcode?: string | null;
-  customer_details?: {
-    firstName?: string | null;
-    lastName?: string | null;
-    email?: string | null;
-    phone?: string | null;
-    address?: string | null;
-    city?: string | null;
-    postalCode?: string | null;
-  };
-  /**
-   * Delivery fee if applicable.
-   */
-  shipping_cost?: number | null;
-  subtotalBeforeDiscount?: number | null;
-  discountTotal?: number | null;
-  totalAfterDiscount?: number | null;
-  total_tax?: number | null;
-  /**
-   * Same as net subtotal, for backward compatibility.
-   */
-  subtotal?: number | null;
-  total?: number | null;
   promotionsUsed?: {
     /**
      * How many membership points were redeemed?
@@ -268,114 +225,56 @@ export interface Order {
     actualTip?: number | null;
   };
   /**
-   * The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.
+   * Delivery fee if applicable.
+   */
+  shipping_cost?: number | null;
+  subtotalBeforeDiscount?: number | null;
+  discountTotal?: number | null;
+  totalAfterDiscount?: number | null;
+  total_tax?: number | null;
+  /**
+   * Same as net subtotal, for backward compatibility.
+   */
+  subtotal?: number | null;
+  total?: number | null;
+  fulfillment_method?: ('delivery' | 'takeaway' | 'dine_in') | null;
+  fulfillment_date?: string | null;
+  fulfillment_time?: string | null;
+  /**
+   * Link to the customer who placed this order (if known).
+   */
+  customer?: (string | null) | Customer;
+  /**
+   * If user used a barcode, store it for reference.
+   */
+  customerBarcode?: string | null;
+  customer_details?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+  };
+  tenant: string | Tenant;
+  /**
+   * The order ID used by CloudPOS if synced.
+   */
+  cloudPOSId?: number | null;
+  /**
+   * Order ID from e.g. MultiSafePay, Mollie, etc.
+   */
+  providerOrderId?: string | null;
+  /**
+   * User’s chosen language locale (e.g. nl, fr, en). Defaults to nl.
    */
   userLocale?: string | null;
   /**
    * If the order was placed from a kiosk, store the kiosk ID here.
    */
   kioskNumber?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tenants".
- */
-export interface Tenant {
-  id: string;
-  name: string;
-  domains?:
-    | {
-        domain: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Used for URL paths, example: /tenant-slug/page-slug.
-   */
-  slug: string;
-  /**
-   * If checked, logging in is not required.
-   */
-  public?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "shops".
- */
-export interface Shop {
-  id: string;
-  tenant: string | Tenant;
-  domain: string;
-  /**
-   * The name of the shop.
-   */
-  name: string;
-  slug?: string | null;
-  /**
-   * The address of the shop.
-   */
-  address?: string | null;
-  location?: {
-    lat?: string | null;
-    lng?: string | null;
-  };
-  /**
-   * The phone number of the shop.
-   */
-  phone?: string | null;
-  /**
-   * Details about the company associated with the shop.
-   */
-  company_details: {
-    /**
-     * The name of the company.
-     */
-    company_name: string;
-    /**
-     * The street of the company address.
-     */
-    street?: string | null;
-    /**
-     * The house number of the company address.
-     */
-    house_number?: string | null;
-    /**
-     * The city of the company address.
-     */
-    city?: string | null;
-    /**
-     * The postal code of the company address.
-     */
-    postal?: string | null;
-    /**
-     * The VAT number of the company.
-     */
-    vat_nr?: string | null;
-    /**
-     * The URL of the company website.
-     */
-    website_url?: string | null;
-  };
-  /**
-   * List of dates when the shop is exceptionally closed.
-   */
-  exceptionally_closed_days?:
-    | {
-        /**
-         * The date when the shop is closed.
-         */
-        date: string;
-        /**
-         * The reason for the closure.
-         */
-        reason?: string | null;
-        id?: string | null;
-      }[]
-    | null;
+  shops: (string | Shop)[];
   updatedAt: string;
   createdAt: string;
 }
@@ -611,6 +510,30 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants".
+ */
+export interface Tenant {
+  id: string;
+  name: string;
+  domains?:
+    | {
+        domain: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Used for URL paths, example: /tenant-slug/page-slug.
+   */
+  slug: string;
+  /**
+   * If checked, logging in is not required.
+   */
+  public?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "productpopups".
  */
 export interface Productpopup {
@@ -760,6 +683,83 @@ export interface Subproduct {
    */
   status: 'enabled' | 'disabled';
   shops: (string | Shop)[];
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shops".
+ */
+export interface Shop {
+  id: string;
+  tenant: string | Tenant;
+  domain: string;
+  /**
+   * The name of the shop.
+   */
+  name: string;
+  slug?: string | null;
+  /**
+   * The address of the shop.
+   */
+  address?: string | null;
+  location?: {
+    lat?: string | null;
+    lng?: string | null;
+  };
+  /**
+   * The phone number of the shop.
+   */
+  phone?: string | null;
+  /**
+   * Details about the company associated with the shop.
+   */
+  company_details: {
+    /**
+     * The name of the company.
+     */
+    company_name: string;
+    /**
+     * The street of the company address.
+     */
+    street?: string | null;
+    /**
+     * The house number of the company address.
+     */
+    house_number?: string | null;
+    /**
+     * The city of the company address.
+     */
+    city?: string | null;
+    /**
+     * The postal code of the company address.
+     */
+    postal?: string | null;
+    /**
+     * The VAT number of the company.
+     */
+    vat_nr?: string | null;
+    /**
+     * The URL of the company website.
+     */
+    website_url?: string | null;
+  };
+  /**
+   * List of dates when the shop is exceptionally closed.
+   */
+  exceptionally_closed_days?:
+    | {
+        /**
+         * The date when the shop is closed.
+         */
+        date: string;
+        /**
+         * The reason for the closure.
+         */
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1965,10 +1965,6 @@ export interface PayloadMigration {
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  cloudPOSId?: T;
-  providerOrderId?: T;
   id?: T;
   tempOrdNr?: T;
   status?: T;
@@ -2009,29 +2005,6 @@ export interface OrdersSelect<T extends boolean = true> {
         amount?: T;
         id?: T;
       };
-  fulfillment_method?: T;
-  fulfillment_date?: T;
-  fulfillment_time?: T;
-  customer?: T;
-  customerBarcode?: T;
-  customer_details?:
-    | T
-    | {
-        firstName?: T;
-        lastName?: T;
-        email?: T;
-        phone?: T;
-        address?: T;
-        city?: T;
-        postalCode?: T;
-      };
-  shipping_cost?: T;
-  subtotalBeforeDiscount?: T;
-  discountTotal?: T;
-  totalAfterDiscount?: T;
-  total_tax?: T;
-  subtotal?: T;
-  total?: T;
   promotionsUsed?:
     | T
     | {
@@ -2067,8 +2040,35 @@ export interface OrdersSelect<T extends boolean = true> {
         amount?: T;
         actualTip?: T;
       };
+  shipping_cost?: T;
+  subtotalBeforeDiscount?: T;
+  discountTotal?: T;
+  totalAfterDiscount?: T;
+  total_tax?: T;
+  subtotal?: T;
+  total?: T;
+  fulfillment_method?: T;
+  fulfillment_date?: T;
+  fulfillment_time?: T;
+  customer?: T;
+  customerBarcode?: T;
+  customer_details?:
+    | T
+    | {
+        firstName?: T;
+        lastName?: T;
+        email?: T;
+        phone?: T;
+        address?: T;
+        city?: T;
+        postalCode?: T;
+      };
+  tenant?: T;
+  cloudPOSId?: T;
+  providerOrderId?: T;
   userLocale?: T;
   kioskNumber?: T;
+  shops?: T;
   updatedAt?: T;
   createdAt?: T;
 }

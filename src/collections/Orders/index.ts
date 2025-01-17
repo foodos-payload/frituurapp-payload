@@ -892,51 +892,6 @@ export const Orders: CollectionConfig = {
   },
 
   fields: [
-    // (A) tenantField
-    {
-      ...tenantField,
-
-    },
-
-    // (B) shopsField
-    {
-      ...shopsField,
-
-    },
-
-    // (C) cloudPOSId
-    {
-      name: 'cloudPOSId',
-      type: 'number',
-      label: 'CloudPOS Order ID',
-      required: false,
-      admin: {
-        position: 'sidebar',
-        description: 'The order ID used by CloudPOS if synced.',
-      },
-      access: {
-        read: hasFieldPermission('orders', 'cloudPOSId', 'read'),
-        update: hasFieldPermission('orders', 'cloudPOSId', 'update'),
-      },
-    },
-
-    // (C) providerOrderId
-    {
-      name: 'providerOrderId',
-      type: 'text',
-      label: 'Payment Provider Order ID',
-      required: false,
-      admin: {
-        position: 'sidebar',
-        description: 'Order ID from e.g. MultiSafePay, Mollie, etc.',
-        readOnly: true,
-      },
-      access: {
-        read: hasFieldPermission('orders', 'providerOrderId', 'read'),
-        update: hasFieldPermission('orders', 'providerOrderId', 'update'),
-      },
-    },
-
     // auto-increment ID
     {
       name: 'id',
@@ -985,6 +940,7 @@ export const Orders: CollectionConfig = {
       admin: {
         description: { en: 'Current status of the order.' },
         readOnly: true,
+        position: 'sidebar',
       },
       access: {
         read: hasFieldPermission('orders', 'status', 'read'),
@@ -1012,623 +968,988 @@ export const Orders: CollectionConfig = {
 
     // order_details array
     {
-      name: 'order_details',
-      type: 'array',
-      label: { en: 'Order Details' },
+      type: 'collapsible',
+      label: {
+        en: 'Product Info',
+        nl: 'Productinfo',
+        de: 'Produktinfo',
+        fr: 'Informations Produit',
+      },
       admin: {
-        description: { en: 'List of products in the order (line items).' },
+        initCollapsed: true, // or false, as you wish
       },
       fields: [
         {
-          name: 'product',
-          type: 'relationship',
-          relationTo: 'products',
-          required: true,
-          label: { en: 'Product' },
-          access: {
-            read: hasFieldPermission('orders', 'order_details.product', 'read'),
-            update: hasFieldPermission('orders', 'order_details.product', 'update'),
-          },
-        },
-        {
-          name: 'quantity',
-          type: 'number',
-          required: true,
-          label: { en: 'Quantity' },
-          access: {
-            read: hasFieldPermission('orders', 'order_details.quantity', 'read'),
-            update: hasFieldPermission('orders', 'order_details.quantity', 'update'),
-          },
-        },
-        {
-          name: 'price',
-          type: 'number',
-          required: true,
-          label: { en: 'Price' },
-          access: {
-            read: hasFieldPermission('orders', 'order_details.price', 'read'),
-            update: hasFieldPermission('orders', 'order_details.price', 'update'),
-          },
-        },
-        {
-          name: 'tax',
-          type: 'number',
-          label: { en: 'Tax Rate (%)' },
-          access: {
-            read: hasFieldPermission('orders', 'order_details.tax', 'read'),
-            update: hasFieldPermission('orders', 'order_details.tax', 'update'),
-          },
-        },
-        {
-          name: 'tax_dinein',
-          type: 'number',
-          label: { en: 'Dine-In Tax Rate (%)' },
-          access: {
-            read: hasFieldPermission('orders', 'order_details.tax_dinein', 'read'),
-            update: hasFieldPermission('orders', 'order_details.tax_dinein', 'update'),
-          },
-        },
-        {
-          name: 'name_nl',
-          type: 'text',
-          label: { en: 'Name (NL)' },
-          access: {
-            read: hasFieldPermission('orders', 'order_details.name_nl', 'read'),
-            update: hasFieldPermission('orders', 'order_details.name_nl', 'update'),
-          },
-        },
-        {
-          name: 'name_en',
-          type: 'text',
-          label: { en: 'Name (EN)' },
-          access: {
-            read: hasFieldPermission('orders', 'order_details.name_en', 'read'),
-            update: hasFieldPermission('orders', 'order_details.name_en', 'update'),
-          },
-        },
-        {
-          name: 'name_de',
-          type: 'text',
-          label: { en: 'Name (DE)' },
-          access: {
-            read: hasFieldPermission('orders', 'order_details.name_de', 'read'),
-            update: hasFieldPermission('orders', 'order_details.name_de', 'update'),
-          },
-        },
-        {
-          name: 'name_fr',
-          type: 'text',
-          label: { en: 'Name (FR)' },
-          access: {
-            read: hasFieldPermission('orders', 'order_details.name_fr', 'read'),
-            update: hasFieldPermission('orders', 'order_details.name_fr', 'update'),
-          },
-        },
-        {
-          name: 'subproducts',
+          name: 'order_details',
           type: 'array',
-          label: { en: 'Subproducts' },
+          label: {
+            en: 'Order Details',
+            nl: 'Bestellingsdetails',
+            de: 'Bestelldetails',
+            fr: 'Détails de la Commande',
+          },
+          admin: {
+            description: {
+              en: 'List of products in the order (line items).',
+              nl: 'Lijst met producten in de bestelling (artikelen).',
+              de: 'Liste der Produkte in der Bestellung (Posten).',
+              fr: 'Liste des produits dans la commande (articles).',
+            },
+          },
           fields: [
             {
-              name: 'subproductId',
-              type: 'text',
-              label: { en: 'Subproduct ID' },
-              access: {
-                read: hasFieldPermission('orders', 'order_details.subproducts.subproductId', 'read'),
-                update: hasFieldPermission('orders', 'order_details.subproducts.subproductId', 'update'),
+              name: 'product',
+              type: 'relationship',
+              relationTo: 'products',
+              required: true,
+              label: {
+                en: 'Product',
+                nl: 'Product',
+                de: 'Produkt',
+                fr: 'Produit',
               },
-            },
-            {
-              name: 'name_nl',
-              type: 'text',
-              label: { en: 'Name (NL)' },
               access: {
-                read: hasFieldPermission('orders', 'order_details.subproducts.name_nl', 'read'),
-                update: hasFieldPermission('orders', 'order_details.subproducts.name_nl', 'update'),
-              },
-            },
-            {
-              name: 'name_en',
-              type: 'text',
-              label: { en: 'Name (EN)' },
-              access: {
-                read: hasFieldPermission('orders', 'order_details.subproducts.name_en', 'read'),
-                update: hasFieldPermission('orders', 'order_details.subproducts.name_en', 'update'),
-              },
-            },
-            {
-              name: 'name_de',
-              type: 'text',
-              label: { en: 'Name (DE)' },
-              access: {
-                read: hasFieldPermission('orders', 'order_details.subproducts.name_de', 'read'),
-                update: hasFieldPermission('orders', 'order_details.subproducts.name_de', 'update'),
-              },
-            },
-            {
-              name: 'name_fr',
-              type: 'text',
-              label: { en: 'Name (FR)' },
-              access: {
-                read: hasFieldPermission('orders', 'order_details.subproducts.name_fr', 'read'),
-                update: hasFieldPermission('orders', 'order_details.subproducts.name_fr', 'update'),
-              },
-            },
-            {
-              name: 'price',
-              type: 'number',
-              label: { en: 'Subproduct Price' },
-              access: {
-                read: hasFieldPermission('orders', 'order_details.subproducts.price', 'read'),
-                update: hasFieldPermission('orders', 'order_details.subproducts.price', 'update'),
-              },
-            },
-            {
-              name: 'tax',
-              type: 'number',
-              label: { en: 'Tax Rate (%)' },
-              access: {
-                read: hasFieldPermission('orders', 'order_details.subproducts.tax', 'read'),
-                update: hasFieldPermission('orders', 'order_details.subproducts.tax', 'update'),
-              },
-            },
-            {
-              name: 'tax_dinein',
-              type: 'number',
-              label: { en: 'Dine-In Tax Rate (%)' },
-              access: {
-                read: hasFieldPermission('orders', 'order_details.subproducts.tax_dinein', 'read'),
-                update: hasFieldPermission('orders', 'order_details.subproducts.tax_dinein', 'update'),
+                read: hasFieldPermission('orders', 'order_details.product', 'read'),
+                update: hasFieldPermission('orders', 'order_details.product', 'update'),
               },
             },
             {
               name: 'quantity',
               type: 'number',
-              required: false,
-              label: { en: 'Quantity' },
-              admin: {
-                description: 'If subproduct can have multiple units.',
+              required: true,
+              label: {
+                en: 'Quantity',
+                nl: 'Aantal',
+                de: 'Menge',
+                fr: 'Quantité',
               },
               access: {
-                read: hasFieldPermission('orders', 'order_details.subproducts.quantity', 'read'),
-                update: hasFieldPermission('orders', 'order_details.subproducts.quantity', 'update'),
+                read: hasFieldPermission('orders', 'order_details.quantity', 'read'),
+                update: hasFieldPermission('orders', 'order_details.quantity', 'update'),
+              },
+            },
+            {
+              name: 'price',
+              type: 'number',
+              required: true,
+              label: {
+                en: 'Price',
+                nl: 'Prijs',
+                de: 'Preis',
+                fr: 'Prix',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.price', 'read'),
+                update: hasFieldPermission('orders', 'order_details.price', 'update'),
+              },
+            },
+            {
+              name: 'tax',
+              type: 'number',
+              label: {
+                en: 'Tax Rate (%)',
+                nl: 'Btw (%)',
+                de: 'MwSt (%)',
+                fr: 'TVA (%)',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.tax', 'read'),
+                update: hasFieldPermission('orders', 'order_details.tax', 'update'),
+              },
+            },
+            {
+              name: 'tax_dinein',
+              type: 'number',
+              label: {
+                en: 'Dine-In Tax Rate (%)',
+                nl: 'Btw voor Eten Ter Plaatse (%)',
+                de: 'Vor-Ort MwSt (%)',
+                fr: 'TVA Sur Place (%)',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.tax_dinein', 'read'),
+                update: hasFieldPermission('orders', 'order_details.tax_dinein', 'update'),
+              },
+            },
+            {
+              name: 'name_nl',
+              type: 'text',
+              label: {
+                en: 'Name (NL)',
+                nl: 'Naam (NL)',
+                de: 'Name (NL)',
+                fr: 'Nom (NL)',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.name_nl', 'read'),
+                update: hasFieldPermission('orders', 'order_details.name_nl', 'update'),
+              },
+            },
+            {
+              name: 'name_en',
+              type: 'text',
+              label: {
+                en: 'Name (EN)',
+                nl: 'Naam (EN)',
+                de: 'Name (EN)',
+                fr: 'Nom (EN)',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.name_en', 'read'),
+                update: hasFieldPermission('orders', 'order_details.name_en', 'update'),
+              },
+            },
+            {
+              name: 'name_de',
+              type: 'text',
+              label: {
+                en: 'Name (DE)',
+                nl: 'Naam (DE)',
+                de: 'Name (DE)',
+                fr: 'Nom (DE)',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.name_de', 'read'),
+                update: hasFieldPermission('orders', 'order_details.name_de', 'update'),
+              },
+            },
+            {
+              name: 'name_fr',
+              type: 'text',
+              label: {
+                en: 'Name (FR)',
+                nl: 'Naam (FR)',
+                de: 'Name (FR)',
+                fr: 'Nom (FR)',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'order_details.name_fr', 'read'),
+                update: hasFieldPermission('orders', 'order_details.name_fr', 'update'),
+              },
+            },
+            {
+              name: 'subproducts',
+              type: 'array',
+              label: {
+                en: 'Subproducts',
+                nl: 'Subproducten',
+                de: 'Unterprodukte',
+                fr: 'Sous-produits',
+              },
+              fields: [
+                {
+                  name: 'subproductId',
+                  type: 'text',
+                  label: {
+                    en: 'Subproduct ID',
+                    nl: 'Subproduct ID',
+                    de: 'Unterprodukt-ID',
+                    fr: 'ID du Sous-produit',
+                  },
+                  access: {
+                    read: hasFieldPermission('orders', 'order_details.subproducts.subproductId', 'read'),
+                    update: hasFieldPermission('orders', 'order_details.subproducts.subproductId', 'update'),
+                  },
+                },
+                {
+                  name: 'name_nl',
+                  type: 'text',
+                  label: {
+                    en: 'Name (NL)',
+                    nl: 'Naam (NL)',
+                    de: 'Name (NL)',
+                    fr: 'Nom (NL)',
+                  },
+                  access: {
+                    read: hasFieldPermission('orders', 'order_details.subproducts.name_nl', 'read'),
+                    update: hasFieldPermission('orders', 'order_details.subproducts.name_nl', 'update'),
+                  },
+                },
+                {
+                  name: 'name_en',
+                  type: 'text',
+                  label: {
+                    en: 'Name (EN)',
+                    nl: 'Naam (EN)',
+                    de: 'Name (EN)',
+                    fr: 'Nom (EN)',
+                  },
+                  access: {
+                    read: hasFieldPermission('orders', 'order_details.subproducts.name_en', 'read'),
+                    update: hasFieldPermission('orders', 'order_details.subproducts.name_en', 'update'),
+                  },
+                },
+                {
+                  name: 'name_de',
+                  type: 'text',
+                  label: {
+                    en: 'Name (DE)',
+                    nl: 'Naam (DE)',
+                    de: 'Name (DE)',
+                    fr: 'Nom (DE)',
+                  },
+                  access: {
+                    read: hasFieldPermission('orders', 'order_details.subproducts.name_de', 'read'),
+                    update: hasFieldPermission('orders', 'order_details.subproducts.name_de', 'update'),
+                  },
+                },
+                {
+                  name: 'name_fr',
+                  type: 'text',
+                  label: {
+                    en: 'Name (FR)',
+                    nl: 'Naam (FR)',
+                    de: 'Name (FR)',
+                    fr: 'Nom (FR)',
+                  },
+                  access: {
+                    read: hasFieldPermission('orders', 'order_details.subproducts.name_fr', 'read'),
+                    update: hasFieldPermission('orders', 'order_details.subproducts.name_fr', 'update'),
+                  },
+                },
+                {
+                  name: 'price',
+                  type: 'number',
+                  label: {
+                    en: 'Subproduct Price',
+                    nl: 'Subproduct Prijs',
+                    de: 'Unterproduktpreis',
+                    fr: 'Prix du Sous-produit',
+                  },
+                  access: {
+                    read: hasFieldPermission('orders', 'order_details.subproducts.price', 'read'),
+                    update: hasFieldPermission('orders', 'order_details.subproducts.price', 'update'),
+                  },
+                },
+                {
+                  name: 'tax',
+                  type: 'number',
+                  label: {
+                    en: 'Tax Rate (%)',
+                    nl: 'Btw (%)',
+                    de: 'MwSt (%)',
+                    fr: 'TVA (%)',
+                  },
+                  access: {
+                    read: hasFieldPermission('orders', 'order_details.subproducts.tax', 'read'),
+                    update: hasFieldPermission('orders', 'order_details.subproducts.tax', 'update'),
+                  },
+                },
+                {
+                  name: 'tax_dinein',
+                  type: 'number',
+                  label: {
+                    en: 'Dine-In Tax Rate (%)',
+                    nl: 'Btw voor Eten Ter Plaatse (%)',
+                    de: 'Vor-Ort MwSt (%)',
+                    fr: 'TVA Sur Place (%)',
+                  },
+                  access: {
+                    read: hasFieldPermission('orders', 'order_details.subproducts.tax_dinein', 'read'),
+                    update: hasFieldPermission('orders', 'order_details.subproducts.tax_dinein', 'update'),
+                  },
+                },
+                {
+                  name: 'quantity',
+                  type: 'number',
+                  required: false,
+                  label: {
+                    en: 'Quantity',
+                    nl: 'Aantal',
+                    de: 'Menge',
+                    fr: 'Quantité',
+                  },
+                  admin: {
+                    description: 'If subproduct can have multiple units.',
+                  },
+                  access: {
+                    read: hasFieldPermission('orders', 'order_details.subproducts.quantity', 'read'),
+                    update: hasFieldPermission('orders', 'order_details.subproducts.quantity', 'update'),
+                  },
+                },
+              ],
+              access: {
+                read: hasFieldPermission('orders', 'order_details.subproducts', 'read'),
+                update: hasFieldPermission('orders', 'order_details.subproducts', 'update'),
               },
             },
           ],
           access: {
-            read: hasFieldPermission('orders', 'order_details.subproducts', 'read'),
-            update: hasFieldPermission('orders', 'order_details.subproducts', 'update'),
+            read: hasFieldPermission('orders', 'order_details', 'read'),
+            update: hasFieldPermission('orders', 'order_details', 'update'),
           },
         },
       ],
-      access: {
-        read: hasFieldPermission('orders', 'order_details', 'read'),
-        update: hasFieldPermission('orders', 'order_details', 'update'),
-      },
     },
 
     // payments array
     {
-      name: 'payments',
-      type: 'array',
-      label: { en: 'Payments' },
+      type: 'collapsible',
+      label: {
+        en: 'Payment Info',
+        nl: 'Betaalinfo',
+        de: 'Zahlungsinfo',
+        fr: 'Infos de Paiement',
+      },
       admin: {
-        description: { en: 'Payment details for the order.' },
+        initCollapsed: true, // or false, as you wish
       },
       fields: [
         {
-          name: 'payment_method',
-          type: 'relationship',
-          relationTo: 'payment-methods',
-          required: true,
-          label: { en: 'Payment Method' },
+          name: 'payments',
+          type: 'array',
+          label: {
+            en: 'Payments',
+            nl: 'Betalingen',
+            de: 'Zahlungen',
+            fr: 'Paiements',
+          },
+          admin: {
+            description: {
+              en: 'Payment details for the order.',
+              nl: 'Betalingsgegevens voor de bestelling.',
+              de: 'Zahlungsdetails für die Bestellung.',
+              fr: 'Détails de paiement pour la commande.',
+            },
+          },
+          fields: [
+            {
+              name: 'payment_method',
+              type: 'relationship',
+              relationTo: 'payment-methods',
+              required: true,
+              label: {
+                en: 'Payment Method',
+                nl: 'Betaalmethode',
+                de: 'Zahlungsmethode',
+                fr: 'Méthode de Paiement',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'payments.payment_method', 'read'),
+                update: hasFieldPermission('orders', 'payments.payment_method', 'update'),
+              },
+            },
+            {
+              name: 'sub_method_label',
+              type: 'text',
+              required: false,
+              label: {
+                en: 'Sub-method Label (e.g. MSP_Bancontact)',
+                nl: 'Submethode Label (bijv. MSP_Bancontact)',
+                de: 'Untermethode Bezeichnung (z.B. MSP_Bancontact)',
+                fr: 'Libellé de Sous-méthode (ex. MSP_Bancontact)',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'payments.sub_method_label', 'read'),
+                update: hasFieldPermission('orders', 'payments.sub_method_label', 'update'),
+              },
+            },
+            {
+              name: 'amount',
+              type: 'number',
+              required: false,
+              label: {
+                en: 'Payment Amount',
+                nl: 'Betaalbedrag',
+                de: 'Zahlungsbetrag',
+                fr: 'Montant du Paiement',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'payments.amount', 'read'),
+                update: hasFieldPermission('orders', 'payments.amount', 'update'),
+              },
+            },
+          ],
           access: {
-            read: hasFieldPermission('orders', 'payments.payment_method', 'read'),
-            update: hasFieldPermission('orders', 'payments.payment_method', 'update'),
+            read: hasFieldPermission('orders', 'payments', 'read'),
+            update: hasFieldPermission('orders', 'payments', 'update'),
           },
         },
+        // Promotions used
         {
-          name: 'sub_method_label',
-          type: 'text',
-          required: false,
-          label: { en: 'Sub-method Label (e.g. MSP_Bancontact)' },
+          name: 'promotionsUsed',
+          type: 'group',
+          label: { en: 'Promotions Used' },
+          fields: [
+            {
+              name: 'pointsUsed',
+              type: 'number',
+              defaultValue: 0,
+              label: { en: 'Points Used' },
+              admin: { description: { en: 'How many membership points were redeemed?' } },
+              access: {
+                read: hasFieldPermission('orders', 'promotionsUsed.pointsUsed', 'read'),
+                update: hasFieldPermission('orders', 'promotionsUsed.pointsUsed', 'update'),
+              },
+            },
+            {
+              name: 'creditsUsed',
+              type: 'number',
+              defaultValue: 0,
+              label: { en: 'Store Credits Used' },
+              admin: { description: { en: 'How many store credits were used?' } },
+              access: {
+                read: hasFieldPermission('orders', 'promotionsUsed.creditsUsed', 'read'),
+                update: hasFieldPermission('orders', 'promotionsUsed.creditsUsed', 'update'),
+              },
+            },
+            {
+              name: 'couponUsed',
+              type: 'group',
+              label: { en: 'Coupon Used' },
+              fields: [
+                { name: 'couponId', type: 'text' },
+                { name: 'barcode', type: 'text' },
+                { name: 'value', type: 'number' },
+                { name: 'value_type', type: 'text' },
+                { name: 'valid_from', type: 'date' },
+                { name: 'valid_until', type: 'date' },
+                { name: 'max_uses', type: 'number' },
+                { name: 'used', type: 'checkbox' },
+              ],
+              access: {
+                read: hasFieldPermission('orders', 'promotionsUsed.couponUsed', 'read'),
+                update: hasFieldPermission('orders', 'promotionsUsed.couponUsed', 'update'),
+              },
+            },
+            {
+              name: 'giftVoucherUsed',
+              type: 'group',
+              label: { en: 'Gift Voucher Used' },
+              fields: [
+                { name: 'voucherId', type: 'text' },
+                { name: 'barcode', type: 'text' },
+                { name: 'value', type: 'number' },
+                { name: 'valid_from', type: 'date' },
+                { name: 'valid_until', type: 'date' },
+                { name: 'used', type: 'checkbox' },
+              ],
+              access: {
+                read: hasFieldPermission('orders', 'promotionsUsed.giftVoucherUsed', 'read'),
+                update: hasFieldPermission('orders', 'promotionsUsed.giftVoucherUsed', 'update'),
+              },
+            },
+          ],
           access: {
-            read: hasFieldPermission('orders', 'payments.sub_method_label', 'read'),
-            update: hasFieldPermission('orders', 'payments.sub_method_label', 'update'),
+            read: hasFieldPermission('orders', 'promotionsUsed', 'read'),
+            update: hasFieldPermission('orders', 'promotionsUsed', 'update'),
           },
         },
+
+        // tippingUsed
         {
-          name: 'amount',
+          name: 'tippingUsed',
+          type: 'group',
+          label: { en: 'Tipping' },
+          fields: [
+            {
+              name: 'type',
+              type: 'select',
+              label: { en: 'Tip Type' },
+              required: false,
+              defaultValue: 'none',
+              options: [
+                { label: 'None', value: 'none' },
+                { label: 'Fixed', value: 'fixed' },
+                { label: 'Percentage', value: 'percentage' },
+                { label: 'Round Up', value: 'round_up' },
+              ],
+              admin: {
+                description:
+                  'Specifies whether the tip is a fixed amount, a percentage, a round-up, or none.',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'tippingUsed.type', 'read'),
+                update: hasFieldPermission('orders', 'tippingUsed.type', 'update'),
+              },
+            },
+            {
+              name: 'amount',
+              type: 'number',
+              defaultValue: 0,
+              label: { en: 'Tip Amount' },
+              admin: {
+                description: 'The numeric tip value (e.g. 2.50 for €2.50, or 10 for 10%).',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'tippingUsed.amount', 'read'),
+                update: hasFieldPermission('orders', 'tippingUsed.amount', 'update'),
+              },
+            },
+            {
+              name: 'actualTip',
+              type: 'number',
+              label: { en: 'Actual Tip Calculated' },
+              required: false,
+              admin: {
+                readOnly: true,
+                description: 'The final computed tip after rounding, etc.',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'tippingUsed.actualTip', 'read'),
+                update: hasFieldPermission('orders', 'tippingUsed.actualTip', 'update'),
+              },
+            },
+          ],
+          access: {
+            read: hasFieldPermission('orders', 'tippingUsed', 'read'),
+            update: hasFieldPermission('orders', 'tippingUsed', 'update'),
+          },
+        },
+        // Totals
+        {
+          name: 'shipping_cost',
           type: 'number',
+          label: { en: 'Shipping Cost' },
           required: false,
-          label: { en: 'Payment Amount' },
+          admin: {
+            description: { en: 'Delivery fee if applicable.' },
+            readOnly: false,
+          },
           access: {
-            read: hasFieldPermission('orders', 'payments.amount', 'read'),
-            update: hasFieldPermission('orders', 'payments.amount', 'update'),
+            read: hasFieldPermission('orders', 'shipping_cost', 'read'),
+            update: hasFieldPermission('orders', 'shipping_cost', 'update'),
+          },
+        },
+        {
+          name: 'subtotalBeforeDiscount',
+          type: 'number',
+          label: { en: 'Subtotal Before Discount' },
+          admin: { readOnly: true },
+          access: {
+            read: hasFieldPermission('orders', 'subtotalBeforeDiscount', 'read'),
+            update: hasFieldPermission('orders', 'subtotalBeforeDiscount', 'update'),
+          },
+        },
+        {
+          name: 'discountTotal',
+          type: 'number',
+          label: { en: 'Discount Total' },
+          admin: { readOnly: true },
+          access: {
+            read: hasFieldPermission('orders', 'discountTotal', 'read'),
+            update: hasFieldPermission('orders', 'discountTotal', 'update'),
+          },
+        },
+        {
+          name: 'totalAfterDiscount',
+          type: 'number',
+          label: { en: 'Total After Discount (Net)' },
+          admin: { readOnly: true },
+          access: {
+            read: hasFieldPermission('orders', 'totalAfterDiscount', 'read'),
+            update: hasFieldPermission('orders', 'totalAfterDiscount', 'update'),
+          },
+        },
+        {
+          name: 'total_tax',
+          type: 'number',
+          label: { en: 'Total Tax' },
+          admin: { readOnly: true },
+          access: {
+            read: hasFieldPermission('orders', 'total_tax', 'read'),
+            update: hasFieldPermission('orders', 'total_tax', 'update'),
+          },
+        },
+        {
+          name: 'subtotal',
+          type: 'number',
+          label: { en: 'Subtotal (Legacy)' },
+          admin: {
+            description: { en: 'Same as net subtotal, for backward compatibility.' },
+            readOnly: true,
+          },
+          access: {
+            read: hasFieldPermission('orders', 'subtotal', 'read'),
+            update: hasFieldPermission('orders', 'subtotal', 'update'),
+          },
+        },
+        {
+          name: 'total',
+          type: 'number',
+          label: { en: 'Final Total' },
+          admin: { readOnly: true },
+          access: {
+            read: hasFieldPermission('orders', 'total', 'read'),
+            update: hasFieldPermission('orders', 'total', 'update'),
           },
         },
       ],
-      access: {
-        read: hasFieldPermission('orders', 'payments', 'read'),
-        update: hasFieldPermission('orders', 'payments', 'update'),
-      },
     },
 
     // fulfillment info
     {
-      name: 'fulfillment_method',
-      type: 'select',
-      options: [
-        { label: 'Delivery', value: 'delivery' },
-        { label: 'Takeaway', value: 'takeaway' },
-        { label: 'Dine In', value: 'dine_in' },
-      ],
-      label: { en: 'Fulfillment Method' },
-      access: {
-        read: hasFieldPermission('orders', 'fulfillment_method', 'read'),
-        update: hasFieldPermission('orders', 'fulfillment_method', 'update'),
+      type: 'collapsible',
+      label: {
+        en: 'Fulfillment Info',
+        nl: 'Afhandelingsinfo',
+        de: 'Abwicklungsinfo',
+        fr: 'Infos de Réalisation',
       },
-    },
-    {
-      name: 'fulfillment_date',
-      type: 'text',
-      label: { en: 'Fulfillment Date' },
-      access: {
-        read: hasFieldPermission('orders', 'fulfillment_date', 'read'),
-        update: hasFieldPermission('orders', 'fulfillment_date', 'update'),
-      },
-    },
-    {
-      name: 'fulfillment_time',
-      type: 'text',
-      label: { en: 'Fulfillment Time' },
-      access: {
-        read: hasFieldPermission('orders', 'fulfillment_time', 'read'),
-        update: hasFieldPermission('orders', 'fulfillment_time', 'update'),
-      },
-    },
-
-    // (H) Customer info
-    {
-      name: 'customer',
-      type: 'relationship',
-      relationTo: 'customers',
-      label: { en: 'Customer' },
-      required: false,
       admin: {
-        description: { en: 'Link to the customer who placed this order (if known).' },
+        initCollapsed: true, // or false, as desired
       },
-      access: {
-        read: hasFieldPermission('orders', 'customer', 'read'),
-        update: hasFieldPermission('orders', 'customer', 'update'),
-      },
-    },
-    {
-      name: 'customerBarcode',
-      type: 'text',
-      required: false,
-      admin: {
-        description: 'If user used barcode, store it for reference.',
-      },
-      access: {
-        read: hasFieldPermission('orders', 'customerBarcode', 'read'),
-        update: hasFieldPermission('orders', 'customerBarcode', 'update'),
-      },
-    },
-    {
-      name: 'customer_details',
-      type: 'group',
-      label: { en: 'Customer Details' },
       fields: [
         {
-          name: 'firstName',
-          type: 'text',
-          label: { en: 'First Name' },
-          access: {
-            read: hasFieldPermission('orders', 'customer_details.firstName', 'read'),
-            update: hasFieldPermission('orders', 'customer_details.firstName', 'update'),
-          },
-        },
-        {
-          name: 'lastName',
-          type: 'text',
-          label: { en: 'Last Name' },
-          access: {
-            read: hasFieldPermission('orders', 'customer_details.lastName', 'read'),
-            update: hasFieldPermission('orders', 'customer_details.lastName', 'update'),
-          },
-        },
-        {
-          name: 'email',
-          type: 'text',
-          label: { en: 'Email' },
-          access: {
-            read: hasFieldPermission('orders', 'customer_details.email', 'read'),
-            update: hasFieldPermission('orders', 'customer_details.email', 'update'),
-          },
-        },
-        {
-          name: 'phone',
-          type: 'text',
-          label: { en: 'Phone' },
-          access: {
-            read: hasFieldPermission('orders', 'customer_details.phone', 'read'),
-            update: hasFieldPermission('orders', 'customer_details.phone', 'update'),
-          },
-        },
-        {
-          name: 'address',
-          type: 'text',
-          label: { en: 'Address' },
-          access: {
-            read: hasFieldPermission('orders', 'customer_details.address', 'read'),
-            update: hasFieldPermission('orders', 'customer_details.address', 'update'),
-          },
-        },
-        {
-          name: 'city',
-          type: 'text',
-          label: { en: 'City' },
-          access: {
-            read: hasFieldPermission('orders', 'customer_details.city', 'read'),
-            update: hasFieldPermission('orders', 'customer_details.city', 'update'),
-          },
-        },
-        {
-          name: 'postalCode',
-          type: 'text',
-          label: { en: 'Postal Code' },
-          access: {
-            read: hasFieldPermission('orders', 'customer_details.postalCode', 'read'),
-            update: hasFieldPermission('orders', 'customer_details.postalCode', 'update'),
-          },
-        },
-      ],
-      access: {
-        read: hasFieldPermission('orders', 'customer_details', 'read'),
-        update: hasFieldPermission('orders', 'customer_details', 'update'),
-      },
-    },
-
-    // Totals
-    {
-      name: 'shipping_cost',
-      type: 'number',
-      label: { en: 'Shipping Cost' },
-      required: false,
-      admin: {
-        description: { en: 'Delivery fee if applicable.' },
-        readOnly: false,
-      },
-      access: {
-        read: hasFieldPermission('orders', 'shipping_cost', 'read'),
-        update: hasFieldPermission('orders', 'shipping_cost', 'update'),
-      },
-    },
-    {
-      name: 'subtotalBeforeDiscount',
-      type: 'number',
-      label: { en: 'Subtotal Before Discount' },
-      admin: { readOnly: true },
-      access: {
-        read: hasFieldPermission('orders', 'subtotalBeforeDiscount', 'read'),
-        update: hasFieldPermission('orders', 'subtotalBeforeDiscount', 'update'),
-      },
-    },
-    {
-      name: 'discountTotal',
-      type: 'number',
-      label: { en: 'Discount Total' },
-      admin: { readOnly: true },
-      access: {
-        read: hasFieldPermission('orders', 'discountTotal', 'read'),
-        update: hasFieldPermission('orders', 'discountTotal', 'update'),
-      },
-    },
-    {
-      name: 'totalAfterDiscount',
-      type: 'number',
-      label: { en: 'Total After Discount (Net)' },
-      admin: { readOnly: true },
-      access: {
-        read: hasFieldPermission('orders', 'totalAfterDiscount', 'read'),
-        update: hasFieldPermission('orders', 'totalAfterDiscount', 'update'),
-      },
-    },
-    {
-      name: 'total_tax',
-      type: 'number',
-      label: { en: 'Total Tax' },
-      admin: { readOnly: true },
-      access: {
-        read: hasFieldPermission('orders', 'total_tax', 'read'),
-        update: hasFieldPermission('orders', 'total_tax', 'update'),
-      },
-    },
-    {
-      name: 'subtotal',
-      type: 'number',
-      label: { en: 'Subtotal (Legacy)' },
-      admin: {
-        description: { en: 'Same as net subtotal, for backward compatibility.' },
-        readOnly: true,
-      },
-      access: {
-        read: hasFieldPermission('orders', 'subtotal', 'read'),
-        update: hasFieldPermission('orders', 'subtotal', 'update'),
-      },
-    },
-    {
-      name: 'total',
-      type: 'number',
-      label: { en: 'Final Total' },
-      admin: { readOnly: true },
-      access: {
-        read: hasFieldPermission('orders', 'total', 'read'),
-        update: hasFieldPermission('orders', 'total', 'update'),
-      },
-    },
-
-    // Promotions used
-    {
-      name: 'promotionsUsed',
-      type: 'group',
-      label: { en: 'Promotions Used' },
-      fields: [
-        {
-          name: 'pointsUsed',
-          type: 'number',
-          defaultValue: 0,
-          label: { en: 'Points Used' },
-          admin: { description: { en: 'How many membership points were redeemed?' } },
-          access: {
-            read: hasFieldPermission('orders', 'promotionsUsed.pointsUsed', 'read'),
-            update: hasFieldPermission('orders', 'promotionsUsed.pointsUsed', 'update'),
-          },
-        },
-        {
-          name: 'creditsUsed',
-          type: 'number',
-          defaultValue: 0,
-          label: { en: 'Store Credits Used' },
-          admin: { description: { en: 'How many store credits were used?' } },
-          access: {
-            read: hasFieldPermission('orders', 'promotionsUsed.creditsUsed', 'read'),
-            update: hasFieldPermission('orders', 'promotionsUsed.creditsUsed', 'update'),
-          },
-        },
-        {
-          name: 'couponUsed',
-          type: 'group',
-          label: { en: 'Coupon Used' },
-          fields: [
-            { name: 'couponId', type: 'text' },
-            { name: 'barcode', type: 'text' },
-            { name: 'value', type: 'number' },
-            { name: 'value_type', type: 'text' },
-            { name: 'valid_from', type: 'date' },
-            { name: 'valid_until', type: 'date' },
-            { name: 'max_uses', type: 'number' },
-            { name: 'used', type: 'checkbox' },
-          ],
-          access: {
-            read: hasFieldPermission('orders', 'promotionsUsed.couponUsed', 'read'),
-            update: hasFieldPermission('orders', 'promotionsUsed.couponUsed', 'update'),
-          },
-        },
-        {
-          name: 'giftVoucherUsed',
-          type: 'group',
-          label: { en: 'Gift Voucher Used' },
-          fields: [
-            { name: 'voucherId', type: 'text' },
-            { name: 'barcode', type: 'text' },
-            { name: 'value', type: 'number' },
-            { name: 'valid_from', type: 'date' },
-            { name: 'valid_until', type: 'date' },
-            { name: 'used', type: 'checkbox' },
-          ],
-          access: {
-            read: hasFieldPermission('orders', 'promotionsUsed.giftVoucherUsed', 'read'),
-            update: hasFieldPermission('orders', 'promotionsUsed.giftVoucherUsed', 'update'),
-          },
-        },
-      ],
-      access: {
-        read: hasFieldPermission('orders', 'promotionsUsed', 'read'),
-        update: hasFieldPermission('orders', 'promotionsUsed', 'update'),
-      },
-    },
-
-    // tippingUsed
-    {
-      name: 'tippingUsed',
-      type: 'group',
-      label: { en: 'Tipping' },
-      fields: [
-        {
-          name: 'type',
+          name: 'fulfillment_method',
           type: 'select',
-          label: { en: 'Tip Type' },
-          required: false,
-          defaultValue: 'none',
           options: [
-            { label: 'None', value: 'none' },
-            { label: 'Fixed', value: 'fixed' },
-            { label: 'Percentage', value: 'percentage' },
-            { label: 'Round Up', value: 'round_up' },
+            { label: 'Delivery', value: 'delivery' },
+            { label: 'Takeaway', value: 'takeaway' },
+            { label: 'Dine In', value: 'dine_in' },
           ],
-          admin: {
-            description:
-              'Specifies whether the tip is a fixed amount, a percentage, a round-up, or none.',
+          label: {
+            en: 'Fulfillment Method',
+            nl: 'Afhandelingsmethode',
+            de: 'Abwicklungsart',
+            fr: 'Méthode de Réalisation',
           },
           access: {
-            read: hasFieldPermission('orders', 'tippingUsed.type', 'read'),
-            update: hasFieldPermission('orders', 'tippingUsed.type', 'update'),
+            read: hasFieldPermission('orders', 'fulfillment_method', 'read'),
+            update: hasFieldPermission('orders', 'fulfillment_method', 'update'),
           },
         },
         {
-          name: 'amount',
-          type: 'number',
-          defaultValue: 0,
-          label: { en: 'Tip Amount' },
-          admin: {
-            description: 'The numeric tip value (e.g. 2.50 for €2.50, or 10 for 10%).',
+          name: 'fulfillment_date',
+          type: 'text',
+          label: {
+            en: 'Fulfillment Date',
+            nl: 'Afhandelingsdatum',
+            de: 'Abwicklungsdatum',
+            fr: 'Date de Réalisation',
           },
           access: {
-            read: hasFieldPermission('orders', 'tippingUsed.amount', 'read'),
-            update: hasFieldPermission('orders', 'tippingUsed.amount', 'update'),
+            read: hasFieldPermission('orders', 'fulfillment_date', 'read'),
+            update: hasFieldPermission('orders', 'fulfillment_date', 'update'),
           },
         },
         {
-          name: 'actualTip',
-          type: 'number',
-          label: { en: 'Actual Tip Calculated' },
-          required: false,
-          admin: {
-            readOnly: true,
-            description: 'The final computed tip after rounding, etc.',
+          name: 'fulfillment_time',
+          type: 'text',
+          label: {
+            en: 'Fulfillment Time',
+            nl: 'Afhandelingstijd',
+            de: 'Abwicklungszeit',
+            fr: 'Heure de Réalisation',
           },
           access: {
-            read: hasFieldPermission('orders', 'tippingUsed.actualTip', 'read'),
-            update: hasFieldPermission('orders', 'tippingUsed.actualTip', 'update'),
+            read: hasFieldPermission('orders', 'fulfillment_time', 'read'),
+            update: hasFieldPermission('orders', 'fulfillment_time', 'update'),
           },
         },
       ],
-      access: {
-        read: hasFieldPermission('orders', 'tippingUsed', 'read'),
-        update: hasFieldPermission('orders', 'tippingUsed', 'update'),
-      },
     },
 
-    // userLocale
+    // customer info
     {
-      name: 'userLocale',
-      type: 'text',
-      label: 'User Locale',
-      required: false,
+      type: 'collapsible',
+      label: {
+        en: 'Customer Info',
+        nl: 'Klanteninfo',
+        de: 'Kundeninfo',
+        fr: 'Infos Client',
+      },
       admin: {
-        description: 'The user’s chosen language locale (e.g., nl, fr, en). Defaults to nl.',
+        initCollapsed: true, // or false, based on your preference
       },
-      access: {
-        read: hasFieldPermission('orders', 'userLocale', 'read'),
-        update: hasFieldPermission('orders', 'userLocale', 'update'),
-      },
+      fields: [
+        {
+          name: 'customer',
+          type: 'relationship',
+          relationTo: 'customers',
+          required: false,
+          label: {
+            en: 'Customer',
+            nl: 'Klant',
+            de: 'Kunde',
+            fr: 'Client',
+          },
+          admin: {
+            description: {
+              en: 'Link to the customer who placed this order (if known).',
+              nl: 'Verwijs naar de klant die deze bestelling plaatste (indien bekend).',
+              de: 'Verknüpfung zum Kunden, der diese Bestellung aufgegeben hat (falls bekannt).',
+              fr: 'Lien vers le client ayant passé cette commande (si connu).',
+            },
+          },
+          access: {
+            read: hasFieldPermission('orders', 'customer', 'read'),
+            update: hasFieldPermission('orders', 'customer', 'update'),
+          },
+        },
+        {
+          name: 'customerBarcode',
+          type: 'text',
+          required: false,
+          label: {
+            en: 'Customer Barcode',
+            nl: 'Klant Barcode',
+            de: 'Kundenbarcode',
+            fr: 'Code-barres Client',
+          },
+          admin: {
+            description: {
+              en: 'If user used a barcode, store it for reference.',
+              nl: 'Als de gebruiker een barcode gebruikte, sla deze hier op ter referentie.',
+              de: 'Wenn der Benutzer einen Barcode verwendete, speichern Sie ihn zur Referenz.',
+              fr: 'Si l’utilisateur a utilisé un code-barres, stockez-le pour référence.',
+            },
+          },
+          access: {
+            read: hasFieldPermission('orders', 'customerBarcode', 'read'),
+            update: hasFieldPermission('orders', 'customerBarcode', 'update'),
+          },
+        },
+        {
+          name: 'customer_details',
+          type: 'group',
+          label: {
+            en: 'Customer Details',
+            nl: 'Klantgegevens',
+            de: 'Kundendetails',
+            fr: 'Détails du Client',
+          },
+          fields: [
+            {
+              name: 'firstName',
+              type: 'text',
+              label: {
+                en: 'First Name',
+                nl: 'Voornaam',
+                de: 'Vorname',
+                fr: 'Prénom',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'customer_details.firstName', 'read'),
+                update: hasFieldPermission('orders', 'customer_details.firstName', 'update'),
+              },
+            },
+            {
+              name: 'lastName',
+              type: 'text',
+              label: {
+                en: 'Last Name',
+                nl: 'Achternaam',
+                de: 'Nachname',
+                fr: 'Nom',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'customer_details.lastName', 'read'),
+                update: hasFieldPermission('orders', 'customer_details.lastName', 'update'),
+              },
+            },
+            {
+              name: 'email',
+              type: 'text',
+              label: {
+                en: 'Email',
+                nl: 'E-mail',
+                de: 'E-Mail',
+                fr: 'E-mail',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'customer_details.email', 'read'),
+                update: hasFieldPermission('orders', 'customer_details.email', 'update'),
+              },
+            },
+            {
+              name: 'phone',
+              type: 'text',
+              label: {
+                en: 'Phone',
+                nl: 'Telefoon',
+                de: 'Telefon',
+                fr: 'Téléphone',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'customer_details.phone', 'read'),
+                update: hasFieldPermission('orders', 'customer_details.phone', 'update'),
+              },
+            },
+            {
+              name: 'address',
+              type: 'text',
+              label: {
+                en: 'Address',
+                nl: 'Adres',
+                de: 'Adresse',
+                fr: 'Adresse',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'customer_details.address', 'read'),
+                update: hasFieldPermission('orders', 'customer_details.address', 'update'),
+              },
+            },
+            {
+              name: 'city',
+              type: 'text',
+              label: {
+                en: 'City',
+                nl: 'Stad',
+                de: 'Stadt',
+                fr: 'Ville',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'customer_details.city', 'read'),
+                update: hasFieldPermission('orders', 'customer_details.city', 'update'),
+              },
+            },
+            {
+              name: 'postalCode',
+              type: 'text',
+              label: {
+                en: 'Postal Code',
+                nl: 'Postcode',
+                de: 'Postleitzahl',
+                fr: 'Code Postal',
+              },
+              access: {
+                read: hasFieldPermission('orders', 'customer_details.postalCode', 'read'),
+                update: hasFieldPermission('orders', 'customer_details.postalCode', 'update'),
+              },
+            },
+          ],
+          access: {
+            read: hasFieldPermission('orders', 'customer_details', 'read'),
+            update: hasFieldPermission('orders', 'customer_details', 'update'),
+          },
+        },
+      ],
     },
 
-    // kioskNumber
+    // metadata info
     {
-      name: 'kioskNumber',
-      type: 'number',
-      label: 'Kiosk Number',
+      type: 'collapsible',
+      label: {
+        en: 'Metadata',
+        nl: 'Metadata',
+        de: 'Metadaten',
+        fr: 'Métadonnées',
+      },
       admin: {
-        description: 'If the order was placed from a kiosk, store the kiosk ID here.',
+        initCollapsed: true, // or false, your choice
       },
-      access: {
-        read: hasFieldPermission('orders', 'kioskNumber', 'read'),
-        update: hasFieldPermission('orders', 'kioskNumber', 'update'),
-      },
+      fields: [
+        // Tenant Field
+        {
+          ...tenantField,
+          // Optionally give it a label if you like:
+          // label: {
+          //   en: 'Tenant',
+          //   nl: 'Tenant',
+          //   de: 'Mandant',
+          //   fr: 'Locataire',
+          // },
+        },
+
+        // CloudPOS ID
+        {
+          name: 'cloudPOSId',
+          type: 'number',
+          label: {
+            en: 'CloudPOS Order ID',
+            nl: 'CloudPOS Order-ID',
+            de: 'CloudPOS-Bestell-ID',
+            fr: 'ID de Commande CloudPOS',
+          },
+          required: false,
+          admin: {
+            description: {
+              en: 'The order ID used by CloudPOS if synced.',
+              nl: 'Het order-ID dat door CloudPOS wordt gebruikt indien gesynchroniseerd.',
+              de: 'Die Bestell-ID, die bei einer Synchronisierung von CloudPOS verwendet wird.',
+              fr: 'L’ID de commande utilisé par CloudPOS en cas de synchronisation.',
+            },
+          },
+          access: {
+            read: hasFieldPermission('orders', 'cloudPOSId', 'read'),
+            update: hasFieldPermission('orders', 'cloudPOSId', 'update'),
+          },
+        },
+
+        // Provider Order ID
+        {
+          name: 'providerOrderId',
+          type: 'text',
+          label: {
+            en: 'Payment Provider Order ID',
+            nl: 'Betaalprovider Order-ID',
+            de: 'Zahlungsanbieter-Bestell-ID',
+            fr: 'ID de Commande du Fournisseur de Paiement',
+          },
+          required: false,
+          admin: {
+            description: {
+              en: 'Order ID from e.g. MultiSafePay, Mollie, etc.',
+              nl: 'Order-ID van bijv. MultiSafePay, Mollie, enz.',
+              de: 'Bestell-ID z.B. von MultiSafePay, Mollie usw.',
+              fr: 'ID de commande, par ex. MultiSafePay, Mollie, etc.',
+            },
+            readOnly: true,
+          },
+          access: {
+            read: hasFieldPermission('orders', 'providerOrderId', 'read'),
+            update: hasFieldPermission('orders', 'providerOrderId', 'update'),
+          },
+        },
+
+        // User Locale
+        {
+          name: 'userLocale',
+          type: 'text',
+          label: {
+            en: 'User Locale',
+            nl: 'Gebruikerstaal',
+            de: 'Benutzersprache',
+            fr: 'Langue Utilisateur',
+          },
+          required: false,
+          admin: {
+            description: {
+              en: 'User’s chosen language locale (e.g. nl, fr, en). Defaults to nl.',
+              nl: 'Door gebruiker gekozen taal (bijv. nl, fr, en). Standaard nl.',
+              de: 'Vom Benutzer gewählte Sprache (z.B. nl, fr, en). Standardmäßig nl.',
+              fr: 'Langue choisie par l’utilisateur (ex. nl, fr, en). Par défaut nl.',
+            },
+          },
+          access: {
+            read: hasFieldPermission('orders', 'userLocale', 'read'),
+            update: hasFieldPermission('orders', 'userLocale', 'update'),
+          },
+        },
+
+        // Kiosk Number
+        {
+          name: 'kioskNumber',
+          type: 'number',
+          label: {
+            en: 'Kiosk Number',
+            nl: 'Kiosknummer',
+            de: 'Kiosk-Nummer',
+            fr: 'Numéro de Kiosque',
+          },
+          admin: {
+            description: {
+              en: 'If the order was placed from a kiosk, store the kiosk ID here.',
+              nl: 'Als de bestelling via een kiosk is geplaatst, sla hier het kiosk-ID op.',
+              de: 'Wenn die Bestellung von einem Kiosk aufgegeben wurde, speichern Sie hier die Kiosk-ID.',
+              fr: 'Si la commande provient d’un kiosque, stockez l’ID du kiosque ici.',
+            },
+          },
+          access: {
+            read: hasFieldPermission('orders', 'kioskNumber', 'read'),
+            update: hasFieldPermission('orders', 'kioskNumber', 'update'),
+          },
+        },
+      ],
     },
+
+    // (B) shopsField
+    {
+      ...shopsField,
+
+    },
+
   ],
 };
 
