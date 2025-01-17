@@ -38,7 +38,7 @@ export function OrderStatusPage({ hostSlug }: OrderStatusPageProps) {
             if (isInitial) {
                 setIsInitialLoading(true)
             }
-            const url = `/api/orders?host=${encodeURIComponent(hostSlug)}`
+            const url = `/api/orderData?host=${encodeURIComponent(hostSlug)}`
             const res = await fetch(url, { cache: "no-store" })
             if (!res.ok) {
                 throw new Error(`Order fetch failed with status ${res.status}`)

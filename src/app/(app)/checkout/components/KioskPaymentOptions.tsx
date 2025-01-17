@@ -139,7 +139,7 @@ export default function KioskPaymentOptions({
 
         const intervalId = setInterval(async () => {
             try {
-                const url = `/api/orders?host=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`;
+                const url = `/api/orderData?host=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`;
                 const resp = await fetch(url);
                 if (!resp.ok) {
                     console.error("[Polling] error =>", resp.statusText);

@@ -247,7 +247,7 @@ export function OrderSummaryPage({
 
     // SWR fetch
     const { data: order, error, isLoading } = useSWR<Order>(
-        `/api/orders?host=${encodeURIComponent(hostSlug)}&orderId=${encodeURIComponent(orderId)}`,
+        `/api/orderData?host=${encodeURIComponent(hostSlug)}&orderId=${encodeURIComponent(orderId)}`,
         fetcher,
         { refreshInterval: 5000 }
     );

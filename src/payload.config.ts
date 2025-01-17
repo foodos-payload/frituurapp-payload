@@ -48,19 +48,29 @@ export default buildConfig({
   admin: {
     routes: {
       login: '/auth/login',
+
     },
     components: {
+
       afterNavLinks: ['@/components/TenantSelector#TenantSelectorRSC'],
       views: {
         login: {
           path: '/auth/login',
           Component: '@/components/Login/CustomLogin.tsx#default',
         },
+        dashboard: {
+          Component: '@/components/Dashboard/CustomDashboardRSC.tsx#CustomDashboardRSC',
+          path: '/',
+        },
       },
+
     },
+
+
+
     user: 'users',
     meta: {
-      titleSuffix: 'Frituurapp',
+      titleSuffix: 'Orderapp',
     },
   },
   i18n: {

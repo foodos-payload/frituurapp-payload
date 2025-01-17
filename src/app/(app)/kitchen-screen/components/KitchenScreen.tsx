@@ -27,7 +27,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
     const fetchCounts = useCallback(async () => {
         try {
             // Active
-            const activeUrl = `/api/orders?host=${encodeURIComponent(hostSlug)}&view=active`
+            const activeUrl = `/api/orderData?host=${encodeURIComponent(hostSlug)}&view=active`
             const rA = await fetch(activeUrl, { cache: "no-store" })
             if (rA.ok) {
                 const dataA = await rA.json()
@@ -35,7 +35,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
             }
 
             // Archived
-            const archUrl = `/api/orders?host=${encodeURIComponent(hostSlug)}&view=archived`
+            const archUrl = `/api/orderData?host=${encodeURIComponent(hostSlug)}&view=archived`
             const rB = await fetch(archUrl, { cache: "no-store" })
             if (rB.ok) {
                 const dataB = await rB.json()
@@ -51,7 +51,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
         async () => {
             try {
                 setIsLoading(true)
-                const url = `/api/orders?host=${encodeURIComponent(hostSlug)}&view=${view}`
+                const url = `/api/orderData?host=${encodeURIComponent(hostSlug)}&view=${view}`
                 const res = await fetch(url, { cache: "no-store" })
                 if (!res.ok) throw new Error(`Fetch error ${res.status}`)
                 const data = await res.json()

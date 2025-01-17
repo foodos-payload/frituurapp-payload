@@ -6,6 +6,7 @@ import { ColorPickerFieldComponent as ColorPickerFieldComponent_95f860801d038134
 import { default as default_561f4ffc1b5843e389baccba35a5fdc0 } from '@/fields/PrinterPortalButton'
 import { TenantSelectorRSC as TenantSelectorRSC_9d7720c4b50db35595dfefa592fabd33 } from '@/components/TenantSelector'
 import { default as default_6788bd98d0b739605700d93f3abb82e0 } from '@/components/Login/CustomLogin.tsx'
+import { CustomDashboardRSC as CustomDashboardRSC_c65adedee50c1376eb428bd6deb426ba } from '@/components/Dashboard/CustomDashboardRSC.tsx'
 
 export const importMap = {
   "@/fields/TenantField/components/Field#TenantFieldComponent": TenantFieldComponent_0e322269e5426a9b98ca88b6faa9d3d0,
@@ -15,5 +16,6 @@ export const importMap = {
   "@innovixx/payload-color-picker-field/components#ColorPickerFieldComponent": ColorPickerFieldComponent_95f860801d0381344387ae1d8e2f4d24,
   "@/fields/PrinterPortalButton#default": default_561f4ffc1b5843e389baccba35a5fdc0,
   "@/components/TenantSelector#TenantSelectorRSC": TenantSelectorRSC_9d7720c4b50db35595dfefa592fabd33,
-  "@/components/Login/CustomLogin.tsx#default": default_6788bd98d0b739605700d93f3abb82e0
+  "@/components/Login/CustomLogin.tsx#default": default_6788bd98d0b739605700d93f3abb82e0,
+  "@/components/Dashboard/CustomDashboardRSC.tsx#CustomDashboardRSC": CustomDashboardRSC_c65adedee50c1376eb428bd6deb426ba
 }
