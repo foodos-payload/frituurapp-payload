@@ -30,7 +30,6 @@ export async function POST(req: Request) {
 
         // 3) Create Stripe Portal session
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-            apiVersion: '2022-11-15',
         })
         const portalSession = await stripe.billingPortal.sessions.create({
             customer: stripeCustomerId,

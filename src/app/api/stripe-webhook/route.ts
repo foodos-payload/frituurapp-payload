@@ -25,7 +25,6 @@ export async function POST(req: Request) {
     let event: Stripe.Event
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-        apiVersion: '2022-11-15',
     })
 
     const sig = req.headers.get('stripe-signature')
@@ -58,10 +57,10 @@ export async function POST(req: Request) {
             }
 
             // Metadata from our create-checkout-session route
-            const serviceId = session.metadata?.service_id
-            const tenantId = session.metadata?.tenant_id
-            const shopId = session.metadata?.shop_id
-            const userId = session.metadata?.user_id
+            const serviceId = session.metadata?.service_id || ''
+            const tenantId = session.metadata?.tenant_id || ''
+            const shopId = session.metadata?.shop_id || ''
+            const userId = session.metadata?.user_id || ''
 
             await activateSubscription({
                 stripe,
