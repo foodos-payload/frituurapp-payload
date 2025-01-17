@@ -49,8 +49,10 @@ export const Media: CollectionConfig = {
     disableLocalStorage: true, // Use S3 entirely
     imageSizes: [
       { name: 'thumbnail', width: 150, height: 150 },
+      { name: 'preview', width: 80, height: 80 },
       { name: 'medium', width: 600, height: 600 },
     ],
+    adminThumbnail: 'preview',
   },
 
   hooks: {

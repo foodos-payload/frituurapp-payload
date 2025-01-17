@@ -394,14 +394,6 @@ export interface Product {
    */
   name_nl: string;
   /**
-   * The unified sale price.
-   */
-  price?: number | null;
-  /**
-   * Product status (enabled or disabled).
-   */
-  status: 'enabled' | 'disabled';
-  /**
    * Enter the name in English.
    */
   name_en?: string | null;
@@ -413,6 +405,22 @@ export interface Product {
    * Enter the name in French.
    */
   name_fr?: string | null;
+  /**
+   * Enter the default description in Dutch.
+   */
+  description_nl: string;
+  /**
+   * Enter the description in English.
+   */
+  description_en?: string | null;
+  /**
+   * Enter the description in German.
+   */
+  description_de?: string | null;
+  /**
+   * Enter the description in French.
+   */
+  description_fr?: string | null;
   /**
    * Select all allergens that apply to this product.
    */
@@ -434,90 +442,6 @@ export interface Product {
       )[]
     | null;
   /**
-   * Use a unified sale price for all fulfillment methods.
-   */
-  price_unified?: boolean | null;
-  /**
-   * Sale price for dine-in.
-   */
-  price_dinein?: number | null;
-  /**
-   * Sale price for takeaway.
-   */
-  price_takeaway?: number | null;
-  /**
-   * Sale price for delivery.
-   */
-  price_delivery?: number | null;
-  /**
-   * Products with a lower menuOrder appear first. If two items share the same menuOrder, they’re sorted alphabetically by name.
-   */
-  menuOrder?: number | null;
-  /**
-   * Check if this product is on promotion. Old price field will appear.
-   */
-  isPromotion?: boolean | null;
-  /**
-   * Please put the old (original) price here, and use the normal price field for the new price.
-   */
-  old_price?: number | null;
-  /**
-   * Enable stock tracking for this product.
-   */
-  enable_stock?: boolean | null;
-  /**
-   * Specify the stock quantity for this product.
-   */
-  quantity?: number | null;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax: number;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax_dinein?: number | null;
-  /**
-   * Enable product visibility in the POS system.
-   */
-  posshow?: boolean | null;
-  /**
-   * Product barcode (if applicable).
-   */
-  barcode?: string | null;
-  /**
-   * Timestamp for last modification.
-   */
-  modtime: number;
-  /**
-   * Enter the default description in Dutch.
-   */
-  description_nl: string;
-  /**
-   * Enter the description in English.
-   */
-  description_en?: string | null;
-  /**
-   * Enter the description in German.
-   */
-  description_de?: string | null;
-  /**
-   * Enter the description in French.
-   */
-  description_fr?: string | null;
-  /**
-   * Show this product in the webshop.
-   */
-  webshopshow?: boolean | null;
-  /**
-   * Allow this product to be ordered via the webshop.
-   */
-  webshoporderable?: boolean | null;
-  /**
-   * Enable this to prevent category-specific popups from applying to this product.
-   */
-  exclude_category_popups?: boolean | null;
-  /**
    * Assign popups to this product and define their order.
    */
   productpopups?:
@@ -533,13 +457,89 @@ export interface Product {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Enable this to prevent category-specific popups from applying to this product.
+   */
+  exclude_category_popups?: boolean | null;
+  /**
+   * Products with a lower menuOrder appear first. If two items share the same menuOrder, they’re sorted alphabetically by name.
+   */
+  menuOrder?: number | null;
+  /**
+   * Use a unified sale price for all fulfillment methods.
+   */
+  price_unified?: boolean | null;
+  /**
+   * The unified sale price.
+   */
+  price?: number | null;
+  /**
+   * Sale price for dine-in.
+   */
+  price_dinein?: number | null;
+  /**
+   * Sale price for takeaway.
+   */
+  price_takeaway?: number | null;
+  /**
+   * Sale price for delivery.
+   */
+  price_delivery?: number | null;
+  /**
+   * Check if this product is on promotion. Old price field will appear.
+   */
+  isPromotion?: boolean | null;
+  /**
+   * Please put the old (original) price here, and use the normal price field for the new price.
+   */
+  old_price?: number | null;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax: number;
+  /**
+   * Specify the VAT percentage (e.g., 6, 12, 21).
+   */
+  tax_dinein?: number | null;
+  /**
+   * Product barcode (if applicable).
+   */
+  barcode?: string | null;
+  /**
+   * Enable stock tracking for this product.
+   */
+  enable_stock?: boolean | null;
+  /**
+   * Specify the stock quantity for this product.
+   */
+  quantity?: number | null;
+  /**
+   * Enable product visibility in the POS system.
+   */
+  posshow?: boolean | null;
+  /**
+   * Show this product in the webshop.
+   */
+  webshopshow?: boolean | null;
+  /**
+   * Allow this product to be ordered via the webshop.
+   */
+  webshoporderable?: boolean | null;
+  /**
+   * Timestamp for last modification.
+   */
+  modtime: number;
   tenant: string | Tenant;
-  shops: (string | Shop)[];
-  categories: (string | Category)[];
   /**
    * The CloudPOS ID for syncing. Leave empty if not synced yet.
    */
   cloudPOSId?: number | null;
+  /**
+   * Product status (enabled or disabled).
+   */
+  status: 'enabled' | 'disabled';
+  shops: (string | Shop)[];
+  categories: (string | Category)[];
   updatedAt: string;
   createdAt: string;
 }
@@ -584,6 +584,14 @@ export interface Media {
   focalY?: number | null;
   sizes?: {
     thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    preview?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -2093,33 +2101,14 @@ export interface CategoriesSelect<T extends boolean = true> {
 export interface ProductsSelect<T extends boolean = true> {
   image?: T;
   name_nl?: T;
-  price?: T;
-  status?: T;
   name_en?: T;
   name_de?: T;
   name_fr?: T;
-  allergens?: T;
-  price_unified?: T;
-  price_dinein?: T;
-  price_takeaway?: T;
-  price_delivery?: T;
-  menuOrder?: T;
-  isPromotion?: T;
-  old_price?: T;
-  enable_stock?: T;
-  quantity?: T;
-  tax?: T;
-  tax_dinein?: T;
-  posshow?: T;
-  barcode?: T;
-  modtime?: T;
   description_nl?: T;
   description_en?: T;
   description_de?: T;
   description_fr?: T;
-  webshopshow?: T;
-  webshoporderable?: T;
-  exclude_category_popups?: T;
+  allergens?: T;
   productpopups?:
     | T
     | {
@@ -2127,10 +2116,29 @@ export interface ProductsSelect<T extends boolean = true> {
         order?: T;
         id?: T;
       };
+  exclude_category_popups?: T;
+  menuOrder?: T;
+  price_unified?: T;
+  price?: T;
+  price_dinein?: T;
+  price_takeaway?: T;
+  price_delivery?: T;
+  isPromotion?: T;
+  old_price?: T;
+  tax?: T;
+  tax_dinein?: T;
+  barcode?: T;
+  enable_stock?: T;
+  quantity?: T;
+  posshow?: T;
+  webshopshow?: T;
+  webshoporderable?: T;
+  modtime?: T;
   tenant?: T;
+  cloudPOSId?: T;
+  status?: T;
   shops?: T;
   categories?: T;
-  cloudPOSId?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2216,6 +2224,16 @@ export interface MediaSelect<T extends boolean = true> {
     | T
     | {
         thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        preview?:
           | T
           | {
               url?: T;

@@ -77,18 +77,37 @@ svg.icon.icon--chevron.nav-group__indicator {
   width: -webkit-fill-available !important;
 }
 
+/* Header */
+.app-header {
+  background-color: #ffffff;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06); /* Slightly lighter shadow */
+}
+
+.doc-controls {
+  border:none !important;
+}
+
+.doc-controls::before, .doc-controls::after {
+  border:none !important;
+}
+
 /* Form elements */
 input,
 optgroup,
 select,
 textarea {
   border: 2px solid #e0e0e0;
-  padding: 8px;
+  padding: 8px !important;
   font-family: 'Poppins', sans-serif;
   &:focus {
     border-color: #068b59; /* highlight with green on focus */
     outline: none;
   }
+}
+
+.tabs-field__tabs {
+  gap:10px;
 }
 
 /* Checkbox styling */
@@ -225,7 +244,7 @@ header.list-header {
 }
 
 .list-header h1 {
-  font-size: 1.5em;
+  font-size: 1.2em;
   font-weight: 600;
 }
 
@@ -244,14 +263,31 @@ header.list-header {
   border-radius: 4px;
 }
 
+.list-header .btn:hover {
+  background-color: darken(#068b59, 5%);
+}
+
 //Filters
+.column-selector {
+  gap: 10px;
+}
+
+.list-controls__columns div {
+  background-color: #f5f5f5 !important;
+  border-radius: 0.5em;
+}
+
+.column-selector button {
+  padding: 5px;
+}
+
 .list-controls__wrap {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   background-color: #ffffff;
-  padding:0px;
+  padding: 0px;
 }
 
 div.search-filter {
@@ -317,25 +353,31 @@ div.search-filter {
 }
 
 //Table
-thead tr{
+thead tr {
   background-color: #f0f0f5;
   color: #141616;
-  border-radius: 0.5em !important;}
+  border-radius: 0.5em !important;
+  font-weight:bold;
+}
+
+thead td {
+  font-weight:bold;
+}
 
 tr {
   background-color: #ffffff;
-  border-right: 1px solid  #ebebf0;
-  border-bottom: 1px solid  #ebebf0 !important;
-  border-left: 1px solid  #ebebf0;
+  border-right: 1px solid #ebebf0;
+  border-bottom: 1px solid #ebebf0 !important;
+  border-left: 1px solid #ebebf0;
 }
 
 .table {
   border-radius: 0.5em !important;
 }
 
-table, thead {
+table,
+thead {
   border-radius: 0.5em !important;
-
 }
 
 .file {
@@ -344,64 +386,309 @@ table, thead {
   }
 
   .file__filename {
-    display: block;
+    display: none;
   }
 
   &:has(.thumbnail--size-small) .file__filename {
     display: none;
+    width: 0px;
   }
 }
-  
-  .table {
-    /* Outer container with clipping and corner rounding */
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-  
-    table {
-      width: 100%;
-      border-spacing: 0;
+
+.table {
+  /* Outer container with clipping and corner rounding */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+
+  table {
+    width: 100%;
+    border-spacing: 0;
+  }
+
+  /* Thead with top corners */
+  thead {
+    background-color: #f5f5f5;
+
+    th:first-child {
+      border-top-left-radius: 8px;
     }
-  
-    /* Thead with top corners */
-    thead {
-      background-color: #f5f5f5;
-  
-      th:first-child {
-        border-top-left-radius: 8px;
-      }
-      th:last-child {
-        border-top-right-radius: 8px;
-      }
-    }
-  
-    /* Zebra striping (every even row) */
-    tbody tr:nth-child(even) {
-      background-color: #fafafa;
-    }
-  
-    /* 
-      1) A bottom border on each row 
-      2) Keep the final row's corners 
-    */
-    tbody tr {
-      /* Give each table row a bottom border */
-      border-bottom: 1px solid #ebebf0;
-    }
-  
-    /* Remove bottom border from the last row 
-       so that the corners are nicely rounded */
-    tbody tr:last-child {
-      border-bottom: none;
-  
-      /* Round bottom corners on last row cells */
-      td:first-child {
-        border-bottom-left-radius: 8px;
-      }
-      td:last-child {
-        border-bottom-right-radius: 8px;
-      }
+    th:last-child {
+      border-top-right-radius: 8px;
     }
   }
 
+  /* Zebra striping (every even row) */
+  tbody tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  /* 
+      1) A bottom border on each row 
+      2) Keep the final row's corners 
+    */
+  tbody tr {
+    /* Give each table row a bottom border */
+    border-bottom: 1px solid #ebebf0;
+  }
+
+  /* Remove bottom border from the last row 
+       so that the corners are nicely rounded */
+  tbody tr:last-child {
+    border-bottom: none;
+
+    /* Round bottom corners on last row cells */
+    td:first-child {
+      border-bottom-left-radius: 8px;
+    }
+    td:last-child {
+      border-bottom-right-radius: 8px;
+    }
+  }
+}
+
+td.cell-image {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  width: 100px !important;
+  height: 86px !important;
+}
+
+td.cell-image img,
+td.cell-image .thumbnail--size-small,
+td.cell-image .file__thumbnail {
+  width: 100px !important;
+  height: 86px !important;
+  object-fit: contain;
+}
+
+.td.cell-image .file {
+  flex-direction: column;
+}
+
+.file__thumbnail {
+  max-width: 1000px !important;
+}
+
+.file__thumbnail img {
+  width: 100px !important;
+  height: 86px !important;
+  border-radius: 10px;
+  object-fit: contain;
+  flex-shrink: 0;
+  mix-blend-mode: multiply;
+}
+
+td.cell-status:has(span:contains('Enabled')) {
+  background-color: #dff0d8; /* light green */
+  color: #3c763d;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+td.cell-status:has(span:contains('Disabled')) {
+  background-color: #f2dede; /* light pink */
+  color: #a94442;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
 //Pagination
+.paginator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.paginator .clickable-arrow {
+  background-color: #f5f5f5;
+  border-radius: 0.5em;
+  padding: 5px;
+}
+
+.paginator .clickable-arrow:hover {
+  background-color: #e0e0e0;
+}
+
+.collection-list__page-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+button.paginator__page {
+  border-radius: 0.5em;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+//Form UI
+/* COLLAPSIBLE FIELDS --------------------------------- */
+
+/* Each collapsible field wrapper */
+.collapsible-field {
+  margin-bottom: 20px; /* spacing between collapsible blocks */
+}
+
+/* The main container for a collapsible block */
+.collapsible {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+/* Optional if Payload uses this style class */
+.collapsible--style-default {
+  /* place any variations here */
+}
+
+/* The top bar that holds the toggle and label */
+.collapsible__toggle-wrap {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 5px 10px;
+}
+
+/* The toggle button itself */
+.collapsible__toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #212121;
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+}
+.collapsible__toggle-wrap:hover {
+  background-color: darken(#f5f5f5, 5%);
+}
+.collapsible__toggle--collapsed {
+  /* optional: style for collapsed state */
+}
+.collapsible__toggle--open {
+  /* optional: style for open state */
+}
+
+/* The row-label containing the collapsible's label text */
+.collapsible-field__row-label-wrap .row-label {
+  color: #212121;
+  font-weight: 600;
+  font-size: 16px;
+  margin-left: 8px;
+  pointer-events: none; /* match your snippet */
+}
+
+/* Actions area that typically holds the chevron icon */
+.collapsible__actions-wrap {
+  display: flex;
+  align-items: center;
+  margin-left: auto; /* push icon to the right if desired */
+}
+
+/* The chevron container */
+.collapsible__indicator {
+  display: flex;
+  align-items: center;
+}
+
+/* The chevron icon itself */
+.collapsible__indicator svg.icon--chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+/* Inner content region of the collapsible */
+.collapsible__content {
+  padding: 10px 15px;
+  background-color: #fff;
+}
+
+/* If you want to remove or override error highlighting */
+.collapsible-field--has-no-error {
+  /* add or override any error-related styles here */
+}
+
+/* 
+  Payload typically uses "rah-static--height-auto" (react-accessible-accordion or 
+  react-collapse) for transitions
+*/
+.rah-static--height-auto {
+  transition: height 300ms !important;
+}
+
+/* If you want small margin within the collapsible content */
+.render-fields--margins-small {
+  margin-top: 10px;
+}
+
+//Field Labels 
+.field-label {
+  font-weight: 500;
+  font-size: 14px;
+  color: #212121;
+}
+
+.field-type {
+  margin-bottom: 30px;
+}
+
+.textarea-outer {
+  font-family: 'Poppins', sans-serif;
+  &:focus {
+    border-color: #068b59; /* highlight with green on focus */
+    outline: none;
+  }
+}
+
+.field-type.textarea .textarea-outer {
+  padding: 0px;
+}
+
+/* Input Fields */
+input {
+  border: 1px solid #e0e0e0;
+  padding: 8px;
+  &:focus {
+    border-color: #068b59; /* highlight with green on focus */
+    outline: none;
+  }
+}
+
+.doc-header h1 {
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.doc-header h1::before {
+  content: '|';
+  display: inline-block;
+  width: 1em;
+  color: #068b59;
+}
+
+#action-save {
+  background-color: #068b59;
+  color: #ffffff;
+  border: 1px solid #068b59;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+#action-save:hover {
+  background-color: darken(#068b59, 5%);
+}
+
+.popup-button-list__button:hover {
+  text-decoration: underline;
+}
