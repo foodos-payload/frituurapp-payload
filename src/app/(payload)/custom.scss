@@ -93,6 +93,61 @@ svg.icon.icon--chevron.nav-group__indicator {
 }
 
 /* Form elements */
+.check svg .stroke{
+  stroke: #068b59; /* Green */
+}
+
+.field-description {
+  background-color:#ebebf0;
+  padding: 3px;
+  color:#212121;
+  border-radius:0.5em;
+  width:auto;
+}
+
+.upload-field-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5em;
+  padding: 10px;
+  background:none;
+}
+
+.doc-drawer__header-close {
+  background: #ce2027;
+  border-radius:0.5em;
+}
+
+.doc-drawer__header-close svg .stroke{
+  stroke:white;
+ 
+}
+
+.leave-without-saving__controls button{
+  border-radius:0.5em;
+  padding:8px;
+}
+
+.leave-without-saving__controls .btn--style-secondary{
+  background-color:#068b59;
+  color:white;
+  border:none;
+  box-shadow: unset !important;
+}
+
+.leave-without-saving__controls .btn--style-primary{
+  background-color:#0c131f;
+  color:white;
+}
+
+.leave-without-saving__controls .btn--style-secondary:hover{
+  background-color: darken(#068b59, 5%);
+}
+
+.leave-without-saving__controls .btn--style-primary:hover{
+  background-color: darken(#0c131f, 5%);
+  
+}
+
 input,
 optgroup,
 select,
@@ -154,7 +209,7 @@ button.btn.btn--icon-style-without-border.btn--size-medium.btn--withoutPopup.btn
   color: #068b59;
   padding: 10px;
   margin-bottom: 10px;
-  border-radius: 4px;
+  border-radius: 0.5em;
 }
 
 .alert--error {
@@ -163,7 +218,7 @@ button.btn.btn--icon-style-without-border.btn--size-medium.btn--withoutPopup.btn
   color: #ce2027;
   padding: 10px;
   margin-bottom: 10px;
-  border-radius: 4px;
+  border-radius: 0.5em;
 }
 
 /* SideBar Left */
@@ -260,7 +315,7 @@ header.list-header {
   color: #ffffff;
   border: 1px solid #068b59;
   padding: 5px 10px;
-  border-radius: 4px;
+  border-radius: 0.5em;
 }
 
 .list-header .btn:hover {
@@ -294,26 +349,26 @@ div.search-filter {
   max-width: 600px;
 }
 
-.search-filter {
-  position: relative;
+// .search-filter {
+//   position: relative;
 
-  &::before {
-    font-family: 'Material Symbols Outlined';
-    content: 'search';
-    font-size: 22px;
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #7f8c8d;
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #7f8c8d;
-    line-height: 1;
-  }
-}
+//   &::before {
+//     font-family: 'Material Symbols Outlined';
+//     content: 'search';
+//     font-size: 22px;
+//     position: absolute;
+//     left: 10px;
+//     top: 50%;
+//     transform: translateY(-50%);
+//     color: #7f8c8d;
+//     position: absolute;
+//     left: 10px;
+//     top: 50%;
+//     transform: translateY(-50%);
+//     color: #7f8c8d;
+//     line-height: 1;
+//   }
+// }
 
 .search-filter__input {
   border: 1px solid #e0e0e0;
@@ -329,14 +384,6 @@ div.search-filter {
 
 .search-filter__input {
   padding-left: 40px;
-}
-
-.search-filter__input::before {
-  content: '|';
-
-  color: #7f8c8d;
-  font-size: 20px;
-  line-height: 1;
 }
 
 .list-controls__wrap .icon--search {
@@ -484,7 +531,7 @@ td.cell-status:has(span:contains('Enabled')) {
   color: #3c763d;
   font-weight: 600;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 0.5em;
 }
 
 td.cell-status:has(span:contains('Disabled')) {
@@ -492,7 +539,7 @@ td.cell-status:has(span:contains('Disabled')) {
   color: #a94442;
   font-weight: 600;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 0.5em;
 }
 
 //Pagination
@@ -682,7 +729,7 @@ input {
   color: #ffffff;
   border: 1px solid #068b59;
   padding: 5px 10px;
-  border-radius: 4px;
+  border-radius: 0.5em;
 }
 
 #action-save:hover {

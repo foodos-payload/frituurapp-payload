@@ -674,12 +674,10 @@ export interface Productpopup {
  */
 export interface Subproduct {
   id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
   /**
-   * The CloudPOS ID for this subproduct. If empty, not synced.
+   * Reference an image from the Media library.
    */
-  cloudPOSId?: number | null;
+  image?: (string | null) | Media;
   /**
    * Enter the subproduct name in Dutch.
    */
@@ -696,6 +694,14 @@ export interface Subproduct {
    * Enter the subproduct name in French.
    */
   name_fr?: string | null;
+  /**
+   * Enable linking to an existing product. If enabled, price and tax fields will be hidden.
+   */
+  linked_product_enabled?: boolean | null;
+  /**
+   * Select a product to link with this subproduct.
+   */
+  linked_product?: (string | null) | Product;
   /**
    * Use a unified sale price for all fulfillment methods.
    */
@@ -717,13 +723,17 @@ export interface Subproduct {
    */
   price_delivery?: number | null;
   /**
-   * Enable linking to an existing product. If enabled, price and tax fields will be hidden.
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
-  linked_product_enabled?: boolean | null;
+  tax?: number | null;
   /**
-   * Select a product to link with this subproduct.
+   * Specify the VAT percentage (e.g., 6, 12, 21).
    */
-  linked_product?: (string | null) | Product;
+  tax_table?: number | null;
+  /**
+   * Optional SKU (stock keeping unit) for this subproduct.
+   */
+  sku?: string | null;
   /**
    * Enable stock tracking for this subproduct.
    */
@@ -733,21 +743,14 @@ export interface Subproduct {
    */
   stock_quantity?: number | null;
   /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax?: number | null;
-  /**
-   * Specify the VAT percentage (e.g., 6, 12, 21).
-   */
-  tax_table?: number | null;
-  /**
-   * Reference an image from the Media library.
-   */
-  image?: (string | null) | Media;
-  /**
    * Timestamp for last modification.
    */
   modtime: number;
+  tenant: string | Tenant;
+  /**
+   * The CloudPOS ID for this subproduct. If empty, not synced.
+   */
+  cloudPOSId?: number | null;
   /**
    * Mark this subproduct as deleted
    */
@@ -756,6 +759,7 @@ export interface Subproduct {
    * Subproduct status (enabled or disabled).
    */
   status: 'enabled' | 'disabled';
+  shops: (string | Shop)[];
   updatedAt: string;
   createdAt: string;
 }
@@ -2147,28 +2151,29 @@ export interface ProductsSelect<T extends boolean = true> {
  * via the `definition` "subproducts_select".
  */
 export interface SubproductsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  cloudPOSId?: T;
+  image?: T;
   name_nl?: T;
   name_en?: T;
   name_de?: T;
   name_fr?: T;
+  linked_product_enabled?: T;
+  linked_product?: T;
   price_unified?: T;
   price?: T;
   price_dinein?: T;
   price_takeaway?: T;
   price_delivery?: T;
-  linked_product_enabled?: T;
-  linked_product?: T;
-  stock_enabled?: T;
-  stock_quantity?: T;
   tax?: T;
   tax_table?: T;
-  image?: T;
+  sku?: T;
+  stock_enabled?: T;
+  stock_quantity?: T;
   modtime?: T;
+  tenant?: T;
+  cloudPOSId?: T;
   deleted?: T;
   status?: T;
+  shops?: T;
   updatedAt?: T;
   createdAt?: T;
 }
