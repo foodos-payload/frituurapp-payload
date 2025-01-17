@@ -257,6 +257,39 @@ export const Services: CollectionConfig = {
         },
         // Add Stripe product and price IDs
         {
+            name: 'subscriptions',
+            label: 'Subscriptions',
+            type: 'array',
+            // Each item in the array represents ONE shop’s subscription
+            fields: [
+                {
+                    name: 'shopId',
+                    type: 'relationship',
+                    relationTo: 'shops',
+                    required: true,
+                },
+                {
+                    name: 'stripeSubscriptionId',
+                    type: 'text',
+                    required: true,
+                },
+                {
+                    name: 'status',
+                    type: 'text', // or a select field with options: "active", "canceled", "past_due", etc.
+                },
+                {
+                    name: 'cancel_at_period_end',
+                    type: 'checkbox',
+                    defaultValue: false,
+                },
+                {
+                    name: 'current_period_end',
+                    type: 'date',
+                },
+                // Add any other relevant fields (like trial_end, canceled_at, etc.)
+            ],
+        },
+        {
             name: 'stripe_monthly_product_id',
             type: 'text',
             required: false,

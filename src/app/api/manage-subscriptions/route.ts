@@ -6,7 +6,7 @@ import config from '@payload-config'
 export async function POST(req: Request) {
     try {
         const payload = await getPayload({ config })
-        const { serviceId, shopId, userId } = await req.json()
+        const { serviceId, shopId, userId, stripeSubscriptionId } = await req.json()
 
         if (!serviceId || !shopId || !userId) {
             return NextResponse.json(
@@ -92,24 +92,38 @@ export async function POST(req: Request) {
             },
         })
 
-        // 6) Optionally update the service doc => unify its .tenants and .shops
-        //    so the service "knows" which tenants/shops are using it
-        const existingTenantIDs = Array.isArray(serviceDoc.tenants)
-            ? serviceDoc.tenants.map((t: any) => (typeof t === 'string' ? t : t.id))
-            : []
-        const existingShopIDs = Array.isArray(serviceDoc.shops)
-            ? serviceDoc.shops.map((s: any) => (typeof s === 'string' ? s : s.id))
-            : []
+        // 6) Update the service doc => push a new subscription object, or
+        //    update if there's already an entry for that shop.
+        const existingSubscriptions = serviceDoc.subscriptions || []
 
-        const updatedTenantIDs = Array.from(new Set([...existingTenantIDs, tenantId]))
-        const updatedShopIDs = Array.from(new Set([...existingShopIDs, shopId]))
+        // See if we already have a sub for this shop
+        const existingIndex = existingSubscriptions.findIndex((sub: any) => {
+            return sub.shopId?.id === shopId || sub.shopId === shopId
+        })
+
+        // If none exist, push a new item
+        if (existingIndex === -1) {
+            existingSubscriptions.push({
+                shopId, // relationship to 'shops'
+                stripeSubscriptionId: null, // We’ll fill in from webhook or from Checkout success retrieval
+                status: 'active',
+                cancel_at_period_end: false,
+                current_period_end: null,
+            })
+        } else {
+            // If we do have one, update it
+            existingSubscriptions[existingIndex].status = 'active'
+            existingSubscriptions[existingIndex].cancel_at_period_end = false
+            if (stripeSubscriptionId) {
+                existingSubscriptions[existingIndex].stripeSubscriptionId = stripeSubscriptionId
+            }
+        }
 
         await payload.update({
             collection: 'services',
             id: serviceId,
             data: {
-                tenants: updatedTenantIDs,
-                shops: updatedShopIDs,
+                subscriptions: existingSubscriptions,
             },
         })
 

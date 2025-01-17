@@ -1,12 +1,15 @@
 // File: /src/utilities/checkSubscription.ts
+
 import type { Payload } from 'payload'
 
 /**
- * Checks whether a given shop is subscribed to a particular collectionSlug.
+ * Checks whether a given shop is subscribed (with an active sub) to a particular collectionSlug.
  *
- * Because the "shops" array is stored on the Service doc, we:
- *  1) Look up all Services whose `shops` field includes that shop.
- *  2) For each service, check if any of its roles unlock the `collectionSlug`.
+ * Because we now store shop-specific subscriptions in `services[].subscriptions[]`,
+ * we:
+ *  1) Look up all Service docs whose `subscriptions.shopId` includes this shopID
+ *     AND where `subscriptions.status` is something like 'active'.
+ *  2) For each matched service, check if any of its roles unlock the `collectionSlug`.
  *  3) Return true if found, otherwise false.
  */
 export async function shopHasCollectionSubscription(
@@ -14,36 +17,53 @@ export async function shopHasCollectionSubscription(
     collectionSlug: string,
     payload: Payload,
 ): Promise<boolean> {
-    // (same as before)
-    const res = await payload.find({
+    // 1) Query the 'services' collection by matching subscription
+    //    If you only want "active" subscriptions, add `status: { equals: 'active' }`.
+    const serviceRes = await payload.find({
         collection: 'services',
         where: {
-            shops: { in: [shopID] },
+            // This syntax means: find any service doc that has a `subscriptions[]` item
+            // whose `shopId` is `shopID` and whose `status` is 'active'.
+            'subscriptions.shopId': {
+                equals: shopID,
+            },
+            'subscriptions.status': {
+                equals: 'active', // or in: ['active', 'trialing'], etc.
+            },
         },
         depth: 2,
         limit: 50,
     })
-    const serviceDocs = res?.docs || []
+
+    const serviceDocs = serviceRes?.docs || []
     if (!serviceDocs.length) return false
 
+    // 2) For each Service doc, check if it has a Role referencing the collectionSlug
     for (const s of serviceDocs) {
         const roles = s.roles || []
         for (const role of roles) {
-            if (typeof role !== 'string') {
-                const colls = role.collections || []
-                // find any collection entry that matches
-                const found = colls.find(
+            if (typeof role !== 'string' && Array.isArray(role.collections)) {
+                // Check if role.collections includes the desired collection slug with read/update perms
+                const found = role.collections.find(
                     (c: any) =>
                         c.collectionName === collectionSlug &&
                         (c.read || c.create || c.update || c.delete),
                 )
-                if (found) return true
+                if (found) {
+                    return true
+                }
             }
         }
     }
+
     return false
 }
 
+
+/**
+ * Checks if a specific Service doc's roles unlock a particular collection.
+ * (Unchanged from your example, except you might optionally confirm the subscription is active.)
+ */
 export async function serviceUnlocksCollection(
     serviceID: string,
     collectionSlug: string,
@@ -60,15 +80,15 @@ export async function serviceUnlocksCollection(
     // 2) gather all roles
     const roles = serviceDoc.roles || []
     for (const role of roles) {
-        if (typeof role === 'string' || !role?.collections) continue
-        // 3) see if any item in role.collections matches
-        const found = role.collections.find(
-            (c: any) =>
-                c.collectionName === collectionSlug &&
-                (c.read || c.create || c.update || c.delete),
-        )
-        if (found) {
-            return true
+        if (typeof role !== 'string' && Array.isArray(role.collections)) {
+            const found = role.collections.find(
+                (c: any) =>
+                    c.collectionName === collectionSlug &&
+                    (c.read || c.create || c.update || c.delete),
+            )
+            if (found) {
+                return true
+            }
         }
     }
 
@@ -87,16 +107,22 @@ export async function shopHasFieldSubscription(
     fieldName: string,
     payload: Payload,
 ): Promise<boolean> {
-    // 1) find all services referencing that shop
-    const res = await payload.find({
+    // 1) find all services referencing that shop with a subscription status=active
+    const serviceRes = await payload.find({
         collection: 'services',
         where: {
-            shops: { in: [shopID] },
+            'subscriptions.shopId': {
+                equals: shopID,
+            },
+            'subscriptions.status': {
+                equals: 'active',
+            },
         },
         depth: 2,
         limit: 50,
     })
-    const serviceDocs = res?.docs || []
+
+    const serviceDocs = serviceRes?.docs || []
     if (!serviceDocs.length) return false
 
     // 2) check each service => see if it has a role whose "fields" array
@@ -105,9 +131,9 @@ export async function shopHasFieldSubscription(
         const roles = s.roles || []
         for (const role of roles) {
             // Ensure role is an object before accessing fields
-            if (typeof role !== 'object' || !role?.fields) continue
+            if (typeof role !== 'object' || !role.fields) continue
 
-            const fieldsPerms = role.fields || []
+            const fieldsPerms = role.fields
             // find any item with matching collectionName + fieldName
             const found = fieldsPerms.find(
                 (f: any) =>
@@ -115,7 +141,9 @@ export async function shopHasFieldSubscription(
                     f.fieldName === fieldName &&
                     (f.update || f.create || f.delete),
             )
-            if (found) return true
+            if (found) {
+                return true
+            }
         }
     }
 

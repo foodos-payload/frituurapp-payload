@@ -1374,6 +1374,16 @@ export interface Service {
    * URL for additional information about the service
    */
   get_more_info_url?: string | null;
+  subscriptions?:
+    | {
+        shopId: string | Shop;
+        stripeSubscriptionId: string;
+        status?: string | null;
+        cancel_at_period_end?: boolean | null;
+        current_period_end?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   stripe_monthly_product_id?: string | null;
   stripe_yearly_product_id?: string | null;
   stripe_monthly_price_id?: string | null;
@@ -2564,6 +2574,16 @@ export interface ServicesSelect<T extends boolean = true> {
   service_last_update_date?: T;
   hide_for_tenants?: T;
   get_more_info_url?: T;
+  subscriptions?:
+    | T
+    | {
+        shopId?: T;
+        stripeSubscriptionId?: T;
+        status?: T;
+        cancel_at_period_end?: T;
+        current_period_end?: T;
+        id?: T;
+      };
   stripe_monthly_product_id?: T;
   stripe_yearly_product_id?: T;
   stripe_monthly_price_id?: T;
