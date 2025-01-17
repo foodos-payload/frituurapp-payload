@@ -67,6 +67,7 @@ export function SubscribeButton({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     price: priceId,
+                    userId,
                     customerEmail: user?.email,
                     successUrl,
                     cancelUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/services/${id}`,
