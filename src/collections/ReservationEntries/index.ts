@@ -23,6 +23,7 @@ export const ReservationEntries: CollectionConfig = {
   admin: {
     baseListFilter,
     useAsTitle: 'customer_name', // Use the customer name as the title
+    defaultColumns: ['customer_name', 'date', 'time', 'persons'],
   },
 
   labels: {
