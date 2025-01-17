@@ -119,6 +119,14 @@ export const Tenants: CollectionConfig = {
       },
     },
     {
+      name: 'stripeCustomerId',
+      type: 'text',
+      required: false,
+      admin: {
+        description: 'Stripe Customer ID for this tenant',
+      },
+    },
+    {
       // 4) public checkbox
       name: 'public',
       type: 'checkbox',

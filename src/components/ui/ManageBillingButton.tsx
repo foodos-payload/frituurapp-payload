@@ -4,10 +4,10 @@
 import React, { useState } from "react"
 
 interface ManageBillingButtonProps {
-    userId: string // We only need the userId to do the POST
+    tenantId: string
 }
 
-export function ManageBillingButton({ userId }: ManageBillingButtonProps) {
+export function ManageBillingButton({ tenantId }: ManageBillingButtonProps) {
     const [isLoading, setIsLoading] = useState(false)
 
     async function handleManageBilling() {
@@ -16,14 +16,14 @@ export function ManageBillingButton({ userId }: ManageBillingButtonProps) {
             const res = await fetch("/api/manage-billing", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId }),
+                body: JSON.stringify({ tenantId }),
             })
             if (!res.ok) {
                 const msg = await res.json()
                 throw new Error(msg.error || "Failed to create billing portal session.")
             }
             const data = await res.json()
-            // Redirect the user to the returned portal URL
+            // Redirect user to the portal URL
             window.location.href = data.url
         } catch (err: any) {
             console.error("ManageBillingButton Error:", err)
@@ -43,4 +43,3 @@ export function ManageBillingButton({ userId }: ManageBillingButtonProps) {
         </button>
     )
 }
-

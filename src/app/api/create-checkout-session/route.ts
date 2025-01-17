@@ -1,27 +1,28 @@
-// File: /src/app/api/create-checkout-session/route.ts
 import { NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import Stripe from 'stripe'
 
-// We'll assume the request includes { price, userId, successUrl, cancelUrl }
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
+    const payload = await getPayload({ config })
     try {
-        // 1) Parse the request
-        const payload = await getPayload({ config })
-        const body = await req.json()
-        const { price, userId, successUrl, cancelUrl } = body
+        const body = await request.json()
+        const {
+            price,
+            userId,
+            customerEmail,
+            serviceId,
+            shopId,
+            successUrl,
+            cancelUrl,
+            tenantId,
+        } = body
 
-        // Basic checks
-        if (!price) {
-            return NextResponse.json({ error: 'Missing `price` in request.' }, { status: 400 })
+        if (!price || !userId || !serviceId || !shopId) {
+            return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 })
         }
-        if (!userId) {
-            return NextResponse.json({ error: 'Missing `userId` in request.' }, { status: 400 })
-        }
-
-        // 2) Fetch the user
+        console.log(userId)
+        // 1) Fetch the user doc to figure out tenant
         const userDoc = await payload.findByID({
             collection: 'users',
             id: userId,
@@ -30,47 +31,105 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'User not found.' }, { status: 404 })
         }
 
-        // 3) Check for existing stripeCustomerId
-        let stripeCustomerId = userDoc.stripeCustomerId
-        if (!stripeCustomerId) {
-            // Create new Stripe Customer
-            const newCustomer = await stripe.customers.create({
-                email: userDoc.email,
-                // You can pass more fields: name, phone, metadata, ...
-            })
-            stripeCustomerId = newCustomer.id
 
-            // 4) Save that to the user doc
+        // 2) Validate that user is tenant-admin for the passed tenantId
+        const userTenants = Array.isArray(userDoc.tenants) ? userDoc.tenants : []
+        const matchingTenant = userTenants.find((entry: any) => {
+            const tID = typeof entry.tenant === 'object' ? entry.tenant?.id : entry.tenant
+            return tID === tenantId && entry.roles?.includes('tenant-admin')
+        })
+        if (!matchingTenant) {
+            return NextResponse.json(
+                { error: 'User is not tenant-admin for the provided tenantId.' },
+                { status: 403 },
+            )
+        }
+        // 3) Fetch the service doc
+        const serviceDoc = await payload.findByID({
+            collection: 'services',
+            id: serviceId,
+        })
+
+        if (!serviceDoc) {
+            return NextResponse.json({ error: 'Service not found.' }, { status: 404 })
+        }
+
+        // 4) Check if there's already a subscription item for this shop
+        const existingSubs = Array.isArray(serviceDoc.subscriptions)
+            ? serviceDoc.subscriptions
+            : []
+        const alreadyExists = existingSubs.some((sub: any) => {
+            const shopValue = typeof sub.shop === 'object' ? sub.shop?.id : sub.shop
+            const tenantValue = typeof sub.tenant === 'object' ? sub.tenant?.id : sub.tenant
+            return shopValue === shopId && tenantValue === tenantId
+        })
+
+        if (!alreadyExists) {
+            existingSubs.push({
+                tenant: tenantId,
+                shop: shopId,
+                stripeSubscriptionId: '',
+                active: false,
+            })
+
             await payload.update({
-                collection: 'users',
-                id: userDoc.id,
+                collection: 'services',
+                id: serviceId,
                 data: {
-                    stripeCustomerId: stripeCustomerId,
+                    subscriptions: existingSubs,
                 },
             })
         }
 
-        // 5) Create the Stripe Checkout Session
+        // NEW: 4.5 Fetch the tenant doc to see if stripeCustomerId already exists
+        const tenantDoc = await payload.findByID({
+            collection: 'tenants',
+            id: tenantId,
+        })
+        const existingCustomer = tenantDoc?.stripeCustomerId || undefined
+
+        // 5) Create Stripe session
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+            apiVersion: '2022-11-15',
+        })
+
         const session = await stripe.checkout.sessions.create({
             mode: 'subscription',
-            customer: stripeCustomerId, // use the existing or newly-created customer
+            payment_method_types: ['card'],
             line_items: [
                 {
                     price,
                     quantity: 1,
                 },
             ],
+            // customer_email: customerEmail,
             success_url: successUrl,
             cancel_url: cancelUrl,
+            customer: existingCustomer,
+
+            // 1) Set metadata on the session
+            metadata: {
+                service_id: serviceId,
+                shop_id: shopId,
+                tenant_id: tenantId,
+                user_id: userId,
+            },
+
+            // 2) Also set subscription_data.metadata so the Subscription itself has this info
+            subscription_data: {
+                metadata: {
+                    service_id: serviceId,
+                    shop_id: shopId,
+                    tenant_id: tenantId,
+                    user_id: userId,
+                },
+            },
         })
 
-        // Return the session ID so the client can redirect
+
         return NextResponse.json({ sessionId: session.id })
-    } catch (error: any) {
-        console.error('Error creating checkout session:', error)
-        return NextResponse.json(
-            { error: error?.message || 'Error creating checkout session' },
-            { status: 500 },
-        )
+    } catch (err: any) {
+        console.error('Error creating checkout session:', err)
+        return NextResponse.json({ error: err.message || 'Something went wrong' }, { status: 500 })
     }
 }

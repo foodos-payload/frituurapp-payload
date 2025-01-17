@@ -528,6 +528,10 @@ export interface Tenant {
    */
   slug: string;
   /**
+   * Stripe Customer ID for this tenant
+   */
+  stripeCustomerId?: string | null;
+  /**
    * If checked, logging in is not required.
    */
   public?: boolean | null;
@@ -2507,6 +2511,7 @@ export interface TenantsSelect<T extends boolean = true> {
         id?: T;
       };
   slug?: T;
+  stripeCustomerId?: T;
   public?: T;
   updatedAt?: T;
   createdAt?: T;
