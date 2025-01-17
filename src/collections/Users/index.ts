@@ -195,6 +195,17 @@ const Users: CollectionConfig = {
     },
     {
       // 4) Username text
+      name: 'stripeCustomerId',
+      type: 'text',
+      label: {
+        en: 'stripeCustomerId',
+        nl: 'stripeCustomerId',
+        de: 'stripeCustomerId',
+        fr: 'stripeCustomerId',
+      },
+    },
+    {
+      // 4) Username text
       name: 'username',
       type: 'text',
       label: {
