@@ -1,4 +1,4 @@
-// File: src/app/api/printers/route.ts
+// File: src/app/api/getPrinters/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getPayload } from 'payload';
 import config from '@payload-config';
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * @openapi
- * /api/printers:
+ * /api/getPrinters:
  *   get:
  *     summary: List printers for the given shop slug
  *     description: |
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
         // 5) Return them
         return NextResponse.json(printersResult, { status: 200 });
     } catch (err: any) {
-        console.error('Error in GET /api/printers:', err);
+        console.error('Error in GET /api/getPrinters:', err);
         return NextResponse.json(
             { error: err?.message || 'Unknown server error' },
             { status: 500 }

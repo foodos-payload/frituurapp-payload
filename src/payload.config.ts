@@ -209,13 +209,10 @@ export default buildConfig({
         group: '🏪 Shops',
       },
     },
-    // {
-    //   ...Pages,
-    //   admin: {
-    //     ...Pages.admin,
-    //     group: '🏪 Shops',
-    //   },
-    // },
+    {
+      ...Pages,
+      admin: { hidden: true }
+    },
     {
       ...PaymentMethods,
       admin: {

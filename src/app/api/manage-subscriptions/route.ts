@@ -28,7 +28,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Shop not found.' }, { status: 404 })
         }
 
-        const tenantId = shopDoc.tenant?.id || shopDoc.tenant
+        const tenantId = typeof shopDoc.tenant === 'object' ? shopDoc.tenant.id : shopDoc.tenant
         if (!tenantId) {
             return NextResponse.json(
                 { error: 'This shop does not have an associated tenant.' },

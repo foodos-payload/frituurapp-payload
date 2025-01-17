@@ -12,6 +12,10 @@ import { checkPrinterNameUniqueness } from './hooks/checkPrinterNameUniqueness';
 // import { automatePrinterSetup } from './hooks/automatePrinterSetup';
 // import { removePrinterOnDelete } from './hooks/removePrinterOnDelete';
 
+import { checkShopSubscription } from './hooks/checkShopSubscription'
+import { restrictFieldBasedOnSubscription } from './hooks/restrictFieldBasedOnSubscription'
+
+
 export const Printers: CollectionConfig = {
     slug: 'printers',
 
@@ -48,6 +52,7 @@ export const Printers: CollectionConfig = {
     },
 
     hooks: {
+        beforeChange: [checkShopSubscription],
         beforeValidate: [
             async ({ data, req, operation, originalDoc }) => {
                 // Only run on create or update
@@ -130,6 +135,11 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'Copy/paste the AWL IP of the new printer.',
             },
+            hooks: {
+                beforeChange: [
+                    restrictFieldBasedOnSubscription('printers', 'awlIP'),
+                ],
+            },
             access: {
                 read: hasFieldPermission('printers', 'awlIP', 'read'),
                 update: hasFieldPermission('printers', 'awlIP', 'update'),
@@ -158,6 +168,11 @@ export const Printers: CollectionConfig = {
                 hidden: true,
                 readOnly: true,
             },
+            hooks: {
+                beforeChange: [
+                    restrictFieldBasedOnSubscription('printers', 'printer_name'),
+                ],
+            },
             access: {
                 read: hasFieldPermission('printers', 'printer_name', 'read'),
                 update: hasFieldPermission('printers', 'printer_name', 'update'),
@@ -172,6 +187,11 @@ export const Printers: CollectionConfig = {
             required: true,
             admin: {
                 description: 'Enter the queue name from the printer setup portal.',
+            },
+            hooks: {
+                beforeChange: [
+                    restrictFieldBasedOnSubscription('printers', 'queue_name'),
+                ],
             },
             access: {
                 read: hasFieldPermission('printers', 'queue_name', 'read'),
@@ -192,6 +212,11 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'Select whether this printer is a kitchen or kiosk printer.',
             },
+            hooks: {
+                beforeChange: [
+                    restrictFieldBasedOnSubscription('printers', 'printer_type'),
+                ],
+            },
             access: {
                 read: hasFieldPermission('printers', 'printer_type', 'read'),
                 update: hasFieldPermission('printers', 'printer_type', 'update'),
@@ -207,6 +232,11 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'Differentiate multiple kiosk/kitchen printers in the same shop.',
             },
+            hooks: {
+                beforeChange: [
+                    restrictFieldBasedOnSubscription('printers', 'unique_id'),
+                ],
+            },
             access: {
                 read: hasFieldPermission('printers', 'unique_id', 'read'),
                 update: hasFieldPermission('printers', 'unique_id', 'update'),
@@ -221,6 +251,11 @@ export const Printers: CollectionConfig = {
             defaultValue: true,
             admin: {
                 description: 'Enable or disable printing functionality.',
+            },
+            hooks: {
+                beforeChange: [
+                    restrictFieldBasedOnSubscription('printers', 'print_enabled'),
+                ],
             },
             access: {
                 read: hasFieldPermission('printers', 'print_enabled', 'read'),
@@ -238,6 +273,11 @@ export const Printers: CollectionConfig = {
                 description: 'Also print a customer copy on the kitchen printer if enabled.',
                 condition: (_, siblingData) => siblingData?.printer_type === 'kitchen',
             },
+            hooks: {
+                beforeChange: [
+                    restrictFieldBasedOnSubscription('printers', 'customer_enabled'),
+                ],
+            },
             access: {
                 read: hasFieldPermission('printers', 'customer_enabled', 'read'),
                 update: hasFieldPermission('printers', 'customer_enabled', 'update'),
@@ -254,6 +294,11 @@ export const Printers: CollectionConfig = {
                 description: 'How many copies to print for each kitchen ticket?',
                 condition: (_, siblingData) => siblingData?.printer_type === 'kitchen',
             },
+            hooks: {
+                beforeChange: [
+                    restrictFieldBasedOnSubscription('printers', 'kitchen_ticket_amount'),
+                ],
+            },
             access: {
                 read: hasFieldPermission('printers', 'kitchen_ticket_amount', 'read'),
                 update: hasFieldPermission('printers', 'kitchen_ticket_amount', 'update'),
@@ -269,6 +314,10 @@ export const Printers: CollectionConfig = {
             admin: {
                 description: 'If enabled, print category headers on the kitchen ticket.',
                 condition: (_, siblingData) => siblingData?.printer_type === 'kitchen',
+            }, hooks: {
+                beforeChange: [
+                    restrictFieldBasedOnSubscription('printers', 'print_category_headers'),
+                ],
             },
             access: {
                 read: hasFieldPermission('printers', 'print_category_headers', 'read'),
