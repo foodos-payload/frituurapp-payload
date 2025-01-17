@@ -615,8 +615,6 @@ export interface Media {
  */
 export interface Productpopup {
   id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
   /**
    * Enter the popup title in Dutch (default).
    */
@@ -665,6 +663,8 @@ export interface Productpopup {
    * List of subproducts associated with this popup.
    */
   subproducts?: (string | Subproduct)[] | null;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
   updatedAt: string;
   createdAt: string;
 }
@@ -2182,8 +2182,6 @@ export interface SubproductsSelect<T extends boolean = true> {
  * via the `definition` "productpopups_select".
  */
 export interface ProductpopupsSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
   popup_title_nl?: T;
   popup_title_en?: T;
   popup_title_de?: T;
@@ -2196,6 +2194,8 @@ export interface ProductpopupsSelect<T extends boolean = true> {
   allowMultipleTimes?: T;
   default_checked_subproduct?: T;
   subproducts?: T;
+  tenant?: T;
+  shops?: T;
   updatedAt?: T;
   createdAt?: T;
 }
