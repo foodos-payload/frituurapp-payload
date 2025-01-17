@@ -25,6 +25,8 @@ export const Tipping: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'title',
+        defaultColumns: ['title', 'enabled'],
+
     },
 
     labels: {
