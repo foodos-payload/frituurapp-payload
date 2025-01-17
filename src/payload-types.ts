@@ -769,12 +769,10 @@ export interface Subproduct {
  */
 export interface Category {
   id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
   /**
-   * The CloudPOS ID of this category. Leave empty if not synced.
+   * Reference an image from the Media library.
    */
-  cloudPOSId?: number | null;
+  image?: (string | null) | Media;
   /**
    * Enter the category name in Dutch (default).
    */
@@ -796,19 +794,7 @@ export interface Category {
    */
   menuOrder?: number | null;
   /**
-   * Reference an image from the Media library.
-   */
-  image?: (string | null) | Media;
-  /**
-   * Timestamp for last modification
-   */
-  modtime: number;
-  /**
-   * Category status (enabled or disabled)
-   */
-  status: 'enabled' | 'disabled';
-  /**
-   * Assign product popups to this category. These popups will apply to all products in the category.
+   * Assign product popups to this category. These popups apply to all products in the category.
    */
   productpopups?:
     | {
@@ -820,6 +806,20 @@ export interface Category {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Timestamp for last modification
+   */
+  modtime: number;
+  tenant: string | Tenant;
+  /**
+   * The CloudPOS ID of this category. Leave empty if not synced.
+   */
+  cloudPOSId?: number | null;
+  /**
+   * Category status (enabled or disabled)
+   */
+  status: 'enabled' | 'disabled';
+  shops: (string | Shop)[];
   updatedAt: string;
   createdAt: string;
 }
@@ -2077,17 +2077,12 @@ export interface OrdersSelect<T extends boolean = true> {
  * via the `definition` "categories_select".
  */
 export interface CategoriesSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  cloudPOSId?: T;
+  image?: T;
   name_nl?: T;
   name_en?: T;
   name_de?: T;
   name_fr?: T;
   menuOrder?: T;
-  image?: T;
-  modtime?: T;
-  status?: T;
   productpopups?:
     | T
     | {
@@ -2095,6 +2090,11 @@ export interface CategoriesSelect<T extends boolean = true> {
         order?: T;
         id?: T;
       };
+  modtime?: T;
+  tenant?: T;
+  cloudPOSId?: T;
+  status?: T;
+  shops?: T;
   updatedAt?: T;
   createdAt?: T;
 }
