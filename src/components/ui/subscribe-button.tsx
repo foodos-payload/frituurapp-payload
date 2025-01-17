@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { ButtonProps } from "@/components/ui/button"
 import { useState } from "react"
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe } from "@stripe/stripe-js"
 import { Role, User } from "@/payload-types"
 
 // SubscribeButtonProps no longer needs internal "selectedShopId" logic
@@ -17,11 +17,11 @@ interface SubscribeButtonProps extends ButtonProps {
     shopId?: string
 }
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")
 
 export function SubscribeButton({
     priceId,
-    id,
+    id: serviceId,  // rename `id` to `serviceId` for clarity
     amount,
     user,
     serviceRoles,
@@ -55,7 +55,7 @@ export function SubscribeButton({
 
             // Build successUrl that includes shop_id, user_id, etc
             const successUrl = `${process.env.NEXT_PUBLIC_SERVER_URL}/subscription-success-callback?` +
-                `service_id=${id}&` +
+                `service_id=${serviceId}&` +
                 `user_id=${userId}&` +
                 `shop_id=${shopId}&` +
                 `amount=${amount}&` +
@@ -66,11 +66,13 @@ export function SubscribeButton({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    // *** Include all necessary fields, including serviceId ***
                     price: priceId,
+                    serviceId,        // <---- IMPORTANT
                     userId,
                     customerEmail: user?.email,
                     successUrl,
-                    cancelUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/services/${id}`,
+                    cancelUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/services/${serviceId}`,
                 }),
             })
 

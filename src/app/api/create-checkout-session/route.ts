@@ -11,7 +11,7 @@ export async function POST(req: Request) {
         // 1) Parse the request
         const payload = await getPayload({ config })
         const body = await req.json()
-        const { price, userId, successUrl, cancelUrl } = body
+        const { price, serviceId, userId, successUrl, cancelUrl } = body
 
         // Basic checks
         if (!price) {
@@ -60,6 +60,12 @@ export async function POST(req: Request) {
                     quantity: 1,
                 },
             ],
+            subscription_data: {
+                metadata: {
+                    serviceId: serviceId,
+                    userId: userId,
+                },
+            },
             success_url: `${successUrl}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: cancelUrl,
         })

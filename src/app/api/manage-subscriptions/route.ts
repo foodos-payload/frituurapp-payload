@@ -6,7 +6,12 @@ import config from '@payload-config'
 export async function POST(req: Request) {
     try {
         const payload = await getPayload({ config })
-        const { serviceId, shopId, userId, stripeSubscriptionId } = await req.json()
+        const {
+            serviceId,
+            shopId,
+            userId,
+            stripeSubscriptionId, // <-- subscription ID from Stripe Checkout
+        } = await req.json()
 
         if (!serviceId || !shopId || !userId) {
             return NextResponse.json(
@@ -18,9 +23,7 @@ export async function POST(req: Request) {
         // 1) Fetch the shop to get its tenant
         const shopRes = await payload.find({
             collection: 'shops',
-            where: {
-                id: { equals: shopId },
-            },
+            where: { id: { equals: shopId } },
             limit: 1,
         })
         const shopDoc = shopRes?.docs?.[0]
@@ -45,7 +48,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'User not found.' }, { status: 404 })
         }
 
-        // userDoc.tenants = [ { tenant: "someTenantID", roles: ["tenant-admin"] }, ... ]
         const matchingTenantIndex = userDoc.tenants?.findIndex((t: any) => {
             const tID = typeof t.tenant === 'string' ? t.tenant : t.tenant?.id
             return tID === tenantId && t.roles?.includes('tenant-admin')
@@ -57,7 +59,7 @@ export async function POST(req: Request) {
             )
         }
 
-        // 3) Fetch the service => read its "roles" field (relationship to 'roles')
+        // 3) Fetch the service => read its "roles" field
         const serviceDoc = await payload.findByID({
             collection: 'services',
             id: serviceId,
@@ -67,18 +69,13 @@ export async function POST(req: Request) {
         }
 
         // 4) Merge serviceDoc.roles into userDoc.roles
-        //    Both are relationships to the "roles" collection, so each item can be either:
-        //    - a string "roleID", or
-        //    - an object { id: "roleID", ... }.
         const serviceRoleIDs = Array.isArray(serviceDoc.roles)
             ? serviceDoc.roles.map((role: any) => (typeof role === 'string' ? role : role.id))
             : []
-
         const userRoleIDs = Array.isArray(userDoc.roles)
             ? userDoc.roles.map((role: any) => (typeof role === 'string' ? role : role.id))
             : []
 
-        // unify them (remove duplicates)
         const updatedRoleIDs = Array.from(new Set([...userRoleIDs, ...serviceRoleIDs]))
 
         // 5) Save updated user doc => only updating top-level "roles"
@@ -87,36 +84,39 @@ export async function POST(req: Request) {
             id: userId,
             data: {
                 roles: updatedRoleIDs,
-                // We do NOT touch tenants[].roles here
-                // tenants: userDoc.tenants, // not necessary unless you changed tenants
+                // We do NOT modify tenants[].roles here unless needed
             },
         })
 
-        // 6) Update the service doc => push a new subscription object, or
-        //    update if there's already an entry for that shop.
+        // 6) Update the service doc => push/update the subscription object
         const existingSubscriptions = serviceDoc.subscriptions || []
 
-        // See if we already have a sub for this shop
         const existingIndex = existingSubscriptions.findIndex((sub: any) => {
+            // If sub.shopId is an object, compare sub.shopId.id; else compare sub.shopId directly
             return sub.shopId?.id === shopId || sub.shopId === shopId
         })
 
-        // If none exist, push a new item
         if (existingIndex === -1) {
+            // If no sub for this shop, push a new subscription record
             existingSubscriptions.push({
-                shopId, // relationship to 'shops'
-                stripeSubscriptionId: null, // We’ll fill in from webhook or from Checkout success retrieval
+                shopId,                     // relationship to 'shops'
+                stripeSubscriptionId: stripeSubscriptionId || '',
                 status: 'active',
                 cancel_at_period_end: false,
                 current_period_end: null,
+                userId,                     // optionally store userId for later reference
             })
         } else {
-            // If we do have one, update it
+            // If we do have one, update it to active
             existingSubscriptions[existingIndex].status = 'active'
             existingSubscriptions[existingIndex].cancel_at_period_end = false
+
+            // If Stripe gave us a subscriptionId from Checkout, set/overwrite it
             if (stripeSubscriptionId) {
                 existingSubscriptions[existingIndex].stripeSubscriptionId = stripeSubscriptionId
             }
+            // Optionally store or overwrite userId
+            existingSubscriptions[existingIndex].userId = userId
         }
 
         await payload.update({

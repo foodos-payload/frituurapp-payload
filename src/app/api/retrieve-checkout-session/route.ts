@@ -1,29 +1,86 @@
-// File: /src/app/api/retrieve-checkout-session/route.ts
-import { NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
+// File: /src/app/api/create-checkout-session/route.ts
+
+import { NextResponse } from 'next/server'
+import { stripe } from '@/lib/stripe'
+import { getPayload } from 'payload'
+import config from '@payload-config'
+
+// We'll assume the request includes { price, serviceId, userId, successUrl, cancelUrl }
 
 export async function POST(req: Request) {
     try {
-        const { sessionId } = await req.json()
-        if (!sessionId) {
-            return NextResponse.json({ error: "Missing sessionId" }, { status: 400 })
+        // 1) Parse the request
+        const payload = await getPayload({ config })
+        const body = await req.json()
+        const { price, serviceId, userId, successUrl, cancelUrl, customerEmail } = body
+
+        // Basic checks
+        if (!price) {
+            return NextResponse.json({ error: 'Missing `price` in request.' }, { status: 400 })
+        }
+        if (!userId) {
+            return NextResponse.json({ error: 'Missing `userId` in request.' }, { status: 400 })
+        }
+        if (!serviceId) {
+            return NextResponse.json({ error: 'Missing `serviceId` in request.' }, { status: 400 })
         }
 
-        // Retrieve the session from Stripe
-        const session = await stripe.checkout.sessions.retrieve(sessionId)
-        if (!session) {
-            return NextResponse.json({ error: "Session not found" }, { status: 404 })
+        // 2) Fetch the user
+        const userDoc = await payload.findByID({
+            collection: 'users',
+            id: userId,
+        })
+        if (!userDoc) {
+            return NextResponse.json({ error: 'User not found.' }, { status: 404 })
         }
 
-        // The subscription ID is found at session.subscription
-        // Type can be string | null
-        const subscriptionId = typeof session.subscription === "string"
-            ? session.subscription
-            : session.subscription?.id || null
+        // 3) Check for existing stripeCustomerId
+        let stripeCustomerId = userDoc.stripeCustomerId
+        if (!stripeCustomerId) {
+            // Create new Stripe Customer
+            const newCustomer = await stripe.customers.create({
+                email: userDoc.email || customerEmail,
+                // You can pass more fields: name, phone, metadata, etc.
+            })
+            stripeCustomerId = newCustomer.id
 
-        return NextResponse.json({ subscriptionId })
+            // 4) Save that to the user doc
+            await payload.update({
+                collection: 'users',
+                id: userDoc.id,
+                data: {
+                    stripeCustomerId: stripeCustomerId,
+                },
+            })
+        }
+
+        // 5) Create the Stripe Checkout Session
+        const session = await stripe.checkout.sessions.create({
+            mode: 'subscription',
+            customer: stripeCustomerId,
+            line_items: [
+                {
+                    price,
+                    quantity: 1,
+                },
+            ],
+            subscription_data: {
+                metadata: {
+                    serviceId,
+                    userId,
+                },
+            },
+            success_url: successUrl,
+            cancel_url: cancelUrl,
+        })
+
+        // Return the session ID so the client can redirect
+        return NextResponse.json({ sessionId: session.id })
     } catch (error: any) {
-        console.error("Error retrieving checkout session from Stripe:", error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        console.error('Error creating checkout session:', error)
+        return NextResponse.json(
+            { error: error?.message || 'Error creating checkout session' },
+            { status: 500 },
+        )
     }
 }

@@ -1377,8 +1377,8 @@ export interface Service {
   subscriptions?:
     | {
         shopId: string | Shop;
-        stripeSubscriptionId: string;
-        status?: string | null;
+        stripeSubscriptionId?: string | null;
+        status?: ('active' | 'canceled') | null;
         cancel_at_period_end?: boolean | null;
         current_period_end?: string | null;
         id?: string | null;

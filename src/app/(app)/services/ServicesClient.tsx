@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useState } from 'react'
-import Image from 'next/image'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { SubscribeButton } from '@/components/ui/subscribe-button'
-import { ManageBillingButton } from '@/components/ui/ManageBillingButton'
-import type { Service, Role, Media, User, Shop } from '@/payload-types'
+import React, { useState } from "react"
+import Image from "next/image"
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { SubscribeButton } from "@/components/ui/subscribe-button"
+import { ManageBillingButton } from "@/components/ui/ManageBillingButton"
+import type { Service, Role, Media, User, Shop } from "@/payload-types"
 
 type ServicesClientProps = {
     services: Service[]
@@ -16,10 +16,9 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
     const [isYearly, setIsYearly] = useState(false)
     const [selectedShops, setSelectedShops] = useState<Record<string, string>>({})
 
-    // Toggle monthly/yearly
     const handleToggle = () => setIsYearly((prev) => !prev)
 
-    // Get user's shops (if any)
+    // All shops belonging to the current user
     const userShops = Array.isArray(currentUser?.shops) ? (currentUser.shops as Shop[]) : []
 
     return (
@@ -36,32 +35,32 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
 
             {/* Billing Toggle + Manage Billing Row */}
             <div className="w-full max-w-7xl flex items-center justify-between">
-                {/* Toggle */}
+                {/* Toggle Monthly/Yearly */}
                 <div className="flex items-center space-x-2">
                     <span
-                        className={`text-lg font-bold ${!isYearly ? 'text-[#1f2a37]' : 'text-gray-400'}`}
+                        className={`text-lg font-bold ${!isYearly ? "text-[#1f2a37]" : "text-gray-400"}`}
                     >
                         Monthly
                     </span>
                     <button
                         onClick={handleToggle}
                         className="relative inline-flex h-6 w-11 border-2 border-transparent
-              rounded-full cursor-pointer transition-colors ease-in-out
-              focus:outline-none bg-[#39454f]"
+                       rounded-full cursor-pointer transition-colors ease-in-out
+                       focus:outline-none bg-[#39454f]"
                     >
                         <span
                             className={`inline-block h-5 w-5 rounded-full bg-white transform transition
-                ${isYearly ? 'translate-x-5' : 'translate-x-0'}`}
+                          ${isYearly ? "translate-x-5" : "translate-x-0"}`}
                         />
                     </button>
                     <span
-                        className={`text-lg font-bold ${isYearly ? 'text-[#1f2a37]' : 'text-gray-400'}`}
+                        className={`text-lg font-bold ${isYearly ? "text-[#1f2a37]" : "text-gray-400"}`}
                     >
                         Yearly
                     </span>
                 </div>
 
-                {/* If user has a stripeCustomerId => show "Manage Billing" */}
+                {/* Manage Billing Button, only if user has a stripeCustomerId */}
                 {currentUser?.stripeCustomerId && (
                     <ManageBillingButton userId={currentUser.id!} />
                 )}
@@ -72,36 +71,33 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                 {services.map((service) => {
                     const thumbnail = service.service_thumbnail as Media
 
-                    // Suppose service.shops is the array of shops that already have this service
-                    const subscribedShopIDs = Array.isArray(service.shops)
-                        ? service.shops.map((sh) => (typeof sh === 'object' ? sh.id : sh))
+                    // 1) Gather all shops that have an ACTIVE subscription for this service
+                    //    service.subscriptions might look like: [{ shopId, status, ...}, ...]
+                    const activeSubscriptionShopIDs = Array.isArray(service.subscriptions)
+                        ? service.subscriptions
+                            .filter((sub) => sub.status === "active")
+                            .map((sub) => (typeof sub.shopId === "object" ? sub.shopId.id : sub.shopId))
                         : []
 
-                    // Filter out shops that already have this service
+                    // 2) Filter out user shops that are already subscribed => unsubscribed remain
                     const unsubscribedShops = userShops.filter(
-                        (sh) => !subscribedShopIDs.includes(sh.id),
+                        (sh) => !activeSubscriptionShopIDs.includes(sh.id),
                     )
+                    const canSubscribe = unsubscribedShops.length > 0
 
-                    // If at least one shop is in subscribedShopIDs => some shop has it
-                    const isOwned = subscribedShopIDs.some(
-                        (sid) => userShops.map((u) => u.id).includes(sid),
-                    )
-
-                    // The displayed price depending on monthly vs yearly
+                    // 3) The displayed price (monthly vs yearly)
                     const displayedPrice = isYearly
                         ? service.yearly_price
                         : service.monthly_price
 
-                    // Keep track of the user’s selection for this particular service
-                    const selectedShop = selectedShops[service.id!] || ''
+                    // 4) Keep track of user’s selected shop for this service
+                    const selectedShop = selectedShops[service.id!] || ""
                     const handleShopChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
                         setSelectedShops((prev) => ({
                             ...prev,
                             [service.id!]: e.target.value,
                         }))
                     }
-
-                    const canSubscribe = unsubscribedShops.length > 0
                     const hasSelectedShop = Boolean(selectedShop)
 
                     return (
@@ -113,7 +109,7 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                                 {thumbnail?.url && (
                                     <Image
                                         src={thumbnail.url}
-                                        alt={service.title_nl || 'Service thumbnail'}
+                                        alt={service.title_nl || "Service thumbnail"}
                                         width={600}
                                         height={600}
                                         className="mb-4 w-full h-48 object-cover rounded-md mix-blend-multiply"
@@ -123,22 +119,19 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                                     {service.title_nl}
                                 </CardTitle>
                                 <CardDescription className="text-[#1f2a37] mt-1">
-                                    {service.description_nl || 'A powerful service for your business.'}
+                                    {service.description_nl || "A powerful service for your business."}
                                 </CardDescription>
                                 <div className="mt-4 text-4xl font-bold text-[#1f2a37]">
                                     €{displayedPrice}
                                     <span className="ml-1 text-lg font-semibold">
-                                        /{isYearly ? 'year' : 'month'}
+                                        /{isYearly ? "year" : "month"}
                                     </span>
                                 </div>
                             </CardHeader>
 
                             <CardFooter className="p-6 pt-0">
                                 <div className="flex flex-row flex-wrap items-end gap-4">
-                                    {/* Remove the old "Modify" button in favor of the single "Manage Billing" button */}
-                                    {/* If user wants to see which shops are subscribed, they can do so in the billing portal. */}
-
-                                    {/* 2) Subscription UI (shop selector + subscribe button) */}
+                                    {/* If user’s shops are all subscribed => show a message */}
                                     {canSubscribe ? (
                                         <>
                                             {/* Shop dropdown */}
@@ -156,11 +149,17 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                                                     value={selectedShop}
                                                 >
                                                     <option value="">-- Select a Shop --</option>
-                                                    {unsubscribedShops.map((shop) => (
-                                                        <option key={shop.id} value={shop.id}>
-                                                            {shop.name}
-                                                        </option>
-                                                    ))}
+                                                    {/**
+                           *  Show *all* user shops, but disable any that are already subscribed
+                           */}
+                                                    {userShops.map((shop) => {
+                                                        const isActive = activeSubscriptionShopIDs.includes(shop.id)
+                                                        return (
+                                                            <option key={shop.id} value={shop.id} disabled={isActive}>
+                                                                {shop.name} {isActive ? "(Subscribed)" : ""}
+                                                            </option>
+                                                        )
+                                                    })}
                                                 </select>
                                             </div>
 
@@ -179,12 +178,12 @@ export default function ServicesClient({ services, currentUser }: ServicesClient
                                                 disabled={!hasSelectedShop}
                                                 className="border-4 hover:bg-[#0000002d] border-[#39454f]"
                                             >
-                                                Subscribe {isYearly ? 'Yearly' : 'Monthly'}
+                                                Subscribe {isYearly ? "Yearly" : "Monthly"}
                                             </SubscribeButton>
                                         </>
                                     ) : (
                                         <p className="text-center font-semibold text-gray-600">
-                                            All your shops already have this service
+                                            All your shops already have an active subscription for this service
                                         </p>
                                     )}
                                 </div>

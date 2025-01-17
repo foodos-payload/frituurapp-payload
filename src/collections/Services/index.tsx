@@ -271,11 +271,12 @@ export const Services: CollectionConfig = {
                 {
                     name: 'stripeSubscriptionId',
                     type: 'text',
-                    required: true,
+                    required: false,
                 },
                 {
                     name: 'status',
-                    type: 'text', // or a select field with options: "active", "canceled", "past_due", etc.
+                    type: 'select',
+                    options: ['active', 'canceled'],
                 },
                 {
                     name: 'cancel_at_period_end',
