@@ -27,6 +27,8 @@ export const Timeslots: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'method_id', // Show the method in the list title
+        defaultColumns: ['method_id', 'week'],
+
     },
     labels: {
         plural: {

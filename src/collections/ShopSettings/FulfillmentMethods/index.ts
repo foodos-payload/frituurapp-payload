@@ -23,6 +23,8 @@ export const FulfillmentMethods: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'method_type',
+        defaultColumns: ['method_type', 'enabled'],
+
     },
 
     labels: {

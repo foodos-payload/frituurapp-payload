@@ -28,6 +28,8 @@ export const Printers: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'printer_name',
+        defaultColumns: ['printer_name', 'printer_type', 'print_enabled'],
+
     },
 
     labels: {

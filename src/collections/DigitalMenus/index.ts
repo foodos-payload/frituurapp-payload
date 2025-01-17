@@ -25,6 +25,8 @@ export const DigitalMenus: CollectionConfig = {
         baseListFilter,
         useAsTitle: 'name',
         group: 'Digital Menus',
+        defaultColumns: ['name'],
+
     },
 
     labels: {

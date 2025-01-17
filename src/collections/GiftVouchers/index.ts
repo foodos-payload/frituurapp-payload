@@ -23,6 +23,8 @@ export const GiftVouchers: CollectionConfig = {
   admin: {
     baseListFilter,
     useAsTitle: 'barcode',
+    defaultColumns: ['barcode', 'value', 'shopsField'],
+
   },
 
   labels: {
@@ -41,11 +43,6 @@ export const GiftVouchers: CollectionConfig = {
   },
 
   fields: [
-    // 1) Tenant
-    {
-      ...tenantField,
-
-    },
 
     // 2) Shops
     {
@@ -218,6 +215,12 @@ export const GiftVouchers: CollectionConfig = {
         read: hasFieldPermission('gift-vouchers', 'payment_type', 'read'),
         update: hasFieldPermission('gift-vouchers', 'payment_type', 'update'),
       },
+    },
+
+    // 1) Tenant
+    {
+      ...tenantField,
+
     },
   ],
 };

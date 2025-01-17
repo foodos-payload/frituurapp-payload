@@ -23,6 +23,8 @@ export const ShopBranding: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'siteTitle',
+        defaultColumns: ['siteTitle', 'siteLogo'],
+
     },
 
     labels: {
@@ -110,6 +112,7 @@ export const ShopBranding: CollectionConfig = {
             type: 'upload',
             relationTo: 'media',
             required: false,
+
             label: {
                 en: 'Site Logo',
                 nl: 'Site Logo',
@@ -123,11 +126,14 @@ export const ShopBranding: CollectionConfig = {
                     de: 'Logo in der Kopfzeile oder Ecke (optional).',
                     fr: 'Logo affiché dans l’en-tête ou dans un coin (facultatif).',
                 },
+
             },
             access: {
                 read: hasFieldPermission('shop-branding', 'siteLogo', 'read'),
                 update: hasFieldPermission('shop-branding', 'siteLogo', 'update'),
             },
+            displayPreview: true,
+
         },
 
         // 6) adImage

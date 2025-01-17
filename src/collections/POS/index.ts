@@ -20,6 +20,9 @@ export const POS: CollectionConfig = {
         singular: 'POS Integration',
         plural: 'POS Integrations',
     },
+    admin: {
+        defaultColumns: ['provider', 'active'],
+    },
 
     fields: [
         // 1) provider (select)

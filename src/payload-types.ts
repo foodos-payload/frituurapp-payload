@@ -882,12 +882,7 @@ export interface PaymentMethod {
  */
 export interface Customer {
   id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
-  /**
-   * The CloudPOS ID for this customer if synced.
-   */
-  cloudPOSId?: number | null;
+  barcode?: string | null;
   /**
    * First name of the customer.
    */
@@ -930,7 +925,12 @@ export interface Customer {
         id?: string | null;
       }[]
     | null;
-  barcode?: string | null;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
+  /**
+   * The CloudPOS ID for this customer if synced.
+   */
+  cloudPOSId?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -967,8 +967,6 @@ export interface MembershipRole {
  */
 export interface CustomerLoyalty {
   id: string;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
   /**
    * Name of the loyalty program, e.g., "VIP Rewards".
    */
@@ -978,7 +976,7 @@ export interface CustomerLoyalty {
    */
   points_per_purchase: number;
   /**
-   * Conversion ratio for points to currency, e.g., 100 points = $1.
+   * Conversion ratio for points to currency, e.g., 1€ = 100 punten.
    */
   redeem_ratio: number;
   /**
@@ -993,6 +991,8 @@ export interface CustomerLoyalty {
    * Which membership roles are allowed for this loyalty program?
    */
   rolesAllowed?: (string | MembershipRole)[] | null;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
   updatedAt: string;
   createdAt: string;
 }
@@ -1229,7 +1229,6 @@ export interface Coupon {
  */
 export interface GiftVoucher {
   id: string;
-  tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
    * Unique barcode for the gift voucher.
@@ -1255,6 +1254,7 @@ export interface GiftVoucher {
    * The payment method used to purchase this voucher.
    */
   payment_type: string | PaymentMethod;
+  tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
 }
@@ -2349,9 +2349,7 @@ export interface TablesSelect<T extends boolean = true> {
  * via the `definition` "customers_select".
  */
 export interface CustomersSelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
-  cloudPOSId?: T;
+  barcode?: T;
   firstname?: T;
   lastname?: T;
   company_name?: T;
@@ -2373,7 +2371,9 @@ export interface CustomersSelect<T extends boolean = true> {
         dateJoined?: T;
         id?: T;
       };
-  barcode?: T;
+  tenant?: T;
+  shops?: T;
+  cloudPOSId?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2399,14 +2399,14 @@ export interface CustomerCreditsSelect<T extends boolean = true> {
  * via the `definition` "customer-loyalty_select".
  */
 export interface CustomerLoyaltySelect<T extends boolean = true> {
-  tenant?: T;
-  shops?: T;
   program_name?: T;
   points_per_purchase?: T;
   redeem_ratio?: T;
   status?: T;
   description?: T;
   rolesAllowed?: T;
+  tenant?: T;
+  shops?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2433,7 +2433,6 @@ export interface CouponsSelect<T extends boolean = true> {
  * via the `definition` "gift-vouchers_select".
  */
 export interface GiftVouchersSelect<T extends boolean = true> {
-  tenant?: T;
   shops?: T;
   barcode?: T;
   value?: T;
@@ -2441,6 +2440,7 @@ export interface GiftVouchersSelect<T extends boolean = true> {
   valid_until?: T;
   used?: T;
   payment_type?: T;
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }

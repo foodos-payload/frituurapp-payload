@@ -26,6 +26,8 @@ export const Coupons: CollectionConfig = {
   admin: {
     baseListFilter,
     useAsTitle: 'barcode',
+    defaultColumns: ['barcode', 'value', 'value_type', 'shop'],
+
   },
 
   labels: {

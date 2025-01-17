@@ -24,6 +24,7 @@ export const PaymentMethods: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'provider',
+        defaultColumns: ['provider', 'enabled'],
     },
 
     labels: {

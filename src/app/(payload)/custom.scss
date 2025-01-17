@@ -494,7 +494,7 @@ thead {
   }
 }
 
-td.cell-image, td.cell-filename {
+td.cell-image, td.cell-filename, td.cell-siteLogo {
   padding-top: 5px;
   padding-bottom: 5px;
   width: 100px !important;
@@ -506,7 +506,10 @@ td.cell-image .thumbnail--size-small,
 td.cell-image .file__thumbnail,
 td.cell-filename img,
 td.cell-filename .thumbnail--size-small,
-td.cell-filename .file__thumbnail {
+td.cell-filename .file__thumbnail,
+td.cell-siteLogo img,
+td.cell-siteLogo .thumbnail--size-small,
+td.cell-siteLogo .file__thumbnail{
   width: 100px !important;
   height: 86px !important;
   object-fit: contain;

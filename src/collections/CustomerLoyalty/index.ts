@@ -40,17 +40,6 @@ export const CustomerLoyalty: CollectionConfig = {
   },
 
   fields: [
-    // 1) Tenant
-    {
-      ...tenantField,
-
-    },
-
-    // 2) Shops
-    {
-      ...shopsField,
-
-    },
 
     // 3) program_name
     {
@@ -121,10 +110,10 @@ export const CustomerLoyalty: CollectionConfig = {
       },
       admin: {
         description: {
-          en: 'Conversion ratio for points to currency, e.g., 100 points = $1.',
-          nl: 'Conversieverhouding voor punten naar valuta, bijv. 100 punten = €1.',
-          de: 'Umrechnungsverhältnis von Punkten zu Währung, z. B. 100 Punkte = 1€.',
-          fr: 'Taux de conversion des points en monnaie, par exemple 100 points = 1€.',
+          en: 'Conversion ratio for points to currency, e.g., 1€ = 100 punten.',
+          nl: 'Conversieverhouding voor punten naar valuta, bijv. €1 = 100 punten.',
+          de: 'Umrechnungsverhältnis von Punkten zu Währung, z. B. 1€ = 100 Punkte.',
+          fr: 'Taux de conversion des points en monnaie, par exemple 1€ = 100 points.',
         },
       },
       access: {
@@ -209,6 +198,18 @@ export const CustomerLoyalty: CollectionConfig = {
         read: hasFieldPermission('customer-loyalty', 'rolesAllowed', 'read'),
         update: hasFieldPermission('customer-loyalty', 'rolesAllowed', 'update'),
       },
+    },
+
+    // 1) Tenant
+    {
+      ...tenantField,
+
+    },
+
+    // 2) Shops
+    {
+      ...shopsField,
+
     },
   ],
 };

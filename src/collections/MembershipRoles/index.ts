@@ -23,6 +23,8 @@ export const MembershipRoles: CollectionConfig = {
         baseListFilter,
         group: 'Shop Settings',
         useAsTitle: 'label',
+        defaultColumns: ['label', 'value', 'loyaltyPrograms', 'shop'],
+
     },
 
     labels: {

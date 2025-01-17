@@ -25,18 +25,20 @@ export const CustomerCredits: CollectionConfig = {
   admin: {
     baseListFilter,
     useAsTitle: 'customerid', // Display customer ID in admin view
+    defaultColumns: ['customerid', 'value'],
+
   },
 
   labels: {
     plural: {
       en: 'Customer Credits',
-      nl: 'Klantenpunten',
+      nl: 'Klantenkrediet',
       de: 'Kundenkredite',
       fr: 'Crédits Client',
     },
     singular: {
       en: 'Customer Credit',
-      nl: 'Klantenpunten',
+      nl: 'Klantenkrediet',
       de: 'Kundenkredit',
       fr: 'Crédit Client',
     },
