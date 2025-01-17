@@ -549,7 +549,6 @@ export interface Product {
  */
 export interface Media {
   id: string;
-  tenant: string | Tenant;
   /**
    * Optional tags to organize media files.
    */
@@ -560,6 +559,10 @@ export interface Media {
       }[]
     | null;
   /**
+   * Alternative text for the media file to improve accessibility.
+   */
+  alt_text?: string | null;
+  /**
    * Blurhash representation of the image for quick previews.
    */
   blurhash?: string | null;
@@ -567,10 +570,7 @@ export interface Media {
    * URL of the original image in S3.
    */
   s3_url?: string | null;
-  /**
-   * Alternative text for the media file to improve accessibility.
-   */
-  alt_text?: string | null;
+  tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -2204,16 +2204,16 @@ export interface ProductpopupsSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  tenant?: T;
   tags?:
     | T
     | {
         tag?: T;
         id?: T;
       };
+  alt_text?: T;
   blurhash?: T;
   s3_url?: T;
-  alt_text?: T;
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

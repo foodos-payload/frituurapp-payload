@@ -494,7 +494,7 @@ thead {
   }
 }
 
-td.cell-image {
+td.cell-image, td.cell-filename {
   padding-top: 5px;
   padding-bottom: 5px;
   width: 100px !important;
@@ -503,7 +503,10 @@ td.cell-image {
 
 td.cell-image img,
 td.cell-image .thumbnail--size-small,
-td.cell-image .file__thumbnail {
+td.cell-image .file__thumbnail,
+td.cell-filename img,
+td.cell-filename .thumbnail--size-small,
+td.cell-filename .file__thumbnail {
   width: 100px !important;
   height: 86px !important;
   object-fit: contain;

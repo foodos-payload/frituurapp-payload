@@ -15,9 +15,7 @@ import {
 export const Media: CollectionConfig = {
   slug: 'media',
 
-  // -------------------------
-  // Collection-level Access
-  // -------------------------
+  // Collection-level access
   access: {
     create: hasPermission('media', 'create'),
     delete: hasPermission('media', 'delete'),
@@ -28,6 +26,8 @@ export const Media: CollectionConfig = {
   admin: {
     baseListFilter,
     useAsTitle: 'filename',
+    // any defaultColumns if desired:
+    // defaultColumns: ['filename', 'blurhash', 'tags'], etc.
   },
 
   labels: {
@@ -109,135 +109,154 @@ export const Media: CollectionConfig = {
   },
 
   fields: [
-    // 1) tenantField
+    // COLLAPSIBLE: Media Info
     {
-      ...tenantField,
-
-    },
-
-    // 2) tags (array)
-    {
-      name: 'tags',
-      type: 'array',
-      label: {
-        en: 'Tags',
-        nl: 'Tags',
-        de: 'Tags',
-        fr: 'Étiquettes',
-      },
+      type: 'collapsible',
+      label: 'Media Info',
       admin: {
-        description: {
-          en: 'Optional tags to organize media files.',
-          nl: 'Optionele tags om mediabestanden te organiseren.',
-          de: 'Optionale Tags zur Organisation von Mediendateien.',
-          fr: 'Tags optionnels pour organiser les fichiers multimédia.',
-        },
+        initCollapsed: false, // or true, your choice
       },
       fields: [
+        // Tags Array
         {
-          name: 'tag',
-          type: 'text',
+          name: 'tags',
+          type: 'array',
           label: {
-            en: 'Tag',
-            nl: 'Tag',
-            de: 'Tag',
-            fr: 'Étiquette',
+            en: 'Tags',
+            nl: 'Tags',
+            de: 'Tags',
+            fr: 'Étiquettes',
+          },
+          admin: {
+            description: {
+              en: 'Optional tags to organize media files.',
+              nl: 'Optionele tags om mediabestanden te organiseren.',
+              de: 'Optionale Tags zur Organisation von Mediendateien.',
+              fr: 'Tags optionnels pour organiser les fichiers multimédia.',
+            },
+          },
+          fields: [
+            {
+              name: 'tag',
+              type: 'text',
+              label: {
+                en: 'Tag',
+                nl: 'Tag',
+                de: 'Tag',
+                fr: 'Étiquette',
+              },
+              admin: {
+                placeholder: {
+                  en: 'Enter a tag',
+                  nl: 'Voer een tag in',
+                  de: 'Geben Sie ein Tag ein',
+                  fr: 'Entrez une étiquette',
+                },
+              },
+            },
+          ],
+          access: {
+            read: hasFieldPermission('media', 'tags', 'read'),
+            update: hasFieldPermission('media', 'tags', 'update'),
+          },
+        },
+
+        // Alt Text
+        {
+          name: 'alt_text',
+          type: 'text',
+          required: false,
+          label: {
+            en: 'Alt Text',
+            nl: 'Alt Tekst',
+            de: 'Alt-Text',
+            fr: 'Texte Alt',
           },
           admin: {
             placeholder: {
-              en: 'Enter a tag',
-              nl: 'Voer een tag in',
-              de: 'Geben Sie ein Tag ein',
-              fr: 'Entrez une étiquette',
+              en: 'Provide a description for accessibility (optional)',
+              nl: 'Geef een beschrijving voor toegankelijkheid (optioneel)',
+              de: 'Geben Sie eine Beschreibung für die Barrierefreiheit ein (optional)',
+              fr: 'Fournir une description pour l\'accessibilité (optionnel)',
             },
+            description: {
+              en: 'Alternative text for the media file to improve accessibility.',
+              nl: 'Alternatieve tekst voor het mediabestand om de toegankelijkheid te verbeteren.',
+              de: 'Alternativtext für die Mediendatei, um die Zugänglichkeit zu verbessern.',
+              fr: 'Texte alternatif pour le fichier multimédia pour améliorer l\'accessibilité.',
+            },
+          },
+          access: {
+            read: hasFieldPermission('media', 'alt_text', 'read'),
+            update: hasFieldPermission('media', 'alt_text', 'update'),
           },
         },
       ],
-      access: {
-        read: hasFieldPermission('media', 'tags', 'read'),
-        update: hasFieldPermission('media', 'tags', 'update'),
-      },
     },
 
-    // 3) blurhash
+    // COLLAPSIBLE: File Metadata
     {
-      name: 'blurhash',
-      type: 'text',
-      label: {
-        en: 'Blurhash',
-        nl: 'Blurhash',
-        de: 'Blurhash',
-        fr: 'Blurhash',
-      },
+      type: 'collapsible',
+      label: 'File Metadata',
       admin: {
-        readOnly: true,
-        description: {
-          en: 'Blurhash representation of the image for quick previews.',
-          nl: 'Blurhash-weergave van de afbeelding voor snelle previews.',
-          de: 'Blurhash-Darstellung des Bildes für schnelle Vorschauen.',
-          fr: 'Représentation Blurhash de l\'image pour des aperçus rapides.',
+        initCollapsed: true,
+      },
+      fields: [
+        // Blurhash (read-only)
+        {
+          name: 'blurhash',
+          type: 'text',
+          label: {
+            en: 'Blurhash',
+            nl: 'Blurhash',
+            de: 'Blurhash',
+            fr: 'Blurhash',
+          },
+          admin: {
+            readOnly: true,
+            description: {
+              en: 'Blurhash representation of the image for quick previews.',
+              nl: 'Blurhash-weergave van de afbeelding voor snelle previews.',
+              de: 'Blurhash-Darstellung des Bildes für schnelle Vorschauen.',
+              fr: 'Représentation Blurhash de l\'image pour des aperçus rapides.',
+            },
+          },
+          access: {
+            read: hasFieldPermission('media', 'blurhash', 'read'),
+            update: hasFieldPermission('media', 'blurhash', 'update'),
+          },
         },
-      },
-      access: {
-        read: hasFieldPermission('media', 'blurhash', 'read'),
-        update: hasFieldPermission('media', 'blurhash', 'update'),
-      },
-    },
 
-    // 4) s3_url
-    {
-      name: 's3_url',
-      type: 'text',
-      label: {
-        en: 'S3 URL',
-        nl: 'S3 URL',
-        de: 'S3 URL',
-        fr: 'URL S3',
-      },
-      admin: {
-        readOnly: true,
-        description: {
-          en: 'URL of the original image in S3.',
-          nl: 'URL van de originele afbeelding in S3.',
-          de: 'URL des Originalbildes in S3.',
-          fr: 'URL de l\'image originale dans S3.',
+        // S3 URL (read-only)
+        {
+          name: 's3_url',
+          type: 'text',
+          label: {
+            en: 'S3 URL',
+            nl: 'S3 URL',
+            de: 'S3 URL',
+            fr: 'URL S3',
+          },
+          admin: {
+            readOnly: true,
+            description: {
+              en: 'URL of the original image in S3.',
+              nl: 'URL van de originele afbeelding in S3.',
+              de: 'URL des Originalbildes in S3.',
+              fr: 'URL de l\'image originale dans S3.',
+            },
+          },
+          access: {
+            read: hasFieldPermission('media', 's3_url', 'read'),
+            update: hasFieldPermission('media', 's3_url', 'update'),
+          },
         },
-      },
-      access: {
-        read: hasFieldPermission('media', 's3_url', 'read'),
-        update: hasFieldPermission('media', 's3_url', 'update'),
-      },
+      ],
     },
-
-    // 5) alt_text
+    // Tenant in Sidebar (optional)
     {
-      name: 'alt_text',
-      type: 'text',
-      required: false,
-      label: {
-        en: 'Alt Text',
-        nl: 'Alt Tekst',
-        de: 'Alt-Text',
-        fr: 'Texte Alt',
-      },
-      admin: {
-        placeholder: {
-          en: 'Provide a description for accessibility (optional)',
-          nl: 'Geef een beschrijving voor toegankelijkheid (optioneel)',
-          de: 'Geben Sie eine Beschreibung für die Barrierefreiheit ein (optional)',
-          fr: 'Fournir une description pour l\'accessibilité (optionnel)',
-        },
-        description: {
-          en: 'Alternative text for the media file to improve accessibility.',
-          nl: 'Alternatieve tekst voor het mediabestand om de toegankelijkheid te verbeteren.',
-          de: 'Alternativtext für die Mediendatei, um die Zugänglichkeit zu verbessern.',
-          fr: 'Texte alternatif pour le fichier multimédia pour améliorer l\'accessibilité.',
-        },
-      },
-      access: {
-        read: hasFieldPermission('media', 'alt_text', 'read'),
-        update: hasFieldPermission('media', 'alt_text', 'update'),
-      },
+      ...tenantField,
+
     },
   ],
 };
