@@ -24,6 +24,8 @@ export const Tables: CollectionConfig = {
     admin: {
         baseListFilter,
         useAsTitle: 'table_num',
+        defaultColumns: ['table_num', 'capacity', 'status'],
+
     },
 
     labels: {

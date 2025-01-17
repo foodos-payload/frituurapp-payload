@@ -24,6 +24,8 @@ export const ReservationSettings: CollectionConfig = {
   admin: {
     baseListFilter,
     useAsTitle: 'reservation_name',
+    defaultColumns: ['reservation_name', 'active_days'],
+
   },
 
   labels: {
@@ -46,11 +48,6 @@ export const ReservationSettings: CollectionConfig = {
   },
 
   fields: [
-    // 1) tenantField
-    {
-      ...tenantField,
-
-    },
 
     // 2) shopsField
     {
@@ -100,6 +97,7 @@ export const ReservationSettings: CollectionConfig = {
           de: 'Definieren Sie aktive Tage für Reservierungen.',
           fr: 'Définissez les jours actifs pour les réservations.',
         },
+
       },
       fields: [
         {
@@ -462,6 +460,12 @@ export const ReservationSettings: CollectionConfig = {
         read: hasFieldPermission('reservation-settings', 'exceptions', 'read'),
         update: hasFieldPermission('reservation-settings', 'exceptions', 'update'),
       },
+    },
+
+    // 1) tenantField
+    {
+      ...tenantField,
+
     },
   ],
 };

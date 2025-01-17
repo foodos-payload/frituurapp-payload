@@ -692,8 +692,6 @@ export interface Subproduct {
  */
 export interface Shop {
   id: string;
-  tenant: string | Tenant;
-  domain: string;
   /**
    * The name of the shop.
    */
@@ -760,6 +758,8 @@ export interface Shop {
         id?: string | null;
       }[]
     | null;
+  domain: string;
+  tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
 }
@@ -1068,7 +1068,6 @@ export interface Table {
  */
 export interface ReservationSetting {
   id: string;
-  tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
    * Name for reservation settings (e.g., Lunch Reservations).
@@ -1138,6 +1137,7 @@ export interface ReservationSetting {
         id?: string | null;
       }[]
     | null;
+  tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
 }
@@ -2283,7 +2283,6 @@ export interface ReservationEntriesSelect<T extends boolean = true> {
  * via the `definition` "reservation-settings_select".
  */
 export interface ReservationSettingsSelect<T extends boolean = true> {
-  tenant?: T;
   shops?: T;
   reservation_name?: T;
   active_days?:
@@ -2328,6 +2327,7 @@ export interface ReservationSettingsSelect<T extends boolean = true> {
         reason?: T;
         id?: T;
       };
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2569,8 +2569,6 @@ export interface ServicesSelect<T extends boolean = true> {
  * via the `definition` "shops_select".
  */
 export interface ShopsSelect<T extends boolean = true> {
-  tenant?: T;
-  domain?: T;
   name?: T;
   slug?: T;
   address?: T;
@@ -2599,6 +2597,8 @@ export interface ShopsSelect<T extends boolean = true> {
         reason?: T;
         id?: T;
       };
+  domain?: T;
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }
