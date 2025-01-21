@@ -3,8 +3,6 @@
 import { RoleFormData } from './types'
 import { toast } from 'sonner'
 
-const API_URL = process.env.NEXT_PUBLIC_SERVER_URL
-
 interface ValidationErrorDetail {
     message: string
     path: string
@@ -59,13 +57,13 @@ async function handleApiRequest<T>(url: string, method: string, data?: RoleFormD
  * ------------
  */
 async function createRole(data: RoleFormData) {
-    const response = await handleApiRequest(`${API_URL}/api/roles`, 'POST', data)
+    const response = await handleApiRequest(`/api/roles`, 'POST', data)
     toast.success('Role created successfully')
     return response
 }
 
 async function updateRole(id: string, data: RoleFormData) {
-    const response = await handleApiRequest(`${API_URL}/api/roles/${id}`, 'PATCH', data)
+    const response = await handleApiRequest(`/api/roles/${id}`, 'PATCH', data)
     toast.success('Role updated successfully')
     return response
 }
