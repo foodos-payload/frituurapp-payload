@@ -13,6 +13,9 @@ export const swaggerConfig = {
         },
         {
             url: 'https://frituurwebshop.be',
+        },
+        {
+            url: 'https://orderapp.be',
         }
     ],
 }

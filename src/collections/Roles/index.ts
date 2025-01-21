@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload';
 
 const Roles: CollectionConfig = {
     slug: 'roles',
+
     access: {
         create: hasPermission('roles', 'create'),
         delete: hasPermission('roles', 'delete'),

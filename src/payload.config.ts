@@ -310,6 +310,7 @@ export default buildConfig({
     'http://localhost:3000',
     'https://frituurapp.ngrok.dev',
     'http://frituurapp.ngrok.dev',
+    'https://orderapp.be',
   ],
   csrf: [
     'https://frituurwebshop.be',
@@ -321,6 +322,7 @@ export default buildConfig({
     'http://*.localhost:3000',
     'https://frituurapp.ngrok.dev',
     'http://frituurapp.ngrok.dev',
+    'https://orderapp.be',
   ],
   db: mongooseAdapter({
     url: process.env.PAYLOAD_DATABASE_URI || '',
