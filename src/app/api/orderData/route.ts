@@ -1,4 +1,4 @@
-// File: /src/app/api/orders/route.ts
+// File: /src/app/api/orderData/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'

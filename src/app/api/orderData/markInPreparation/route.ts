@@ -1,11 +1,11 @@
-// File: src/app/api/orders/markInPreparation/route.ts
+// File: src/app/api/orderData/markInPreparation/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
 /**
  * @openapi
- * /api/orders/markInPreparation:
+ * /api/orderData/markInPreparation:
  *   post:
  *     summary: Mark an order as in_preparation
  *     operationId: markOrderInPreparation

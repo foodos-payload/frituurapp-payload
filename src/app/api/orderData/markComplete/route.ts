@@ -1,11 +1,11 @@
-// File: src/app/api/orders/markComplete/route.ts
+// File: src/app/api/orderData/markComplete/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { getPayload } from "payload"
 import config from "@payload-config"
 
 /**
  * @openapi
- * /api/orders/markComplete:
+ * /api/orderData/markComplete:
  *   post:
  *     summary: Mark an order as complete
  *     operationId: markOrderComplete

@@ -1,11 +1,11 @@
-// File: src/app/api/orders/markInDelivery/route.ts
+// File: src/app/api/orderData/markInDelivery/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
 /**
  * @openapi
- * /api/orders/markInDelivery:
+ * /api/orderData/markInDelivery:
  *   post:
  *     summary: Mark an order as in_delivery
  *     operationId: markOrderInDelivery

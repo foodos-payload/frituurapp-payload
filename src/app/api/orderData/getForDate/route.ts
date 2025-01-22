@@ -1,4 +1,4 @@
-// File: /src/app/api/orders/getForDate/route.ts
+// File: /src/app/api/orderData/getForDate/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 /**
  * @openapi
- * /api/orders/getForDate:
+ * /api/orderData/getForDate:
  *   get:
  *     summary: "Retrieve the list of orders for a given date + fulfillmentMethod"
  *     operationId: "getOrdersForDate"
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json(matchedOrders.docs)
     } catch (err: any) {
-        console.error('Error in /api/orders/getForDate =>', err)
+        console.error('Error in /api/orderData/getForDate =>', err)
         return NextResponse.json({ error: err?.message ?? 'Unknown error' }, { status: 500 })
     }
 }

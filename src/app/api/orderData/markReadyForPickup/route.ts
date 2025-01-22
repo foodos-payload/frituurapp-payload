@@ -1,11 +1,11 @@
-// File: src/app/api/orders/markReadyForPickup/route.ts
+// File: src/app/api/orderData/markReadyForPickup/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
 /**
  * @openapi
- * /api/orders/markReadyForPickup:
+ * /api/orderData/markReadyForPickup:
  *   post:
  *     summary: Mark an order as ready_for_pickup
  *     operationId: markOrderReadyForPickup

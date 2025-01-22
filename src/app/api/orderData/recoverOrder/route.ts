@@ -1,4 +1,4 @@
-// File: src/app/api/orders/recoverOrder/route.ts
+// File: src/app/api/orderData/recoverOrder/route.ts
 
 import { NextRequest, NextResponse } from "next/server"
 import { getPayload } from "payload"
@@ -6,7 +6,7 @@ import config from "@payload-config"
 
 /**
  * @openapi
- * /api/orders/recoverOrder:
+ * /api/orderData/recoverOrder:
  *   post:
  *     summary: Recover an order to in_preparation
  *     operationId: recoverOrder

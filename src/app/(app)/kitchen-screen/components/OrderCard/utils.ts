@@ -142,7 +142,7 @@ export async function callServerRoute(
         default:
             return
     }
-    const url = `/api/orders/${routeName}?host=${encodeURIComponent(hostSlug)}&orderId=${orderId}`
+    const url = `/api/orderData/${routeName}?host=${encodeURIComponent(hostSlug)}&orderId=${orderId}`
     const res = await fetch(url, { method: "POST" })
     if (!res.ok) {
         throw new Error(`Failed to ${routeName}, status ${res.status}`)
