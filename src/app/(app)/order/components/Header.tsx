@@ -195,9 +195,9 @@ export default function Header({
                             <Image
                                 src={encodedLogoUrl}
                                 alt="Site Logo"
-                                className={isKiosk ? "object-contain h-14" : "object-contain h-8"}
-                                width={isKiosk ? 56 : 32} // Adjust width and height as needed
-                                height={isKiosk ? 56 : 32}
+                                className={isKiosk ? "object-contain h-24" : "object-contain h-24"}
+                                width={isKiosk ? 66 : 66} // Adjust width and height as needed
+                                height={isKiosk ? 66 : 66}
                             />
                         ) : (
                             <div className="font-bold text-sm md:text-lg">[Your Logo]</div>

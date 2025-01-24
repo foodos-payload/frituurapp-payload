@@ -729,7 +729,7 @@ export function OrderSummaryPage({
                             <Image
                                 src={branding.logoUrl}
                                 alt="Site Logo"
-                                className="mr-2 max-h-16 w-auto object-contain"
+                                className="mr-2 max-h-24 w-auto object-contain"
                                 width={64}
                                 height={64}
                             />
