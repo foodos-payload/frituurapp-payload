@@ -92,27 +92,31 @@ export default function OrderSummary({
         [handleProceedClick, canProceed, loadingState]
     );
 
-    function handleIncrease(productId: string) {
-        const item = cartItems.find((ci) => ci.productId === productId);
+    /**
+     * Increase item quantity by 1 based on line signature
+     */
+    function handleIncrease(lineSig: string) {
+        const item = cartItems.find(ci => getLineItemSignature(ci) === lineSig);
         if (!item) return;
-        const sig = getLineItemSignature(item);
-        updateItemQuantity(sig, item.quantity + 1);
+        updateItemQuantity(lineSig, item.quantity + 1);
     }
 
-    function handleDecrease(productId: string) {
-        const item = cartItems.find((ci) => ci.productId === productId);
+    /**
+     * Decrease item quantity by 1 based on line signature
+     */
+    function handleDecrease(lineSig: string) {
+        const item = cartItems.find(ci => getLineItemSignature(ci) === lineSig);
         if (!item) return;
         if (item.quantity > 1) {
-            const sig = getLineItemSignature(item);
-            updateItemQuantity(sig, item.quantity - 1);
+            updateItemQuantity(lineSig, item.quantity - 1);
         }
     }
 
-    function handleRemoveItem(productId: string) {
-        const item = cartItems.find((ci) => ci.productId === productId);
-        if (!item) return;
-        const sig = getLineItemSignature(item);
-        removeItem(sig);
+    /**
+     * Remove the entire line based on line signature
+     */
+    function handleRemoveItem(lineSig: string) {
+        removeItem(lineSig);
     }
 
     /**
@@ -157,10 +161,10 @@ export default function OrderSummary({
                         </div>
                         <ul
                             className={`
-                                flex flex-col gap-4
-                                ${showItems ? "block" : "hidden"}
-                                sm:block
-                            `}
+                flex flex-col gap-4
+                ${showItems ? "block" : "hidden"}
+                sm:block
+              `}
                         >
                             {cartItems.map((item, idx) => {
                                 const displayName = item.productName || "Untitled Product";
@@ -176,14 +180,17 @@ export default function OrderSummary({
                                 const linePrice =
                                     (item.price + subLineTotal) * item.quantity;
 
+                                // Generate a unique signature so we can correctly identify this line
+                                const lineSig = getLineItemSignature(item);
+
                                 return (
-                                    <li key={`${item.productId}-${idx}`}>
+                                    <li key={lineSig}>
                                         <div
                                             className="
-                                                rounded-xl flex w-full overflow-hidden relative
-                                                items-center bg-white shadow-sm
-                                                p-3
-                                            "
+                        rounded-xl flex w-full overflow-hidden relative
+                        items-center bg-white shadow-sm
+                        p-3
+                      "
                                             style={{ minHeight: "80px" }}
                                         >
                                             {/* Thumbnail */}
@@ -206,26 +213,15 @@ export default function OrderSummary({
                                                 </h3>
 
                                                 {/* Subproducts */}
-                                                {item.subproducts &&
-                                                    item.subproducts.length > 0 && (
-                                                        <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
-                                                            {item.subproducts.map(
-                                                                (sp, sIdx) => {
-                                                                    return (
-                                                                        <li
-                                                                            key={`${sp.subproductId}-${sIdx}`}
-                                                                        >
-                                                                            {getSubLine(
-                                                                                sp.name_nl,
-                                                                                sp.price,
-                                                                                sp.quantity
-                                                                            )}
-                                                                        </li>
-                                                                    );
-                                                                }
-                                                            )}
-                                                        </ul>
-                                                    )}
+                                                {item.subproducts && item.subproducts.length > 0 && (
+                                                    <ul className="ml-3 text-sm text-gray-500 list-disc list-inside mt-1">
+                                                        {item.subproducts.map((sp, sIdx) => (
+                                                            <li key={`${sp.subproductId}-${sIdx}`}>
+                                                                {getSubLine(sp.name_nl, sp.price, sp.quantity)}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
 
                                                 {/* Price */}
                                                 <div className="text-sm mt-2 font-semibold text-gray-800">
@@ -241,20 +237,20 @@ export default function OrderSummary({
                                                         aria-label="Decrease Quantity"
                                                         type="button"
                                                         className="
-                                                            focus:outline-none border-r border
-                                                            rounded-l border-gray-300 hover:bg-gray-50
-                                                            w-8 h-8 flex items-center justify-center
-                                                        "
-                                                        onClick={() => handleDecrease(item.productId)}
+                              focus:outline-none border-r border
+                              rounded-l border-gray-300 hover:bg-gray-50
+                              w-8 h-8 flex items-center justify-center
+                            "
+                                                        onClick={() => handleDecrease(lineSig)}
                                                     >
                                                         -
                                                     </button>
                                                     <div
                                                         className="
-                                                            flex items-center justify-center
-                                                            border-y border-gray-300 text-center px-2
-                                                            w-8 text-sm
-                                                        "
+                              flex items-center justify-center
+                              border-y border-gray-300 text-center px-2
+                              w-8 text-sm
+                            "
                                                     >
                                                         {item.quantity}
                                                     </div>
@@ -263,18 +259,18 @@ export default function OrderSummary({
                                                         aria-label="Increase Quantity"
                                                         type="button"
                                                         className="
-                                                            focus:outline-none border-l border
-                                                            rounded-r hover:bg-gray-50 border-gray-300
-                                                            w-8 h-8 flex items-center justify-center
-                                                        "
-                                                        onClick={() => handleIncrease(item.productId)}
+                              focus:outline-none border-l border
+                              rounded-r hover:bg-gray-50 border-gray-300
+                              w-8 h-8 flex items-center justify-center
+                            "
+                                                        onClick={() => handleIncrease(lineSig)}
                                                     >
                                                         +
                                                     </button>
                                                 </div>
 
                                                 <button
-                                                    onClick={() => handleRemoveItem(item.productId)}
+                                                    onClick={() => handleRemoveItem(lineSig)}
                                                     title="Remove"
                                                     className="text-gray-400 hover:text-red-500 transition-colors"
                                                 >
@@ -361,13 +357,13 @@ export default function OrderSummary({
                         onClick={debouncedProceedClick}
                         disabled={!canProceed() || loadingState === "loading"}
                         className={`
-                            w-full mt-2 text-white font-medium py-2 rounded-xl focus:outline-none
-                            transition-colors
-                            ${!canProceed()
+              w-full mt-2 text-white font-medium py-2 rounded-xl focus:outline-none
+              transition-colors
+              ${!canProceed()
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:opacity-90"
                             }
-                        `}
+            `}
                         style={{
                             backgroundColor: canProceed() ? brandColor : "#9ca3af",
                         }}
