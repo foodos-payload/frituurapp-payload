@@ -42,7 +42,12 @@ export default function CustomLoginTailwind() {
                 const data = await res.json()
                 throw new Error(data?.message || "Login failed")
             }
-            router.push("/admin")
+
+            if (res.ok) {
+                // Easiest is a real reload so Next picks up the new session cookie from scratch
+                window.location.href = '/admin'
+                return
+            }
         } catch (err: any) {
             setError(err.message || "Something went wrong")
         }

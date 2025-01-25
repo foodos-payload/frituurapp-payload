@@ -52,7 +52,7 @@ export default buildConfig({
     },
 
     components: {
-      afterNavLinks: ['@/components/TenantSelector#TenantSelectorRSC'],
+      beforeNavLinks: ['@/components/TenantSelector#TenantSelectorRSC'],
       views: {
         login: {
           path: '/auth/login',

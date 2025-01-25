@@ -1,3 +1,4 @@
+// src/fields/TenantField/index.ts
 import type { Field } from 'payload'
 
 import { isSuperAdmin } from '../../access/isSuperAdmin'
