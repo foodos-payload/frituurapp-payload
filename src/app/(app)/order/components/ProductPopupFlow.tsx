@@ -425,7 +425,7 @@ export default function ProductPopupFlow({
                             name_en: sp.linkedProduct?.name_en ?? sp.name_en ?? sp.name_nl,
                             name_de: sp.linkedProduct?.name_de ?? sp.name_de ?? sp.name_nl,
                             name_fr: sp.linkedProduct?.name_fr ?? sp.name_fr ?? sp.name_nl,
-                            price: sp.linkedProduct?.price ?? sp.price,
+                            price: sp.linkedProduct?.price ?? sp.price ?? 0,
                             tax:
                                 typeof sp.linkedProduct?.tax === "number"
                                     ? sp.linkedProduct!.tax
@@ -710,8 +710,8 @@ export default function ProductPopupFlow({
                                 ? pickSubproductName(sub.linkedProduct!, lang)
                                 : pickSubproductName(sub, lang);
                             const displayPrice = useLinked
-                                ? sub.linkedProduct!.price ?? 0
-                                : sub.price;
+                                ? (sub.linkedProduct?.price ?? 0)
+                                : (sub.price ?? 0)
                             const displayImage = useLinked
                                 ? sub.linkedProduct?.image
                                 : sub.image;
