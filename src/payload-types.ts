@@ -1601,6 +1601,10 @@ export interface ShopBranding {
    */
   siteLogo?: (string | null) | Media;
   /**
+   * Upload an .ico or small .png to show in the browser tab.
+   */
+  siteFavicon?: (string | null) | Media;
+  /**
    * Advertisement image for the order status page.
    */
   adImage?: (string | null) | Media;
@@ -1616,6 +1620,10 @@ export interface ShopBranding {
    * Used for “Add to Cart” / “Checkout” buttons, etc.
    */
   primaryColorCTA?: string | null;
+  /**
+   * Background color for the site’s main body area.
+   */
+  bodyColor?: string | null;
   /**
    * Optional direct link for customers to leave a Google review.
    */
@@ -2811,10 +2819,12 @@ export interface ShopBrandingSelect<T extends boolean = true> {
   siteTitle?: T;
   siteHeaderImg?: T;
   siteLogo?: T;
+  siteFavicon?: T;
   adImage?: T;
   headerBackgroundColor?: T;
   categoryCardBgColor?: T;
   primaryColorCTA?: T;
+  bodyColor?: T;
   googleReviewUrl?: T;
   tripAdvisorUrl?: T;
   kiosk_idle_screen_enabled?: T;

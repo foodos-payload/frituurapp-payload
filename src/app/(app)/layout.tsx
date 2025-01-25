@@ -16,12 +16,14 @@ const baseClass = 'multi-tenant';
 // Adjust this shape based on your real branding fields
 type ShopBranding = {
   logoUrl?: string;
+  faviconUrl?: string;
   adImage?: string;
   headerBackgroundColor?: string;
   categoryCardBgColor?: string;
   primaryColorCTA?: string;
   siteTitle?: string;
   siteHeaderImg?: string;
+  bodyColor?: string;
   kiosk_idle_screen_enabled?: boolean;
   kioskIdleImage?: {
     id: string;
@@ -53,6 +55,8 @@ async function getShopBranding(hostSlug: string): Promise<ShopBranding> {
   // Map “rawBranding” to the fields you need
   return {
     logoUrl: rawBranding.siteLogo?.s3_url ?? '',
+    faviconUrl: rawBranding.siteFavicon?.s3_url ?? '',
+    bodyColor: rawBranding.bodyColor ?? '#FFFFFF',
     adImage: rawBranding.adImage?.s3_url ?? '',
     headerBackgroundColor: rawBranding.headerBackgroundColor ?? '',
     categoryCardBgColor: rawBranding.categoryCardBgColor ?? '',
@@ -88,23 +92,23 @@ async function getShopBranding(hostSlug: string): Promise<ShopBranding> {
  * This runs on the server and can fetch data, then produce <title>, <link rel="icon">, etc.
  */
 export async function generateMetadata() {
-  // 1) Determine shop slug from the request host
+  // 1) get the host
   const requestHeaders = await headers();
   const fullHost = requestHeaders.get("host") || "";
   const hostSlug = fullHost.split(".")[0] || "defaultShop";
 
-  // 2) Fetch the brand doc
+  // 2) fetch branding
   const branding = await getShopBranding(hostSlug);
 
-  // 3) Fallback icon if none provided
+  // 3) fallback if none
   const fallbackFavicon = "/favicon.ico";
 
   return {
     title: branding.siteTitle || "MyShop",
+    // either add more icon types or just a single `icon`
     icons: {
-      icon: branding.logoUrl || fallbackFavicon,
+      icon: branding.faviconUrl || fallbackFavicon,
     },
-    // Add a description or openGraph, etc. if you want
     description: `Welcome to ${branding.siteTitle || "our shop"}!`,
   };
 }
@@ -138,7 +142,7 @@ export default async function RootLayout({
           strategy="beforeInteractive"
         />
       </head>
-      <body className="scollbar-webkit">
+      <body className="scollbar-webkit" style={{ backgroundColor: branding.bodyColor || '#FFFFFF' }}>
         <TranslationProvider>
           <CartProvider>
             <ShopBrandingProvider branding={branding}>

@@ -10,6 +10,7 @@ import React, { createContext, useContext } from "react";
 export type ShopBranding = {
     // Existing fields from your snippet
     logoUrl?: string;
+    faviconUrl?: string;
     adImage?: string;
     headerBackgroundColor?: string;
     categoryCardBgColor?: string;
@@ -56,6 +57,7 @@ export type ShopBranding = {
         };
         altText?: string;
     }[];
+    bodyColor?: string;
 };
 
 type ShopBrandingProviderProps = {

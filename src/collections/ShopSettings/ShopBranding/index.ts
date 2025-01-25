@@ -136,6 +136,32 @@ export const ShopBranding: CollectionConfig = {
 
         },
 
+        // 5b) siteFavicon
+        {
+            name: 'siteFavicon',
+            type: 'upload',
+            relationTo: 'media',
+            required: false,
+            label: {
+                en: 'Site Favicon',
+                nl: 'Site Favicon',
+                de: 'Site Favicon',
+                fr: 'Favicon du Site',
+            },
+            admin: {
+                description: {
+                    en: 'Upload an .ico or small .png to show in the browser tab.',
+                    nl: 'Upload een .ico of kleine .png als favicon in de browsertab.',
+                    de: 'Lade eine .ico oder kleine .png als Favicon.',
+                    fr: 'Téléchargez un .ico ou un petit .png pour l’onglet du navigateur.',
+                },
+            },
+            access: {
+                read: hasFieldPermission('shop-branding', 'siteFavicon', 'read'),
+                update: hasFieldPermission('shop-branding', 'siteFavicon', 'update'),
+            },
+        },
+
         // 6) adImage
         {
             name: 'adImage',
@@ -238,6 +264,30 @@ export const ShopBranding: CollectionConfig = {
                 update: hasFieldPermission('shop-branding', 'primaryColorCTA', 'update'),
             },
 
+        }),
+
+        // 9b) bodyColor
+        colorPickerField({
+            name: 'bodyColor',
+            label: {
+                en: 'Body Background Color',
+                nl: 'Achtergrondkleur Body',
+                de: 'Hintergrundfarbe Body',
+                fr: 'Couleur d’arrière-plan du corps',
+            },
+            defaultValue: '#FFFFFF', // fallback to white
+            admin: {
+                description: {
+                    en: 'Background color for the site’s main body area.',
+                    nl: 'Achtergrondkleur voor de hoofdinhoud van de site.',
+                    de: 'Hintergrundfarbe für den Hauptinhalt der Seite.',
+                    fr: 'Couleur d’arrière-plan pour la zone principale du site.',
+                },
+            },
+            access: {
+                read: hasFieldPermission('shop-branding', 'bodyColor', 'read'),
+                update: hasFieldPermission('shop-branding', 'bodyColor', 'update'),
+            },
         }),
 
         // 10) googleReviewUrl
