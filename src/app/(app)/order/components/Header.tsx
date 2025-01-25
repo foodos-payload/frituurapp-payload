@@ -76,7 +76,7 @@ export default function Header({
     // Possibly use a custom background color for the header row
     const bgColor = branding?.headerBackgroundColor?.trim() || "#ffffff";
     const isCustomBG =
-        bgColor.toLowerCase() !== "#ffffff" && bgColor.toLowerCase() !== "#fff";
+        bgColor.toLowerCase() !== "#ffffff" && bgColor.toLowerCase() !== "#fff" && bgColor.toLowerCase() !== "#";
     const brandCTA = branding?.primaryColorCTA || "#068b59";
 
     const categoryCardColor = branding?.categoryCardColor || "#CE2027";
@@ -196,7 +196,7 @@ export default function Header({
                                 <Image
                                     src={encodedLogoUrl}
                                     alt="Site Logo"
-                                    className={isKiosk ? "object-contain h-24" : "object-contain h-24"}
+                                    className={`${isKiosk ? "object-contain h-24" : "object-contain h-24"} mix-blend-multiply`}
                                     width="210"
                                     height="90"
                                 />

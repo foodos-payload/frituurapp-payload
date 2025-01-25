@@ -82,6 +82,7 @@ export default function LandingHeader({
                                     alt={finalSiteTitle}
                                     fill
                                     className="object-contain"
+                                    style={{ mixBlendMode: "multiply" }}
                                 />
                             </div>
                         </Link>
