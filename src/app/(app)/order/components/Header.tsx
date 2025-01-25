@@ -161,7 +161,7 @@ export default function Header({
                             borderRadius: "0.5em",
                         }}
                     >
-                        {displayedSiteTitle}
+                        <span className="text-base font-semibold hidden md:inline">  {displayedSiteTitle}</span>
                     </h1>
                 </div>
             )}
@@ -192,20 +192,22 @@ export default function Header({
                     {/* LEFT: brand / logo */}
                     <div className="flex items-center space-x-5">
                         {encodedLogoUrl ? (
-                            <Image
-                                src={encodedLogoUrl}
-                                alt="Site Logo"
-                                className={isKiosk ? "object-contain h-24" : "object-contain h-24"}
-                                width={isKiosk ? 66 : 66} // Adjust width and height as needed
-                                height={isKiosk ? 66 : 66}
-                            />
+                            <div className="relative">
+                                <Image
+                                    src={encodedLogoUrl}
+                                    alt="Site Logo"
+                                    className={isKiosk ? "object-contain h-24" : "object-contain h-24"}
+                                    width="210"
+                                    height="90"
+                                />
+                            </div>
                         ) : (
                             <div className="font-bold text-sm md:text-lg">[Your Logo]</div>
                         )}
 
                         {/* Show site title on non-kiosk or if no kioskBannerImg */}
                         {(!isKiosk || !kioskBannerImg) && (
-                            <span className="text-base font-semibold">{displayedSiteTitle}</span>
+                            <span className="text-base font-semibold hidden md:inline">{displayedSiteTitle}</span>
                         )}
                     </div>
 

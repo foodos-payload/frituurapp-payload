@@ -76,7 +76,7 @@ export default function LandingHeader({
                 <div className="flex items-center gap-2">
                     {finalLogoUrl ? (
                         <Link href="/">
-                            <div className="relative w-[90px] h-[80px]">
+                            <div className="relative w-[200px] h-[80px]">
                                 <Image
                                     src={finalLogoUrl}
                                     alt={finalSiteTitle}
