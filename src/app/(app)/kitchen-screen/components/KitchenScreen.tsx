@@ -202,7 +202,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
                 archivedCount={archivedCount}
             />
 
-            <div className="order-list grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+            <div className="order-list grid grid-cols-1 md:grid-cols-2 gap-5 mt-4 justify-items-center items-start">
                 {isInitialLoad
                     ? [1, 2, 3].map(n => <SkeletonOrderCard key={n} />)
                     : orders.map(order => (
