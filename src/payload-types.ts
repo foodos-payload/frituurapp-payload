@@ -337,9 +337,12 @@ export interface Product {
         | 'celery'
         | 'mustard'
         | 'sesame'
-        | 'sulphites'
         | 'lupin'
         | 'molluscs'
+        | 'crustaceans'
+        | 'sulphites'
+        | 'propolis'
+        | 'corn'
       )[]
     | null;
   /**

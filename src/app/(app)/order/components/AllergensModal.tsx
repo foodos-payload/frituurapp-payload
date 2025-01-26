@@ -4,36 +4,25 @@
 import React, { useState, useEffect } from "react";
 
 const allergenIcons: Record<string, string> = {
-    gluten: "🌾",
-    eggs: "🥚",
-    fish: "🐟",
-    peanuts: "🥜",
-    soybeans: "🌱",
-    milk: "🥛",
-    nuts: "🌰",
-    celery: "🥬",
-    mustard: "🌭",
-    sesame: "🤎",
-    sulphites: "💨",
-    lupin: "🫘",
-    molluscs: "🦪",
+    gluten: "/images/allergens/gluten.png",
+    eggs: "/images/allergens/eggs.png",
+    fish: "/images/allergens/fish.png",
+    peanuts: "/images/allergens/peanuts.png",
+    soybeans: "/images/allergens/soybeans.png",
+    milk: "/images/allergens/milk.png",
+    nuts: "/images/allergens/nuts.png",
+    celery: "/images/allergens/celery.png",
+    mustard: "/images/allergens/mustard.png",
+    sesame: "/images/allergens/sesame.png",
+    lupin: "/images/allergens/lupin.png",
+    molluscs: "/images/allergens/molluscs.png",
+    crustaceans: "/images/allergens/crustaceans.png",
+    sulphites: "/images/allergens/sulphites.png",
+    propolis: "/images/allergens/propolis.png",
+    corn: "/images/allergens/corn.png",
 };
 
-const ALL_ALLERGENS = [
-    "gluten",
-    "eggs",
-    "fish",
-    "peanuts",
-    "soybeans",
-    "milk",
-    "nuts",
-    "celery",
-    "mustard",
-    "sesame",
-    "sulphites",
-    "lupin",
-    "molluscs",
-];
+const ALL_ALLERGENS = Object.keys(allergenIcons);
 
 interface AllergensModalProps {
     /** Called when the user closes the modal. */
@@ -121,7 +110,12 @@ export default function AllergensModal({
                                 }
                                 onClick={() => toggleAllergen(allergen)}
                             >
-                                <span className="text-3xl">{icon}</span>
+                                <img
+                                    src={icon}
+                                    alt={`${allergen} icon`}
+                                    className="h-8 w-8 object-contain mix-blend-multiply"
+                                    style={{ mixBlendMode: "multiply" }}
+                                />
                                 <span className="mt-1 text-sm text-gray-700">{allergen}</span>
                             </div>
                         );

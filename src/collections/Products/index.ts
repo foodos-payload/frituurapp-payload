@@ -407,9 +407,12 @@ export const Products: CollectionConfig = {
                         { label: { en: 'Celery', nl: 'Selderij', de: 'Sellerie', fr: 'Céleri' }, value: 'celery' },
                         { label: { en: 'Mustard', nl: 'Mosterd', de: 'Senf', fr: 'Moutarde' }, value: 'mustard' },
                         { label: { en: 'Sesame', nl: 'Sesam', de: 'Sesam', fr: 'Sésame' }, value: 'sesame' },
-                        { label: { en: 'Sulphites', nl: 'Sulfieten', de: 'Sulfite', fr: 'Sulfites' }, value: 'sulphites' },
                         { label: { en: 'Lupin', nl: 'Lupine', de: 'Lupine', fr: 'Lupin' }, value: 'lupin' },
                         { label: { en: 'Molluscs', nl: 'Weekdieren', de: 'Weichtiere', fr: 'Mollusques' }, value: 'molluscs' },
+                        { label: { en: 'Crustaceans', nl: 'Schaaldieren', de: 'Krustentiere', fr: 'Crustacés' }, value: 'crustaceans' },
+                        { label: { en: 'Sulphites', nl: 'Sulfieten', de: 'Sulfite', fr: 'Sulfites' }, value: 'sulphites' },
+                        { label: { en: 'Propolis', nl: 'Propolis', de: 'Propolis', fr: 'Propolis' }, value: 'propolis' },
+                        { label: { en: 'Corn', nl: 'Maïs', de: 'Mais', fr: 'Maïs' }, value: 'corn' },
                     ],
                     access: {
                         read: hasFieldPermission('products', 'allergens', 'read'),
