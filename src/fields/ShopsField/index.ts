@@ -1,30 +1,19 @@
-// /src/fields/ShopsField/index.ts
-import { isSuperAdmin } from '@/access/isSuperAdmin'
-import type { Field } from 'payload'
+import type { Field } from 'payload';
 
 export const shopsField: Field = {
     name: 'shops',
     type: 'relationship',
     relationTo: 'shops',
-    hasMany: true,
+    hasMany: true, // Allow linking to multiple shops
     required: true,
     access: {
-        read: ({ req }) => {
-            if (isSuperAdmin({ req })) {
-                return true
-            }
-            const tenantShops = req.user?.shops || []
-            return tenantShops.length > 0
-        },
-        update: ({ req }) => {
-            if (isSuperAdmin({ req })) {
-                return true
-            }
-            const tenantShops = req.user?.shops || []
-            return tenantShops.length > 0
-        },
+        read: () => true, // Shops are publicly readable
+        update: () => true, // Controlled through hooks and filters
     },
     admin: {
+        components: {
+            Field: '@/fields/ShopsField/components/Field#ShopsFieldComponent',
+        },
         position: 'sidebar',
     },
-}
+};

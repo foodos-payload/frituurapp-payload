@@ -7,18 +7,13 @@ export const categoriesField: Field = {
     hasMany: true, // Allow linking to multiple categories
     required: true,
     access: {
-        read: ({ req }) => {
-            // Ensure only accessible categories are shown
-            const userShops = req.user?.shops || [];
-            return userShops.length > 0;
-        },
-        update: ({ req }) => {
-            // Ensure updates are limited to accessible categories
-            const userShops = req.user?.shops || [];
-            return userShops.length > 0;
-        },
+        read: () => true, // Categories are publicly readable
+        update: () => true, // Controlled through hooks and filters
     },
     admin: {
+        components: {
+            Field: '@/fields/CategoriesField/components/Field#CategoriesFieldComponent',
+        },
         position: 'sidebar',
     },
 };

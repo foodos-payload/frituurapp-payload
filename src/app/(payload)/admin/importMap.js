@@ -1,4 +1,6 @@
 import { TenantFieldComponent as TenantFieldComponent_0e322269e5426a9b98ca88b6faa9d3d0 } from '@/fields/TenantField/components/Field'
+import { ShopsFieldComponent as ShopsFieldComponent_ca83614448c296e6941f18230f026264 } from '@/fields/ShopsField/components/Field'
+import { CategoriesFieldComponent as CategoriesFieldComponent_779c00f217650f3f6dc4bd4c7110046a } from '@/fields/CategoriesField/components/Field'
 import { default as default_03bfcb996d8cd81c29ed21106a8dad21 } from '@/fields/CustomerQRField'
 import { default as default_62597bfa3c1050fb10d86f1e5e1e2f21 } from '@/fields/custom-field/collections-field.tsx'
 import { default as default_cc7c43cc23f37bd496482c00da0b8f2d } from '@/fields/ShopGeocodeButton'
@@ -10,6 +12,8 @@ import { CustomDashboardRSC as CustomDashboardRSC_c65adedee50c1376eb428bd6deb426
 
 export const importMap = {
   "@/fields/TenantField/components/Field#TenantFieldComponent": TenantFieldComponent_0e322269e5426a9b98ca88b6faa9d3d0,
+  "@/fields/ShopsField/components/Field#ShopsFieldComponent": ShopsFieldComponent_ca83614448c296e6941f18230f026264,
+  "@/fields/CategoriesField/components/Field#CategoriesFieldComponent": CategoriesFieldComponent_779c00f217650f3f6dc4bd4c7110046a,
   "@/fields/CustomerQRField#default": default_03bfcb996d8cd81c29ed21106a8dad21,
   "@/fields/custom-field/collections-field.tsx#default": default_62597bfa3c1050fb10d86f1e5e1e2f21,
   "@/fields/ShopGeocodeButton#default": default_cc7c43cc23f37bd496482c00da0b8f2d,
