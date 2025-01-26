@@ -331,6 +331,8 @@ export default function OrderLayout({
                         setMobileSearchOpen={setMobileSearchOpen}
                         branding={branding}
                         isKiosk={isKiosk}
+                        allergensList={allergensList}
+                        onAllergensChange={handleAllergensChange}
                         onCategoryClick={() => {
                             // If user clicks a category in the UI, optionally reset the search
                             setMobileSearchOpen(false);

@@ -26,6 +26,8 @@ interface HeaderProps {
     isKiosk?: boolean;
     branding?: BrandingProps;
     onCategoryClick?: (slug: string) => void;
+    allergensList: string[];
+    onAllergensChange: (newAllergens: string[]) => void;
 }
 
 export default function Header({
@@ -36,22 +38,14 @@ export default function Header({
     mobileSearchOpen,
     setMobileSearchOpen,
     isKiosk = false,
+    allergensList,
+    onAllergensChange,
     branding,
 }: HeaderProps) {
     const { t } = useTranslation();
     const mobileInputRef = useRef<HTMLInputElement>(null);
 
-    // 1) Check if allergens are active => read from ?allergens
-    const [hasAllergens, setHasAllergens] = useState(false);
-
-    function handleAllergensChange(newAllergens: string[]) {
-        setHasAllergens(newAllergens.length > 0);
-    }
-
-    useEffect(() => {
-        const storedAllergens = localStorage.getItem("userAllergens") || "";
-        setHasAllergens(storedAllergens.trim().length > 0);
-    }, []);
+    const hasAllergens = allergensList.length > 0;
 
     useEffect(() => {
         if (mobileSearchOpen) {
@@ -379,7 +373,7 @@ export default function Header({
                 <AllergensModal
                     onClose={() => setAllergensOpen(false)}
                     brandCTA={brandCTA}
-                    onAllergensChange={handleAllergensChange}
+                    onAllergensChange={onAllergensChange}
                 />
             )}
 
