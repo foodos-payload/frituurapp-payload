@@ -4,6 +4,8 @@ import type { CollectionConfig } from 'payload';
 import { tenantField } from '../../../fields/TenantField';
 import { shopsField } from '../../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
+import { methodTypeField } from '@/fields/MethodTypeField';
+
 
 // IMPORTANT: 
 //   - 'Access' is used for collection-level (can return boolean | Where).
@@ -58,18 +60,7 @@ export const Timeslots: CollectionConfig = {
 
         // method_id relationship
         {
-            name: 'method_id',
-            type: 'relationship',
-            relationTo: 'fulfillment-methods',
-            required: true,
-            label: { en: 'Fulfillment Method' },
-            admin: {
-                description: { en: 'Fulfillment method associated with these day/time ranges.' },
-            },
-            access: {
-                read: hasFieldPermission('timeslots', 'method_id', 'read'),
-                update: hasFieldPermission('timeslots', 'method_id', 'update'),
-            },
+            ...methodTypeField,
         },
 
         // 'week' group (all weekly arrays within)

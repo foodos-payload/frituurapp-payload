@@ -1501,9 +1501,6 @@ export interface Timeslot {
   id: string;
   tenant: string | Tenant;
   shops: (string | Shop)[];
-  /**
-   * Fulfillment method associated with these day/time ranges.
-   */
   method_id: string | FulfillmentMethod;
   /**
    * Define time ranges for each day of the week.

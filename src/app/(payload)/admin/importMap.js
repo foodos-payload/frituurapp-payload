@@ -4,6 +4,7 @@ import { CategoriesFieldComponent as CategoriesFieldComponent_779c00f217650f3f6d
 import { default as default_03bfcb996d8cd81c29ed21106a8dad21 } from '@/fields/CustomerQRField'
 import { default as default_62597bfa3c1050fb10d86f1e5e1e2f21 } from '@/fields/custom-field/collections-field.tsx'
 import { default as default_cc7c43cc23f37bd496482c00da0b8f2d } from '@/fields/ShopGeocodeButton'
+import { MethodTypeFieldComponent as MethodTypeFieldComponent_6b32959a1c2c0ae70012d2b3b4f9a9e6 } from '@/fields/MethodTypeField/components/Field'
 import { ColorPickerFieldComponent as ColorPickerFieldComponent_95f860801d0381344387ae1d8e2f4d24 } from '@innovixx/payload-color-picker-field/components'
 import { default as default_561f4ffc1b5843e389baccba35a5fdc0 } from '@/fields/PrinterPortalButton'
 import { TenantSelectorRSC as TenantSelectorRSC_9d7720c4b50db35595dfefa592fabd33 } from '@/components/TenantSelector'
@@ -17,6 +18,7 @@ export const importMap = {
   "@/fields/CustomerQRField#default": default_03bfcb996d8cd81c29ed21106a8dad21,
   "@/fields/custom-field/collections-field.tsx#default": default_62597bfa3c1050fb10d86f1e5e1e2f21,
   "@/fields/ShopGeocodeButton#default": default_cc7c43cc23f37bd496482c00da0b8f2d,
+  "@/fields/MethodTypeField/components/Field#MethodTypeFieldComponent": MethodTypeFieldComponent_6b32959a1c2c0ae70012d2b3b4f9a9e6,
   "@innovixx/payload-color-picker-field/components#ColorPickerFieldComponent": ColorPickerFieldComponent_95f860801d0381344387ae1d8e2f4d24,
   "@/fields/PrinterPortalButton#default": default_561f4ffc1b5843e389baccba35a5fdc0,
   "@/components/TenantSelector#TenantSelectorRSC": TenantSelectorRSC_9d7720c4b50db35595dfefa592fabd33,
