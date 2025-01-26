@@ -243,7 +243,7 @@ export const Products: CollectionConfig = {
                         de: 'Beschreibung (Niederländisch)',
                         fr: 'Description (Néerlandais)',
                     },
-                    required: true,
+                    required: false,
                     admin: {
                         placeholder: {
                             en: 'e.g., A delicious Pizza Margherita.',
