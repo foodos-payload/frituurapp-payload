@@ -57,7 +57,10 @@ export function ShopsFieldComponentClient({ path, readOnly }: Props) {
             <label>Shops</label>
             <select
                 value={value || ''}
-                onChange={(e) => setValue(e.target.value)}
+                onChange={(e) => {
+                    const selectedValue = e.target.value;
+                    setValue(selectedValue ? [selectedValue] : []); // Wrap in array
+                }}
                 style={{ padding: '0.5rem', width: '100%', border: '1px solid #ccc', borderRadius: '4px' }}
                 disabled={readOnly}
             >
@@ -67,7 +70,8 @@ export function ShopsFieldComponentClient({ path, readOnly }: Props) {
                         {shop.label}
                     </option>
                 ))}
-            </select>
+            </select>;
+
         </div>
     );
 }
