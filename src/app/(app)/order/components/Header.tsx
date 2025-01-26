@@ -196,7 +196,7 @@ export default function Header({
                                 <Image
                                     src={encodedLogoUrl}
                                     alt="Site Logo"
-                                    className={`${isKiosk ? "object-contain h-24" : "object-contain h-24"} mix-blend-multiply`}
+                                    className={`${isKiosk ? "object-contain h-24" : "object-contain h-24"}`}
                                     width="210"
                                     height="90"
                                 />
