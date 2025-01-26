@@ -27,7 +27,7 @@ export function CategoriesFieldComponentClient({ path, readOnly }: Props) {
             const tenantId = decodeURIComponent(cookies);
 
             // Fetch categories filtered by tenant
-            const response = await fetch(`/api/categories?depth=1&where[tenant][equals]=${tenantId}`);
+            const response = await fetch(`/api/categories?depth=1&where[tenant][equals]=${tenantId}&limit=1000000`);
             const data = await response.json();
 
             interface Category {

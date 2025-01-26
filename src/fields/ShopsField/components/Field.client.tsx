@@ -27,7 +27,7 @@ export function ShopsFieldComponentClient({ path, readOnly }: Props) {
             const tenantId = decodeURIComponent(cookies);
 
             // Fetch shops filtered by tenant
-            const response = await fetch(`/api/shops?depth=1&where[tenant][equals]=${tenantId}`);
+            const response = await fetch(`/api/shops?depth=1&where[tenant][equals]=${tenantId}&limit=1000`);
             const data = await response.json();
 
             interface Shop {
