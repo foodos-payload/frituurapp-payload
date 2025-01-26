@@ -1817,6 +1817,18 @@ export const Orders: CollectionConfig = {
       ],
     },
 
+    // Tenant Field
+    {
+      ...tenantField,
+      // Optionally give it a label if you like:
+      // label: {
+      //   en: 'Tenant',
+      //   nl: 'Tenant',
+      //   de: 'Mandant',
+      //   fr: 'Locataire',
+      // },
+    },
+
     // metadata info
     {
       type: 'collapsible',
@@ -1830,17 +1842,7 @@ export const Orders: CollectionConfig = {
         initCollapsed: true, // or false, your choice
       },
       fields: [
-        // Tenant Field
-        {
-          ...tenantField,
-          // Optionally give it a label if you like:
-          // label: {
-          //   en: 'Tenant',
-          //   nl: 'Tenant',
-          //   de: 'Mandant',
-          //   fr: 'Locataire',
-          // },
-        },
+
 
         // CloudPOS ID
         {

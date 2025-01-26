@@ -109,6 +109,11 @@ export const Media: CollectionConfig = {
   },
 
   fields: [
+    // Tenant in Sidebar (optional)
+    {
+      ...tenantField,
+
+    },
     // COLLAPSIBLE: Media Info
     {
       type: 'collapsible',
@@ -253,11 +258,7 @@ export const Media: CollectionConfig = {
         },
       ],
     },
-    // Tenant in Sidebar (optional)
-    {
-      ...tenantField,
 
-    },
   ],
 };
 

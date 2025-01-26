@@ -309,7 +309,7 @@ export interface Product {
   /**
    * Enter the default description in Dutch.
    */
-  description_nl: string;
+  description_nl?: string | null;
   /**
    * Enter the description in English.
    */
@@ -430,7 +430,6 @@ export interface Product {
    * Timestamp for last modification.
    */
   modtime: number;
-  tenant: string | Tenant;
   /**
    * The CloudPOS ID for syncing. Leave empty if not synced yet.
    */
@@ -440,6 +439,7 @@ export interface Product {
    */
   status: 'enabled' | 'disabled';
   shops: (string | Shop)[];
+  tenant: string | Tenant;
   categories: (string | Category)[];
   updatedAt: string;
   createdAt: string;
@@ -450,6 +450,7 @@ export interface Product {
  */
 export interface Media {
   id: string;
+  tenant: string | Tenant;
   /**
    * Optional tags to organize media files.
    */
@@ -471,7 +472,6 @@ export interface Media {
    * URL of the original image in S3.
    */
   s3_url?: string | null;
-  tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -675,7 +675,6 @@ export interface Subproduct {
    * Timestamp for last modification.
    */
   modtime: number;
-  tenant: string | Tenant;
   /**
    * The CloudPOS ID for this subproduct. If empty, not synced.
    */
@@ -689,6 +688,7 @@ export interface Subproduct {
    */
   status: 'enabled' | 'disabled';
   shops: (string | Shop)[];
+  tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
 }
@@ -816,7 +816,6 @@ export interface Category {
    * Timestamp for last modification
    */
   modtime: number;
-  tenant: string | Tenant;
   /**
    * The CloudPOS ID of this category. Leave empty if not synced.
    */
@@ -826,6 +825,7 @@ export interface Category {
    */
   status: 'enabled' | 'disabled';
   shops: (string | Shop)[];
+  tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
 }
@@ -931,12 +931,12 @@ export interface Customer {
         id?: string | null;
       }[]
     | null;
-  tenant: string | Tenant;
-  shops: (string | Shop)[];
   /**
    * The CloudPOS ID for this customer if synced.
    */
   cloudPOSId?: number | null;
+  tenant: string | Tenant;
+  shops: (string | Shop)[];
   updatedAt: string;
   createdAt: string;
 }
@@ -1235,6 +1235,7 @@ export interface Coupon {
  */
 export interface GiftVoucher {
   id: string;
+  tenant: string | Tenant;
   shops: (string | Shop)[];
   /**
    * Unique barcode for the gift voucher.
@@ -1260,7 +1261,6 @@ export interface GiftVoucher {
    * The payment method used to purchase this voucher.
    */
   payment_type: string | PaymentMethod;
-  tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
 }
@@ -2139,10 +2139,10 @@ export interface CategoriesSelect<T extends boolean = true> {
         id?: T;
       };
   modtime?: T;
-  tenant?: T;
   cloudPOSId?: T;
   status?: T;
   shops?: T;
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2186,10 +2186,10 @@ export interface ProductsSelect<T extends boolean = true> {
   webshopshow?: T;
   webshoporderable?: T;
   modtime?: T;
-  tenant?: T;
   cloudPOSId?: T;
   status?: T;
   shops?: T;
+  tenant?: T;
   categories?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2217,11 +2217,11 @@ export interface SubproductsSelect<T extends boolean = true> {
   stock_enabled?: T;
   stock_quantity?: T;
   modtime?: T;
-  tenant?: T;
   cloudPOSId?: T;
   deleted?: T;
   status?: T;
   shops?: T;
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2252,6 +2252,7 @@ export interface ProductpopupsSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
   tags?:
     | T
     | {
@@ -2261,7 +2262,6 @@ export interface MediaSelect<T extends boolean = true> {
   alt_text?: T;
   blurhash?: T;
   s3_url?: T;
-  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -2419,9 +2419,9 @@ export interface CustomersSelect<T extends boolean = true> {
         dateJoined?: T;
         id?: T;
       };
+  cloudPOSId?: T;
   tenant?: T;
   shops?: T;
-  cloudPOSId?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2481,6 +2481,7 @@ export interface CouponsSelect<T extends boolean = true> {
  * via the `definition` "gift-vouchers_select".
  */
 export interface GiftVouchersSelect<T extends boolean = true> {
+  tenant?: T;
   shops?: T;
   barcode?: T;
   value?: T;
@@ -2488,7 +2489,6 @@ export interface GiftVouchersSelect<T extends boolean = true> {
   valid_until?: T;
   used?: T;
   payment_type?: T;
-  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }

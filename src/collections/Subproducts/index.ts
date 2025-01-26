@@ -552,10 +552,7 @@ export const Subproducts: CollectionConfig = {
                         update: hasFieldPermission('subproducts', 'modtime', 'update'),
                     },
                 },
-                {
-                    // Tenant
-                    ...tenantField,
-                },
+
                 {
                     name: 'cloudPOSId',
                     type: 'number',
@@ -635,6 +632,11 @@ export const Subproducts: CollectionConfig = {
         {
             ...shopsField,
 
+        },
+
+        {
+            // Tenant
+            ...tenantField,
         },
     ],
 };

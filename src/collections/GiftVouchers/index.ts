@@ -43,7 +43,11 @@ export const GiftVouchers: CollectionConfig = {
   },
 
   fields: [
+    // 1) Tenant
+    {
+      ...tenantField,
 
+    },
     // 2) Shops
     {
       ...shopsField,
@@ -217,11 +221,7 @@ export const GiftVouchers: CollectionConfig = {
       },
     },
 
-    // 1) Tenant
-    {
-      ...tenantField,
 
-    },
   ],
 };
 

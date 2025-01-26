@@ -501,14 +501,16 @@ export const Shops: CollectionConfig = {
             update: hasFieldPermission('shops', 'domain', 'update'),
           },
         },
-        // Tenant Field
-        {
 
-          ...tenantField,
-          // Optionally label it if you like
-          // label: { en: 'Tenant', ... }
-        },
       ],
+    },
+
+    // Tenant Field
+    {
+
+      ...tenantField,
+      // Optionally label it if you like
+      // label: { en: 'Tenant', ... }
     },
   ],
 };

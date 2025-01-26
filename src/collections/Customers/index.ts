@@ -345,17 +345,7 @@ export const Customers: CollectionConfig = {
         initCollapsed: false,
       },
       fields: [
-        // Tenant
-        {
-          ...tenantField,
-          // Optionally add a label if you prefer
-          // label: { en: 'Tenant', ... },
-        },
 
-        // Shops
-        {
-          ...shopsField,
-        },
 
         // CloudPOS ID
         {
@@ -373,6 +363,18 @@ export const Customers: CollectionConfig = {
           },
         },
       ],
+    },
+
+    // Tenant
+    {
+      ...tenantField,
+      // Optionally add a label if you prefer
+      // label: { en: 'Tenant', ... },
+    },
+
+    // Shops
+    {
+      ...shopsField,
     },
   ],
 

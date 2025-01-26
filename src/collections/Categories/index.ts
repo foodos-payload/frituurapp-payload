@@ -322,10 +322,7 @@ export const Categories: CollectionConfig = {
                     },
                 },
 
-                // Tenant (categories are scoped by tenant)
-                {
-                    ...tenantField,
-                },
+
 
                 // 2) cloudPOSId in the sidebar (below modtime)
                 {
@@ -373,6 +370,10 @@ export const Categories: CollectionConfig = {
         // Shops at the bottom of the sidebar
         {
             ...shopsField,
+        },
+        // Tenant (categories are scoped by tenant)
+        {
+            ...tenantField,
         },
     ],
 };

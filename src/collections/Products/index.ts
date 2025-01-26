@@ -967,10 +967,7 @@ export const Products: CollectionConfig = {
                         update: hasFieldPermission('products', 'modtime', 'update'),
                     },
                 },
-                {
-                    // Spread in your tenant field
-                    ...tenantField,
-                },
+
                 {
                     name: 'cloudPOSId',
                     type: 'number',
@@ -1022,6 +1019,12 @@ export const Products: CollectionConfig = {
         //Shops
         {
             ...shopsField,
+
+        },
+
+        {
+
+            ...tenantField,
 
         },
 
