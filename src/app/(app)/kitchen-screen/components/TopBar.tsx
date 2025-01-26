@@ -84,7 +84,7 @@ export function TopBar({
                 </button>
 
                 {showLangSwitcher && (
-                    <div className="absolute top-10 right-0">
+                    <div className="absolute top-8 right-0">
                         <LanguageSwitcher />
                     </div>
                 )}

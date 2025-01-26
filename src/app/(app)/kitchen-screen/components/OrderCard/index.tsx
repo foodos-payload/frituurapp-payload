@@ -158,7 +158,7 @@ export function OrderCard({
         const minus10 = subtractTenMinutes(fullTime)
         leftGetReadyText = `${t("kitchen.orderCard.get_ready_by")}: ${minus10}`
         secondRow = (
-            <div className="px-3 py-1 bg-gray-50 text-xs text-gray-700 flex items-center justify-end">
+            <div className="px-3 py-1 bg-gray-50 text-sm text-gray-700 flex items-center justify-end">
                 <div className="flex items-center gap-1">
                     <FaMotorcycle className="text-sm" />
                     <span>{t("kitchen.orderCard.deliver_by")}: {fullTime}</span>
@@ -168,7 +168,7 @@ export function OrderCard({
     } else if (method === "takeaway") {
         leftGetReadyText = `${t("kitchen.orderCard.get_ready_by")}: ${fullTime}`
         secondRow = (
-            <div className="px-3 py-1 bg-gray-50 text-xs text-gray-700 flex items-center justify-end">
+            <div className="px-3 py-1 bg-gray-50 text-sm text-gray-700 flex items-center justify-end">
                 <div className="flex items-center gap-1">
                     <FaShoppingBag className="text-sm" />
                     <span>{t("kitchen.orderCard.takeaway_by")}: {fullTime}</span>
@@ -261,14 +261,14 @@ export function OrderCard({
 
     return (
         <div
-            className={`border-[1.5px] border-gray-300 rounded-xl shadow-md bg-white w-[300px] flex flex-col overflow-hidden
-        ${statusLoading ? "opacity-60 pointer-events-none" : ""}`}
+            className={`
+               rounded-xl shadow-md bg-white w-[400px] flex flex-col overflow-hidden
+               ${redGlow ? "border-[4px] blink-border" : "border-[1.5px] border-gray-300"}
+               ${statusLoading ? "opacity-60 pointer-events-none" : ""}
+             `}
         >
             {/* TOP => GET READY BY... #OrderNum */}
-            <div
-                className={`px-3 py-2 ${redGlow ? "bg-red-200 animate-pulse" : "bg-gray-50"}
-           flex items-center justify-between text-xs text-gray-700`}
-            >
+            <div className="px-3 py-2 bg-gray-50 flex items-center justify-between text-sm text-gray-700">
                 <div>{leftGetReadyText}</div>
                 <div className="flex items-center gap-1 font-medium">
                     <span># {orderNum}</span>
@@ -310,7 +310,7 @@ export function OrderCard({
             />
 
             {/* BOTTOM => note, isCash, prepDay, print */}
-            <div className="bg-gray-50 px-3 py-2 text-gray-700 text-xs flex items-center justify-between">
+            <div className="bg-gray-50 px-3 py-2 text-gray-700 text-sm flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     {order.customer_note && (
                         <span className="font-semibold">{order.customer_note}</span>
@@ -354,8 +354,8 @@ export function OrderCard({
                 ) : null}
             </div>
 
-            <div className="bg-gray-100 text-center text-gray-600 py-1.5 text-xs italic">
-                TESTING
+            <div className="bg-gray-100 text-center text-gray-600 py-1.5 text-sm italic">
+                ORDER
             </div>
         </div>
     )
