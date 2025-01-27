@@ -1763,6 +1763,22 @@ export interface Po {
    * Which shop does this POS config belong to?
    */
   shop: string | Shop;
+  /**
+   * Choose how to handle product synchronization.
+   */
+  syncProducts?: ('off' | 'orderapp-to-cloudpos' | 'cloudpos-to-orderapp') | null;
+  /**
+   * Choose how to handle category synchronization.
+   */
+  syncCategories?: ('off' | 'orderapp-to-cloudpos' | 'cloudpos-to-orderapp') | null;
+  /**
+   * Choose how to handle subproduct synchronization.
+   */
+  syncSubproducts?: ('off' | 'orderapp-to-cloudpos' | 'cloudpos-to-orderapp') | null;
+  /**
+   * Choose how to handle order synchronization.
+   */
+  syncOrders?: ('off' | 'to-cloudpos') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2896,6 +2912,10 @@ export interface PosSelect<T extends boolean = true> {
   apiSecret?: T;
   active?: T;
   shop?: T;
+  syncProducts?: T;
+  syncCategories?: T;
+  syncSubproducts?: T;
+  syncOrders?: T;
   updatedAt?: T;
   createdAt?: T;
 }

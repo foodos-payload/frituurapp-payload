@@ -48,13 +48,13 @@ export async function GET(req: NextRequest) {
         const host = searchParams.get('host')
 
         if (!host) {
-            return NextResponse.json({ error: 'Missing ?host= (shop slug)' }, { status: 400 })
+            return NextResponse.json({ error: 'Missing ?host=' }, { status: 400 })
         }
 
-        // 1) Initialize Payload
+        // 1) Payload
         const payload = await getPayload({ config })
 
-        // 2) Find the Shop by its slug
+        // 2) Find shop by slug
         const shopResult = await payload.find({
             collection: 'shops',
             where: { slug: { equals: host } },
@@ -62,10 +62,10 @@ export async function GET(req: NextRequest) {
         })
         const shop = shopResult.docs?.[0]
         if (!shop) {
-            return NextResponse.json({ error: `No shop found for slug: "${host}"` }, { status: 404 })
+            return NextResponse.json({ error: `No shop found for slug="${host}"` }, { status: 404 })
         }
 
-        // 3) Find the POS doc(s) for this shop
+        // 3) Find active POS doc(s)
         const posResult = await payload.find({
             collection: 'pos',
             where: {
@@ -76,39 +76,57 @@ export async function GET(req: NextRequest) {
             },
             limit: 10,
         })
-
         if (posResult.totalDocs === 0) {
-            return NextResponse.json({
-                error: `No active POS config found for shop slug "${host}"`,
-            }, { status: 404 })
+            return NextResponse.json(
+                { error: `No active POS config for shop slug="${host}"` },
+                { status: 404 },
+            )
         }
 
-        // 4) For each POS doc => create instance => sync
+        // 4) For each POS doc => create instance => check toggles => sync
         for (const posDoc of posResult.docs) {
             console.log(`[syncPOS] Found POS doc ${posDoc.id} for shop ${host}.`)
 
-            // e.g. if you stored licenseName & token in posDoc
-            const { provider, apiKey, apiSecret, licenseName, token } = posDoc
+            const {
+                provider,
+                apiKey,
+                apiSecret,
+                licenseName,
+                token,
 
-            const instance = createPOSInstance(
-                provider ?? '',
-                apiKey ?? '',
-                apiSecret ?? '',
-                {
-                    licenseName: licenseName ?? '',
-                    token: token ?? '',
-                    shopId: shop.id,
-                    tenantId: typeof shop.tenant === 'string' ? shop.tenant : undefined,
-                }
-            )
-            await instance.syncCategories()
-            await instance.syncProducts()
-            await instance.syncSubproducts()
+                // Our new toggles
+                syncProducts,
+                syncCategories,
+                syncSubproducts,
+                // syncOrders // not used here, see pushOrder route
+            } = posDoc
+
+            const instance = createPOSInstance(provider ?? '', apiKey ?? '', apiSecret ?? '', {
+                licenseName: licenseName ?? '',
+                token: token ?? '',
+                shopId: shop.id,
+                tenantId: typeof shop.tenant === 'string' ? shop.tenant : undefined,
+            })
+
+            // 4a) Sync categories
+            if (syncCategories && syncCategories !== 'off') {
+                await instance.syncCategories(syncCategories)
+            }
+
+            // 4b) Sync products
+            if (syncProducts && syncProducts !== 'off') {
+                await instance.syncProducts(syncProducts)
+            }
+
+            // 4c) Sync subproducts
+            if (syncSubproducts && syncSubproducts !== 'off') {
+                await instance.syncSubproducts(syncSubproducts)
+            }
         }
 
         return NextResponse.json({
             status: 'ok',
-            msg: `POS sync done for shop slug="${host}". Found ${posResult.totalDocs} POS config(s).`,
+            msg: `POS sync done for shop="${host}". Found ${posResult.totalDocs} config(s).`,
         })
     } catch (err: any) {
         console.error('syncPOS error:', err)

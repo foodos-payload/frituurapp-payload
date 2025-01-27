@@ -49,16 +49,21 @@ export interface LocalOrderBase {
     }
 }
 
-/**
- * Abstract class for all POS systems.
- */
+
+export type SyncDirection = 'cloudpos-to-orderapp' | 'orderapp-to-cloudpos'
+
+
 export abstract class AbstractPOS {
     constructor(protected apiKey: string, protected apiSecret: string) { }
 
-    // Child classes must implement these:
-    abstract syncProducts(): Promise<void>
-    abstract syncSubproducts(): Promise<void>
-    abstract syncCategories(): Promise<void>
+
+    abstract syncProducts(direction: SyncDirection): Promise<void>
+
+
+    abstract syncSubproducts(direction: SyncDirection): Promise<void>
+
+
+    abstract syncCategories(direction: SyncDirection): Promise<void>
 
     protected callPOSAPI(_endpoint: string, _requestBody: any): Promise<any> {
         throw new Error('Not implemented')

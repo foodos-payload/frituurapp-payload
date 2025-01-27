@@ -135,7 +135,82 @@ export const POS: CollectionConfig = {
             },
         },
 
-        // 8) (Optional) tenantField could go here with similar field-level checks:
+        // New fields for syncing
+        // -------------------------
+
+        {
+            name: 'syncProducts',
+            label: 'Sync Products',
+            type: 'select',
+            defaultValue: 'off',
+            options: [
+                { label: 'Off', value: 'off' },
+                { label: 'OrderApp to CloudPOS', value: 'orderapp-to-cloudpos' },
+                { label: 'CloudPOS to OrderApp', value: 'cloudpos-to-orderapp' },
+            ],
+            admin: {
+                description: 'Choose how to handle product synchronization.',
+            },
+            access: {
+                read: hasFieldPermission('pos', 'syncProducts', 'read'),
+                update: hasFieldPermission('pos', 'syncProducts', 'update'),
+            },
+        },
+        {
+            name: 'syncCategories',
+            label: 'Sync Categories',
+            type: 'select',
+            defaultValue: 'off',
+            options: [
+                { label: 'Off', value: 'off' },
+                { label: 'OrderApp to CloudPOS', value: 'orderapp-to-cloudpos' },
+                { label: 'CloudPOS to OrderApp', value: 'cloudpos-to-orderapp' },
+            ],
+            admin: {
+                description: 'Choose how to handle category synchronization.',
+            },
+            access: {
+                read: hasFieldPermission('pos', 'syncCategories', 'read'),
+                update: hasFieldPermission('pos', 'syncCategories', 'update'),
+            },
+        },
+        {
+            name: 'syncSubproducts',
+            label: 'Sync Subproducts',
+            type: 'select',
+            defaultValue: 'off',
+            options: [
+                { label: 'Off', value: 'off' },
+                { label: 'OrderApp to CloudPOS', value: 'orderapp-to-cloudpos' },
+                { label: 'CloudPOS to OrderApp', value: 'cloudpos-to-orderapp' },
+            ],
+            admin: {
+                description: 'Choose how to handle subproduct synchronization.',
+            },
+            access: {
+                read: hasFieldPermission('pos', 'syncSubproducts', 'read'),
+                update: hasFieldPermission('pos', 'syncSubproducts', 'update'),
+            },
+        },
+        {
+            name: 'syncOrders',
+            label: 'Sync Orders',
+            type: 'select',
+            defaultValue: 'off',
+            options: [
+                { label: 'Off', value: 'off' },
+                { label: 'Sync Orders to CloudPOS', value: 'to-cloudpos' },
+            ],
+            admin: {
+                description: 'Choose how to handle order synchronization.',
+            },
+            access: {
+                read: hasFieldPermission('pos', 'syncOrders', 'read'),
+                update: hasFieldPermission('pos', 'syncOrders', 'update'),
+            },
+        },
+
+        // 8) (Optional) tenantField, etc...
         // {
         //   ...tenantField,
         //   access: {
