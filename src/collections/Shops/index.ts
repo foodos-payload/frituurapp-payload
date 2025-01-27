@@ -6,6 +6,37 @@ import { filterByShopRead } from './access/byShop';
 import { ensureUniqueName } from './hooks/ensureUniqueName';
 // import { slugify } from './hooks/slugify';
 import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
+import CustomAPIError from '@/errors/CustomAPIError';
+
+const validateSlug = (slug: string): boolean => {
+  const regex = /^[a-z]+(-[a-z]+)*$/; // Only lowercase letters and hyphens
+  return regex.test(slug);
+};
+
+const slugValidationHook = async ({ data, operation }: { data: any; operation: 'create' | 'update' }) => {
+  if (operation === 'create' || operation === 'update') {
+    if (data?.slug && !validateSlug(data.slug)) {
+      throw new CustomAPIError(
+        'Invalid slug. Only lowercase letters, hyphens (-), and no spaces, numbers, or special characters are allowed.'
+      );
+    }
+  }
+};
+
+const validateDomain = (domain: string): boolean => {
+  const regex = /^https:\/\/[a-z0-9.-]+$/; // Must start with https:// and include valid domain characters
+  return regex.test(domain);
+};
+
+const domainValidationHook = async ({ data, operation }: { data: any; operation: 'create' | 'update' }) => {
+  if (operation === 'create' || operation === 'update') {
+    if (data?.domain && !validateDomain(data.domain)) {
+      throw new CustomAPIError(
+        'Invalid domain format. Domain must include "https://" and a valid domain name (e.g., https://example.com).'
+      );
+    }
+  }
+};
 
 export const Shops: CollectionConfig = {
   slug: 'shops',
@@ -42,6 +73,27 @@ export const Shops: CollectionConfig = {
   },
 
   hooks: {
+    beforeValidate: [
+      async ({ data, operation }) => {
+        if (operation === 'create' || operation === 'update') {
+          // Validate slug
+          if (data?.slug && !validateSlug(data.slug)) {
+            throw new CustomAPIError(
+              'Invalid slug. Only lowercase letters, hyphens (-), and no spaces, numbers, or special characters are allowed.'
+            );
+          }
+
+          // Validate domain
+          if (data?.domain && !validateDomain(data.domain)) {
+            throw new CustomAPIError(
+              'Invalid domain format. Domain must include "https://" and a valid domain name (e.g., https://example.com).'
+            );
+          }
+        }
+
+        return data;
+      },
+    ],
     afterChange: [
       async ({ req, operation, doc }) => {
         if (operation === 'create') {

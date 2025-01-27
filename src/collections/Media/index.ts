@@ -6,11 +6,19 @@ import { baseListFilter } from './access/baseListFilter';
 import { filterByTenantRead } from './access/byTenant';
 import { generateBlurhash } from './hooks/generateBlurhash'; // Updated to reflect no Base64
 import { S3 } from '@aws-sdk/client-s3';
+import CustomAPIError from '@/errors/CustomAPIError';
 
 import {
   hasPermission,
   hasFieldPermission,
 } from '@/access/permissionChecker';
+
+// Helper function to validate filenames
+const isFilenameValid = (filename: string): boolean => {
+  // Allow only alphanumeric characters, dashes, underscores, and periods
+  const regex = /^[a-zA-Z0-9._-]+$/;
+  return regex.test(filename);
+};
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -56,6 +64,15 @@ export const Media: CollectionConfig = {
   },
 
   hooks: {
+    beforeValidate: [
+      async ({ data, operation }) => {
+        if ((operation === 'create' || operation === 'update') && data?.filename && !isFilenameValid(data.filename)) {
+          throw new CustomAPIError('Invalid filename. Only alphanumeric characters, dashes (-), underscores (_), and periods (.) are allowed.');
+        }
+        return data;
+      },
+    ],
+
     beforeChange: [
       async ({ data, operation }) => {
         if (operation === 'create' && data.filename) {
