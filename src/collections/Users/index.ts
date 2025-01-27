@@ -7,7 +7,13 @@ import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
 
 const Users: CollectionConfig = {
   slug: 'users',
-
+  auth: {
+    tokenExpiration: 60 * 60 * 24 * 365, //(controls session expiration)
+    cookies: {
+      secure: true, // Must be true for "None" to work
+      sameSite: 'None', // Allows cookies to work across domains and subdomains
+    },
+  },
   // ---------------------------
   // Collection-level access
   // ---------------------------
@@ -36,8 +42,6 @@ const Users: CollectionConfig = {
       fr: 'Utilisateur',
     },
   },
-
-  auth: true,
 
   hooks: {
     afterLogin: [setCookieBasedOnDomain],
