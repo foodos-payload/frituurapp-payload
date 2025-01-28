@@ -140,7 +140,7 @@ export default function MenuDrawer({
                     {/* Footer / version */}
                     <div className="mt-auto text-center p-8 text-[10px] text-gray-400">
                         <span title="4.0.15">
-                            Frituurapp v2.0
+                            Orderapp v2.0
                         </span>
                     </div>
                 </div>

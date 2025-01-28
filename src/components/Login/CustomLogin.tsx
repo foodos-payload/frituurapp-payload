@@ -86,7 +86,7 @@ export default function CustomLoginTailwind() {
                     {/* Logo + heading */}
                     <div className="flex flex-col items-center mb-8">
                         <div className="flex items-center text-3xl font-bold">
-                            Frituurapp
+                            Orderapp
                         </div>
                     </div>
 
