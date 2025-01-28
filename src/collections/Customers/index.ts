@@ -5,18 +5,80 @@ import { tenantField } from '../../fields/TenantField';
 import { shopsField } from '../../fields/ShopsField';
 import { baseListFilter } from './access/baseListFilter';
 import { hasPermission, hasFieldPermission } from '@/access/permissionChecker';
+import { FieldAccess } from 'payload';
+import { isSuperAdmin } from '@/access/isSuperAdmin';
+
+// A custom field-level access function that checks if doc is the owner or staff
+export const ownerOrFieldPermission =
+  (
+    collectionName: string,
+    fieldName: string,
+    action: 'read' | 'update',
+  ): FieldAccess =>
+    async ({ req, doc }) => {
+      // 1) If no user => no
+      if (!req.user) return false;
+
+      // 2) If superadmin => yes
+      if (isSuperAdmin({ req })) {
+        return true;
+      }
+
+      // 3) If doc is the same user => yes
+      if (req.user.collection === collectionName && req.user.id === doc?.id) {
+        return true;
+      }
+
+      // 4) Otherwise, fallback to your role-based check
+      //    NOTE: hasFieldPermission expects a function call pattern:
+      return hasFieldPermission(collectionName, fieldName, action)({
+        req, // pass the 'req' so it can evaluate roles
+      });
+    };
 
 export const Customers: CollectionConfig = {
   slug: 'customers',
 
   // -------------------------
+  // 1) Enable Auth
+  // -------------------------
+  auth: {
+    tokenExpiration: 60 * 60 * 24 * 365,
+    cookies: {
+      secure: false,
+      sameSite: 'None',
+    },
+  },
+
+  // -------------------------
   // Collection-level Access
   // -------------------------
   access: {
+    // On CREATE, staff or your custom logic
     create: hasPermission('customers', 'create'),
+
+    // On READ, do doc-level checks
+    read: async ({ req, id }) => {
+      if (!req.user) return false;
+      if (hasPermission('customers', 'read')({ req })) {
+        return true; // staff can read all
+      }
+      // otherwise, only let them read their own doc
+      return req.user.id === id;
+    },
+
+    // On UPDATE
+    update: async ({ req, id }) => {
+      if (!req.user) return false;
+      if (hasPermission('customers', 'update')({ req })) {
+        return true; // staff can update all
+      }
+      // otherwise, only let them update their own doc
+      return req.user.id === id;
+    },
+
+    // On DELETE
     delete: hasPermission('customers', 'delete'),
-    read: hasPermission('customers', 'read'),
-    update: hasPermission('customers', 'update'),
   },
 
   admin: {
@@ -24,7 +86,6 @@ export const Customers: CollectionConfig = {
     useAsTitle: 'firstname',
     group: 'Shop Settings',
     defaultColumns: ['firstname', 'lastname', 'company_name', 'email'],
-
   },
 
   labels: {
@@ -42,9 +103,11 @@ export const Customers: CollectionConfig = {
     },
   },
 
+  // -------------------------
+  // 2) Fields
+  // NOTE: No explicit "password" field, Payload auto-adds one if auth=true
+  // -------------------------
   fields: [
-
-
     {
       name: 'barcode',
       type: 'text',
@@ -56,8 +119,9 @@ export const Customers: CollectionConfig = {
         },
       },
       access: {
-        read: hasFieldPermission('customers', 'barcode', 'read'),
-        update: hasFieldPermission('customers', 'barcode', 'update'),
+        // Replace with ownerOrFieldPermission
+        read: ownerOrFieldPermission('customers', 'barcode', 'read'),
+        update: ownerOrFieldPermission('customers', 'barcode', 'update'),
       },
     },
 
@@ -74,7 +138,6 @@ export const Customers: CollectionConfig = {
         initCollapsed: true,
       },
       fields: [
-        // firstname
         {
           name: 'firstname',
           type: 'text',
@@ -95,12 +158,10 @@ export const Customers: CollectionConfig = {
             },
           },
           access: {
-            read: hasFieldPermission('customers', 'firstname', 'read'),
-            update: hasFieldPermission('customers', 'firstname', 'update'),
+            read: ownerOrFieldPermission('customers', 'firstname', 'read'),
+            update: ownerOrFieldPermission('customers', 'firstname', 'update'),
           },
         },
-
-        // lastname
         {
           name: 'lastname',
           type: 'text',
@@ -121,12 +182,10 @@ export const Customers: CollectionConfig = {
             },
           },
           access: {
-            read: hasFieldPermission('customers', 'lastname', 'read'),
-            update: hasFieldPermission('customers', 'lastname', 'update'),
+            read: ownerOrFieldPermission('customers', 'lastname', 'read'),
+            update: ownerOrFieldPermission('customers', 'lastname', 'update'),
           },
         },
-
-        // company_name
         {
           name: 'company_name',
           type: 'text',
@@ -134,14 +193,14 @@ export const Customers: CollectionConfig = {
             en: 'Company Name',
             nl: 'Bedrijfsnaam',
             de: 'Firmenname',
-            fr: 'Nom de l\'Entreprise',
+            fr: "Nom de l'Entreprise",
           },
           admin: {
             description: {
               en: 'Company name associated with the customer (if applicable).',
               nl: 'Bedrijfsnaam gekoppeld aan de klant (indien van toepassing).',
               de: 'Firmenname des Kunden (falls zutreffend).',
-              fr: 'Nom de l\'entreprise associé au client (le cas échéant).',
+              fr: "Nom de l'entreprise associé au client (le cas échéant).",
             },
             placeholder: {
               en: 'e.g., Acme Inc.',
@@ -151,8 +210,8 @@ export const Customers: CollectionConfig = {
             },
           },
           access: {
-            read: hasFieldPermission('customers', 'company_name', 'read'),
-            update: hasFieldPermission('customers', 'company_name', 'update'),
+            read: ownerOrFieldPermission('customers', 'company_name', 'read'),
+            update: ownerOrFieldPermission('customers', 'company_name', 'update'),
           },
         },
       ],
@@ -171,7 +230,6 @@ export const Customers: CollectionConfig = {
         initCollapsed: true,
       },
       fields: [
-        // email
         {
           name: 'email',
           type: 'email',
@@ -179,10 +237,10 @@ export const Customers: CollectionConfig = {
           label: { en: 'Email Address', nl: 'E-mailadres', de: 'E-Mail-Adresse', fr: 'Adresse E-mail' },
           admin: {
             description: {
-              en: 'Email address of the customer.',
-              nl: 'E-mailadres van de klant.',
-              de: 'E-Mail-Adresse des Kunden.',
-              fr: 'Adresse e-mail du client.',
+              en: 'Email address of the customer. Used as the username for login.',
+              nl: 'E-mailadres van de klant. Gebruikt als de gebruikersnaam om in te loggen.',
+              de: 'E-Mail-Adresse des Kunden. Wird als Benutzername beim Anmelden verwendet.',
+              fr: "Adresse e-mail du client. Utilisé comme nom d'utilisateur pour la connexion.",
             },
             placeholder: {
               en: 'e.g., john.doe@example.com',
@@ -192,12 +250,10 @@ export const Customers: CollectionConfig = {
             },
           },
           access: {
-            read: hasFieldPermission('customers', 'email', 'read'),
-            update: hasFieldPermission('customers', 'email', 'update'),
+            read: ownerOrFieldPermission('customers', 'email', 'read'),
+            update: ownerOrFieldPermission('customers', 'email', 'update'),
           },
         },
-
-        // phone
         {
           name: 'phone',
           type: 'text',
@@ -217,8 +273,8 @@ export const Customers: CollectionConfig = {
             },
           },
           access: {
-            read: hasFieldPermission('customers', 'phone', 'read'),
-            update: hasFieldPermission('customers', 'phone', 'update'),
+            read: ownerOrFieldPermission('customers', 'phone', 'read'),
+            update: ownerOrFieldPermission('customers', 'phone', 'update'),
           },
         },
       ],
@@ -270,8 +326,8 @@ export const Customers: CollectionConfig = {
             },
           ],
           access: {
-            read: hasFieldPermission('customers', 'tags', 'read'),
-            update: hasFieldPermission('customers', 'tags', 'update'),
+            read: ownerOrFieldPermission('customers', 'tags', 'read'),
+            update: ownerOrFieldPermission('customers', 'tags', 'update'),
           },
         },
       ],
@@ -325,8 +381,8 @@ export const Customers: CollectionConfig = {
             },
           ],
           access: {
-            read: hasFieldPermission('customers', 'memberships', 'read'),
-            update: hasFieldPermission('customers', 'memberships', 'update'),
+            read: ownerOrFieldPermission('customers', 'memberships', 'read'),
+            update: ownerOrFieldPermission('customers', 'memberships', 'update'),
           },
         },
       ],
@@ -345,8 +401,6 @@ export const Customers: CollectionConfig = {
         initCollapsed: false,
       },
       fields: [
-
-
         // CloudPOS ID
         {
           name: 'cloudPOSId',
@@ -358,8 +412,8 @@ export const Customers: CollectionConfig = {
             description: 'The CloudPOS ID for this customer if synced.',
           },
           access: {
-            read: hasFieldPermission('customers', 'cloudPOSId', 'read'),
-            update: hasFieldPermission('customers', 'cloudPOSId', 'update'),
+            read: ownerOrFieldPermission('customers', 'cloudPOSId', 'read'),
+            update: ownerOrFieldPermission('customers', 'cloudPOSId', 'update'),
           },
         },
       ],
@@ -368,8 +422,6 @@ export const Customers: CollectionConfig = {
     // Tenant
     {
       ...tenantField,
-      // Optionally add a label if you prefer
-      // label: { en: 'Tenant', ... },
     },
 
     // Shops
@@ -378,6 +430,9 @@ export const Customers: CollectionConfig = {
     },
   ],
 
+  // -------------------------
+  // 3) Hooks
+  // -------------------------
   hooks: {
     beforeDelete: [
       async ({ req, id }) => {
@@ -386,10 +441,10 @@ export const Customers: CollectionConfig = {
           collection: 'customer-credits',
           where: {
             customerid: {
-              equals: id, // The `id` of this customer being deleted
+              equals: id,
             },
           },
-          limit: 999, // Or a high enough limit to fetch all
+          limit: 999,
         });
 
         // 2) Delete each doc individually
@@ -407,19 +462,27 @@ export const Customers: CollectionConfig = {
 
         // 1) On CREATE, if no barcode, generate a random code
         if (operation === 'create' && !data.barcode) {
-          const randomCode = `CUST-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+          const randomCode = `CUST-${Math.random()
+            .toString(36)
+            .substr(2, 8)
+            .toUpperCase()}`;
           data.barcode = randomCode;
         }
 
-        // 2) On CREATE or UPDATE, if memberships is empty => assign default role
+        // 2) On CREATE, if password is missing, auto-generate one
+        if (operation === 'create' && !data.password) {
+          data.password = Math.random().toString(36).slice(-10);
+        }
+
+        // 3) On CREATE or UPDATE, if memberships is empty => assign default role
         if (operation === 'create' || operation === 'update') {
           const memberships = data.memberships || [];
           if (memberships.length === 0) {
-            // find any membership role(s) with `defaultRole = true`
+            // find membership role(s) with `defaultRole = true`
             const defaultRoles = await req.payload.find({
               collection: 'membership-roles',
               where: { defaultRole: { equals: true } },
-              limit: 10, // if you allow multiple default roles
+              limit: 10,
             });
 
             if (defaultRoles.docs.length > 0) {

@@ -8,6 +8,7 @@
 
 export interface Config {
   auth: {
+    customers: CustomerAuthOperations;
     users: UserAuthOperations;
   };
   collections: {
@@ -85,12 +86,34 @@ export interface Config {
   globals: {};
   globalsSelect: {};
   locale: 'nl' | 'en' | 'de' | 'fr';
-  user: User & {
-    collection: 'users';
-  };
+  user:
+    | (Customer & {
+        collection: 'customers';
+      })
+    | (User & {
+        collection: 'users';
+      });
   jobs: {
     tasks: unknown;
     workflows: unknown;
+  };
+}
+export interface CustomerAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
   };
 }
 export interface UserAuthOperations {
@@ -904,9 +927,6 @@ export interface Customer {
    * Company name associated with the customer (if applicable).
    */
   company_name?: string | null;
-  /**
-   * Email address of the customer.
-   */
   email: string;
   /**
    * Phone number of the customer.
@@ -942,6 +962,13 @@ export interface Customer {
   shops: (string | Shop)[];
   updatedAt: string;
   createdAt: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  password?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1967,10 +1994,15 @@ export interface PayloadLockedDocument {
         value: string | Tipping;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'customers';
+        value: string | Customer;
+      }
+    | {
+        relationTo: 'users';
+        value: string | User;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -1980,10 +2012,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: string;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'customers';
+        value: string | Customer;
+      }
+    | {
+        relationTo: 'users';
+        value: string | User;
+      };
   key?: string | null;
   value?:
     | {
@@ -2424,6 +2461,12 @@ export interface CustomersSelect<T extends boolean = true> {
   shops?: T;
   updatedAt?: T;
   createdAt?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
