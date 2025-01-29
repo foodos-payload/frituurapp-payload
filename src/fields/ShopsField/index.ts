@@ -20,9 +20,9 @@ export const shopsField: Field = {
     relationTo: 'shops',
     hasMany: true, // Allow linking to multiple shops
     required: true,
-    hooks: {
-        beforeValidate: [validateShops], // Add validation hook
-    },
+    // hooks: {
+    //     beforeValidate: [validateShops], // Add validation hook
+    // },
     access: {
         read: () => true, // Shops are publicly readable
         update: () => true, // Controlled through hooks and filters

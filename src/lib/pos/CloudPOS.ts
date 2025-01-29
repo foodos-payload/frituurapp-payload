@@ -178,7 +178,22 @@ export class CloudPOS extends AbstractPOS {
     public async getProductsFromRemote(): Promise<CloudPOSProduct[]> {
         console.log('[CloudPOS] Fetching products...');
         const data = await this.doCloudPOSRequest('product.select', { show_deleted: false });
-        return data || [];
+        console.log('[CloudPOS] product.select =>', data);
+
+        // if the data object has something like {success:0, errorcode:2000, message:"No products found"}
+        // treat that as an empty array
+        if (data?.errorcode === 2000 && data?.message?.includes('No products found')) {
+            console.log('[CloudPOS] CloudPOS says "No products found" => returning empty array.');
+            return [];
+        }
+
+        if (!Array.isArray(data)) {
+            throw new Error(
+                `Expected an array from CloudPOS product.select, but got: ${JSON.stringify(data)}`
+            );
+        }
+
+        return data;
     }
 
     public async createProductInCloudPOS(local: LocalProduct, categoryId: number): Promise<number> {
@@ -543,17 +558,26 @@ export class CloudPOS extends AbstractPOS {
         if (direction !== 'cloudpos-to-orderapp') {
             for (const local of localCats) {
                 if (!local.cloudPOSId) {
-                    // never synced => create remote
-                    const newId = await this.createCategoryInCloudPOS(local);
-                    await payload.update({
-                        collection: 'categories',
-                        id: local.id,
-                        data: { cloudPOSId: newId },
-
-                    });
-                    console.log(
-                        `[CloudPOS] Created new remote category => ID ${newId} for local doc ${local.id}`,
-                    );
+                    // 1) Attempt to find existing remote category by name
+                    const alreadyRemote = remoteCats.find(rc => rc.name.toLowerCase() === local.name_nl.toLowerCase());
+                    if (alreadyRemote) {
+                        // use that existing remote doc
+                        console.log(`[CloudPOS] Found remote category by name="${alreadyRemote.name}" => ID ${alreadyRemote.id}`);
+                        await payload.update({
+                            collection: 'categories',
+                            id: local.id,
+                            data: { cloudPOSId: alreadyRemote.id },
+                        });
+                    } else {
+                        // 2) Actually create a new one
+                        const newId = await this.createCategoryInCloudPOS(local);
+                        await payload.update({
+                            collection: 'categories',
+                            id: local.id,
+                            data: { cloudPOSId: newId },
+                        });
+                        console.log(`[CloudPOS] Created new remote category => ID ${newId} for local doc ${local.id}`);
+                    }
                 } else {
                     // see if remote doc exists
                     const remoteCat = remoteMap.get(local.cloudPOSId);
@@ -692,33 +716,51 @@ export class CloudPOS extends AbstractPOS {
         // ─────────────────────────────────────────────────────────────────
         if (direction !== 'cloudpos-to-orderapp') {
             for (const local of localSubs) {
+                // If no cloudPOSId => see if there's a remote subproduct with the same name
                 if (!local.cloudPOSId) {
-                    const newId = await this.createSubproductInCloudPOS(local);
-                    await localPayload.update({
-                        collection: 'subproducts',
-                        id: local.id,
-                        data: { cloudPOSId: newId },
-
-                    });
-                    console.log(
-                        `[CloudPOS] Created new remote subproduct => ID ${newId} for local doc ${local.id}`,
+                    // 1) Attempt to find existing remote subproduct by name
+                    const existingRemote = remoteSubs.find(
+                        (rs) => rs.name.toLowerCase() === (local.name_nl || '').toLowerCase(),
                     );
+
+                    if (existingRemote) {
+                        console.log(
+                            `[CloudPOS] Found remote subproduct by name="${existingRemote.name}" => ID ${existingRemote.id}`
+                        );
+                        // Link the local doc so we don't create duplicates
+                        await localPayload.update({
+                            collection: 'subproducts',
+                            id: local.id,
+                            data: { cloudPOSId: existingRemote.id },
+                        });
+                    } else {
+                        // 2) Actually create a new subproduct in remote
+                        const newId = await this.createSubproductInCloudPOS(local);
+                        await localPayload.update({
+                            collection: 'subproducts',
+                            id: local.id,
+                            data: { cloudPOSId: newId },
+                        });
+                        console.log(
+                            `[CloudPOS] Created new remote subproduct => ID ${newId} for local doc ${local.id}`
+                        );
+                    }
                 } else {
+                    // => has a cloudPOSId => either re-create if missing, or update if local is newer
                     const remoteDoc = remoteMap.get(local.cloudPOSId);
                     if (!remoteDoc) {
                         // re-create
                         console.log(
-                            `[CloudPOS] Remote subproduct for local doc ${local.id} not found => re-creating...`,
+                            `[CloudPOS] Remote subproduct for local doc ${local.id} not found => re-creating...`
                         );
                         const newId = await this.createSubproductInCloudPOS(local);
                         await localPayload.update({
                             collection: 'subproducts',
                             id: local.id,
                             data: { cloudPOSId: newId },
-
                         });
                         console.log(
-                            `[CloudPOS] Re-created remote subproduct => ID ${newId} for local doc ${local.id}`,
+                            `[CloudPOS] Re-created remote subproduct => ID ${newId} for local doc ${local.id}`
                         );
                     } else {
                         // compare modtime => push if local is newer
@@ -726,7 +768,7 @@ export class CloudPOS extends AbstractPOS {
                         const remoteMod = remoteDoc.modtime ?? 0;
                         if (localMod > remoteMod) {
                             console.log(
-                                `[CloudPOS] Local subproduct ${local.id} is newer => updating remote ID ${remoteDoc.id}...`,
+                                `[CloudPOS] Local subproduct ${local.id} is newer => updating remote ID ${remoteDoc.id}...`
                             );
                             await this.updateSubproductInCloudPOS(local, remoteDoc.id);
                         }
@@ -752,7 +794,7 @@ export class CloudPOS extends AbstractPOS {
                 if (!localMatch) {
                     // => create local
                     console.log(
-                        `[CloudPOS] Found remote-only subproduct ID ${remote.id} => creating local doc...`,
+                        `[CloudPOS] Found remote-only subproduct ID ${remote.id} => creating local doc...`
                     );
                     await localPayload.create({
                         collection: 'subproducts',
@@ -766,7 +808,6 @@ export class CloudPOS extends AbstractPOS {
                             tenant: this.tenantId || '',
                             status: 'enabled',
                         },
-
                     });
                 } else {
                     // => compare modtime => pull if remote is newer
@@ -774,7 +815,7 @@ export class CloudPOS extends AbstractPOS {
                     const remoteMod = remote.modtime ?? 0;
                     if (remoteMod > localMod) {
                         console.log(
-                            `[CloudPOS] Remote subproduct ${remote.id} is newer => pulling into local doc ${localMatch.id}...`,
+                            `[CloudPOS] Remote subproduct ${remote.id} is newer => pulling into local doc ${localMatch.id}...`
                         );
                         await localPayload.update({
                             collection: 'subproducts',
@@ -785,7 +826,6 @@ export class CloudPOS extends AbstractPOS {
                                 tax: remote.tax,
                                 modtime: remoteMod,
                             },
-
                         });
                     }
                 }
