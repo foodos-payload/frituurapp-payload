@@ -937,6 +937,38 @@ export const Products: CollectionConfig = {
             ],
         },
 
+        // 5) A NEW Collapsible for "Loyalty & Rewards"
+        {
+            type: 'collapsible',
+            label: 'Loyalty & Rewards',
+            admin: {
+                initCollapsed: true, // optional
+            },
+            fields: [
+                {
+                    name: 'pointscost',
+                    type: 'number',
+                    label: {
+                        en: 'Points Cost',
+                        nl: 'Puntenkost',
+                        // add other translations if needed
+                    },
+                    required: false,
+                    defaultValue: 0, // or null
+                    admin: {
+                        description: {
+                            en: 'Number of loyalty points required to redeem this product as a reward.',
+                            nl: 'Aantal loyaliteitspunten vereist om dit product te verzilveren als beloning.',
+                        },
+                    },
+                    access: {
+                        read: hasFieldPermission('products', 'pointscost', 'read'),
+                        update: hasFieldPermission('products', 'pointscost', 'update'),
+                    },
+                },
+            ],
+        },
+
         //MetaData
         {
             type: 'collapsible',

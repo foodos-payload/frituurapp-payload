@@ -453,6 +453,10 @@ export interface Product {
    */
   webshoporderable?: boolean | null;
   /**
+   * Number of loyalty points required to redeem this product as a reward.
+   */
+  pointscost?: number | null;
+  /**
    * Timestamp for last modification.
    */
   modtime: number;
@@ -1229,13 +1233,21 @@ export interface Coupon {
    */
   barcode: string;
   /**
+   * Determines how this coupon is applied. “product” means a free item reward.
+   */
+  coupon_type: 'percentage' | 'fixed' | 'product';
+  /**
    * Value of the coupon (percentage or fixed amount).
    */
-  value: number;
+  value?: number | null;
   /**
    * Type of value for the coupon.
    */
-  value_type: 'percentage' | 'fixed';
+  value_type?: ('percentage' | 'fixed') | null;
+  /**
+   * If coupon_type = product, specify which product is granted as a free reward.
+   */
+  product?: (string | null) | Product;
   /**
    * Start date for the coupon validity.
    */
@@ -1245,15 +1257,15 @@ export interface Coupon {
    */
   valid_until: string;
   /**
-   * Maximum number of times the coupon can be used. Leave empty for unlimited.
+   * Maximum times the coupon can be used (leave empty for unlimited).
    */
   max_uses?: number | null;
   /**
-   * Number of times this coupon has been used.
+   * Number of times this coupon has been redeemed.
    */
   uses?: number | null;
   /**
-   * Mark if the gift voucher has been used.
+   * Mark if the coupon (or gift voucher) has been fully used/redeemed.
    */
   used?: boolean | null;
   updatedAt: string;
@@ -2222,6 +2234,7 @@ export interface ProductsSelect<T extends boolean = true> {
   posshow?: T;
   webshopshow?: T;
   webshoporderable?: T;
+  pointscost?: T;
   modtime?: T;
   cloudPOSId?: T;
   status?: T;
@@ -2509,8 +2522,10 @@ export interface CouponsSelect<T extends boolean = true> {
   tenant?: T;
   shops?: T;
   barcode?: T;
+  coupon_type?: T;
   value?: T;
   value_type?: T;
+  product?: T;
   valid_from?: T;
   valid_until?: T;
   max_uses?: T;

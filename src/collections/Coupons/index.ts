@@ -26,8 +26,7 @@ export const Coupons: CollectionConfig = {
   admin: {
     baseListFilter,
     useAsTitle: 'barcode',
-    defaultColumns: ['barcode', 'value', 'value_type', 'shop'],
-
+    defaultColumns: ['barcode', 'coupon_type', 'value', 'value_type', 'shops'],
   },
 
   labels: {
@@ -49,13 +48,11 @@ export const Coupons: CollectionConfig = {
     // 1) Tenant
     {
       ...tenantField,
-
     },
 
     // 2) Shops
     {
       ...shopsField,
-
     },
 
     // 3) barcode
@@ -93,7 +90,38 @@ export const Coupons: CollectionConfig = {
       },
     },
 
-    // 4) value
+    // 4) coupon_type (NEW)
+    {
+      name: 'coupon_type',
+      type: 'select',
+      label: {
+        en: 'Coupon Type',
+        nl: 'Type Kortingsbon',
+        de: 'Gutscheinart',
+        fr: 'Type de Coupon',
+      },
+      required: true,
+      defaultValue: 'percentage',
+      options: [
+        { label: 'Percentage', value: 'percentage' },
+        { label: 'Fixed Amount', value: 'fixed' },
+        { label: 'Product Reward', value: 'product' },
+      ],
+      admin: {
+        description: {
+          en: 'Determines how this coupon is applied. “product” means a free item reward.',
+          nl: 'Bepaalt hoe deze kortingsbon wordt toegepast. "product" betekent een gratis productbeloning.',
+          de: 'Legt fest, wie dieser Gutschein angewendet wird. "product" bedeutet eine kostenlose Produktprämie.',
+          fr: 'Détermine la manière dont ce coupon est appliqué. "product" signifie un article gratuit.',
+        },
+      },
+      access: {
+        read: hasFieldPermission('coupons', 'coupon_type', 'read'),
+        update: hasFieldPermission('coupons', 'coupon_type', 'update'),
+      },
+    },
+
+    // 5) value (hide if coupon_type = product)
     {
       name: 'value',
       type: 'number',
@@ -103,7 +131,7 @@ export const Coupons: CollectionConfig = {
         de: 'Wert',
         fr: 'Valeur',
       },
-      required: true,
+      required: false,
       admin: {
         description: {
           en: 'Value of the coupon (percentage or fixed amount).',
@@ -111,6 +139,7 @@ export const Coupons: CollectionConfig = {
           de: 'Wert des Gutscheins (Prozentsatz oder fester Betrag).',
           fr: 'Valeur du coupon (pourcentage ou montant fixe).',
         },
+        condition: (data) => data.coupon_type !== 'product',
       },
       access: {
         read: hasFieldPermission('coupons', 'value', 'read'),
@@ -118,7 +147,7 @@ export const Coupons: CollectionConfig = {
       },
     },
 
-    // 5) value_type
+    // 6) value_type (hide if coupon_type = product)
     {
       name: 'value_type',
       type: 'select',
@@ -132,7 +161,7 @@ export const Coupons: CollectionConfig = {
         { label: 'Percentage', value: 'percentage' },
         { label: 'Fixed Amount', value: 'fixed' },
       ],
-      required: true,
+      required: false,
       admin: {
         description: {
           en: 'Type of value for the coupon.',
@@ -140,6 +169,7 @@ export const Coupons: CollectionConfig = {
           de: 'Werttyp für den Gutschein.',
           fr: 'Type de valeur pour le coupon.',
         },
+        condition: (data) => data.coupon_type !== 'product',
       },
       access: {
         read: hasFieldPermission('coupons', 'value_type', 'read'),
@@ -147,7 +177,34 @@ export const Coupons: CollectionConfig = {
       },
     },
 
-    // 6) valid_from
+    // 7) product (NEW) — only relevant if coupon_type = product
+    {
+      name: 'product',
+      type: 'relationship',
+      relationTo: 'products',
+      required: false,
+      label: {
+        en: 'Reward Product',
+        nl: 'Beloningsproduct',
+        de: 'Prämienprodukt',
+        fr: 'Produit de Récompense',
+      },
+      admin: {
+        description: {
+          en: 'If coupon_type = product, specify which product is granted as a free reward.',
+          nl: 'Als coupon_type = product, geef aan welk product gratis wordt toegekend.',
+          de: 'Wenn coupon_type = product, geben Sie an, welches Produkt als kostenlose Prämie gewährt wird.',
+          fr: 'Si coupon_type = product, spécifiez le produit offert comme récompense.',
+        },
+        condition: (data) => data.coupon_type === 'product',
+      },
+      access: {
+        read: hasFieldPermission('coupons', 'product', 'read'),
+        update: hasFieldPermission('coupons', 'product', 'update'),
+      },
+    },
+
+    // 8) valid_from
     {
       name: 'valid_from',
       type: 'date',
@@ -172,7 +229,7 @@ export const Coupons: CollectionConfig = {
       },
     },
 
-    // 7) valid_until
+    // 9) valid_until
     {
       name: 'valid_until',
       type: 'date',
@@ -197,7 +254,7 @@ export const Coupons: CollectionConfig = {
       },
     },
 
-    // 8) max_uses
+    // 10) max_uses
     {
       name: 'max_uses',
       type: 'number',
@@ -210,10 +267,10 @@ export const Coupons: CollectionConfig = {
       required: false,
       admin: {
         description: {
-          en: 'Maximum number of times the coupon can be used. Leave empty for unlimited.',
-          nl: 'Maximaal aantal keren dat de kortingsbon kan worden gebruikt. Laat leeg voor onbeperkt.',
-          de: 'Maximale Anzahl der Nutzungen des Gutscheins. Leer lassen für unbegrenzt.',
-          fr: 'Nombre maximal d\'utilisations du coupon. Laissez vide pour illimité.',
+          en: 'Maximum times the coupon can be used (leave empty for unlimited).',
+          nl: 'Maximaal aantal keren dat deze kortingsbon kan worden gebruikt (leeg voor onbeperkt).',
+          de: 'Max. Anzahl Verwendungen (leer lassen für unbegrenzt).',
+          fr: 'Nombre max d’utilisations (laissez vide pour illimité).',
         },
       },
       access: {
@@ -222,7 +279,7 @@ export const Coupons: CollectionConfig = {
       },
     },
 
-    // 9) uses
+    // 11) uses
     {
       name: 'uses',
       type: 'number',
@@ -236,21 +293,19 @@ export const Coupons: CollectionConfig = {
       admin: {
         readOnly: true,
         description: {
-          en: 'Number of times this coupon has been used.',
+          en: 'Number of times this coupon has been redeemed.',
           nl: 'Aantal keren dat deze kortingsbon is gebruikt.',
-          de: 'Anzahl der Nutzungen dieses Gutscheins.',
+          de: 'Anzahl der Einlösungen dieses Gutscheins.',
           fr: 'Nombre de fois que ce coupon a été utilisé.',
         },
       },
       access: {
         read: hasFieldPermission('coupons', 'uses', 'read'),
-        // no `update` permission needed if you never want manual updates 
-        // (only done by system or hooks). If you want to allow manual update, add it:
         update: hasFieldPermission('coupons', 'uses', 'update'),
       },
     },
 
-    // 10) used
+    // 12) used
     {
       name: 'used',
       type: 'checkbox',
@@ -263,10 +318,10 @@ export const Coupons: CollectionConfig = {
       },
       admin: {
         description: {
-          en: 'Mark if the gift voucher has been used.',
-          nl: 'Markeer als de cadeaubon al is gebruikt.',
-          de: 'Markieren Sie, ob der Geschenkgutschein bereits verwendet wurde.',
-          fr: 'Marquez si le bon cadeau a été utilisé.',
+          en: 'Mark if the coupon (or gift voucher) has been fully used/redeemed.',
+          nl: 'Markeer als deze kortingsbon al volledig is gebruikt/verzilverd.',
+          de: 'Markieren Sie, ob der Gutschein vollständig verwendet/eingelöst wurde.',
+          fr: 'Indiquez si le coupon a été entièrement utilisé.',
         },
       },
       access: {

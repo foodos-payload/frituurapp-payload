@@ -47,8 +47,9 @@ export default async function LoginPage() {
 
     // b) Fetch branding
     const brandingData = await fetchBranding(hostSlug);
+    const shopData = brandingData.shop || null;
 
     // c) Render the client layout.
     //    If your root layout sets up ShopBrandingProvider globally, we just do:
-    return <LoginLayout shopSlug={hostSlug} />;
+    return <LoginLayout shopSlug={hostSlug} shopData={shopData} />;
 }

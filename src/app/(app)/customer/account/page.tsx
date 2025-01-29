@@ -49,11 +49,12 @@ export default async function AccountPage() {
 
     // b) Fetch branding
     const brandingData = await fetchBranding(hostSlug);
+    const shopData = brandingData.shop || null;
 
     // c) Render your client layout with the shopSlug
     //    (We assume your root layout or another provider sets up ShopBrandingProvider globally.
     //     If not, you could pass `branding` as a prop here, but let's assume it's handled globally.)
     return (
-        <AccountLayout shopSlug={hostSlug} />
+        <AccountLayout shopSlug={hostSlug} shopData={shopData} />
     );
 }

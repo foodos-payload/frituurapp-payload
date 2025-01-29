@@ -4,29 +4,30 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useShopBranding } from "@/context/ShopBrandingContext";
 
+import LandingHeader from "@/app/(app)/components/LandingHeader";
+import Footer from "@/app/(app)/components/Footer";
+
 interface Props {
     shopSlug: string;
+    shopData?: any;
 }
 
-/**
- * A client component that works like your OrderLayout or AccountLayout:
- * - Calls `useShopBranding()` for the shop branding.
- * - Renders the login form (same logic as your original code).
- */
-export default function LoginLayout({ shopSlug }: Props) {
-    // 1) If the entire app is wrapped in <ShopBrandingProvider>,
-    //    we can directly call:
+export default function LoginLayout({ shopSlug, shopData }: Props) {
+    // Grab branding from context
     const branding = useShopBranding();
     console.log("[LoginLayout] branding =>", branding);
 
     const router = useRouter();
 
-    // 2) Local form states
+    // Local states
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
 
-    // 3) When user submits, POST to /api/customers/login
+    // We'll use the CTA color if present; fallback to something
+    const ctaColor = branding.primaryColorCTA || "#3490dc";
+
+    // Submit => POST /api/customers/login
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
         setError(null);
@@ -50,8 +51,6 @@ export default function LoginLayout({ shopSlug }: Props) {
 
             localStorage.setItem("customerToken", token);
             localStorage.setItem("customerID", user.id);
-
-            // 4) Redirect to the "My Account" page
             router.push("/customer/account");
         } catch (err: any) {
             setError(err.message || "Something went wrong");
@@ -59,43 +58,85 @@ export default function LoginLayout({ shopSlug }: Props) {
     }
 
     return (
-        <div style={{ maxWidth: 400, margin: "40px auto" }}>
-            {/* Example usage of branding: */}
-            {branding.siteTitle && (
-                <h2>{branding.siteTitle} - Login Page</h2>
-            )}
+        <div className="flex flex-col min-h-screen">
+            {/* Header */}
+            <LandingHeader
+                siteTitle={branding.siteTitle}
+                logoUrl={branding.logoUrl}
+                headerBg={branding.headerBackgroundColor}
+                primaryColorCTA={branding.primaryColorCTA}
+                branding={branding}
+            />
 
-            <h1>Customer Login (JWT in Header)</h1>
+            {/* Main */}
+            <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+                <h2 className="text-2xl font-bold mb-8">
+                    Klantenlogin
+                </h2>
 
-            <form onSubmit={handleLogin}>
-                <div>
-                    <label>Email:</label>
-                    <br />
-                    <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={{ width: "100%", marginBottom: 12 }}
-                    />
-                </div>
 
-                <div>
-                    <label>Password:</label>
-                    <br />
-                    <input
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={{ width: "100%", marginBottom: 12 }}
-                    />
-                </div>
+                {error && <p className="text-red-600 mb-4">{error}</p>}
 
-                <button type="submit">Login</button>
-            </form>
+                <form onSubmit={handleLogin} className="w-full space-y-4">
+                    <div>
+                        <label className="block mb-1 font-medium">Email</label>
+                        <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="
+                w-full 
+                border border-gray-300 
+                rounded-md 
+                p-2 
+                focus:outline-none 
+                focus:border-blue-500
+              "
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block mb-1 font-medium">Password</label>
+                        <input
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="
+                w-full 
+                border border-gray-300 
+                rounded-md 
+                p-2 
+                focus:outline-none 
+                focus:border-blue-500
+              "
+                        />
+                    </div>
+
+                    {/* The Login button uses CTA color */}
+                    <button
+                        type="submit"
+                        className="
+              w-full
+              text-white
+              font-semibold
+              rounded-md
+              py-2
+              mt-2
+              hover:opacity-90
+              transition-opacity
+            "
+                        style={{ backgroundColor: ctaColor }}
+                    >
+                        Login
+                    </button>
+                </form>
+            </main>
+
+            {/* Footer */}
+            <Footer branding={branding} shopData={shopData} />
         </div>
     );
 }
