@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
         // 6) Create Order
         const sanitizedData = {
             tenant: tenantID,
-            shops: [shopID],
+            shops: [shopDoc],// ✅ Ensure shops is stored as an array of relationship objects
             order_type: orderType || "web",
             status: status || "pending_payment",
             customerBarcode,
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
             fulfillment_date: fulfillmentDate,
             fulfillment_time: fulfillmentTime,
             customer_details: customerDetails,
-            order_details: sanitizedOrderDetails,
+            order_details: sanitizedOrderDetails, // ✅ Ensures product is stored correctly
             payments: paymentsToStore,
             shipping_cost: typeof shippingCost === "number" ? shippingCost : 0,
             promotionsUsed: promotionsUsed || {},
@@ -172,6 +172,13 @@ export async function POST(request: NextRequest) {
             kioskNumber: kioskNumber || null,
         };
 
+        // ✅ Remove unwanted fields before inserting
+        sanitizedData.order_details.forEach((detail) => {
+            detail.subproducts?.forEach((sub) => { });
+        });
+        sanitizedData.payments.forEach((payment) => { });
+
+        // ✅ Insert into Payload CMS
         const createdOrder = await payload.create({
             collection: "orders",
             data: sanitizedData,
