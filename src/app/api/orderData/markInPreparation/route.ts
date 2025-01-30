@@ -19,9 +19,9 @@ import config from '@payload-config'
  *       - name: orderId
  *         in: query
  *         required: true
- *         description: The numeric ID of the order
+ *         description: The ID of the order
  *         schema:
- *           type: integer
+ *           type: string
  *     responses:
  *       '200':
  *         description: Successfully updated order to status=in_preparation
@@ -40,13 +40,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'host + orderId required' }, { status: 400 })
         }
 
-        const orderId = parseInt(orderIdStr, 10)
         const payload = await getPayload({ config })
 
         // Mark the order => status=in_preparation
         const updated = await payload.update({
             collection: 'orders',
-            id: orderId,
+            id: orderIdStr,
             data: {
                 status: 'in_preparation',
             },

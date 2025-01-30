@@ -1,4 +1,5 @@
 // File: src/app/api/orderData/markAwaitingPreparation/route.ts
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -19,9 +20,9 @@ import config from '@payload-config'
  *       - name: orderId
  *         in: query
  *         required: true
- *         description: The numeric ID of the order
+ *         description: The ID of the order
  *         schema:
- *           type: integer
+ *           type: string
  *     responses:
  *       '200':
  *         description: Successfully updated order to status=awaiting_preparation
@@ -40,13 +41,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'host + orderId required' }, { status: 400 })
         }
 
-        const orderId = parseInt(orderIdStr, 10)
         const payload = await getPayload({ config })
 
         // Mark the order => status=awaiting_preparation
         const updated = await payload.update({
             collection: 'orders',
-            id: orderId,
+            // Pass the string directly as the doc ID
+            id: orderIdStr,
             data: {
                 status: 'awaiting_preparation',
             },
