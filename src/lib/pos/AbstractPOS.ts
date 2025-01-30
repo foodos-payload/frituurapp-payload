@@ -1,10 +1,40 @@
 // src/lib/pos/AbstractPOS.ts
 export interface LocalProductBase {
-    id: string
-    name_nl: string
-    price?: number
-    tax_dinein?: number
-    modtime?: number
+    /** The Payload doc ID (string). */
+    id: string;
+
+    /** The primary product name in Dutch (required). */
+    name_nl: string;
+
+    /** Sale price (unified or for one fulfillment method). */
+    price?: number;
+
+    /**
+     * The default tax (e.g. for takeaway) or a standard VAT rate.
+     * In your CloudPOS sync, you map this to the remote `tax` field.
+     */
+    tax?: number;
+
+    /**
+     * The dine-in tax, separate from the default if needed.
+     * In your CloudPOS sync, you map this to the remote `tax_table` field.
+     */
+    tax_dinein?: number;
+
+    /**
+     * Timestamp for last modification (used to decide if local is newer).
+     */
+    modtime?: number;
+
+    /**
+     * Whether stock tracking is enabled for this product.
+     */
+    enable_stock?: boolean;
+
+    /**
+     * The current inventory quantity if `enable_stock` is true.
+     */
+    quantity?: number;
 }
 
 export interface LocalCategoryBase {

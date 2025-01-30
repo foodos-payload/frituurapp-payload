@@ -58,8 +58,10 @@ interface CloudPOSSubproduct {
     product_ids?: number[];
 }
 interface CloudPOSPopup {
+    id: number;
     default_checked_subproduct_id: number;
     minimum_option: number;
+    maximum_option: number;
     required_option_webshop: boolean;
     required_option_cashregister: boolean;
     multiselect: boolean;
@@ -68,6 +70,7 @@ interface CloudPOSPopup {
     subproduct_ids?: number[];
     modtime?: number;
 }
+
 interface CloudPOSCustomer {
     id: number;
     firstname: string;
@@ -197,29 +200,57 @@ export class CloudPOS extends AbstractPOS {
     }
 
     public async createProductInCloudPOS(local: LocalProduct, categoryId: number): Promise<number> {
-        const requestBody = {
-            name: local.name_nl,
-            price: (local.price || 0).toFixed(2),
-            tax: local.tax_dinein || 21,
+        // Build request body
+        // (See https://cloudpos.be/api/v2/product.insert for full specs)
+        let quantity = 0;
+        if (local.enable_stock) {
+            quantity = local.quantity ?? 0;
+        }
+
+        // If you want to pass a purchase price, set it here. Otherwise skip it.
+        // For example: let purchasePrice = '0.00';
+
+        const requestBody: any = {
+            name: local.name_nl ?? '',
             category_id: categoryId,
+            price: (local.price ?? 0).toFixed(2), // sale price
+            // purchaseprice: purchasePrice,        // if needed
+            tax: local.tax ?? 21,               // CloudPOS 'tax'
+            tax_table: local.tax_dinein ?? 21,  // CloudPOS 'tax_table'
+            quantity: quantity.toString(),      // send as string if you want
         };
+
+        // Call CloudPOS
         const res = await this.doCloudPOSRequest('product.insert', requestBody);
+        if (!res?.id) {
+            throw new Error(`Failed to create product in CloudPOS => ${JSON.stringify(res)}`);
+        }
         return res.id;
     }
 
-    public async updateProductInCloudPOS(
-        local: LocalProduct,
-        remoteId: number,
-        categoryId: number,
-    ): Promise<void> {
-        const requestBody = {
+    public async updateProductInCloudPOS(local: LocalProduct, remoteId: number, categoryId: number) {
+        let quantity = 0;
+        if (local.enable_stock) {
+            quantity = local.quantity ?? 0;
+        }
+        const requestBody: any = {
             id: remoteId,
-            name: local.name_nl,
-            price: (local.price || 0).toFixed(2),
-            tax: local.tax_dinein || 21,
+            name: local.name_nl ?? '',
             category_id: categoryId,
+            price: (local.price ?? 0).toFixed(2),
+
+            // The lines in question:
+            tax: local.tax ?? 21,           // e.g., 12
+            tax_table: local.tax_dinein ?? 21,  // e.g., 21
+
+            quantity: quantity.toString(),
         };
-        await this.doCloudPOSRequest('product.update', requestBody);
+
+        console.log('[updateProductInCloudPOS] requestBody=', requestBody);
+
+        const responseData = await this.doCloudPOSRequest('product.update', requestBody);
+
+        console.log('[updateProductInCloudPOS] responseData=', responseData);
     }
 
     /**
@@ -420,21 +451,24 @@ export class CloudPOS extends AbstractPOS {
     }
 
     public async updatePopupInCloudPOS(productCloudId: number, popup: CloudPOSPopup): Promise<void> {
+        // The body must match the CloudPOS API shape
+        // (which you have correct, but let's show explicitly)
         const requestBody = {
-            id: productCloudId,
-            popupid: popup.popupid,
-            popup_titel: popup.popup_titel || '',
-            multiselect: popup.multiselect || false,
-            required_option_cashregister: popup.required_option_cashregister || false,
-            required_option_webshop: popup.required_option_webshop || false,
-            minimum_option: popup.minimum_option || 0,
-            maximum_option: popup.minimum_option || 0,
-            default_checked_subproduct_id: popup.default_checked_subproduct_id || 0,
-            subproduct_ids: popup.subproduct_ids || [],
+            id: popup.id || productCloudId,                // typically "id" is the product's ID
+            popupid: popup.popupid,                        // popup column index
+            popup_titel: popup.popup_titel,
+            multiselect: popup.multiselect,
+            required_option_cashregister: popup.required_option_cashregister,
+            required_option_webshop: popup.required_option_webshop,
+            minimum_option: popup.minimum_option,
+            maximum_option: popup.maximum_option,
+            default_checked_subproduct_id: popup.default_checked_subproduct_id,
+            subproduct_ids: popup.subproduct_ids,
         };
+
         await this.doCloudPOSRequest('productpopup.update', requestBody);
         console.log(
-            `[CloudPOS] Updated popup column ${popup.popupid} on product ${productCloudId} => "${requestBody.popup_titel}"`,
+            `[CloudPOS] Updated popup column ${popup.popupid} on product ${productCloudId} => "${popup.popup_titel}"`,
         );
     }
 
@@ -443,11 +477,12 @@ export class CloudPOS extends AbstractPOS {
      * Only relevant in local->remote flow (orderapp-to-cloudpos).
      */
     private async syncPopupsForProduct(productDoc: any, productCloudId: number): Promise<void> {
+        // If productpopups is missing or empty, we do nothing
         if (!productDoc.productpopups || !Array.isArray(productDoc.productpopups)) {
             return;
         }
 
-        let popupColumnIndex = 1;
+        // We'll need to do a separate productpopup.update call for each assigned popup.
         for (const assignedPopup of productDoc.productpopups) {
             const popupDoc = assignedPopup.popup;
             if (!popupDoc) {
@@ -457,6 +492,11 @@ export class CloudPOS extends AbstractPOS {
                 continue;
             }
 
+            // This is the "popup column ID" in CloudPOS: usually 1,2,3,... 
+            // or you might store it in `assignedPopup.order`.
+            const columnIndex = assignedPopup.order || 1;
+
+            // Gather subproduct IDs
             const subproductIds: number[] = [];
             if (Array.isArray(popupDoc.subproducts)) {
                 const localPayload = await getPayload({ config });
@@ -470,12 +510,13 @@ export class CloudPOS extends AbstractPOS {
                         subproductIds.push(subDoc.cloudPOSId);
                     } else {
                         console.warn(
-                            `[CloudPOS] subproduct ${localSubID} is missing cloudPOSId => skipping in popup.`,
+                            `[CloudPOS] Subproduct ${localSubID} missing cloudPOSId => skipping in popup.`,
                         );
                     }
                 }
             }
 
+            // If your popup doc has a “default_checked_subproduct”, gather that ID
             let defaultCheckedId = 0;
             if (
                 popupDoc.default_checked_subproduct &&
@@ -484,24 +525,25 @@ export class CloudPOS extends AbstractPOS {
                 defaultCheckedId = popupDoc.default_checked_subproduct.cloudPOSId || 0;
             }
 
+            // Build the request body for "productpopup.update"
             const popupForCloudPOS = {
-                popupid: popupColumnIndex,
-                popup_titel: popupDoc.popup_title_nl || '',
-                subproduct_ids: subproductIds,
+                id: productCloudId,
+                popupid: columnIndex,
+                popup_titel: popupDoc.popup_title_nl || '',            // or whichever field
                 multiselect: popupDoc.multiselect || false,
                 required_option_cashregister: popupDoc.required_option_cashregister || false,
                 required_option_webshop: popupDoc.required_option_webshop || false,
                 minimum_option: popupDoc.minimum_option || 0,
                 maximum_option: popupDoc.maximum_option || 0,
                 default_checked_subproduct_id: defaultCheckedId,
+                subproduct_ids: subproductIds,
             };
 
+            // Send it off to CloudPOS
             await this.updatePopupInCloudPOS(productCloudId, popupForCloudPOS);
             console.log(
-                `[CloudPOS] Synced popup #${popupColumnIndex} ("${popupDoc.popup_title_nl}") on product ${productCloudId}.`,
+                `[CloudPOS] Synced popup (column=${columnIndex}) title="${popupForCloudPOS.popup_titel}" on product ${productCloudId}.`,
             );
-
-            popupColumnIndex++;
         }
     }
 
@@ -967,6 +1009,11 @@ export class CloudPOS extends AbstractPOS {
         // trim trailing commas/spaces
         remark = remark.trim().replace(/[,\s]+$/, '');
 
+        // e.g., discount = orderDoc.discountTotal ?? 0;
+        const discount = typeof orderDoc.discountTotal === 'number'
+            ? orderDoc.discountTotal
+            : 0;
+
         // 9) Build request
         const requestBody: any = {
             plannedorder,
@@ -975,10 +1022,16 @@ export class CloudPOS extends AbstractPOS {
             customerid,
             delivery: deliveryMode,
             onlinepaid,
-            discountamount: '0.00', // if you have discount, pass it here
+            discountamount: discount.toFixed(2) || 0, // e.g. "1.50"
             remark,
             weborderdetail: baseLines,
         };
+
+        // **Add a console.log right here:**
+        console.log(
+            '[pushLocalOrderToCloudPOS] About to call weborder.insert with:',
+            JSON.stringify(requestBody, null, 2)
+        );
 
         // 10) Insert weborder
         const res = await this.doCloudPOSRequest('weborder.insert', requestBody);
@@ -1030,14 +1083,22 @@ export class CloudPOS extends AbstractPOS {
         return newId;
     }
 
-    /**
-     * Builds "weborderdetail" lines from local order_details, including subproducts.
-     */
+    /******************************************************
+ * Dynamically fetch subDoc by sub.subproductId so
+ * that we can fill in sub.cloudPOSId before building
+ * the "weborderdetail" lines for CloudPOS.
+ ******************************************************/
+    /*******************************************************
+ * buildWebOrderDetail: replicate the entire "product" line
+ * for each unit in line.quantity, so each line in the
+ * CloudPOS detail has quantity=1. This is more "readable"
+ * in the POS if you prefer multiple lines.
+ ******************************************************/
     private async buildWebOrderDetail(orderDetails: any[], payload: any): Promise<any[]> {
         const result: any[] = [];
 
         for (const line of orderDetails) {
-            // 1) get product doc
+            // -- fetch product doc if "line.product" is just an ID --
             let productDoc = line.product;
             if (typeof productDoc === 'string') {
                 productDoc = await payload.findByID({
@@ -1045,49 +1106,71 @@ export class CloudPOS extends AbstractPOS {
                     id: productDoc,
                 });
             }
+
             if (!productDoc?.cloudPOSId) {
                 console.warn(
-                    `[CloudPOS] Order line referencing product "${productDoc?.name_nl}" but no cloudPOSId => skipping.`,
+                    `[CloudPOS] Skipping line; product "${productDoc?.name_nl}" missing cloudPOSId.`,
                 );
                 continue;
             }
 
-            const quantity = line.quantity ?? 1;
-            const productprice = (line.price ?? 0).toFixed(2);
-            const producttax = line.tax ?? 21;
+            // For each unit in "line.quantity", create a separate line
+            const itemCount = line.quantity ?? 1;
+            for (let i = 0; i < itemCount; i++) {
+                // Build a single line with quantity=1
+                const detailEntry: any = {
+                    quantity: 1,
+                    productid: productDoc.cloudPOSId,
+                    productprice: (line.price ?? 0).toFixed(2),
+                    producttax: line.tax ?? 21,
+                };
 
-            const detailEntry: any = {
-                quantity,
-                productid: productDoc.cloudPOSId,
-                productprice,
-                producttax,
-            };
-
-            // 2) subproducts
-            if (Array.isArray(line.subproducts)) {
+                // subIndex 1..10 for subproducts
                 let subIndex = 1;
-                for (const sub of line.subproducts) {
-                    if (subIndex > 10) break; // CloudPOS limit
-                    // sub might already have subDoc.cloudPOSId or we might fetch again
-                    if (!sub.cloudPOSId) {
-                        // you could fetch subDoc by sub.subproductId if needed
-                    }
-                    if (!sub.cloudPOSId) {
-                        console.warn(
-                            `[CloudPOS] Subproduct in order line missing cloudPOSId => skipping subproduct.`,
-                        );
-                        continue;
-                    }
-                    detailEntry[`sub${subIndex} id`] = sub.cloudPOSId;
-                    detailEntry[`sub${subIndex} price`] = (sub.price ?? 0).toFixed(2);
-                    detailEntry[`sub${subIndex} tax`] = sub.tax ?? 21;
+                if (Array.isArray(line.subproducts)) {
+                    for (const sub of line.subproducts) {
+                        // If sub lacks a cloudPOSId, fetch it by subproductId
+                        if (!sub.cloudPOSId && typeof sub.subproductId === 'string') {
+                            try {
+                                const subDoc = await payload.findByID({
+                                    collection: 'subproducts',
+                                    id: sub.subproductId,
+                                });
+                                if (subDoc?.cloudPOSId) {
+                                    sub.cloudPOSId = subDoc.cloudPOSId;
+                                }
+                            } catch (err) {
+                                console.warn(`[CloudPOS] Could not fetch subDoc for ID=${sub.subproductId}`, err);
+                            }
+                        }
 
-                    subIndex++;
+                        if (!sub.cloudPOSId) {
+                            console.warn(`[CloudPOS] Skipping subproduct with no cloudPOSId.`);
+                            continue;
+                        }
+
+                        // replicate subproduct if "sub.quantity" > 1
+                        const subQty = sub.quantity ?? 1;
+                        for (let sq = 0; sq < subQty; sq++) {
+                            detailEntry[`sub${subIndex}id`] = sub.cloudPOSId;
+                            detailEntry[`sub${subIndex}price`] = (sub.price ?? 0).toFixed(2);
+                            detailEntry[`sub${subIndex}tax`] = sub.tax ?? 21;
+
+                            subIndex++;
+                            if (subIndex > 10) {
+                                console.warn('[CloudPOS] Truncated at 10 subproducts for one line');
+                                break;
+                            }
+                        }
+                        if (subIndex > 10) break; // no more sub slots left
+                    }
                 }
-            }
 
-            result.push(detailEntry);
+                // push the final single unit line
+                result.push(detailEntry);
+            }
         }
+
         return result;
     }
 }
