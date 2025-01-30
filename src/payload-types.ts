@@ -116,10 +116,11 @@ export interface UserAuthOperations {
  * via the `definition` "orders".
  */
 export interface Order {
+  id: string;
   /**
-   * Auto-incrementing identifier for the order.
+   * Increments per shop for every order, never resets daily.
    */
-  id: number;
+  shopOrdNr?: number | null;
   /**
    * Daily incremented order number.
    */
@@ -276,6 +277,10 @@ export interface Order {
    * If the order was placed from a kiosk, store the kiosk ID here.
    */
   kioskNumber?: number | null;
+  /**
+   * Auto-incrementing identifier for the order.
+   */
+  ordId?: number | null;
   shops: (string | Shop)[];
   updatedAt: string;
   createdAt: string;
@@ -1868,7 +1873,7 @@ export interface PayloadLockedDocument {
   document?:
     | ({
         relationTo: 'orders';
-        value: number | Order;
+        value: string | Order;
       } | null)
     | ({
         relationTo: 'categories';
@@ -2029,7 +2034,7 @@ export interface PayloadMigration {
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
-  id?: T;
+  shopOrdNr?: T;
   tempOrdNr?: T;
   status?: T;
   order_type?: T;
@@ -2132,6 +2137,7 @@ export interface OrdersSelect<T extends boolean = true> {
   providerOrderId?: T;
   userLocale?: T;
   kioskNumber?: T;
+  ordId?: T;
   shops?: T;
   updatedAt?: T;
   createdAt?: T;

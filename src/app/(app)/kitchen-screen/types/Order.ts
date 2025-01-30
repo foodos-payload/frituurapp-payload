@@ -68,7 +68,7 @@ export interface OrderDetail {
 
 /** The main order object */
 export interface Order {
-    id: number
+    id: string
     fulfillment_method: string
     order_type: string
     status: OrderStatus

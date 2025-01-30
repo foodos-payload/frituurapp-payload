@@ -104,7 +104,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
     }, [fetchCounts, fetchOrders])
 
     // E) Mark order ready => set status=complete => remove local
-    async function markOrderReady(orderId: number) {
+    async function markOrderReady(orderId: string) {
         try {
             await fetch(`/api/orderData/markComplete?host=${encodeURIComponent(hostSlug)}&orderId=${orderId}`, {
                 method: "POST",
@@ -120,7 +120,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
     }
 
     // F) Recover => set status=in_preparation => remove local => switch to active
-    async function recoverOrder(orderId: number) {
+    async function recoverOrder(orderId: string) {
         try {
             await fetch(`/api/orderData/recoverOrder?host=${encodeURIComponent(hostSlug)}&orderId=${orderId}`, {
                 method: "POST",
@@ -145,7 +145,7 @@ export default function KitchenScreen({ hostSlug }: KitchenScreenProps) {
     }
 
     // H) printOrder => console or real print call
-    async function printOrder(orderId: number, type: "kitchen" | "customer" | "both") {
+    async function printOrder(orderId: string, type: "kitchen" | "customer" | "both") {
         try {
             const orderData = orders.find(o => o.id === orderId)
             if (!orderData) {

@@ -27,7 +27,7 @@ export const Orders: CollectionConfig = {
 
   admin: {
     baseListFilter,
-    useAsTitle: 'ordId',
+    useAsTitle: 'shopOrdNr',
   },
 
   labels: {
@@ -188,12 +188,13 @@ export const Orders: CollectionConfig = {
           }
         }
 
-        // 3) Auto-increment: daily `tempOrdNr` + global `id`
+        // 3) Auto-increment: daily `tempOrdNr`, your new `shopOrdNr`, + global `id`
         const today = new Date().toISOString().split('T')[0];
 
         const shopID = Array.isArray(data.shops) ? data.shops[0] : data.shops;
         // or if there's guaranteed exactly one shop, just use data.shops directly.
 
+        // (A) find last order today => increment daily tempOrdNr
         const lastOrderToday = await req.payload.find({
           collection: 'orders',
           where: {
@@ -205,6 +206,20 @@ export const Orders: CollectionConfig = {
         });
         const lastTempOrdNr = lastOrderToday.docs[0]?.tempOrdNr || 0;
         data.tempOrdNr = lastTempOrdNr + 1;
+
+        // (A) Non-daily shopOrdNr logic
+        // Find last overall order for this shop => increment shopOrdNr
+        const lastShopOrder = await req.payload.find({
+          collection: 'orders',
+          where: {
+            shops: { equals: shopID },
+          },
+          sort: '-shopOrdNr',
+          limit: 1,
+        });
+        const lastShopOrdNr = lastShopOrder.docs[0]?.shopOrdNr || 0;
+
+        data.shopOrdNr = lastShopOrdNr + 1;
 
         // (B) Find last order overall => set global `id`
         const lastFullOrder = await req.payload.find({
@@ -504,6 +519,7 @@ export const Orders: CollectionConfig = {
         }
       },
     ],
+
     afterChange: [
       // 1) Print Logic
       async ({ doc, previousDoc, operation, req }) => {
@@ -959,20 +975,19 @@ export const Orders: CollectionConfig = {
   },
 
   fields: [
-    // auto-increment ID
     {
-      name: 'ordId',
+      name: 'shopOrdNr',
       type: 'number',
-      label: { en: 'Order ID' },
-      admin: {
-        description: { en: 'Auto-incrementing identifier for the order.' },
-        readOnly: true,
+      label: {
+        en: 'Order Number',
       },
-      access: {
-        read: hasFieldPermission('orders', 'ordId', 'read'),
-        update: hasFieldPermission('orders', 'ordId', 'update'),
+      admin: {
+        readOnly: true,
+        description: { en: 'Increments per shop for every order, never resets daily.' },
       },
     },
+
+
     {
       name: 'tempOrdNr',
       type: 'number',
@@ -986,6 +1001,7 @@ export const Orders: CollectionConfig = {
         update: hasFieldPermission('orders', 'tempOrdNr', 'update'),
       },
     },
+
 
     // status
     {
@@ -1347,6 +1363,8 @@ export const Orders: CollectionConfig = {
         },
       ],
     },
+
+
 
     // payments array
     {
@@ -2010,6 +2028,21 @@ export const Orders: CollectionConfig = {
           },
         },
       ],
+    },
+
+    // auto-increment ID
+    {
+      name: 'ordId',
+      type: 'number',
+      label: { en: 'Order ID' },
+      admin: {
+        description: { en: 'Auto-incrementing identifier for the order.' },
+        readOnly: true,
+      },
+      access: {
+        read: hasFieldPermission('orders', 'ordId', 'read'),
+        update: hasFieldPermission('orders', 'ordId', 'update'),
+      },
     },
 
     // (B) shopsField

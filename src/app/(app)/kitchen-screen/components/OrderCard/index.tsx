@@ -5,7 +5,6 @@ import {
     FaCheckCircle,
     FaShoppingBag,
     FaMotorcycle,
-    FaPrint,
     FaArrowLeft,
     FaArrowRight,
 } from "react-icons/fa"
@@ -15,7 +14,7 @@ import {
     shouldGlowRed,
     getNextStatus,
     getPrevStatus,
-    callServerRoute,
+    callServerRoute, // <-- We'll show updated signature in 'utils' below
     getWorkflow,
 } from "./utils"
 import { OrderDetailsList } from "./OrderDetailsList"
@@ -24,16 +23,15 @@ import { useTranslation } from "@/context/TranslationsContext"
 
 import type { OrderStatus } from "../../types/Order"
 
-
+// Minimal definitions for order details
 interface OrderDetail {
     id: string
-    product: {
-        name_nl?: string
-    }
+    product: { name_nl?: string }
     quantity: number
 }
 interface Order {
-    id: number
+    /** The real doc ID from Payload (string). */
+    id: string
     status: OrderStatus
     fulfillment_method: string
     fulfillment_date?: string
@@ -47,46 +45,38 @@ interface Order {
     customer_note?: string
 }
 
-/** 
- * 3) The props for your OrderCard
- */
+/** Props for your OrderCard */
 export interface OrderCardProps {
     order: Order
     hostSlug: string
 
-    /** If you allow recovering an archived order */
-    onRecoverOrder?: (orderId: number) => void
-
-    /** For printing logic */
-    printOrder: (orderId: number, type: "kitchen" | "customer") => Promise<void>
-
-    markOrderReady?: (orderId: number) => Promise<void>
+    onRecoverOrder?: (orderId: string) => void
+    printOrder: (orderId: string, type: "kitchen" | "customer") => Promise<void>
+    markOrderReady?: (orderId: string) => Promise<void>
 }
 
 /**
- * Returns true if `current` is exactly one step before "complete" 
- * (e.g. `in_delivery` for method=delivery, or `ready_for_pickup` for takeaway, etc.).
+ * isOneStepBeforeComplete:
+ * returns true if `current` status is exactly one step
+ * before "complete" within the workflow for the given `method`.
  */
 function isOneStepBeforeComplete(
     current: OrderStatus,
     method: string | undefined
 ) {
     const wf = getWorkflow(method)
-    // e.g. dine_in => [awaiting_preparation, in_preparation, complete]
     const idx = wf.indexOf(current)
     const lastIdx = wf.indexOf("complete")
     if (lastIdx < 0 || idx < 0) return false
     return idx === lastIdx - 1
 }
 
-/** 
- * 4) The main component => no external ArrowsRow
- */
 export function OrderCard({
     order,
     hostSlug,
     onRecoverOrder,
     printOrder,
+    markOrderReady,
 }: OrderCardProps) {
     const { t } = useTranslation()
 
@@ -102,7 +92,7 @@ export function OrderCard({
 
     const isArchived = localStatus === "complete" || localStatus === "done"
 
-    // Red glow if within 10 minutes?
+    // Red glow if within 10 minutes
     const [redGlow, setRedGlow] = useState(false)
     useEffect(() => {
         function updateGlow() {
@@ -115,12 +105,15 @@ export function OrderCard({
             )
         }
         updateGlow()
-        const t = setInterval(updateGlow, 30_000)
-        return () => clearInterval(t)
+        const intervalRef = setInterval(updateGlow, 30_000)
+        return () => clearInterval(intervalRef)
     }, [order.fulfillment_method, order.fulfillment_date, order.fulfillment_time])
 
+    // Display either the daily tempOrdNr or fallback to the doc ID
     const prepDayTag = getPrepDayTag(order.fulfillment_date)
-    const orderNum = order.tempOrdNr != null ? String(order.tempOrdNr) : String(order.id)
+    const orderNum = order.tempOrdNr != null
+        ? String(order.tempOrdNr)
+        : order.id // Fallback
 
     // Build label(s)
     let statusLabel = ""
@@ -154,6 +147,7 @@ export function OrderCard({
     const fullTime = order.fulfillment_time || "??:??"
     let leftGetReadyText = `${t("kitchen.orderCard.get_ready_by")}: ${fullTime}`
     let secondRow: React.ReactNode = null
+
     if (method === "delivery") {
         const minus10 = subtractTenMinutes(fullTime)
         leftGetReadyText = `${t("kitchen.orderCard.get_ready_by")}: ${minus10}`
@@ -177,6 +171,7 @@ export function OrderCard({
         )
     }
 
+    // Downgrade status
     async function handleDowngradeStatus() {
         const prev = getPrevStatus(localStatus, method)
         if (!prev) return
@@ -191,10 +186,11 @@ export function OrderCard({
         }
     }
 
+    // Upgrade status
     async function handleUpgradeStatus() {
         const next = getNextStatus(localStatus, method)
         if (!next) return
-        // If the next step is "complete," do NOT automatically set it => nudge
+        // If next step is "complete," we nudge instead
         if (next === "complete") {
             setNudgeCompleteButton(true)
             setTimeout(() => setNudgeCompleteButton(false), 700)
@@ -211,6 +207,7 @@ export function OrderCard({
         }
     }
 
+    // Mark complete
     async function handleMarkComplete() {
         if (isArchived) return
         setStatusLoading(true)
@@ -224,15 +221,21 @@ export function OrderCard({
         }
     }
 
-    function toggleItemCheck(id: string) {
+    // Toggling checkboxes for line items
+    function toggleItemCheck(itemId: string) {
         if (isArchived || statusLoading) return
         setCheckedItems((prev) => {
             const newSet = new Set(prev)
-            newSet.has(id) ? newSet.delete(id) : newSet.add(id)
+            if (newSet.has(itemId)) {
+                newSet.delete(itemId)
+            } else {
+                newSet.add(itemId)
+            }
             return newSet
         })
     }
 
+    // If you need a "print" popover, here's an example
     function togglePrintPopover(e: React.MouseEvent) {
         e.stopPropagation()
         setShowPrintOptions((prev) => !prev)
@@ -246,18 +249,20 @@ export function OrderCard({
         await printOrder(order.id, "customer")
     }
 
+    // If recovering an archived order
     function triggerRecoverOrder() {
         onRecoverOrder?.(order.id)
     }
 
+    // Show "mark complete" button if we’re exactly one step before complete
     const showCompleteButton = !isArchived && isOneStepBeforeComplete(localStatus, method)
 
     const completeBtnClasses = `
-    w-full bg-green-600 text-white font-bold py-2 text-sm rounded
-    hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed
-    transition-transform duration-300
-    ${nudgeCompleteButton ? "scale-110" : ""}
-  `
+        w-full bg-green-600 text-white font-bold py-2 text-sm rounded
+        hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed
+        transition-transform duration-300
+        ${nudgeCompleteButton ? "scale-110" : ""}
+    `
 
     return (
         <div
@@ -265,7 +270,7 @@ export function OrderCard({
                rounded-xl shadow-md bg-white w-[400px] flex flex-col overflow-hidden
                ${redGlow ? "border-[4px] blink-border" : "border-[1.5px] border-gray-300"}
                ${statusLoading ? "opacity-60 pointer-events-none" : ""}
-             `}
+            `}
         >
             {/* TOP => GET READY BY... #OrderNum */}
             <div className="px-3 py-2 bg-gray-50 flex items-center justify-between text-sm text-gray-700">

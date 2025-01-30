@@ -47,7 +47,7 @@ export function getPrepDayTag(fulfillmentDate?: string): string | null {
 }
 
 /** 
- * If we are within 10 min of "getReadyBy" => glow red. 
+ * If we are within 10 min of "getReadyBy" => glow red.
  */
 export function shouldGlowRed(
     method: string | undefined,
@@ -72,7 +72,7 @@ export function shouldGlowRed(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Workflow
+// Workflow arrays
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** 
@@ -96,6 +96,7 @@ export function getWorkflow(method: string | undefined): OrderStatus[] {
                 "complete",
             ]
         default:
+            // fallback if unknown method
             return ["awaiting_preparation", "in_preparation", "complete"]
     }
 }
@@ -106,6 +107,7 @@ export function getNextStatus(current: OrderStatus, method: string | undefined):
     if (idx === -1 || idx >= wf.length - 1) return null
     return wf[idx + 1]
 }
+
 export function getPrevStatus(current: OrderStatus, method: string | undefined): OrderStatus | null {
     const wf = getWorkflow(method)
     const idx = wf.indexOf(current)
@@ -113,13 +115,13 @@ export function getPrevStatus(current: OrderStatus, method: string | undefined):
     return wf[idx - 1]
 }
 
-/** 
- * Perform server call for new status => pick the right route name 
- * (markAwaitingPreparation, markInPreparation, markReadyForPickup, markInDelivery, markComplete)
+/**
+ * Perform a server call for a new status => pick the right route name
+ * (markAwaitPreparation, markInPreparation, markReadyForPickup, markInDelivery, markComplete)
  */
 export async function callServerRoute(
     hostSlug: string,
-    orderId: number,
+    orderId: string,            // <-- changed to string
     newStatus: OrderStatus
 ) {
     let routeName = ""
@@ -142,6 +144,8 @@ export async function callServerRoute(
         default:
             return
     }
+
+    // We pass orderId as a string in the query param; the server route can parse it if needed
     const url = `/api/orderData/${routeName}?host=${encodeURIComponent(hostSlug)}&orderId=${orderId}`
     const res = await fetch(url, { method: "POST" })
     if (!res.ok) {
