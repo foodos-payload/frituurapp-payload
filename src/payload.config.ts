@@ -311,6 +311,8 @@ export default buildConfig({
     'https://frituurapp.ngrok.dev',
     'http://frituurapp.ngrok.dev',
     'https://orderapp.be',
+    'https://nayasfrit.orderapp.be',
+    'https://denbareel.orderapp.be',
   ],
   csrf: [
     'https://frituurwebshop.be',
@@ -323,6 +325,8 @@ export default buildConfig({
     'https://frituurapp.ngrok.dev',
     'http://frituurapp.ngrok.dev',
     'https://orderapp.be',
+    'https://nayasfrit.orderapp.be',
+    'https://denbareel.orderapp.be',
   ],
   db: mongooseAdapter({
     url: process.env.PAYLOAD_DATABASE_URI || '',
