@@ -179,6 +179,7 @@ export const Orders: CollectionConfig = {
                 status: { not_equals: 'cancelled' },
               },
               limit: 200,
+              depth: 0,
             });
 
             if (usageCheck.docs.length >= matchedMaxOrders) {
@@ -962,7 +963,6 @@ export const Orders: CollectionConfig = {
     {
       name: 'id',
       type: 'number',
-      unique: false,
       label: { en: 'Order ID' },
       admin: {
         description: { en: 'Auto-incrementing identifier for the order.' },
