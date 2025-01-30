@@ -190,12 +190,13 @@ export const Orders: CollectionConfig = {
         // 3) Auto-increment: daily `tempOrdNr` + global `id`
         const today = new Date().toISOString().split('T')[0];
 
-        // (A) Find last order *today*
+        const shopID = Array.isArray(data.shops) ? data.shops[0] : data.shops;
+        // or if there's guaranteed exactly one shop, just use data.shops directly.
+
         const lastOrderToday = await req.payload.find({
           collection: 'orders',
           where: {
-            tenant: { equals: data.tenant },
-            shops: { in: data.shops },
+            shops: { equals: shopID },
             createdAt: { greater_than: `${today}T00:00:00` },
           },
           sort: '-tempOrdNr',
@@ -961,7 +962,7 @@ export const Orders: CollectionConfig = {
     {
       name: 'id',
       type: 'number',
-      unique: true,
+      unique: false,
       label: { en: 'Order ID' },
       admin: {
         description: { en: 'Auto-incrementing identifier for the order.' },
