@@ -27,7 +27,7 @@ export const Orders: CollectionConfig = {
 
   admin: {
     baseListFilter,
-    useAsTitle: 'id',
+    useAsTitle: 'ordId',
   },
 
   labels: {
@@ -213,7 +213,7 @@ export const Orders: CollectionConfig = {
             tenant: { equals: data.tenant },
             shops: { in: data.shops },
           },
-          sort: '-id',
+          sort: '-ordId',
           limit: 1,
         });
         const lastId = lastFullOrder.docs[0]?.id ?? 0;
@@ -961,7 +961,7 @@ export const Orders: CollectionConfig = {
   fields: [
     // auto-increment ID
     {
-      name: 'id',
+      name: 'ordId',
       type: 'number',
       label: { en: 'Order ID' },
       admin: {
@@ -969,8 +969,8 @@ export const Orders: CollectionConfig = {
         readOnly: true,
       },
       access: {
-        read: hasFieldPermission('orders', 'id', 'read'),
-        update: hasFieldPermission('orders', 'id', 'update'),
+        read: hasFieldPermission('orders', 'ordId', 'read'),
+        update: hasFieldPermission('orders', 'ordId', 'update'),
       },
     },
     {
