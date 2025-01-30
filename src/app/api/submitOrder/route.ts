@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
         // 6) Create Order
         const sanitizedData = {
             tenant: tenantID,
-            shops: [shopDoc],// ✅ Ensure shops is stored as an array of relationship objects
+            shops: [shopID],// ✅ Ensure shops is stored as an array of relationship objects
             order_type: orderType || "web",
             status: status || "pending_payment",
             customerBarcode,
