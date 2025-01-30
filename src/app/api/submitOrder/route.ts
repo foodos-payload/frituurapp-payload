@@ -211,13 +211,68 @@ export async function POST(request: NextRequest) {
             };
         });
 
-        // 5) Create the new order in the 'orders' collection
-        //    (No extra doc lookups for subproducts—just store them as passed.)
+        interface Subproduct {
+            subproductId: string;
+            name_nl?: string | null;
+            name_en?: string | null;
+            name_de?: string | null;
+            name_fr?: string | null;
+            price: number; // Ensure price is always a number
+            tax?: number | null;
+            tax_dinein?: number | null;
+            quantity?: number | null;
+            id?: string | null;
+        }
+
+        interface OrderDetail {
+            product: string | Product;
+            quantity: number;
+            price: number; // Ensure price is always a number
+            tax?: number | null;
+            tax_dinein?: number | null;
+            name_nl?: string | null;
+            name_en?: string | null;
+            name_de?: string | null;
+            name_fr?: string | null;
+            subproducts?: Subproduct[] | null;
+            id?: string | null;
+        }
+
+        const sanitizedOrderDetails: OrderDetail[] = (orderDetails || []).map((item): OrderDetail => ({
+            product: String(item.product || ""), // Ensure product ID is a string
+            quantity: item.quantity ?? 1, // Ensure quantity is always a number
+            price: item.price ?? 0, // Ensure price is always a number (fallback to 0)
+            tax: item.tax ?? null,
+            tax_dinein: item.tax_dinein ?? null,
+            name_nl: item.name_nl ?? null,
+            name_en: item.name_en ?? null,
+            name_de: item.name_de ?? null,
+            name_fr: item.name_fr ?? null,
+            subproducts: (item.subproducts || []).map((sp): Subproduct => ({
+                subproductId: String(sp.subproductId || ""), // Ensure subproduct ID is a string
+                name_nl: sp.name_nl ?? null,
+                name_en: sp.name_en ?? null,
+                name_de: sp.name_de ?? null,
+                name_fr: sp.name_fr ?? null,
+                price: sp.price ?? 0, // Ensure price is always a number
+                tax: sp.tax ?? null,
+                tax_dinein: sp.tax_dinein ?? null,
+                quantity: sp.quantity ?? null,
+                id: sp.id ?? null,
+            })),
+            id: item.id ?? null,
+        }));
+
+        const sanitizedPayments = (paymentsToStore || []).map((pay) => ({
+            ...pay,
+            payment_method: String(pay.payment_method || ""), // Ensure payment method is a string
+        }));
+
         const createdOrder = await payload.create({
             collection: 'orders',
             data: {
                 tenant: tenantID,
-                shops: [shopID],
+                shops: [String(shopID)], // Ensure shop ID is a string
 
                 order_type: orderType || 'web',
                 status: status || 'pending_payment',
@@ -227,13 +282,12 @@ export async function POST(request: NextRequest) {
                 fulfillment_time: fulfillmentTime,
                 customer_details: customerDetails,
 
-                order_details: orderDetails || [],  // Pass exactly as front-end gave us
-                payments: paymentsToStore || [],
+                order_details: sanitizedOrderDetails, // Now sanitized
+                payments: sanitizedPayments, // Now sanitized
                 shipping_cost: typeof shippingCost === 'number' ? shippingCost : 0,
                 promotionsUsed: promotionsUsed || {},
                 tippingUsed: tippingUsed || {},
                 kioskNumber: kioskNumber || null,
-
             },
         });
 

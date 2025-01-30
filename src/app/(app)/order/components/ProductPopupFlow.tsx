@@ -321,14 +321,19 @@ export default function ProductPopupFlow({
             let newArray: string[] = [];
 
             if (popup.multiselect) {
-                // multi-select toggle
+                // Multi-select toggle with max limit
                 if (oldArray.includes(subID)) {
                     newArray = oldArray.filter((id) => id !== subID);
                 } else {
+                    if (popup.maximum_option && oldArray.length >= popup.maximum_option) {
+                        setIsOverMax(true);
+                        setTimeout(() => setIsOverMax(false), 1000);
+                        return prev; // Return previous state without adding more
+                    }
                     newArray = [...oldArray, subID];
                 }
             } else {
-                // single select
+                // Single select
                 if (oldArray.includes(subID)) {
                     newArray = [];
                 } else {
@@ -457,7 +462,7 @@ export default function ProductPopupFlow({
                         name_en: sp.linkedProduct?.name_en ?? sp.name_en ?? sp.name_nl,
                         name_de: sp.linkedProduct?.name_de ?? sp.name_de ?? sp.name_nl,
                         name_fr: sp.linkedProduct?.name_fr ?? sp.name_fr ?? sp.name_nl,
-                        price: sp.linkedProduct?.price ?? sp.price,
+                        price: sp.linkedProduct?.price ?? sp.price ?? 0,
                         tax:
                             typeof sp.linkedProduct?.tax === "number"
                                 ? sp.linkedProduct!.tax
