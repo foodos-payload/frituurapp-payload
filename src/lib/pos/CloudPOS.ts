@@ -937,6 +937,12 @@ export class CloudPOS extends AbstractPOS {
             return orderDoc.cloudPOSId;
         }
 
+        // 2) If status is pending_payment => skip
+        if (orderDoc.status === 'pending_payment') {
+            console.log(`[CloudPOS] Skipping push => Order ${localOrderId} is still "pending_payment".`);
+            return 0; // or return some sentinel
+        }
+
         // 3) Determine delivery mode
         let deliveryMode = 0;
         switch (orderDoc.fulfillment_method) {
@@ -1108,28 +1114,43 @@ export class CloudPOS extends AbstractPOS {
             }
 
             if (!productDoc?.cloudPOSId) {
-                console.warn(
-                    `[CloudPOS] Skipping line; product "${productDoc?.name_nl}" missing cloudPOSId.`,
-                );
+                console.warn(`[CloudPOS] Skipping line; product "${productDoc?.name_nl}" missing cloudPOSId.`);
                 continue;
             }
 
-            // For each unit in "line.quantity", create a separate line
-            const itemCount = line.quantity ?? 1;
-            for (let i = 0; i < itemCount; i++) {
-                // Build a single line with quantity=1
-                const detailEntry: any = {
-                    quantity: 1,
-                    productid: productDoc.cloudPOSId,
-                    productprice: (line.price ?? 0).toFixed(2),
-                    producttax: line.tax ?? 21,
-                };
+            // Check if any subproduct has quantity > 1
+            interface OrderDetail {
+                product: any;
+                quantity?: number;
+                price?: number;
+                tax?: number;
+                subproducts: SubproductDetail[];
+            }
 
-                // subIndex 1..10 for subproducts
-                let subIndex = 1;
-                if (Array.isArray(line.subproducts)) {
+            interface SubproductDetail {
+                subproductId: string;
+                cloudPOSId?: number;
+                quantity?: number;
+                price?: number;
+                tax?: number;
+            }
+
+            const hasMultiSubproducts: boolean = Array.isArray(line.subproducts) && line.subproducts.some((sub: SubproductDetail) => (sub.quantity ?? 0) > 1);
+
+            if (hasMultiSubproducts) {
+                // SPLIT INTO MULTIPLE LINES
+                const itemCount = line.quantity ?? 1;
+                for (let i = 0; i < itemCount; i++) {
+                    const detailEntry: any = {
+                        quantity: 1,
+                        productid: productDoc.cloudPOSId,
+                        productprice: (line.price ?? 0).toFixed(2),
+                        producttax: line.tax ?? 21,
+                    };
+
+                    let subIndex = 1;
                     for (const sub of line.subproducts) {
-                        // If sub lacks a cloudPOSId, fetch it by subproductId
+                        // Fetch cloudPOSId if missing
                         if (!sub.cloudPOSId && typeof sub.subproductId === 'string') {
                             try {
                                 const subDoc = await payload.findByID({
@@ -1149,7 +1170,7 @@ export class CloudPOS extends AbstractPOS {
                             continue;
                         }
 
-                        // replicate subproduct if "sub.quantity" > 1
+                        // Replicate subproduct if "sub.quantity" > 1
                         const subQty = sub.quantity ?? 1;
                         for (let sq = 0; sq < subQty; sq++) {
                             detailEntry[`sub${subIndex}id`] = sub.cloudPOSId;
@@ -1162,11 +1183,53 @@ export class CloudPOS extends AbstractPOS {
                                 break;
                             }
                         }
-                        if (subIndex > 10) break; // no more sub slots left
+                        if (subIndex > 10) break; // No more sub slots left
+                    }
+
+                    result.push(detailEntry);
+                }
+            } else {
+                // KEEP AS SINGLE LINE
+                const detailEntry: any = {
+                    quantity: line.quantity ?? 1,
+                    productid: productDoc.cloudPOSId,
+                    productprice: (line.price ?? 0).toFixed(2),
+                    producttax: line.tax ?? 21,
+                };
+
+                let subIndex = 1;
+                for (const sub of line.subproducts) {
+                    // Fetch cloudPOSId if missing
+                    if (!sub.cloudPOSId && typeof sub.subproductId === 'string') {
+                        try {
+                            const subDoc = await payload.findByID({
+                                collection: 'subproducts',
+                                id: sub.subproductId,
+                            });
+                            if (subDoc?.cloudPOSId) {
+                                sub.cloudPOSId = subDoc.cloudPOSId;
+                            }
+                        } catch (err) {
+                            console.warn(`[CloudPOS] Could not fetch subDoc for ID=${sub.subproductId}`, err);
+                        }
+                    }
+
+                    if (!sub.cloudPOSId) {
+                        console.warn(`[CloudPOS] Skipping subproduct with no cloudPOSId.`);
+                        continue;
+                    }
+
+                    detailEntry[`sub${subIndex}id`] = sub.cloudPOSId;
+                    detailEntry[`sub${subIndex}price`] = (sub.price ?? 0).toFixed(2);
+                    detailEntry[`sub${subIndex}tax`] = sub.tax ?? 21;
+
+                    subIndex++;
+                    if (subIndex > 10) {
+                        console.warn('[CloudPOS] Truncated at 10 subproducts for one line');
+                        break;
                     }
                 }
 
-                // push the final single unit line
                 result.push(detailEntry);
             }
         }

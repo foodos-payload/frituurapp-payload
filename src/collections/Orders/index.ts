@@ -9,6 +9,9 @@ import { baseListFilter } from './access/baseListFilter';
 import { hasPermission, hasFieldPermission } from '@/access/permissionChecker'; // import field-level as well
 import { generateOrderSummaryEmail } from '../../email/generateOrderSummaryEmail';
 
+import { createPOSInstance } from '@/lib/pos';
+import { CloudPOS } from '@/lib/pos/CloudPOS';
+
 export const Orders: CollectionConfig = {
   slug: 'orders',
 
@@ -664,7 +667,9 @@ export const Orders: CollectionConfig = {
 
           if (oldStatus === 'pending_payment' && newStatus !== 'pending_payment') {
             try {
-              // kiosk logic
+              // ─────────────────────────────────────────────────────────────
+              // (A) Kiosk logic
+              // ─────────────────────────────────────────────────────────────
               if (doc.order_type === 'kiosk') {
                 if (!doc.kioskNumber) {
                   console.warn('Order is kiosk-type, but no kioskNumber found; skipping kiosk print.');
@@ -697,6 +702,7 @@ export const Orders: CollectionConfig = {
                     const nameParts = p.printer_name?.split('-') || [];
                     const lastPart = nameParts[nameParts.length - 1];
                     if (String(lastPart) === String(doc.kioskNumber)) {
+                      // Retry logic (5 attempts)
                       for (let attempt = 1; attempt <= 5; attempt++) {
                         try {
                           await fetch(`${process.env.PAYLOAD_PUBLIC_SERVER_URL}/api/printOrder`, {
@@ -728,7 +734,9 @@ export const Orders: CollectionConfig = {
                 }
               }
 
-              // KITCHEN LOGIC
+              // ─────────────────────────────────────────────────────────────
+              // (B) Kitchen logic
+              // ─────────────────────────────────────────────────────────────
               const shopIDs = Array.isArray(doc.shops)
                 ? doc.shops.map((s: any) => (typeof s === 'object' ? s.id : s))
                 : [doc.shops];
@@ -778,6 +786,7 @@ export const Orders: CollectionConfig = {
                     }
                   }
 
+                  // If this printer is also set to print a customer copy
                   if (p?.customer_enabled === true) {
                     for (let attempt = 1; attempt <= 5; attempt++) {
                       try {
@@ -808,8 +817,64 @@ export const Orders: CollectionConfig = {
                   console.error(`Error printing to printer ${p.printer_name}:`, printErr);
                 }
               }
+
+              // ─────────────────────────────────────────────────────────────
+              // (C) CloudPOS Push Logic
+              // ─────────────────────────────────────────────────────────────
+              console.log(`[CloudPOS] Order status changed from "pending_payment" to "${newStatus}"`);
+
+              const posResult = await req.payload.find({
+                collection: 'pos',
+                where: {
+                  and: [
+                    { active: { equals: true } },
+                    { shop: { equals: doc.shops[0] } },
+                  ],
+                },
+                limit: 10,
+              });
+
+              for (const posDoc of posResult.docs) {
+                const { provider, apiKey, apiSecret, licenseName, token, syncOrders } = posDoc;
+
+                console.log(`[pushOrder] Found POS doc ${posDoc.id} for shop="${doc.shops[0]}". syncOrders=${syncOrders}`);
+
+                // If syncOrders is 'off', skip
+                if (syncOrders === 'off') {
+                  console.log(`syncOrders is OFF => skipping push...`);
+                  continue;
+                }
+
+                // Only push if provider is "cloudpos" and syncOrders is set to "to-cloudpos"
+                if (provider === 'cloudpos' && syncOrders === 'to-cloudpos') {
+                  const cloudPOSInstance = createPOSInstance(
+                    'cloudpos',
+                    apiKey ?? '',
+                    apiSecret ?? '',
+                    {
+                      licenseName: licenseName ?? '',
+                      token: token ?? '',
+                      shopId: doc.shops[0],
+                      tenantId: typeof doc.tenant === 'string' ? doc.tenant : undefined,
+                    }
+                  ) as CloudPOS;
+
+                  const newCloudPOSId = await cloudPOSInstance.pushLocalOrderToCloudPOS(doc.id);
+                  console.log(`Pushed local order=${doc.id} => CloudPOS ID=${newCloudPOSId}`);
+
+                  // Update the order document with the CloudPOS ID
+                  await req.payload.update({
+                    collection: 'orders',
+                    id: doc.id,
+                    data: { cloudPOSId: newCloudPOSId },
+                  });
+                } else {
+                  console.log(`Provider="${provider}" or syncOrders="${syncOrders}" => no push.`);
+                }
+              }
+
             } catch (err) {
-              console.error('Error in order afterChange print hook (update):', err);
+              console.error('Error in order afterChange hook (update):', err);
             }
           }
         }
